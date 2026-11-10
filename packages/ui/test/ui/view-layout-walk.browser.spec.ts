@@ -1,7 +1,7 @@
 import {expect, test} from '../fixtures.js';
 import {measureFieldLayoutRules} from '../fixtures/fieldLayoutAudit.js';
 import {measureWholeScreen} from '../fixtures/wholeScreenAudit.js';
-import {NO_OPEN_WHY, NoOpenReason, WalkSkin, startWalk, walkTargets} from '../fixtures/viewOpen.js';
+import {NO_OPEN_WHY, NoOpenReason, WalkSkin, openTargets, startWalk, stepperGapFor, walkTargets} from '../fixtures/viewOpen.js';
 import {EXTRA_OPEN_STEPS, VIEW_REASONS} from '../fixtures/viewOpenSteps.js';
 import {VIEW_INDEX} from '../fixtures/viewIndex.js';
 import {PhoneRowColumns} from '@openisd/design/fields';
@@ -18,7 +18,6 @@ import {PhoneRowColumns} from '@openisd/design/fields';
 const REASON_CEILING = 131;
 /** A view that measures fewer controls and text elements than this is empty, and fails. */
 const MIN_MEASURED = 1;
-const DESKTOP_STEPPER_GAP_PX = 0;
 
 /** A fault found by this walk and not yet fixed: the view, the rules it breaks, and the bug file that records it. Its test expects the fault and turns red when it is fixed; then the entry is deleted. */
 interface KnownFault {readonly skin: WalkSkin; readonly view: (id: string) => boolean; readonly rules: readonly string[]; readonly bug: string}
@@ -42,20 +41,20 @@ test.describe('view index coverage', () => {
     console.log(`view walk: ${targets.length - withReason.length} opened, ${withReason.length} with a reason (${byReason.join(', ')}); ${NO_OPEN_WHY[NoOpenReason.StepNotWritten]}`);
     expect(withReason.length, 'views with a reason may only go down: lower REASON_CEILING when a step is written').toBeLessThanOrEqual(REASON_CEILING);
   });
+
   test('the step and reason tables name only views that are in the index', () => {
     const known = new Set(VIEW_INDEX.flatMap(view => Object.values(WalkSkin).map(skin => `${skin}:${view.id}`)));
     expect([...EXTRA_OPEN_STEPS.keys(), ...VIEW_REASONS.keys()].filter(entry => !known.has(entry))).toEqual([]);
   });
 });
 
-for (const {view, skin, plan} of targets) {
-  if (plan.kind !== 'open') continue;
+for (const {view, skin, plan} of openTargets()) {
   test(`${skin} ${view.id}`, async ({page}) => {
     await startWalk(page, skin);
     await plan.open(page);
-    const root = plan.root === '' ? 'body' : plan.root;
+    const root = plan.root;
     await page.locator(root).first().waitFor({state: 'visible'});
-    const stepperGap = skin === WalkSkin.Phone ? PhoneRowColumns.MIN_STEPPER_GAP_PX : DESKTOP_STEPPER_GAP_PX;
+    const stepperGap = stepperGapFor(skin, PhoneRowColumns.MIN_STEPPER_GAP_PX);
     const fieldIssues = await page.locator(root).first().evaluate(measureFieldLayoutRules, stepperGap);
     const whole = await page.locator(root).first().evaluate(measureWholeScreen);
     expect(whole.measured, `${view.id}: nothing measured`).toBeGreaterThanOrEqual(MIN_MEASURED);
@@ -64,6 +63,7 @@ for (const {view, skin, plan} of targets) {
     const isKnown = (issue: string) => known.some(fault => fault.rules.some(rule => issue.startsWith(rule + ' ')));
     expect(issues.filter(issue => !isKnown(issue))).toEqual([]);
     // A known fault must still show; when it is fixed this goes red, and the KNOWN entry and its bug file are deleted.
-    if (known.length > 0) expect(issues.filter(isKnown), `${known.map(fault => fault.bug).join(', ')} is fixed: delete its KNOWN entry`).not.toEqual([]);
+    const stillShows = known.every(fault => issues.some(issue => fault.rules.some(rule => issue.startsWith(rule + ' '))));
+    expect(stillShows, `${known.map(fault => fault.bug).join(', ')} is fixed: delete its KNOWN entry`).toBe(true);
   });
 }
