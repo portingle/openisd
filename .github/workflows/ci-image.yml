@@ -3,6 +3,8 @@
 name: ci-image
 on:
   workflow_dispatch:
+  push:
+    branches: [t752]
 
 permissions:
   contents: read
@@ -27,5 +29,7 @@ jobs:
         with:
           context: .github/ci-image
           push: true
-          tags: ghcr.io/johnlon/openisd-ci:${{ steps.tag.outputs.hash }}
-      - run: echo "ghcr.io/johnlon/openisd-ci@${{ steps.build.outputs.digest }}"
+          tags: ghcr.io/portingle/openisd-ci-runner:${{ steps.tag.outputs.hash }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/portingle/openisd
+      - run: echo "ghcr.io/portingle/openisd-ci-runner@${{ steps.build.outputs.digest }}"
