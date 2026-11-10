@@ -64,7 +64,7 @@ export const EXTRA_OPEN_STEPS: ReadonlyMap<string, OpenStep> = new Map(steps.map
 
 const P = WalkSkin.Phone, D = WalkSkin.Desktop;
 const reasons: [NoOpenReason, WalkSkin, readonly string[]][] = [
-  [NoOpenReason.BrowserOwned, P, ['native-files', 'native-select', 'native-colour', 'native-keyboard', 'native-title']],
+  [NoOpenReason.BrowserOwned, P, ['native-select', 'native-colour', 'native-title']],
   [NoOpenReason.BrowserOwned, D, ['desktop/projects/trace-colour-picker']],
   [NoOpenReason.IndexDisagrees, P, ['cross-tab', 'shared/driver-library-storage-note', 'phone/response-model-pending-notice']],
   [NoOpenReason.IndexDisagrees, D, ['desktop/cross-tab-notice', 'shared/driver-library-storage-note', 'desktop/enclosure/response-model-pending-notice', 'desktop/results/chart-unavailable-notice', 'desktop/wizard-help']],
