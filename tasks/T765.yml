@@ -4,7 +4,7 @@ repo: openisd
 owner: cover
 status: done
 goal: Picture stamp survives mark-diff and shows under every picture
-done_test: python3 scripts/feedback/feedback_page_test.py
+done_test: v=$(mktemp -d) && python3 -m venv "$v" && "$v/bin/pip" install -q pillow numpy && PATH="$v/bin:$PATH" python3 scripts/feedback/feedback_page_test.py
 why: John's UI-control spec (CONTROL_CHANGES.md, Three UI controls item 2) wants every picture to carry its stamp (source, build, commit, viewport). mark-diff dropped the PNG text chunk, and the pictures page never showed it.
 files:
   - tasks/T765.yml
