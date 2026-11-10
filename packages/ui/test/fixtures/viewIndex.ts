@@ -117,8 +117,8 @@ const RULED_VIEWS:readonly ViewEntry[]=[
   sharedRuled('shared/driver-library-broken-entry',ViewKind.WarningPopup,CMP+'DriverLibrary.vue','Driver list with a saved driver this version cannot read: a flagged row offers Export and Delete.'),
   sharedRuled('shared/driver-type-help',ViewKind.FieldNote,CMP+'DriverLibrary.vue','Driver list filters, press the ? by the types: a table explains the driver range classifications.'),
 ];
-/** John, 10 Nov 2026 (T763, process control "one view list the layout check walks"): views the index listed for the phone only, though the desktop skin has them too. */
-const DESKTOP_TWIN_RULING:ViewDecision={kind:'ruling',by:'John',date:'2026-11-10',ref:'T763'};
+/** Basis: control change T763, Fable review 10 Nov 2026 (workspace docs/process/CONTROL_CHANGES.md), not a ruling by John: views the index listed for the phone only, though the desktop skin has them too. */
+const DESKTOP_TWIN_RULING:ViewDecision={kind:'ruling',by:'basis: control change T763, Fable review 10 Nov (workspace docs/process/CONTROL_CHANGES.md)',date:'2026-11-10',ref:'T763'};
 function desktopTwin(id:string,kind:ViewKind,owner:string,reach:string):ViewEntry {
   return {id,skin:ViewSkin.Desktop,kind,owner,reach,decision:DESKTOP_TWIN_RULING};
 }
