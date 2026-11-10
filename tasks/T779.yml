@@ -2,7 +2,7 @@ id: T779
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Delete the stale copy of the picture-page checker
 done_test: test ! -e scripts/feedback/check-answerable.mjs
 files:
