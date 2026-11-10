@@ -4,6 +4,9 @@ repo: openisd
 owner: cover
 status: open
 goal: ship.sh pushes and opens pull requests on the portingle copy (one remote variable)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/land/test/ship.test.sh
 files:
   - tasks/T759.yml
+  - scripts/ship.sh
+  - ship.conf
+  - scripts/land/test/ship.test.sh
