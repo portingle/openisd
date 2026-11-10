@@ -57,18 +57,36 @@ function derivedStep(view: ViewEntry, skin: WalkSkin): OpenStep | undefined {
   }
 }
 
+/** A step with no root of its own measures the whole body. */
+function withRoot(step: OpenStep): OpenStep {
+  return {root: step.root === '' ? 'body' : step.root, open: step.open};
+}
+
 /** The plan for one view in one skin: an extra step, a derived step, or a reason. */
 export function planFor(view: ViewEntry, skin: WalkSkin): ViewPlan {
   const named = VIEW_REASONS.get(`${skin}:${view.id}`);
   if (named !== undefined) return {kind: 'reason', reason: named};
   const extra = EXTRA_OPEN_STEPS.get(`${skin}:${view.id}`);
-  if (extra !== undefined) return {kind: 'open', ...extra};
+  if (extra !== undefined) return {kind: 'open', ...withRoot(extra)};
   const derived = derivedStep(view, skin);
-  if (derived !== undefined) return {kind: 'open', ...derived};
+  if (derived !== undefined) return {kind: 'open', ...withRoot(derived)};
   return {kind: 'reason', reason: VIEW_REASONS.get(`${skin}:${view.id}`) ?? NoOpenReason.StepNotWritten};
 }
 
 /** Every (view, skin) the walk covers. */
 export function walkTargets(): readonly {readonly view: ViewEntry; readonly skin: WalkSkin; readonly plan: ViewPlan}[] {
   return VIEW_INDEX.flatMap(view => skinsOf(view).map(skin => ({view, skin, plan: planFor(view, skin)})));
+}
+
+/** Only the targets that have an open step, with the plan narrowed to it. */
+export function openTargets(): readonly {readonly view: ViewEntry; readonly skin: WalkSkin; readonly plan: Extract<ViewPlan, {kind: 'open'}>}[] {
+  return walkTargets().flatMap(({view, skin, plan}) => plan.kind === 'open' ? [{view, skin, plan}] : []);
+}
+
+/** The smallest gap between a number box and its up/down buttons the walk asks for: John's phone ruling (10 Nov 2026); desktop spinners are the slim 18 px ones and ask for none. */
+export function stepperGapFor(skin: WalkSkin, phoneGapPx: number): number {
+  switch (skin) {
+    case WalkSkin.Phone: return phoneGapPx;
+    case WalkSkin.Desktop: return 0;
+  }
 }
