@@ -1,0 +1,9 @@
+id: T785
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: check-task-contract refuses a done_test that selects one test inside a test file the change touched
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T785.yml
