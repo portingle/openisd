@@ -2,7 +2,7 @@ id: T762
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: A pull request may carry several tasks; ship.sh and the PR gates accept N task ids
 done_test: bash scripts/land/test/pr-gates.test.sh && bash scripts/land/test/ship.test.sh && bash scripts/land/test/visual.e2e.test.sh
 files:
