@@ -4,9 +4,14 @@ repo: openisd
 owner: leader
 status: done
 goal: CI browser jobs need no apt download per run: run them in the pinned Playwright container image
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/ui/test/scripts/release-workflows.test.ts
 files:
   - tasks/T752.yml
+  - .github/ci-image/Dockerfile
+  - .github/ci-image/expected-fonts.txt
+  - .github/workflows/ci-image.yml
+  - .github/workflows/suite.yml
+  - packages/ui/test/scripts/release-workflows.test.ts
 notes: |
   Prepared, NOT published. Image: .github/ci-image/Dockerfile + expected-fonts.txt, built by ci-image.yml (workflow_dispatch only).
   OPEN: suite.yml holds the placeholder REPLACE_WITH_CI_IMAGE_DIGEST. The guard test in
