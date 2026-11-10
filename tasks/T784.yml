@@ -2,7 +2,7 @@ id: T784
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Record three clipping bugs found by the 10 Nov gallery check
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
