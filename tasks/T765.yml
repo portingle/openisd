@@ -1,0 +1,9 @@
+id: T765
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Picture stamp survives mark-diff and shows under every picture
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T765.yml
