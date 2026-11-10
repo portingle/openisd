@@ -1,0 +1,9 @@
+id: T771
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: View coverage batch 2: saved-state views (includes batch 1 from T769)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T771.yml
