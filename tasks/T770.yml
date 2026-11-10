@@ -4,6 +4,12 @@ repo: openisd
 owner: cover
 status: done
 goal: Phone Box tab: Box type dropdown shows its whole text
-done_test: bash scripts/quiet-test.sh npm run typecheck
+why: "John, 10 Nov 2026 (QO526): pictures showed the narrower Box type dropdown cuts Passive Radiator; field-layout rules say nothing is cut"
+done_test: bash scripts/test.sh packages/ui/test/ui/phone-box-type-text-fits.browser.spec.ts
 files:
   - tasks/T770.yml
+  - bugs/BUG_20261110_phone-box-type-dropdown-cut.md
+  - packages/ui/src/style.css
+  - packages/ui/src/ui/shells/mobile/MobileBoxTab.vue
+  - packages/ui/test/fixtures/fieldLayoutAudit.ts
+  - packages/ui/test/ui/phone-box-type-text-fits.browser.spec.ts
