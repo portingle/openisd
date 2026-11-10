@@ -16,3 +16,4 @@ files:
   - bugs/BUG_20261108_desktop-800x600-driver-tab-buttons-overlap-fields.md
   - bugs/BUG_20261108_desktop-800x600-driver-editor-footer-overlaps-fields.md
   - bugs/BUG_20261108_desktop-640x360-save-revert-cut-off-and-unreachable.md
+  - packages/ui/test/fixtures/mobileSurfaceSourceIndex.json
