@@ -4,6 +4,7 @@ repo: openisd
 owner: cover
 status: done
 goal: Delete the stale copy of the picture-page checker
+why: "John, 10 Nov 2026: \"delete the dupe tool\""
 done_test: test ! -e scripts/feedback/check-answerable.mjs
 files:
   - scripts/feedback/check-answerable.mjs
