@@ -9,3 +9,5 @@ files:
   - tasks/T786.yml
   - scripts/land/check-task-contract.sh
   - scripts/land/test/pr-gates.test.sh
+  - scripts/ship.sh
+  - .github/workflows/pr.yml
