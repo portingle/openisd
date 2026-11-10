@@ -2,7 +2,7 @@ id: T764
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Main red: field-catalogue browser spec after T742
 done_test: bash scripts/test.sh packages/ui/test/ui/mobile-signal-box-width.browser.spec.ts
 files:
