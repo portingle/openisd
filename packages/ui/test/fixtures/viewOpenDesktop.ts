@@ -1,5 +1,6 @@
 import type {Page} from '@playwright/test';
 import {dirtyFocusedDesign, setFocusedBoxType} from '../fixtures.js';
+import type {BoxTypeName} from '../fixtures.js';
 import {fillAndBlur} from './numField.js';
 import {deviceRecord, MY_DRIVERS_KEY} from './seedMyDrivers.js';
 import {WalkSkin} from './viewOpenTypes.js';
@@ -41,7 +42,7 @@ const closeUnsaved: OpenStep = {root: '.overlay.on .modal.narrow', open: async p
   await page.locator('.close-actions').waitFor({state: 'visible'});
 }};
 
-const alignment = (box: string): OpenStep => ({root: '.alignment-modal', open: async page => {
+const alignment = (box: BoxTypeName): OpenStep => ({root: '.alignment-modal', open: async page => {
   await setFocusedBoxType(page, box);
   await page.getByRole('button', {name: 'Alignment', exact: true}).click();
   await page.locator('.alignment-modal').waitFor({state: 'visible'});
