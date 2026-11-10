@@ -1,0 +1,9 @@
+id: T759
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: ship.sh pushes and opens pull requests on the portingle copy (one remote variable)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T759.yml
