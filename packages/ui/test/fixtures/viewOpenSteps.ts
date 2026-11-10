@@ -1,4 +1,3 @@
-import type {Page} from '@playwright/test';
 import {CHART_LABELS, TABS} from '@openisd/design/chart';
 import {MOBILE_BOX_VARIANTS} from './mobileSurfaceManifest.js';
 import {NoOpenReason, WalkSkin} from './viewOpenTypes.js';
