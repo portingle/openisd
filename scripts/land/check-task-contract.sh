@@ -70,14 +70,20 @@ if git cat-file -e "$BASE:$TASK" 2> /dev/null; then
   git show "$BASE:$TASK" > "$work"
   [ "$(task_contract "$work")" = "$(task_contract "$TASK")" ] || fail done_test "$TASK changed its done_test or locked entries since main"
 fi
-# A file this branch changed that another task locks needs that task's hash updated in the same landing (T235, T249, T261).
+# A file this branch changed that another task locks as its own pass-mark test needs that task's hash updated in the same landing (T235, T249, T261);
+# any other locked file only warns (T786).
 changed="$(git diff --name-only "$BASE" "$HEAD_REF")"
 for other in tasks/*.yml; do
   [ "$other" = "$TASK" ] && continue
   while read -r path hash; do
     [ -n "$path" ] && [ "$hash" != pending ] && grep -qxF "$path" <<< "$changed" || continue
     actual="$(git show "$HEAD_REF:$path" 2> /dev/null | sha256sum | cut -d' ' -f1)"
-    [ "$actual" = "$hash" ] || fail locked "$path changed (locked by $other); update its sha256 there in this landing"
+    [ "$actual" = "$hash" ] && continue
+    # only the other task's own pass-mark test (named in its done_test) stays refused; any other locked file warns (T786, QO512)
+    if grep -qF -- "$path" <<< "$(task_field "$other" done_test)"; then
+      fail locked "$path changed (locked by $other); update its sha256 there in this landing"
+    fi
+    printf 'WARN\tlocked\t%s changed; %s locks it but it is not that task'"'"'s done_test, so the change goes through\n' "$path" "$other"
   done < <(task_locked "$other")
 done
 

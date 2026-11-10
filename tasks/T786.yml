@@ -4,6 +4,8 @@ repo: openisd
 owner: cover
 status: open
 goal: A locked file that is not another task's own pass-mark test warns instead of refusing when changed without that task's hash
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/land/test/pr-gates.test.sh
 files:
   - tasks/T786.yml
+  - scripts/land/check-task-contract.sh
+  - scripts/land/test/pr-gates.test.sh
