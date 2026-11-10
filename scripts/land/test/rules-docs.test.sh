@@ -29,15 +29,15 @@ done
 
 # the new process is described where agents read it
 need() { grep -qF -- "$2" "$REPO/$1" && ok "$1 names: $2" || fail "$1 lacks: $2"; }
-need .claude/rules/verify.md     'scripts/land.sh'
+need .claude/rules/verify.md     'scripts/ship.sh'
 need .claude/rules/verify.md     'post-land'
-need .claude/rules/processes.md  'scripts/land.sh'
+need .claude/rules/processes.md  'scripts/ship.sh'
 need docs/DEV_PROCESS.md         'scripts/land.sh'
 need docs/DEV_PROCESS.md         'tasks/'
 need docs/DEV_PROCESS.md         'done_test'
 need docs/DEV_PROCESS.md         'locked'
 need docs/DEV_PROCESS.md         'release'
-need docs/DEV_PROCESS.md         'tasks/fixes/'
+need docs/DEV_PROCESS.md         'fixes'
 
 # John's standing rules survive the rewrite
 need .claude/rules/verify.md     'no-verify'
