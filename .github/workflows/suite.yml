@@ -176,11 +176,17 @@ jobs:
   browser:
     needs: [plan, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     # The saved test machine (.github/ci-image, built by ci-image.yml): the laptop's distribution and
     # fonts, plus Playwright's Chromium, so pictures match the laptop baselines and nothing downloads per run.
     container:
-      # T752 PLACEHOLDER: replace REPLACE_WITH_CI_IMAGE_DIGEST with the digest ci-image.yml prints.
-      image: ghcr.io/johnlon/openisd-ci@sha256:REPLACE_WITH_CI_IMAGE_DIGEST
+      # Built by ci-image.yml inside this repo, so its Actions can pull it with GITHUB_TOKEN.
+      image: ghcr.io/portingle/openisd-ci-runner@sha256:51e24d3e3c17259a560ce8ee15a89d635011c9a3eba0abf920cc0690f79799f7
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       options: --ipc=host
     timeout-minutes: 45
     strategy:
