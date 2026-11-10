@@ -2,7 +2,7 @@ id: T769
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: View coverage batch 1: the static About, Install and Refresh pages are opened and measured
 done_test: bash scripts/test.sh packages/ui/test/logic/view-walk-coverage.test.ts
 files:
