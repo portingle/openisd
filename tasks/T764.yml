@@ -4,6 +4,11 @@ repo: openisd
 owner: cover
 status: open
 goal: Main red: field-catalogue browser spec after T742
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/ui/test/ui/mobile-signal-box-width.browser.spec.ts
 files:
   - tasks/T764.yml
+  - bugs/BUG_20261110_visual-baselines-unstable.md
+  - packages/design/fields/phoneRowSizes.ts
+  - packages/design/test/fields/phoneRowColumns.test.ts
+  - packages/ui/src/style.css
+  - packages/ui/test/ui/mobile-signal-box-width.browser.spec.ts

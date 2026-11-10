@@ -68,10 +68,10 @@ export class PhoneRowColumns {
   static readonly MODEL_CUE_PX = 24;
   static readonly CONTROL_GAP_PX = 8;
   /**
-   * The Signal tab's typing box takes this share of the width a Box-tab box has. T720 (John, 8 Nov 2026) set 60% of a 186 px box (112 px);
-   * T742 widened the label column, so the Signal column is 145 px and 77% keeps the Signal box at the same 112 px, which holds a 6-digit value and its chip.
+   * The width of the Signal tab's typing box (unit chip inside). T720 (John, 8 Nov 2026) set 60% of the 186 px a Box-tab box had: 112 px.
+   * A fixed width, not a share of the column: each page sizes its own label column to its labels, so a share of the column moved with them (T742 gave 157 px on the Signal tab).
    */
-  static readonly SIGNAL_INPUT_SHARE = 0.77;
+  static readonly SIGNAL_INPUT_PX = 112;
 
   /** Side margin of a row, each side. */
   static readonly EDGE_PX = 16;
@@ -116,7 +116,7 @@ export class PhoneRowColumns {
       ['--mob-col-gap', `${PhoneRowColumns.CONTROL_GAP_PX}px`],
       ['--mob-col-gutter', `${this.textGutterPx}px`],
       ['--mob-col-edge', `${this.edgePx}px`],
-      ['--mob-col-input-share', `${PhoneRowColumns.SIGNAL_INPUT_SHARE}`],
+      ['--mob-col-input-w', `${PhoneRowColumns.SIGNAL_INPUT_PX}px`],
     ]);
   }
 }
