@@ -7,3 +7,4 @@ goal: View coverage batch 6e: shared views opened in both skins (field-catalogue
 done_test: bash scripts/test.sh packages/ui/test/logic/view-walk-coverage.test.ts
 files:
   - tasks/T782.yml
+why: cover (coordinator), 10 Nov 2026, QO527: John: "I need full coverage, add it, then maintain it"
