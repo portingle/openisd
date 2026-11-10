@@ -1,0 +1,9 @@
+id: T776
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: View coverage batch 6a: phone dialogs from menus
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T776.yml
