@@ -1,4 +1,4 @@
-import type {Air, CalculationIssue, DqIssue, DriverEngine, DriverIssue, DriverQuantityName, DriverSolverParams, DriverValues, IssueEngine, OutOfRangeIssue, SolverInput, SweepDriver, Wiring} from '../../engine/index.js';
+import type {Air, CalculationIssue, DqIssue, DriverEngine, DriverIssue, DriverQuantityName, DriverSolverParams, DriverValues, IssueEngine, OutOfRangeIssue, ShownMechanics, SolverInput, SweepDriver, Wiring} from '../../engine/index.js';
 import {NumberField} from '../../fields/field.js';
 import type {ValueFloor} from '../../fields/field.js';
 import type {
@@ -22,6 +22,8 @@ import {
     VoiceCoilWiring,
     wiringFromRecord
 } from '../voiceCoilWiring.js';
+import {NOTHING_SHOWN} from './chartFigureNote.js';
+import type {DriverContext} from './driverContext.js';
 import {computedSlot} from './computedSlot.js';
 import {driverSection} from './driverSection.js';
 import type {DriverSpecFieldName} from './driverSpecFieldName.js';
@@ -137,6 +139,17 @@ void _assertDriverQuantityNamesComplete;
  *
  * Fields are constructed eagerly to preserve object identity for reactivity.
  */
+/** One numeric spec field, as every field of the spec is published. */
+type SpecNumberField = Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
+
+/** `slot` as the box shows it: `shown`'s entry where it has one, else the stored entry. Writes go to the stored entry. */
+function shownSlot(slot: SimpleField<SpecEntryJson | undefined>, shown: () => SpecEntryJson | undefined): SimpleField<SpecEntryJson | undefined> {
+    return {
+        get value() { return shown() ?? slot.value; },
+        set: (entry) => slot.set(entry),
+    };
+}
+
 export class OpenIsdDriverSpec {
     // Thiele/Small.
     readonly Fs_hz: Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
@@ -215,6 +228,13 @@ export class OpenIsdDriverSpec {
     readonly DVol_m3: Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
 
     readonly #driver: DriverEngine;
+    readonly #air: () => Air;
+    readonly #context: DriverContext;
+    /** Cms, Mms and Rms as the record stores them: `resolve()` reads and writes these only, so it never overwrites a stated value.
+     *  The public fields of the same names show what the charts use. */
+    readonly #storedCms: SpecNumberField;
+    readonly #storedMms: SpecNumberField;
+    readonly #storedRms: SpecNumberField;
     #issues: readonly DriverIssue[] = [];
 
     constructor(
@@ -222,8 +242,8 @@ export class OpenIsdDriverSpec {
         section: 'woofer' | 'tweeter',
         driver: DriverEngine,
         issues: IssueEngine,
-        /** The driver's air: what a not-entered `c_m_per_s`/`roo_kg_per_m3` reads as. */
-        air: () => Air,
+        /** The driver's air (what a not-entered `c_m_per_s`/`roo_kg_per_m3` reads as) and how the charts' Cms, Mms and Rms are worked out (the project's "Cms from Vas" switch, or the datasheet). */
+        context: DriverContext,
         /** Where a field's dq is read from when THIS spec object cannot be relied on to still
          *  exist between the resolve that produced it and the read that wants it — the project's
          *  embedded driver, rebuilt fresh on every access, which discards `entryField`'s own
@@ -233,15 +253,22 @@ export class OpenIsdDriverSpec {
         durableIssues?: () => readonly DriverIssue[],
     ) {
         this.#driver = driver;
+        this.#air = context.air;
+        this.#context = context;
 
         /** One `SpecEntryJson` slot inside this section — deletes the key when set to `undefined`
          *  (T11: absence is 'N', not a stored null). */
         const sectionLens = driverSection(record, section);
-        const sectionSlot = (key: DriverSpecFieldName): SimpleField<SpecEntryJson | undefined> => ({
+        const sectionSlot = (
+            key: DriverSpecFieldName,
+            partners: readonly DriverSpecFieldName[],
+        ): SimpleField<SpecEntryJson | undefined> => ({
             get value() {
                 return sectionLens.value[key];
             },
             set: (v) => {
+                // Typed last wins: typing one of a linked pair drops the partner's entered value, so the solve works it out again.
+                if (v?.state === 'E') for (const partner of partners) if (sectionLens.value[partner]?.state === 'E') sectionSlot(partner, []).set(undefined);
                 const spec = sectionLens.value;
                 const {[key]: _removed, ...rest} = spec;
                 sectionLens.set(v === undefined ? rest : {...spec, [key]: v});
@@ -263,21 +290,12 @@ export class OpenIsdDriverSpec {
          *  CURRENT value on every read so it shows up immediately on `.set()`, not only after
          *  the next `resolve()`. */
         const f =
-            (key: DriverSpecFieldName):
-                Readable<number | null> &
-                Entered & Calculated &
-                Precise &
-                Writable<number> &
-                Clearable &
-                Calculatable<number> &
-                Unsolvable =>
-
-                entryField(
-                    sectionSlot(key),
-                    key,
-                    dqFor(key),
-                    (v) => floorIssue(key, v, issues)
-                );
+            (key: DriverSpecFieldName, partners: readonly DriverSpecFieldName[]): SpecNumberField =>
+                entryField(sectionSlot(key, partners), key, dqFor(key), (v) => floorIssue(key, v, issues));
+        /** `f` for a figure the box shows as the engine works it out (`shown`) while writes still go to the stored entry. */
+        const shownF =
+            (key: DriverSpecFieldName, partners: readonly DriverSpecFieldName[], shown: () => SpecEntryJson | undefined): SpecNumberField =>
+                entryField(shownSlot(sectionSlot(key, partners), shown), key, dqFor(key), (v) => floorIssue(key, v, issues));
 
         /** The wiring field — `entryField` in every respect but the value's type, which is a
          *  NAME rather than one of `DriverSpecsSection`'s numbers, so it cannot go through `f()`
@@ -289,7 +307,7 @@ export class OpenIsdDriverSpec {
          *  "simply no reason for these exceptions to the rule" — replacing the S2-3 read-time
          *  fallback, which left a saved driver silent about its wiring). A number the encoding
          *  does not define reads as absence, the same as a missing key. */
-        const wiringSlot = sectionSlot('VCCon');
+        const wiringSlot = sectionSlot('VCCon', []);
         let wiringDq: readonly DqIssue[] = [];
         this.VCCon = new DualWriteFieldImpl<VoiceCoilWiring>(
             () => {
@@ -320,62 +338,65 @@ export class OpenIsdDriverSpec {
             },
         );
 
-        this.numVC = f('numVC');
-        this.Fs_hz = f('Fs_hz');
-        this.Re_ohm = f('Re_ohm');
-        this.Le_H = f('Le_H');
-        this.fLe_hz = f('fLe_hz');
-        this.KLe_H_sqrtHz = f('KLe_H_sqrtHz');
-        this.Znom_ohm = f('Znom_ohm');
-        this.Qts = f('Qts');
-        this.Qes = f('Qes');
-        this.Qms = f('Qms');
-        this.Vas_m3 = f('Vas_m3');
-        this.Sd_m2 = f('Sd_m2');
-        this.BL_Tm = f('BL_Tm');
-        this.Mms_kg = f('Mms_kg');
-        this.Cms_m_per_N = f('Cms_m_per_N');
-        this.Rms_kg_per_s = f('Rms_kg_per_s');
-        this.Xmax_m = f('Xmax_m');
-        this.Xlim_m = f('Xlim_m');
-        this.SPL_dB = f('SPL_dB');
-        this.Pe_W = f('Pe_W');
-        this.Dd_m = f('Dd_m');
-        this.EBP_hz = f('EBP_hz');
-        this.Vd_m3 = f('Vd_m3');
-        this.no = f('no');
-        this.SPLmax_dB = f('SPLmax_dB');
-        this.SPLmaxLF_dB = f('SPLmaxLF_dB');
-        this.USPL_dB = f('USPL_dB');
-        this.alfaVC_per_K = f('alfaVC_per_K');
-        this.Rt_K_per_W = f('Rt_K_per_W');
-        this.Ct_J_per_K = f('Ct_J_per_K');
-        this.gamma_m_per_s2_A = f('gamma_m_per_s2_A');
-        this.Rme_kg_per_s = f('Rme_kg_per_s');
-        this.Mpow_N_per_sqrtW = f('Mpow_N_per_sqrtW');
-        this.Mcost_kg_per_s = f('Mcost_kg_per_s');
-        this.Gloss = f('Gloss');
+        this.numVC = f('numVC', []);
+        this.Fs_hz = f('Fs_hz', []);
+        this.Re_ohm = f('Re_ohm', []);
+        this.Le_H = f('Le_H', []);
+        this.fLe_hz = f('fLe_hz', []);
+        this.KLe_H_sqrtHz = f('KLe_H_sqrtHz', []);
+        this.Znom_ohm = f('Znom_ohm', []);
+        this.Qts = f('Qts', []);
+        this.Qes = f('Qes', []);
+        this.Qms = f('Qms', []);
+        this.Vas_m3 = f('Vas_m3', ['Cms_m_per_N']);
+        this.Sd_m2 = f('Sd_m2', []);
+        this.BL_Tm = f('BL_Tm', []);
+        this.#storedMms = f('Mms_kg', []);
+        this.#storedCms = f('Cms_m_per_N', ['Vas_m3', 'no']);
+        this.#storedRms = f('Rms_kg_per_s', []);
+        this.Mms_kg = shownF('Mms_kg', [], () => this.#shownEntry('Mms_kg'));
+        this.Cms_m_per_N = shownF('Cms_m_per_N', ['Vas_m3', 'no'], () => this.#shownEntry('Cms_m_per_N'));
+        this.Rms_kg_per_s = shownF('Rms_kg_per_s', [], () => this.#shownEntry('Rms_kg_per_s'));
+        this.Xmax_m = f('Xmax_m', []);
+        this.Xlim_m = f('Xlim_m', []);
+        this.SPL_dB = f('SPL_dB', []);
+        this.Pe_W = f('Pe_W', []);
+        this.Dd_m = f('Dd_m', []);
+        this.EBP_hz = f('EBP_hz', []);
+        this.Vd_m3 = f('Vd_m3', []);
+        this.no = f('no', []);
+        this.SPLmax_dB = f('SPLmax_dB', []);
+        this.SPLmaxLF_dB = f('SPLmaxLF_dB', []);
+        this.USPL_dB = f('USPL_dB', []);
+        this.alfaVC_per_K = f('alfaVC_per_K', []);
+        this.Rt_K_per_W = f('Rt_K_per_W', []);
+        this.Ct_J_per_K = f('Ct_J_per_K', []);
+        this.gamma_m_per_s2_A = f('gamma_m_per_s2_A', []);
+        this.Rme_kg_per_s = f('Rme_kg_per_s', []);
+        this.Mpow_N_per_sqrtW = f('Mpow_N_per_sqrtW', []);
+        this.Mcost_kg_per_s = f('Mcost_kg_per_s', []);
+        this.Gloss = f('Gloss', []);
         // The air this driver's calculations used, written back by `resolve()` as `'C'`: the
         // project's, or with no project the app's environment defaults. A record's own c/roo feed
         // no calculation (John, 2026-10-05).
-        this.c_m_per_s = f('c_m_per_s');
-        this.roo_kg_per_m3 = f('roo_kg_per_m3');
-        this.Vcd_m = f('Vcd_m');
-        this.Hg_m = f('Hg_m');
-        this.Hc_m = f('Hc_m');
-        this.freq_low_hz = f('freq_low_hz');
-        this.freq_high_hz = f('freq_high_hz');
-        this.power_peak_W = f('power_peak_W');
-        this.weight_kg = f('weight_kg');
-        this.Thick_m = f('Thick_m');
-        this.Depth_m = f('Depth_m');
-        this.MagDepth_m = f('MagDepth_m');
-        this.Magnet_m = f('Magnet_m');
-        this.Basket_m = f('Basket_m');
-        this.Outer_m = f('Outer_m');
-        this.OuterX_m = f('OuterX_m');
-        this.OuterY_m = f('OuterY_m');
-        this.DVol_m3 = f('DVol_m3');
+        this.c_m_per_s = f('c_m_per_s', []);
+        this.roo_kg_per_m3 = f('roo_kg_per_m3', []);
+        this.Vcd_m = f('Vcd_m', []);
+        this.Hg_m = f('Hg_m', []);
+        this.Hc_m = f('Hc_m', []);
+        this.freq_low_hz = f('freq_low_hz', []);
+        this.freq_high_hz = f('freq_high_hz', []);
+        this.power_peak_W = f('power_peak_W', []);
+        this.weight_kg = f('weight_kg', []);
+        this.Thick_m = f('Thick_m', []);
+        this.Depth_m = f('Depth_m', []);
+        this.MagDepth_m = f('MagDepth_m', []);
+        this.Magnet_m = f('Magnet_m', []);
+        this.Basket_m = f('Basket_m', []);
+        this.Outer_m = f('Outer_m', []);
+        this.OuterX_m = f('OuterX_m', []);
+        this.OuterY_m = f('OuterY_m', []);
+        this.DVol_m3 = f('DVol_m3', []);
     }
 
     /** T11: every driver quantity `solveDriver` can derive is written back into the record as a
@@ -397,7 +418,7 @@ export class OpenIsdDriverSpec {
             Fs_hz: this.Fs_hz, Re_ohm: this.Re_ohm, Znom_ohm: this.Znom_ohm, Le_H: this.Le_H,
             fLe_hz: this.fLe_hz, KLe_H_sqrtHz: this.KLe_H_sqrtHz, Qes: this.Qes, Qms: this.Qms,
             Qts: this.Qts, Vas_m3: this.Vas_m3, Sd_m2: this.Sd_m2, Dd_m: this.Dd_m, BL_Tm: this.BL_Tm,
-            Mms_kg: this.Mms_kg, Cms_m_per_N: this.Cms_m_per_N, Rms_kg_per_s: this.Rms_kg_per_s,
+            Mms_kg: this.#storedMms, Cms_m_per_N: this.#storedCms, Rms_kg_per_s: this.#storedRms,
             EBP_hz: this.EBP_hz, Xmax_m: this.Xmax_m, Vd_m3: this.Vd_m3, Hc_m: this.Hc_m, Hg_m: this.Hg_m,
             Pe_W: this.Pe_W, no: this.no, SPLref_dB: NO_SLOT, SPL_dB: this.SPL_dB,
             USPL_dB: this.USPL_dB, SPLmax_dB: this.SPLmax_dB, SPLmaxLF_dB: this.SPLmaxLF_dB,
@@ -408,9 +429,28 @@ export class OpenIsdDriverSpec {
             Re_terminal_ohm: NO_SLOT, BL_terminal_Tm: NO_SLOT, numVC: this.numVC,
             wiring: this.VCCon,
         } satisfies DriverSolverParams;
-        this.#issues = this.#driver.solve(params, air);
+        this.#issues = this.#withChartNotes(this.#driver.solve(params, air), air);
         this.#markDq(params, this.#issues);
+        this.#markDq({...params, Mms_kg: this.Mms_kg, Cms_m_per_N: this.Cms_m_per_N, Rms_kg_per_s: this.Rms_kg_per_s}, this.#issues);
         return this.#issues;
+    }
+
+    /** The issues, with the stated Cms that disagrees with the stated Vas named in one sentence on Cms (only the generic Vas/Cms issue loses Cms; an Fs/Mms/Cms
+     *  issue keeps it), and each stated Mms or Rms the charts do not use named in its own sentence. */
+    #withChartNotes(issues: readonly DriverIssue[], air: Air): readonly DriverIssue[] {
+        const stated = (f: SpecNumberField): number | null => f.entered ? f.value : null;
+        const notes = this.#context.chartNotes(
+            {Cms_m_per_N: stated(this.#storedCms), Mms_kg: stated(this.#storedMms), Rms_kg_per_s: stated(this.#storedRms)},
+            this.#storedValues(air), air);
+        const {cmsConflict} = notes;
+        const kept = issues.map(issue => 'fields' in issue && issue.kind === 'inconsistent-inputs' && cmsConflict !== null && issue.fields.includes('Vas_m3')
+            ? {...issue, fields: issue.fields.filter(f => f !== 'Cms_m_per_N')} : issue);
+        const cmsNotes = cmsConflict === null ? [] : [{
+            kind: 'inconsistent-inputs', target: 'Cms_m_per_N', fields: ['Cms_m_per_N'], formula: NumberField.CMS_M_PER_N.formula ?? '',
+            expected: cmsConflict.expected, actual: cmsConflict.actual, relative: cmsConflict.relative, text: cmsConflict.text,
+        } satisfies DriverIssue];
+        const figureNotes = notes.figures.map(({name, text}): DriverIssue => ({kind: 'approximate-charts', target: name, fields: [name], text}));
+        return [...kept, ...cmsNotes, ...figureNotes];
     }
 
     /** Clears `dq` on every quantity, then applies each issue's OWN formula only to the handles
@@ -447,6 +487,31 @@ export class OpenIsdDriverSpec {
      *  project (a standalone driver's own chart) uses `solverParams()`, which carries the
      *  driver's own stated pair; `solverParamsIn(air)` is the project's. */
     solverParams(): DriverSolverParams {
+        return this.#solverParamsIn(this.#air(), this.Mms_kg, this.Cms_m_per_N, this.Rms_kg_per_s, this.#shown(this.#air()));
+    }
+
+    /** The stored figures as the chain reads them: Vas wins only where Vas is stated; a Vas the solve worked out (a Cms was typed, Vas was dropped) is not a figure to hold the charts to. */
+    #storedValues(air: Air): DriverValues {
+        const values = valuesOf(this.#solverParamsIn(air, this.#storedMms, this.#storedCms, this.#storedRms, NOTHING_SHOWN));
+        return this.Vas_m3.entered ? values : {...values, Vas_m3: null};
+    }
+
+    /** The mechanical figures the charts use, worked out on demand by the context from the stored figures. Nothing is stored. */
+    #shown(air: Air): ShownMechanics {
+        return this.#context.shown(this.#storedValues(air), air);
+    }
+
+    /** A mechanical figure as the box shows it: the engine's, as a calculated entry, or nothing when the engine has none. */
+    #shownEntry(name: 'Cms_m_per_N' | 'Mms_kg' | 'Rms_kg_per_s'): SpecEntryJson | undefined {
+        const value = this.#shown(this.#air())[name];
+        return value === null ? undefined : {state: 'C', value};
+    }
+
+    /** `solverParams` over the given Mms, Cms and Rms fields. `chain` is the figures the charts use, whose BL stands in for the stated one's terminal value. */
+    #solverParamsIn(
+        air: Air, Mms: SpecNumberField, Cms: SpecNumberField, Rms: SpecNumberField,
+        chain: ShownMechanics,
+    ): DriverSolverParams {
         const wiring: Wiring = this.VCCon.value === VoiceCoilWiring.Series ? 'series' : 'parallel';
         const Re_ohm = this.Re_ohm.value;
         const BL_Tm = this.BL_Tm.value;
@@ -458,16 +523,17 @@ export class OpenIsdDriverSpec {
 
         return {
             ...this,
+            Mms_kg: Mms, Cms_m_per_N: Cms, Rms_kg_per_s: Rms,
             SPLref_dB: NO_SLOT,
             Re_terminal_ohm: computedSlot(Re_terminal_ohm),
-            BL_terminal_Tm: computedSlot(BL_terminal_entered_Tm),
+            BL_terminal_Tm: computedSlot(chain.BL_terminal_Tm ?? BL_terminal_entered_Tm),
             wiring: wiringInput,
         };
     }
 
     /** `solverParams` with the circuit's air taken from `air` (the project's) instead of the driver's own pair. */
     solverParamsIn(air: Air): DriverSolverParams {
-        return { ...this.solverParams(), c_m_per_s: computedSlot(air.c()), roo_kg_per_m3: computedSlot(air.rho()) };
+        return {...this.#solverParamsIn(air, this.Mms_kg, this.Cms_m_per_N, this.Rms_kg_per_s, this.#shown(air)), c_m_per_s: computedSlot(air.c()), roo_kg_per_m3: computedSlot(air.rho())};
     }
 
     /** `solverParams`' values as plain data for `SimulationEngine.sweep`/`maxCurves`, with the

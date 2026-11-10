@@ -31,7 +31,8 @@ describe('formulas — passive radiator derivations', () => {
   it('prVas ≈ 0.0200714 m³ for Cms=0.0008, Sd=0.0133 (hand-computed)', () => {
     // The same hand-computed figure as ever — 20.0714 litres — stated in the SI unit the
     // function now returns, with the tolerance converted alongside it (0.01 l = 1e-5 m³).
-    assert.ok(Math.abs(engine.pr.vas(Cms, Sd, air) - 0.0200714) < 1e-5, `got ${engine.pr.vas(Cms, Sd, air)}`);
+    const Vas = engine.pr.solveSpec({Fs_hz: null, Qms: null, Vas_m3: null, Sd_m2: Sd, Mms_kg: null, Cms_m_per_N: Cms, Rms_kg_per_s: null}, air).Vas_m3;
+    assert.ok(Vas !== null && Math.abs(Vas - 0.0200714) < 1e-5, `got ${Vas}`);
   });
   it('prFs ≈ 56.27 Hz for Mmd=0.010, Cms=0.0008 (hand-computed)', () => {
     assert.ok(Math.abs(prFs(Mmd, Cms) - 56.271) < 0.01, `got ${prFs(Mmd, Cms)}`);
@@ -50,37 +51,5 @@ describe('formulas — passive radiator derivations', () => {
     assert.equal(prFs(Mmd, 0), 0);
     assert.equal(engine.pr.fsWithMass(0, 0, Cms), 0);
     assert.equal(engine.pr.qms(Mmd, Cms, 0), 0);
-  });
-});
-
-describe('formulas — passive radiator inverses round-trip through their forward functions', () => {
-  const Cms = 111111e-8, Sd = 222222e-6, Mmd = 333333e-6, Rms = 444444e-4;
-
-  it('prCmsFromVas inverts prVas: prCmsFromVas(engine.pr.vas(Cms, Sd, air), Sd) === Cms', () => {
-    const vas_m3 = engine.pr.vas(Cms, Sd, air);
-    assert.ok(Math.abs(engine.pr.cmsFromVas(vas_m3, Sd, air) - Cms) / Cms < 1e-9,
-      `got ${engine.pr.cmsFromVas(vas_m3, Sd, air)}, want ${Cms}`);
-  });
-  it('prCmsFromVas returns 0 when Sd is non-positive', () => {
-    assert.equal(engine.pr.cmsFromVas(999999, 0, air), 0);
-  });
-
-  it('prMmdFromFs inverts prFs: prMmdFromFs(prFs(Mmd, Cms), Cms) === Mmd', () => {
-    const fsHz = prFs(Mmd, Cms);
-    assert.ok(Math.abs(engine.pr.mmdFromFs(fsHz, Cms) - Mmd) / Mmd < 1e-9,
-      `got ${engine.pr.mmdFromFs(fsHz, Cms)}, want ${Mmd}`);
-  });
-  it('prMmdFromFs returns 0 when Fs or Cms is non-positive', () => {
-    assert.equal(engine.pr.mmdFromFs(0, Cms), 0);
-    assert.equal(engine.pr.mmdFromFs(999999, 0), 0);
-  });
-
-  it('prRmsFromQms inverts prQms: prRmsFromQms(engine.pr.qms(Mmd, Cms, Rms), Mmd, Cms) === Rms', () => {
-    const qms = engine.pr.qms(Mmd, Cms, Rms);
-    assert.ok(Math.abs(engine.pr.rmsFromQms(qms, Mmd, Cms) - Rms) / Rms < 1e-9,
-      `got ${engine.pr.rmsFromQms(qms, Mmd, Cms)}, want ${Rms}`);
-  });
-  it('prRmsFromQms returns 0 when Qms is non-positive', () => {
-    assert.equal(engine.pr.rmsFromQms(0, Mmd, Cms), 0);
   });
 });

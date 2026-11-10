@@ -1,5 +1,5 @@
 import {type Engine} from '../../engine/index.js';
-import type { Air, BoxType, DqIssue, VentedAlignment } from '../../engine/index.js';
+import type { Air, BoxType, ChartingSource, DqIssue, VentedAlignment } from '../../engine/index.js';
 import { CalculatedFieldImpl, DerivableFieldImpl, DualWriteFieldImpl, absentCell, enteredCell, calculatedCell, defaultedField, entryField, focus, nullableField, pairedField, settlingNullableField, simpleField } from '../cell.js';
 import type { Clearable, Entered, Precise, Readable, SimpleField, Writable } from '../cell.js';
 import type { SealedLosses } from '../losses.js';
@@ -7,6 +7,7 @@ import { WINISD_BOX_LOSSES } from '../boxDefaults.js';
 import type { OpenISDBoxJson, SpecEntryJson } from '../openisdSchema.js';
 import { OpenISDDriverEmbedded } from '../driver/openISDDriverEmbedded.js';
 import { OpenISDPassiveRadiatorEmbedded } from '../passiveRadiator/openISDPassiveRadiatorEmbedded.js';
+import { RadiatorProjectContext } from '../passiveRadiator/radiatorContext.js';
 import { OpenISDPassiveRadiatorStandalone } from '../passiveRadiator/openISDPassiveRadiatorStandalone.js';
 import { NumberField } from '../../fields/field.js';
 import { displayedHalfWidth } from '../precision.js';
@@ -154,6 +155,7 @@ export class OpenISDBox implements Box {
         ventTuningExtra: () => DqIssue | null,
         air: () => Air,
         nDrivers: () => number,
+        cmsSource: () => ChartingSource,
     ) {
         this.#driver = driver;
         this.#engine = engine;
@@ -408,7 +410,7 @@ export class OpenISDBox implements Box {
         const pr = focus(lens, 'passiveRadiator');
         const prSlot = focus(pr, 'component');
         const getRadiator = (): OpenISDPassiveRadiatorEmbedded => {
-            return new OpenISDPassiveRadiatorEmbedded(prSlot, () => issues().radiator);
+            return new OpenISDPassiveRadiatorEmbedded(prSlot, () => issues().radiator, RadiatorProjectContext.of(cmsSource, air, engine.pr));
         };
         const prVolume = settlingNullableField(pr, 'volume_m3', () => STARTING_SHARED_VOLUME_M3, (v) => engine.issues.requiredPositiveIssue('Box volume', v));
         const prAddedMassEntry = entryField(focus(pr, 'addedMass_kg'), 'addedMass_kg', () => groupDq(issues().pr));
@@ -632,7 +634,8 @@ export class OpenISDBox implements Box {
         if (spec.Qms.value === null) spec.Qms.set(STARTING.radiatorQms);
         if (spec.Fs_hz.value === null) spec.Fs_hz.set(this.#engine.pr.fsWithMass(STARTING.radiatorMms_kg, 0, STARTING.radiatorCms_m_per_N));
         const air = this.#air();
-        if (spec.Vas_m3.value === null && sd !== null) spec.Vas_m3.set(this.#engine.pr.vas(STARTING.radiatorCms_m_per_N, sd, air));
+        const startingVas = sd === null ? null : this.#startingVas(sd, air);
+        if (spec.Vas_m3.value === null && startingVas !== null) spec.Vas_m3.set(startingVas);
     }
 
     /** Give the active box type its starting values where nothing is entered yet: sealed gets the
@@ -690,9 +693,8 @@ export class OpenISDBox implements Box {
                     spec.Fs_hz.set(this.#engine.pr.fsWithMass(STARTING.radiatorMms_kg, 0, STARTING.radiatorCms_m_per_N));
                 }
                 const startAir = this.#air();
-                if (spec.Vas_m3.value === null && startSd !== null) {
-                    spec.Vas_m3.set(this.#engine.pr.vas(STARTING.radiatorCms_m_per_N, startSd, startAir));
-                }
+                const startVas = startSd === null ? null : this.#startingVas(startSd, startAir);
+                if (spec.Vas_m3.value === null && startVas !== null) spec.Vas_m3.set(startVas);
                 return;
             }
             case 'bandpass4': {
@@ -764,8 +766,16 @@ export class OpenISDBox implements Box {
         ventTuningExtra: () => DqIssue | null,
         air: () => Air,
         nDrivers: () => number,
+        cmsSource: () => ChartingSource,
     ): OpenISDBox {
-        return new OpenISDBox(slot, driver, engine, rs, issues, ventTuningExtra, air, nDrivers);
+        return new OpenISDBox(slot, driver, engine, rs, issues, ventTuningExtra, air, nDrivers, cmsSource);
+    }
+
+    /** The Vas of the starting radiator's compliance on `sd`, in `air`: the engine's solve works it out (the Vas-from-Cms route). */
+    #startingVas(sd: number, air: Air): number | null {
+        return this.#engine.pr.solveSpec({
+            Fs_hz: null, Qms: null, Vas_m3: null, Sd_m2: sd, Mms_kg: null, Cms_m_per_N: STARTING.radiatorCms_m_per_N, Rms_kg_per_s: null,
+        }, air).Vas_m3;
     }
 
     /** The sealed volume an entered Qtc or an entered Fsc gives; null with neither entered or when no box reaches it. */

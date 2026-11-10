@@ -1,6 +1,7 @@
 /**
  * winisd_research/findings/FINDING_20261003_pr-sd-edit-ignored.md: WinISD ignores a typed passive radiator Sd.
- * In OpenISD a typed Sd takes effect: PR excursion and PR velocity scale as 1/Sd.
+ * In OpenISD a typed Sd takes effect: PR excursion and PR velocity scale as 1/Sd, with Fs, Vas and
+ * Qms driving the radiator (its stated Mms, Cms and Rms cleared, as a user would to let them follow).
  */
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '@openisd/design/engine';
@@ -28,13 +29,20 @@ describe('passive radiator Sd edit', () => {
     const radiator = OpenISDPassiveRadiatorStandalone.fromConformingRecord(nd140);
     if (Array.isArray(radiator)) throw new Error(`ND140-PR is invalid: ${radiator.join(', ')}`);
     project.box.passiveRadiator.configurePR(radiator);
+    project.box.passiveRadiator.radiator.spec.Mms_kg.clear();
+    project.box.passiveRadiator.radiator.spec.Cms_m_per_N.clear();
+    project.box.passiveRadiator.radiator.spec.Rms_kg_per_s.clear();
     project.box.passiveRadiator.count.set(1);
     project.box.passiveRadiator.losses.Ql.set(7);
     project.box.passiveRadiator.losses.Qa.set(30);
 
     const grid: FrequencyGrid = {fmin: 10, fmax: 1000, N: 50};
+    // A typed Sd works Cms, Mms and Rms out from the stated Vas, Fs and Qms (QO463), as WinISD's
+    // model does. Type the stated Sd first, so both sweeps hold those worked-out figures.
+    const sd = project.box.passiveRadiator.radiator.spec.Sd_m2;
+    sd.set(sd.value!);
     const before = project.sweep(grid).values;
-    project.box.passiveRadiator.radiator.spec.Sd_m2.set(project.box.passiveRadiator.radiator.spec.Sd_m2.value! * 2);
+    sd.set(sd.value! * 2);
     const after = project.sweep(grid).values;
     if (before === null || after === null) throw new Error('sweep did not run');
 

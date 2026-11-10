@@ -6,6 +6,8 @@
  */
 import type {Air, AirWorkingName} from '../air.js';
 import type {ConsistencyCheck, RouteGroup, RouteQuantity} from '../driver/routes/index.js';
+import {resolveCms} from '../driver/cmsResolver.js';
+import type {ChartingSource, ShownMechanics} from '../driver/cmsResolver.js';
 import type {DriverWorkingSet} from '../solvers/driverQuantities.js';
 import type {PrParams} from '../types.js';
 import type {PrSolverParams} from '../solverTypes.js';
@@ -34,9 +36,7 @@ export type PrSpecPrecision = Readonly<Record<keyof PrSpecValues, number>>;
 /** A stated radiator figure that contradicts the relation tying it to the others. */
 export type PrSpecIssue = CalculationIssue<RouteQuantity>;
 
-/** `air` where taken is the PROJECT's own resolved `{ rho, c }` — see `vent/VentEngine.ts`.
- *  `vas`/`cmsFromVas` take none: no environment reaches their call sites, so ρ/c are the
- *  reference environment's, computed live — never a stored constant. */
+/** `air` where taken is the PROJECT's own resolved `{ rho, c }` — see `vent/VentEngine.ts`. */
 export interface PrEngine {
   /** System resonance with `prNum` radiators in parallel: PR compliance `Cap = prCms·prSd²`,
    *  `Cpar = Cab·N·Cap/(Cab+N·Cap)`, `fp = 1/(2π·√((Map/N)·Cpar))` — the Fb WinISD displays.
@@ -45,20 +45,11 @@ export interface PrEngine {
   /** Moving mass per radiator that tunes the box to `fp` — the inverse of `tuning`:
    *  `Map = N/((2π·fp)²·Cpar)`, `Mmp = Map·prSd²`. */
   massForFp(p: PrParams, fp: number, air: Air): number;
-  /** Compliance-equivalent volume, cubic metres: `Vas = Cms·Sd²·ρ·c²`. */
-  vas(prCms: number, prSd: number, air: Air): number;
-  /** Compliance from Vas (cubic metres) and Sd — the inverse of `vas`. 0 when Sd ≤ 0. */
-  cmsFromVas(prVas_m3: number, prSd: number, air: Air): number;
   /** Free-air resonance loaded with added cone mass: `1/(2π·√((Mmd+Madd)·Cms))` — the
    *  radiator alone, no box. 0 when the total mass or compliance is non-positive. */
   fsWithMass(prMmd: number, prMadd: number, prCms: number): number;
-  /** Moving mass from free-air Fs and compliance — the inverse of `fsWithMass` with no added
-   *  mass. 0 when Fs or Cms is non-positive. */
-  mmdFromFs(prFsHz: number, prCms: number): number;
   /** Mechanical Q: `√(Mmd/Cms)/Rms`. 0 when Rms ≤ 0. */
   qms(prMmd: number, prCms: number, prRms: number): number;
-  /** Mechanical resistance from Qms — the inverse of `qms`. 0 when Qms ≤ 0. */
-  rmsFromQms(prQmsValue: number, prMmd: number, prCms: number): number;
   /** The radiator's seven stated figures run through the driver's consistency relations, in
    *  the project's `air`: every figure derivable from the stated ones comes back with them, a
    *  stated one unchanged, an underivable one null. Pass only what was entered. */
@@ -69,6 +60,9 @@ export interface PrEngine {
    *  Also the first of Cms, Mms, Rms the simulation needs and the stated figures cannot give, as
    *  a `missing-dependencies` issue naming what to state. */
   checkSpec(stated: PrSpecValues, precision: PrSpecPrecision, air: Air): PrSpecIssue[];
+  /** The mechanical figures the charts use for these stated figures: the engine's one Cms chain (`resolveCms`), exactly as the driver's,
+   *  over the stated Fs, Qms, Vas, Sd, Cms and Mms. A radiator has no motor, so Qes and Re are not there. Pure: nothing is stored. */
+  shownMechanics(stated: PrSpecValues, air: Air, source: ChartingSource): ShownMechanics;
   /** The PR handle solve (T10/T11): derive whichever of `tuning_goal_hz`/`addedMass_kg` is not
    *  entered plus `resonanceWithAddedMass_hz`/`systemTuning_hz`, write each onto its
    *  `SolverField` via `setCalculated`, and return the issues the stated values carry. An
@@ -104,30 +98,13 @@ export class PrEngineImpl implements PrEngine {
     return Map * p.prSd * p.prSd;
   }
 
-  vas(prCms: number, prSd: number, air: Air): number {
-    return prCms * prSd * prSd * air.rho() * air.c() * air.c();
-  }
-
-  cmsFromVas(prVas_m3: number, prSd: number, air: Air): number {
-    if (!(prSd > 0)) return 0;
-    return prVas_m3 / (prSd * prSd * air.rho() * air.c() * air.c());
-  }
-
   fsWithMass(prMmd: number, prMadd: number, prCms: number): number {
     const m = prMmd + prMadd;
     return m > 0 && prCms > 0 ? 1 / (2 * Math.PI * Math.sqrt(m * prCms)) : 0;
   }
 
-  mmdFromFs(prFsHz: number, prCms: number): number {
-    return prFsHz > 0 && prCms > 0 ? 1 / ((2 * Math.PI * prFsHz) ** 2 * prCms) : 0;
-  }
-
   qms(prMmd: number, prCms: number, prRms: number): number {
     return prRms > 0 ? Math.sqrt(prMmd / prCms) / prRms : 0;
-  }
-
-  rmsFromQms(prQmsValue: number, prMmd: number, prCms: number): number {
-    return prQmsValue > 0 ? Math.sqrt(prMmd / prCms) / prQmsValue : 0;
   }
 
   solveSpec(stated: PrSpecValues, air: Air): PrSpecValues {
@@ -136,6 +113,13 @@ export class PrEngineImpl implements PrEngine {
       Fs_hz: solved.Fs_hz ?? null, Qms: solved.Qms ?? null, Vas_m3: solved.Vas_m3 ?? null, Sd_m2: solved.Sd_m2 ?? null,
       Mms_kg: solved.Mms_kg ?? null, Cms_m_per_N: solved.Cms_m_per_N ?? null, Rms_kg_per_s: solved.Rms_kg_per_s ?? null,
     };
+  }
+
+  shownMechanics(stated: PrSpecValues, air: Air, source: ChartingSource): ShownMechanics {
+    return resolveCms(source, {
+      Fs_hz: stated.Fs_hz, Qms: stated.Qms, Vas_m3: stated.Vas_m3, Sd_m2: stated.Sd_m2,
+      Cms_m_per_N: stated.Cms_m_per_N, Mms_kg: stated.Mms_kg, Qes: null, Re_terminal_ohm: null,
+    }, air);
   }
 
   checkSpec(stated: PrSpecValues, precision: PrSpecPrecision, air: Air): PrSpecIssue[] {

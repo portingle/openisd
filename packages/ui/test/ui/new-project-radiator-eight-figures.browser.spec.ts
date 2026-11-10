@@ -16,6 +16,7 @@ interface Skin {
   readonly open: (page: Page) => Promise<void>;
   readonly projectRms: (page: Page) => Promise<Locator>;
   readonly projectCms: (page: Page) => Promise<Locator>;
+  readonly projectMms: (page: Page) => Promise<Locator>;
 }
 
 const DESKTOP: Skin = {
@@ -30,6 +31,10 @@ const DESKTOP: Skin = {
     await openTab(page, 'Passive Radiator');
     return page.locator('#og-pr-cms');
   },
+  projectMms: async page => {
+    await openTab(page, 'Passive Radiator');
+    return page.locator('#og-pr-mms');
+  },
 };
 
 const PHONE: Skin = {
@@ -43,6 +48,10 @@ const PHONE: Skin = {
   projectCms: async page => {
     await openTab(page, 'Box');
     return mobileFieldRow(page, 'Cms').locator('input').first();
+  },
+  projectMms: async page => {
+    await openTab(page, 'Box');
+    return mobileFieldRow(page, 'Mms').locator('input').first();
   },
 };
 
@@ -90,7 +99,7 @@ for (const [name, skin] of [['desktop', DESKTOP], ['phone', PHONE]] as const) {
       const root = skin.root(p);
       await expect(root.locator('#np-pr-qms')).toHaveValue(/^4\.8/);
       await expect(root.locator('#np-pr-qms')).toHaveClass(/value-c/);
-      await expect(root.locator('#np-pr-fs')).toHaveValue(/^23\.2/);
+      await expect(root.locator('#np-pr-fs')).toHaveValue(/^23\.3/);
       await expect(root.locator('#np-pr-fs')).toHaveClass(/value-c/);
       await expect(root.locator('#np-pr-vas')).not.toHaveClass(/value-c/);
       for (const id of FIGURE_IDS.filter(i => i !== '#np-pr-xmax')) await expect.soft(root.locator(id), id).toHaveValue(/\d/);
@@ -106,16 +115,45 @@ for (const [name, skin] of [['desktop', DESKTOP], ['phone', PHONE]] as const) {
       await expect(await skin.projectRms(p)).toHaveValue(/^2\.2/);
     });
 
-    test('a Cms typed over a stated Vas reaches the project and both boxes show the mark', async ({page, appPage}) => {
+    // QO463 (John, 8 Nov 2026): the figure typed last wins; a typed Cms works the stated Vas out again.
+    test('a Cms typed over a stated Vas reaches the project, with Vas worked out from it', async ({page, appPage}) => {
       const p = pageOf({page, appPage});
       await pickThenBack(p, skin, 'ASP190');
       const root = skin.root(p);
+      const vasBefore = await root.locator('#np-pr-vas').inputValue();
       await root.locator('#np-pr-cms').fill('1');
       await root.locator('#np-pr-cms').press('Tab');
-      await expect(root.locator('#np-pr-cms')).toHaveClass(/dq-flag/);
-      await expect(root.locator('#np-pr-vas')).toHaveClass(/dq-flag/);
+      await expect(root.locator('#np-pr-cms')).not.toHaveClass(/dq-flag/);
+      await expect(root.locator('#np-pr-vas')).toHaveClass(/value-c/);
+      await expect(root.locator('#np-pr-vas')).not.toHaveValue(vasBefore);
       await createProject(p, skin);
       await expect(await skin.projectCms(p)).toHaveValue(/^1(\.0*)?$/);
+    });
+
+    // John, QO451, 8 Nov 2026: "a stated 1.01 must not be replaced by other numbers" - in the wizard, which shows the datasheet.
+    test('P173: the wizard shows the stated Cms 1.01 and Mms 15 as stated, entered', async ({page, appPage}) => {
+      const p = pageOf({page, appPage});
+      await pickThenBack(p, skin, 'P173');
+      const root = skin.root(p);
+      await expect(root.locator('#np-pr-cms')).toHaveValue(/^1\.010*$/);
+      await expect(root.locator('#np-pr-cms')).toHaveClass(/value-e/);
+      await expect(root.locator('#np-pr-mms')).toHaveValue(/^15(\.0*)?$/);
+      await expect(root.locator('#np-pr-mms')).toHaveClass(/value-e/);
+    });
+
+    // QO463 / T744 goal 5: a datasheet stating Cms and Vas that disagree is charted with Cms from Vas (the option is ticked by default);
+    // the project's box shows that figure as calculated, and Mms follows it. The record keeps the stated 1.01 (unit-tested).
+    test('P173 in the project: Cms and Mms are the figures the charts use, calculated, and Cms carries the warning', async ({page, appPage}) => {
+      const p = pageOf({page, appPage});
+      await pickThenBack(p, skin, 'P173');
+      await createProject(p, skin);
+      const cms = await skin.projectCms(p);
+      await expect(cms).toHaveValue(/^1\.0011$/);
+      await expect(cms).toHaveClass(/value-c/);
+      await expect(cms).toHaveClass(/dq-flag/);
+      const mms = await skin.projectMms(p);
+      await expect(mms).toHaveClass(/value-c/);
+      await expect(mms).not.toHaveValue(/^15(\.0*)?$/);
     });
 
     test('P173 gives nothing to calculate Qms from: the box stays empty', async ({page, appPage}) => {
