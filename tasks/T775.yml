@@ -1,0 +1,9 @@
+id: T775
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: View coverage batch 5: fault views
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T775.yml
