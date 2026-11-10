@@ -1,0 +1,9 @@
+id: T761
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Suite runs on push to main in the portingle copy; its red report opens the issue there
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T761.yml
