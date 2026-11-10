@@ -12,3 +12,5 @@ notes: |
   OPEN: suite.yml holds the placeholder REPLACE_WITH_CI_IMAGE_DIGEST. The guard test in
   packages/ui/test/scripts/release-workflows.test.ts ("suite.yml names a real image digest") FAILS until the digest from
   the ci-image.yml run is put in. Expected until then.
+
+next (cover, 10 Nov): image published ghcr.io/johnlon/openisd-ci:0a2914668adcfcb3 @ sha256:5c93cf5f4d50ba732b1aa12a213ba1d861ee11a4a4abe60303e8c083fd3e1f83 (package private; give Johnlon/openisd Actions read access, or public per QO492 A). Fill the digest in suite.yml after T758 (fast-gates PR #506) merges, rebase, ship.
