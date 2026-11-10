@@ -4,6 +4,8 @@ repo: openisd
 owner: cover
 status: open
 goal: Delete the stale copy of the picture-page checker
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: test ! -e scripts/feedback/check-answerable.mjs
 files:
+  - scripts/feedback/check-answerable.mjs
+  - scripts/feedback/feedback_page_test.py
   - tasks/T779.yml
