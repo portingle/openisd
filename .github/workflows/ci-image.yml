@@ -3,8 +3,6 @@
 name: ci-image
 on:
   workflow_dispatch:
-  push:
-    branches: [t752]
 
 permissions:
   contents: read

@@ -13,4 +13,7 @@ notes: |
   packages/ui/test/scripts/release-workflows.test.ts ("suite.yml names a real image digest") FAILS until the digest from
   the ci-image.yml run is put in. Expected until then.
 
-next (cover, 10 Nov): image published ghcr.io/johnlon/openisd-ci:0a2914668adcfcb3 @ sha256:5c93cf5f4d50ba732b1aa12a213ba1d861ee11a4a4abe60303e8c083fd3e1f83 (package private; give Johnlon/openisd Actions read access, or public per QO492 A). Fill the digest in suite.yml after T758 (fast-gates PR #506) merges, rebase, ship.
+image: ghcr.io/portingle/openisd-ci-runner:0a2914668adcfcb3 @ sha256:51e24d3e3c17259a560ce8ee15a89d635011c9a3eba0abf920cc0690f79799f7
+  (built by ci-image.yml inside portingle/openisd, private, linked to the repo; Actions pull it with GITHUB_TOKEN, no settings click).
+  Proven: suite run 42807290599 on portingle land/t752-proof, browser job started the container and passed setup (no apt step).
+  Old laptop-pushed packages ghcr.io/johnlon/openisd-ci and portingle openisd-ci(-img) are unused.
