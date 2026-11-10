@@ -1,0 +1,9 @@
+id: T787
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: View coverage batch 7: native-files and native-keyboard (phone) are opened as far as the page can show them
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T787.yml
