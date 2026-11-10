@@ -1,0 +1,9 @@
+id: T768
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Full view coverage: every view in the index opened and measured
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T768.yml
