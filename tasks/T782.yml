@@ -2,7 +2,7 @@ id: T782
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: View coverage batch 6e: shared views opened in both skins (field-catalogue, flash-message, chart-readout, graph pill, graph blocked message, graph context menu, winisd-difference-entry, driver-editor-incomplete-warning, driver-type-help)
 done_test: bash scripts/test.sh packages/ui/test/logic/view-walk-coverage.test.ts
 files:
