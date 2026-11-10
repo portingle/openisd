@@ -1,0 +1,9 @@
+id: T780
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: The main folder follows the last green full-suite run on the repo where the suite runs (portingle), not a record nothing writes any more
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T780.yml
