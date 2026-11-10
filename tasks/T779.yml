@@ -1,0 +1,9 @@
+id: T779
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Delete the stale copy of the picture-page checker
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T779.yml
