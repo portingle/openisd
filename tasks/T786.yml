@@ -2,7 +2,7 @@ id: T786
 release_note: internal
 repo: openisd
 owner: cover
-status: blocked
+status: done
 goal: A locked file that is not another task's own pass-mark test warns instead of refusing when changed without that task's hash
 done_test: bash scripts/land/test/pr-gates.test.sh
 files:
@@ -11,4 +11,3 @@ files:
   - scripts/land/test/pr-gates.test.sh
   - scripts/ship.sh
   - .github/workflows/pr.yml
-blocked_reason: rebase onto portingle/main conflicts in: scripts/land/check-task-contract.sh 
