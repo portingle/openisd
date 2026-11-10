@@ -75,5 +75,16 @@ bash scripts/land/attribution-range.sh main HEAD > /dev/null && bad "an AI trail
 git switch -q main; git switch -q -c none; echo 4 > src/a.ts; git add -A; git commit -qm "(auto) none"
 bash scripts/land/pr-task.sh main HEAD > /dev/null 2>&1 && bad "no task file is refused" || ok "no task file is refused"
 
+# T785: a done_test that selects ONE test inside a test file the change touched is refused (T765 passed that way).
+git switch -q main; git switch -q -c narrow; mkdir -p t; printf 'x\n' > t/foo_test.py
+printf 'id: T7\nowner: t\nstatus: open\ngoal: g\nwhy: John, 10 Nov 2026, scratch test fixture\ndone_test: python3 -m unittest foo_test.Cls.test_one\nfiles:\n  - t/**\n' > tasks/T7.yml
+git add -A; git commit -qm "(auto) T7: x"
+out="$(bash scripts/land/check-task-contract.sh T7 main HEAD --pr)"
+grep -q $'REFUSE\tdone_test\t.*foo_test.py' <<< "$out" && ok "a done_test narrowed to one test of a touched test file is refused" || bad "narrowed done_test refused ($out)"
+git switch -q main; git switch -q -c whole; mkdir -p t; printf 'x\n' > t/foo_test.py
+printf 'id: T8\nowner: t\nstatus: open\ngoal: g\nwhy: John, 10 Nov 2026, scratch test fixture\ndone_test: python3 -m unittest foo_test\nfiles:\n  - t/**\n' > tasks/T8.yml
+git add -A; git commit -qm "(auto) T8: x"
+bash scripts/land/check-task-contract.sh T8 main HEAD --pr > /dev/null && ok "a done_test running the whole test file passes" || bad "whole-file done_test passes"
+
 echo "pr-gates: $([ "$fails" = 0 ] && echo 'all passed' || echo "$fails failed")"
 [ "$fails" = 0 ]

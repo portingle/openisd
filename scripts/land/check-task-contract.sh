@@ -70,6 +70,17 @@ if git cat-file -e "$BASE:$TASK" 2> /dev/null; then
   git show "$BASE:$TASK" > "$work"
   [ "$(task_contract "$work")" = "$(task_contract "$TASK")" ] || fail done_test "$TASK changed its done_test or locked entries since main"
 fi
+# A done_test must not pick ONE test out of a test file this change touched (T785; T765 passed with a failing test file
+# because its done_test ran a single method). Selectors refused: unittest Class.method, pytest ::, -k, vitest -t, --test-name-pattern.
+if [ -n "$PR_MODE" ]; then
+  dt="$(task_field "$TASK" done_test)"
+  if grep -Eq '(unittest[^|;&]* [A-Za-z0-9_]+\.[A-Za-z0-9_]+\.[A-Za-z0-9_]+)|::| -k |( -t )|testNamePattern|test-name-pattern' <<< "$dt"; then
+    while read -r f; do
+      case "$f" in *_test.*|*.test.*|*.spec.*|*/test/*|*/tests/*) ;; *) continue ;; esac
+      grep -qF "$(basename "${f%.*}")" <<< "$dt" && fail done_test "$TASK's done_test selects a single test in $f, a test file this change touched; run the whole file (a failing test in it must block the pull request)"
+    done < <(git diff --name-only --diff-filter=ACMR "$BASE" "$HEAD_REF")
+  fi
+fi
 # A file this branch changed that another task locks needs that task's hash updated in the same landing (T235, T249, T261).
 changed="$(git diff --name-only "$BASE" "$HEAD_REF")"
 for other in tasks/*.yml; do
