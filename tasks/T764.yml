@@ -1,0 +1,9 @@
+id: T764
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Main red: field-catalogue browser spec after T742
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T764.yml
