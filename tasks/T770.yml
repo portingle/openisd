@@ -2,7 +2,7 @@ id: T770
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Phone Box tab: Box type dropdown shows its whole text
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
