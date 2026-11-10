@@ -1,0 +1,9 @@
+id: T762
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: A pull request may carry several tasks; ship.sh and the PR gates accept N task ids
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T762.yml
