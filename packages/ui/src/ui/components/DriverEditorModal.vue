@@ -1496,5 +1496,4 @@ input.value-n, .de-fld.value-n input, .de-modal select.value-n { color: var(--mu
 .de-help-button:hover,.de-help-button:focus-visible {background:#cfe2f8;}
 .de-desktop :deep(.mob-help-overlay) {align-items:center;justify-content:center;}
 .de-desktop :deep(.mob-help-sheet) {width:min(680px,92%);max-height:90%;border-radius:8px;}
-.de-modal input:not([type=checkbox]):not([type=radio]){width:400px !important;min-width:400px !important}
 </style>
