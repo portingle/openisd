@@ -1,0 +1,9 @@
+id: T767
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Every pull request records why: task file with a why line; task files never deleted
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T767.yml
