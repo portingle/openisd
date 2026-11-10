@@ -1,0 +1,9 @@
+id: T783
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: The rule-docs wording test warns about missing or retired words and never fails
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T783.yml
