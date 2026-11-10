@@ -30,7 +30,7 @@ const nativeFiles: OpenStep = {root: '.mob-menu-overlay', open: async page => {
 const nativeKeyboard: OpenStep = {root: 'body', open: async page => {
   await phoneTab(page, 'Box');
   await page.setViewportSize({width: 374, height: KEYBOARD_UP_HEIGHT});
-  const field = page.locator('.mob-tabpage input:visible').first();
+  const field = page.locator('.mob-content .ui-field input[data-numinput]:visible').first();
   await field.click();
   await field.waitFor({state: 'visible'});
 }};
