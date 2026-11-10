@@ -17,3 +17,4 @@ image: ghcr.io/portingle/openisd-ci-runner:0a2914668adcfcb3 @ sha256:51e24d3e3c1
   (built by ci-image.yml inside portingle/openisd, private, linked to the repo; Actions pull it with GITHUB_TOKEN, no settings click).
   Proven: suite run 42807290599 on portingle land/t752-proof, browser job started the container and passed setup (no apt step).
   Old laptop-pushed packages ghcr.io/johnlon/openisd-ci and portingle openisd-ci(-img) are unused.
+gates_approved: QO525
