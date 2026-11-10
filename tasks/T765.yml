@@ -4,6 +4,11 @@ repo: openisd
 owner: cover
 status: open
 goal: Picture stamp survives mark-diff and shows under every picture
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: python3 scripts/feedback/feedback_page_test.py
+why: John's UI-control spec (CONTROL_CHANGES.md, Three UI controls item 2) wants every picture to carry its stamp (source, build, commit, viewport). mark-diff dropped the PNG text chunk, and the pictures page never showed it.
 files:
   - tasks/T765.yml
+  - scripts/feedback/mark-diff.py
+  - scripts/feedback/feedback-page.template.html
+  - scripts/feedback/feedback_page_test.py
+  - scripts/feedback/feedback_page_stamp_test.mjs
