@@ -1,0 +1,9 @@
+id: T766
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Restore tasks/T750.yml, dropped by the T742 merge
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T766.yml
