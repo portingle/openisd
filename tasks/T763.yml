@@ -1,0 +1,9 @@
+id: T763
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: One view list the layout check walks: every view in the view index is opened and measured
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T763.yml
