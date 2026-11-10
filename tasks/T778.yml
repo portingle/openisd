@@ -1,0 +1,9 @@
+id: T778
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: View coverage batch 6c: phone wizard info, notes and strips
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T778.yml
