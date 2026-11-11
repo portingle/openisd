@@ -15,6 +15,11 @@ export type SheetEdits = 'project' | 'whatIfLayer';
 export class SheetMode {
   /** The sheet footer's Auto Y box (QO267 mock): its label and what it does. */
   static readonly AUTO_Y_LABEL = 'Auto Y';
+  /** The What-if sheet's number boxes: a quick tap picks a digit to spin, a press held this long
+   *  switches the box to typing (QO536, John 11 Nov 2026). */
+  static readonly HOLD_TO_TYPE_MS = 500;
+  /** The one-line hint under the What-if sheet's title until the person has used it once (QO536). */
+  static readonly TAP_SPIN_HINT = 'Tap a digit to spin it. Hold to type a number.';
   static readonly AUTO_Y_TITLE = 'Auto Y: ticked, the charts fit the curves after every edit. Unticked, the Y axis stays at the range shown when you unticked it.';
   static readonly TUNE = new SheetMode('Tune', 'project', SheetMode.#tuneFields);
   static readonly WHAT_IF = new SheetMode('What-if', 'whatIfLayer', t => SheetField.forBox(t).map(f => [f]));
@@ -31,6 +36,15 @@ export class SheetMode {
     return SheetField.forBox(type)
       .filter(f => !SheetField.DRIVER_SPEC.includes(f))
       .map(f => [f]);
+  }
+
+  /** A quick tap on a box spins a digit and a held press types: the What-if (the numpad was in the
+   *  way, QO536). Tune keeps tap-to-type. */
+  tapsToSpin(): boolean {
+    switch (this.edits) {
+      case 'project': return false;
+      case 'whatIfLayer': return true;
+    }
   }
 
   /** The name a row carries in this sheet: Tune's real short name, What-if's full name. */

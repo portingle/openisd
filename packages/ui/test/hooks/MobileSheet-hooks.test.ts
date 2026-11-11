@@ -19,6 +19,7 @@ import type {TelemetryEvent} from '../../src/logic/telemetry/events.js';
 import type {TelemetryUi} from '../../src/hooks/telemetryContext.js';
 import {ErrorContext, RecentActions} from '../../src/logic/telemetry/errorContext.js';
 import {runHook} from './runHook.js';
+import {testAppLogic} from './testAppLogic.js';
 
 const LAUNCH_ENV: LaunchEnvironment = {
   standalone: false, platformHint: undefined, userAgent: 'test',
@@ -40,6 +41,23 @@ function sheet(mode: SheetMode = SheetMode.WHAT_IF, telemetryUi?: TelemetryUi) {
 }
 
 describe('useMobileSheet', () => {
+
+  it('the What-if sheet taps to spin and shows its hint until the person has used it once (gone from the next opening); Tune does neither (QO536)', () => {
+    const logic = testAppLogic();
+    const project = computed(() => ProjectBuilder.empty(createEngine()));
+    const whatIf = runHook(project, () => useMobileSheet({ open: () => true, setOpen: () => {}, mode: SheetMode.WHAT_IF }), logic);
+    const tune = runHook(project, () => useMobileSheet({ open: () => true, setOpen: () => {}, mode: SheetMode.TUNE }), logic);
+    expect(tune.tapToSpin).toBeNull();
+    expect(tune.tapHint.value).toBeNull();
+    expect(whatIf.tapHint.value).toBe('Tap a digit to spin it. Hold to type a number.');
+    expect(whatIf.tapToSpin?.holdToTypeMs).toBe(500);
+    whatIf.tapToSpin?.used();
+    expect(logic.presentation.ui.whatIfTapHintSeen).toBe(true);
+    expect(whatIf.tapHint.value, 'kept while this sheet is open: the rows do not move under the finger').not.toBeNull();
+    whatIf.close();
+    whatIf.openSheet();
+    expect(whatIf.tapHint.value).toBeNull();
+  });
 
   it('exposes rowSlots for the focused project box type', () => {
     const { projectRef, api } = sheet();

@@ -55,6 +55,9 @@ interface UiState {
   /** The splash has been shown and dismissed once — it opens itself only for a visitor whose
    *  stored view carries nothing (`SplashModal-hooks.ts`). */
   splashSeen?: boolean;
+  /** The phone What-if sheet's "tap a digit to spin it" hint has done its job: a digit was spun or
+   *  a box held to type (`MobileSheet-hooks.ts`, QO536). */
+  whatIfTapHintSeen?: boolean;
   /** Manual, persisted skin choice from the Info menu. Absent means "follow the viewport" —
    *  `App.vue`'s `activeSkin` falls back to `narrowViewport` below. */
   skinOverride?: SkinChoice;

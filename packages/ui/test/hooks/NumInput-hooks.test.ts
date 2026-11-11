@@ -6,6 +6,7 @@ import {useNumInput, type NumInputEmit, type NumInputProps} from '../../src/hook
 import type {DragClock} from '../../src/logic/dragClock.js';
 import {StepperPin} from '../../src/logic/stepperPin.js';
 import type {FieldEditMode} from '../../src/logic/fieldEditMode.js';
+import type {TapToSpin} from '../../src/logic/tapToSpin.js';
 import {createAppStateFixture} from '../fixtures/appStateFixture.js';
 
 type HostNode = {children: HostNode[]; parent: HostNode | null};
@@ -96,6 +97,7 @@ const documentStub: EventTarget & {activeElement: EventTarget | null; createElem
 interface SetupOptions {
   fieldEditMode?: FieldEditMode;
   stepperPin?: StepperPin;
+  tapToSpin?: TapToSpin;
   unitTokens?: PresentationState['ui']['unitTokens'];
 }
 
@@ -176,7 +178,7 @@ function setup(initial: Partial<NumInputProps> = {}, attrs: Record<string, unkno
   });
   const app = renderer.createApp(defineComponent({
     setup() {
-      api = useNumInput(props, emit, {presentationState, stepperPin: options.stepperPin ?? null, fieldEditMode: options.fieldEditMode ?? null, dragClock, attrs});
+      api = useNumInput(props, emit, {presentationState, stepperPin: options.stepperPin ?? null, fieldEditMode: options.fieldEditMode ?? null, tapToSpin: options.tapToSpin ?? null, dragClock, attrs});
       return () => null;
     },
   }));
@@ -932,6 +934,87 @@ describe('useNumInput pointer gestures', () => {
     api.onBoxPointer(pointer('pointerdown'));
     app.unmount();
     vi.advanceTimersByTime(5000);
+    vi.useRealTimers();
+  });
+});
+
+/** A What-if sheet's tap-to-spin context that counts its uses (the hint goes after the first). */
+function tapToSpin(): TapToSpin & {uses: number} {
+  const context = {uses: 0, holdToTypeMs: 500, used() { context.uses++; }};
+  return context;
+}
+const touch = (type: string, props: Record<string, unknown> = {}) => pointer(type, {pointerType: 'touch', ...props});
+
+describe('useNumInput tap to spin, hold to type (phone What-if, QO536)', () => {
+  it('a quick tap picks the digit to spin and opens no keypad', () => {
+    vi.useFakeTimers();
+    const spin = tapToSpin();
+    const {api, app, input} = setup({modelValue: 12.3}, {}, {tapToSpin: spin});
+    expect(api.keyboard.value).toBe('none');
+    input.value = '12.30';
+    api.onBoxPointer(touch('pointerdown', {clientX: 1 * 8 + 4}));
+    vi.advanceTimersByTime(100);
+    documentStub.dispatchEvent(touch('pointerup'));
+    documentStub.activeElement = input;
+    api.onBoxPointerUp(touch('pointerup', {clientX: 1 * 8 + 4}));
+    vi.advanceTimersByTime(5000);
+    expect(api.underlineIndex.value).toBe(1);
+    expect(api.keyboard.value).toBe('none');
+    expect(spin.uses).toBe(0);
+    app.unmount();
+    vi.useRealTimers();
+  });
+
+  it('a spin of the tapped digit counts as using the box', () => {
+    const spin = tapToSpin();
+    const {api, app, input, emissions} = setup({modelValue: 12.3}, {}, {tapToSpin: spin});
+    documentStub.activeElement = input;
+    input.value = '12.30';
+    input.setSelectionRange(1, 2);
+    api.onKeydown(keyEvent('keydown', 'ArrowUp', input));
+    api.onKeyup(keyEvent('keyup', 'ArrowUp', input));
+    expect(emissions.at(-1)?.args[0]).toBeCloseTo(13.3);
+    expect(spin.uses).toBe(1);
+    app.unmount();
+  });
+
+  it('a press held for the hold time switches the box to typing with the decimal keypad; leaving it goes back to tap mode', async () => {
+    vi.useFakeTimers();
+    const spin = tapToSpin();
+    const {api, app, input} = setup({modelValue: 12.3}, {}, {tapToSpin: spin});
+    input.value = '12.30';
+    api.onBoxPointer(touch('pointerdown', {clientX: 1 * 8 + 4}));
+    vi.advanceTimersByTime(499);
+    expect(api.keyboard.value).toBe('none');
+    vi.advanceTimersByTime(1);
+    await nextTick();
+    expect(api.keyboard.value).toBe('decimal');
+    expect(documentStub.activeElement).toBe(input);
+    expect([input.selectionStart, input.selectionEnd]).toEqual([0, 5]);
+    expect(spin.uses).toBe(1);
+    documentStub.dispatchEvent(touch('pointerup'));
+    api.onBoxPointerUp(touch('pointerup', {clientX: 1 * 8 + 4}));
+    expect([input.selectionStart, input.selectionEnd]).toEqual([0, 5]);
+    api.onBlur(focusEvent('blur'));
+    expect(api.keyboard.value).toBe('none');
+    app.unmount();
+    vi.useRealTimers();
+  });
+
+  it('a sideways drag spins and never turns into typing, and a box without tap to spin keeps its keypad', () => {
+    vi.useFakeTimers();
+    const spin = tapToSpin();
+    const {api, app, input} = setup({modelValue: 12.3}, {}, {tapToSpin: spin});
+    input.value = '12.30';
+    api.onBoxPointer(touch('pointerdown', {clientX: 1 * 8 + 4}));
+    documentStub.dispatchEvent(touch('pointermove', {clientX: 1 * 8 + 4 + 40}));
+    vi.advanceTimersByTime(600);
+    expect(api.keyboard.value).toBe('none');
+    documentStub.dispatchEvent(touch('pointerup'));
+    app.unmount();
+    const plain = setup({modelValue: 12.3});
+    expect(plain.api.keyboard.value).toBe('decimal');
+    plain.app.unmount();
     vi.useRealTimers();
   });
 });

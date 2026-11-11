@@ -1,5 +1,5 @@
 
-import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {CARET_HOLD_START_MS, DragSpin, DRAG_SPIN_THRESHOLD_PX, caretRepeatDelayMs, digitAtCaret, pressedDigit, formatFixed, PHONE_MAX_SIGNIFICANT, NUMBER_TEXT, pastedEdit, typedEdit, spinStep, NumberField, type FieldSpin, type NumberEdit, type SpinDirection, type SteppedPlace, type StepAt} from '@openisd/design/fields';
 import {inputFrom} from '../logic/domEvents.js';
 import {entryRefusal, type EntryBounds} from '../logic/entryRefusal.js';
@@ -7,6 +7,7 @@ import type {StepperPin} from '../logic/stepperPin.js';
 import type {DragClock} from '../logic/dragClock.js';
 import {screenTopPx} from '../logic/visibleViewport.js';
 import type {FieldEditMode} from '../logic/fieldEditMode.js';
+import type {TapToSpin} from '../logic/tapToSpin.js';
 import type {PresentationState} from '../logic/presentationState.js';
 
 export interface NumInputProps {
@@ -43,13 +44,15 @@ export interface NumInputDependencies {
   readonly presentationState: PresentationState;
   readonly stepperPin: StepperPin | null;
   readonly fieldEditMode: FieldEditMode | null;
+  /** The phone What-if sheet: a tap picks a digit, a held press types (logic/tapToSpin.ts). */
+  readonly tapToSpin: TapToSpin | null;
   readonly dragClock: DragClock;
   readonly attrs: Readonly<Record<string, unknown>>;
 }
 
 /** One injectable owner of numeric input, digit spinning, validation and focus behaviour. */
 export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, dependencies: NumInputDependencies) {
-  const {presentationState, stepperPin, fieldEditMode, dragClock, attrs} = dependencies;
+  const {presentationState, stepperPin, fieldEditMode, tapToSpin, dragClock, attrs} = dependencies;
   const activeToken = computed(() => props.field?.unitTokenFor(presentationState.ui.unitTokens ?? {}));
 
   function fmt(v: number | null | undefined, halfWidth: number | null | undefined = props.halfWidth): string {
@@ -162,6 +165,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     const mouse = e.pointerType === 'mouse';
     const press = {x: e.clientX, y: e.clientY, id: e.pointerId, at: pressed, displacement: 0, since: dragClock.now()};
     const spin = new DragSpin();
+    if (!mouse) startHoldToType(el);
     let dragging = false;
     let first = true;
     let timer: number | undefined;
@@ -177,6 +181,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
       }
     };
     const end = () => {
+      stopHoldToType();
       if (dragging && lastCaret.kind === 'digit') chooseDigit(lastCaret.at);
       abort.abort();
       if (timer !== undefined) dragClock.clear(timer);
@@ -197,6 +202,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
         }
       }
       if (!dragging && Math.abs(press.displacement) >= DRAG_SPIN_THRESHOLD_PX) {
+        stopHoldToType();
         dragging = true;
         dragSpinning = true;
         pointerSpinOccurred = true;
@@ -238,6 +244,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
 
   function onBoxPointerUp(event: PointerEvent): void {
     pointerEntering = false;
+    if (heldToType) { heldToType = false; return; }   // the release of the press that switched to typing keeps the whole number selected
     if (isReadonly.value || pointerSpinOccurred) return;
     const el = inputEl.value;
     if (el === null) return;
@@ -311,7 +318,41 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     return true;
   }
 
-  onBeforeUnmount(() => { dragAbort?.abort(); stopLongPress(); });
+  /** Tap to spin (the phone What-if): the box is typing only after a held press, until it is left. */
+  const typing = ref(false);
+  let holdToTypeTimer: ReturnType<typeof setTimeout> | undefined;
+  /** The press now down is the one that switched the box to typing. */
+  let heldToType = false;
+  /** The box is being refocused so the phone reads its new keypad: that blur is not leaving it. */
+  let refocusing = false;
+  function stopHoldToType(): void {
+    if (holdToTypeTimer !== undefined) { clearTimeout(holdToTypeTimer); holdToTypeTimer = undefined; }
+  }
+  function startHoldToType(el: HTMLInputElement): void {
+    stopHoldToType();
+    heldToType = false;
+    if (tapToSpin === null || typing.value) return;
+    const context = tapToSpin;
+    holdToTypeTimer = setTimeout(() => {
+      holdToTypeTimer = undefined;
+      heldToType = true;
+      typing.value = true;
+      context.used();
+      // A phone reads inputmode when focus arrives: once the box says "decimal", focus it afresh.
+      void nextTick(() => {
+        if (document.activeElement === el) { refocusing = true; el.blur(); refocusing = false; }
+        el.focus({preventScroll: true});
+        underlineIndex.value = null;
+        el.setSelectionRange(0, el.value.length);
+      });
+    }, context.holdToTypeMs);
+  }
+  /** A long press in a box still in tap mode is ours, not the phone's text-selection menu. */
+  function onContextMenu(e: Event): void {
+    if (tapToSpin !== null && !typing.value) e.preventDefault();
+  }
+
+  onBeforeUnmount(() => { dragAbort?.abort(); stopLongPress(); stopHoldToType(); });
 
   /** The digit under a press at `clientX`, measured in the box's own font. */
   function pressedDigitOf(el: HTMLInputElement, clientX: number): StepAt {
@@ -551,6 +592,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     }
     lastStep = {place: spun.place, at: caretForStep()};
     editedThisFocus = true;
+    tapToSpin?.used();
     if (valid(si)) emit('update:modelValue', si, typedPrecision(spun.text));
   }
 
@@ -750,6 +792,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
   }
 
   function onBlur(e: Event) {
+    if (refocusing) return;
     clearRepeat();
     commitEdit();
     focused.value = false;
@@ -771,6 +814,8 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     stopRepeat();
     longPressEditing.value = false;
     stopLongPress();
+    stopHoldToType();
+    typing.value = false;
     if (refusal.value !== '') {
       // Ruling "b": leaving the box keeps the refused entry and its ⚠; nothing was stored.
       emit('blur');
@@ -810,8 +855,12 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     };
   });
 
-  /** A phone keyboard with a minus where the value can be negative, the decimal pad otherwise. */
-  const keyboard = computed<'decimal' | 'text'>(() => effMin.value < 0 ? 'text' : 'decimal');
+  /** A phone keyboard with a minus where the value can be negative, the decimal pad otherwise; none
+   *  in a tap-to-spin box until a held press switches it to typing. */
+  const keyboard = computed<'decimal' | 'text' | 'none'>(() => {
+    if (tapToSpin !== null && !typing.value) return 'none';
+    return effMin.value < 0 ? 'text' : 'decimal';
+  });
 
-  return {inputEl, unitEl, increaseEl, decreaseEl, isReadonly, keyboard, display, classes, refusal, helpText, underlineIndex, showStepper, onFocus, onBoxPointer, onBoxPointerUp, onBoxDoubleClick, onKeydown, onGroupKeydown, onKeyup, onBeforeInput, onPaste, onWheel, onInput, onBlur, onStepperPointerDown, onStepperPointerUp, stopRepeat, onStepperLeave, onStepperFocus, onStepperBlur};
+  return {inputEl, unitEl, increaseEl, decreaseEl, isReadonly, keyboard, display, classes, refusal, helpText, underlineIndex, showStepper, onFocus, onBoxPointer, onBoxPointerUp, onBoxDoubleClick, onKeydown, onGroupKeydown, onKeyup, onBeforeInput, onPaste, onWheel, onInput, onBlur, onContextMenu, onStepperPointerDown, onStepperPointerUp, stopRepeat, onStepperLeave, onStepperFocus, onStepperBlur};
 }

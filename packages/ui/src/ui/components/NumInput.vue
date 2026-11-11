@@ -5,6 +5,7 @@ import {STEPPER_PIN} from '../../logic/stepperPin.js';
 import {DRAG_CLOCK, REAL_DRAG_CLOCK} from '../../logic/dragClock.js';
 import {FIELD_EDIT_MODE} from '../../logic/fieldEditMode.js';
 import {ENTER_CLOSES_KEYBOARD} from '../../logic/enterClosesKeyboard.js';
+import {TAP_TO_SPIN} from '../../logic/tapToSpin.js';
 import {useNumInput, type NumInputProps} from '../../hooks/NumInput-hooks.js';
 
 defineOptions({inheritAttrs: false});
@@ -24,10 +25,11 @@ const emit = defineEmits<{
   /** What is wrong with the text in the box and what to enter instead; '' when it is acceptable. */
   refusal: [text: string];
 }>();
-const {inputEl, unitEl, increaseEl, decreaseEl, isReadonly, keyboard, display, classes, refusal, helpText, underlineIndex, showStepper, onFocus, onBoxPointer, onBoxPointerUp, onBoxDoubleClick, onKeydown, onGroupKeydown, onKeyup, onBeforeInput, onPaste, onWheel, onInput, onBlur, onStepperPointerDown, onStepperPointerUp, stopRepeat, onStepperLeave, onStepperFocus, onStepperBlur} = useNumInput(props, emit, {
+const {inputEl, unitEl, increaseEl, decreaseEl, isReadonly, keyboard, display, classes, refusal, helpText, underlineIndex, showStepper, onFocus, onBoxPointer, onBoxPointerUp, onBoxDoubleClick, onKeydown, onGroupKeydown, onKeyup, onBeforeInput, onPaste, onWheel, onInput, onBlur, onContextMenu, onStepperPointerDown, onStepperPointerUp, stopRepeat, onStepperLeave, onStepperFocus, onStepperBlur} = useNumInput(props, emit, {
   presentationState: useApp().presentation,
   stepperPin: inject(STEPPER_PIN, null),
   fieldEditMode: inject(FIELD_EDIT_MODE, null),
+  tapToSpin: inject(TAP_TO_SPIN, null),
   dragClock: inject(DRAG_CLOCK, REAL_DRAG_CLOCK),
   attrs: useAttrs(),
 });
@@ -43,7 +45,7 @@ function closeKeyboardOnEnter(e: KeyboardEvent): void {
   <span class="num-input-wrap">
     <input ref="inputEl" v-bind="$attrs" :readonly="isReadonly" data-numinput type="text" :inputmode="keyboard" :enterkeyhint="enterCloses ? 'done' : undefined" autocomplete="off" :value="display"
       :class="classes" :title="refusal !== '' ? refusal : helpText"
-      @focus="onFocus" @pointerdown="onBoxPointer" @pointerup="onBoxPointerUp" @dblclick="onBoxDoubleClick" @keydown="onKeydown($event); closeKeyboardOnEnter($event)" @keyup="onKeyup" @beforeinput="onBeforeInput" @paste="onPaste" @wheel="onWheel" @input="onInput" @blur="onBlur">
+      @focus="onFocus" @pointerdown="onBoxPointer" @pointerup="onBoxPointerUp" @dblclick="onBoxDoubleClick" @keydown="onKeydown($event); closeKeyboardOnEnter($event)" @keyup="onKeyup" @beforeinput="onBeforeInput" @paste="onPaste" @wheel="onWheel" @input="onInput" @blur="onBlur" @contextmenu="onContextMenu">
     <span v-if="underlineIndex !== null" class="num-mark-overlay" aria-hidden="true"><span class="num-mark-pre">{{ display.slice(0, underlineIndex) }}</span><span class="num-mark-underline">{{ display.slice(underlineIndex, underlineIndex + 1) }}</span><span class="num-mark-post">{{ display.slice(underlineIndex + 1) }}</span></span>
   </span>
   <span v-if="$slots.unit" ref="unitEl" class="num-unit" @focusin="onStepperFocus" @focusout="onStepperBlur" @keydown="onGroupKeydown"><slot name="unit" /></span>

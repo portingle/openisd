@@ -13,14 +13,16 @@ import { createPhoneLabelColumnDirective } from '../../../hooks/phoneLabelColumn
 const vPhoneLabelColumn = createPhoneLabelColumnDirective();
 import { provide } from 'vue';
 import { ENTER_CLOSES_KEYBOARD } from '../../../logic/enterClosesKeyboard.js';
+import { TAP_TO_SPIN } from '../../../logic/tapToSpin.js';
 
 const props = defineProps<{ open: boolean; mode: SheetMode; hidden: boolean; autoY: boolean }>();
 const emit = defineEmits<{ 'update:open': [open: boolean]; 'update:autoY': [on: boolean] }>();
 
-const { isOpen, lines, rowSlots, mode, help, sizeStyle, portEditor, portView, portValuePress, closePortEditor, sheetEl, rowsEl, sheetStyle, setValue, openSheet, close, reset,
+const { isOpen, lines, rowSlots, mode, help, tapToSpin, tapHint, sizeStyle, portEditor, portView, portValuePress, closePortEditor, sheetEl, rowsEl, sheetStyle, setValue, openSheet, close, reset,
   onTabDown, onTabUp, onHandleDown, onHandleMove, onHandleUp } =
   useMobileSheet({ open: () => props.open, setOpen: v => emit('update:open', v), mode: props.mode });
 provide(ENTER_CLOSES_KEYBOARD, true);
+provide(TAP_TO_SPIN, tapToSpin);
 </script>
 
 <template>
@@ -31,6 +33,7 @@ provide(ENTER_CLOSES_KEYBOARD, true);
          @pointerdown="onHandleDown" @pointermove="onHandleMove" @pointerup="onHandleUp" @pointercancel="onHandleUp">
       <PhoneBand :section="help" />
     </div>
+    <p v-if="tapHint !== null" class="mob-sheet-hint">{{ tapHint }}</p>
     <div ref="rowsEl" class="mob-sheet-rows" :style="{ '--mob-row-slots': rowSlots }">
       <div v-for="(line, lineIdx) in lines" :key="lineIdx" class="mob-sheet-line">
         <UIFixedField v-for="cell in line" :key="cell.field.label" class="mob-ui-field" :field="cell.field.field" :label="mode.labelOf(cell.field)" :value="cell.value" stepper
@@ -99,6 +102,8 @@ provide(ENTER_CLOSES_KEYBOARD, true);
 .mob-sheet-port-head .mob-sheet-btn { flex: none; }
 .mob-sheet-port-title { font-weight: 600; font-size: 15px; }
 .mob-sheet-port-body { flex: 1; min-height: 0; overflow-y: auto; }
+/* The first-time hint under the title: one line, the What-if's own muted italic (QO536). */
+.mob-sheet-hint { flex: none; margin: 0; padding: 4px 16px; font-size: 13px; font-style: italic; color: var(--mut); }
 /* The band is the handle: drag it to resize the sheet, tap its ? for help. */
 .mob-sheet-handle { flex: none; touch-action: none; cursor: ns-resize; }
 .mob-sheet-handle :deep(.mob-band) { height: var(--gp-sheet-band); margin-top: 0; }

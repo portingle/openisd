@@ -14,7 +14,8 @@ import type {ComputedRef, Ref} from 'vue';
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {createSheetSession, type SheetRow} from './sheetSession.js';
 import {portFieldsView, type PortFieldsView} from './portFieldsView.js';
-import {ChartPageHelp, PhoneRowColumns, PhoneRowSizes, SheetSizes, type PhoneHelpSection, type SheetField, type SheetMode} from '@openisd/design/fields';
+import type {TapToSpin} from '../logic/tapToSpin.js';
+import {ChartPageHelp, PhoneRowColumns, PhoneRowSizes, SheetMode, SheetSizes, type PhoneHelpSection, type SheetField} from '@openisd/design/fields';
 
 /** The sheet's open state (owned by the chart view; its Auto Y box follows it) and its fixed mode. */
 export interface MobileSheetDeps {
@@ -59,6 +60,10 @@ export interface MobileSheetAPI {
   /** A press on a port-area value opens that port's fields; the box is never focused, so the keyboard stays down. */
   portValuePress(e: PressEvent, row: SheetRow): void;
   closePortEditor(): void;
+  /** The sheet's boxes tap to spin and hold to type (the What-if), or null: tap to type (Tune). */
+  readonly tapToSpin: TapToSpin | null;
+  /** The one-line hint under the title, from each opening until tap to spin has been used once; null when not shown. */
+  readonly tapHint: ComputedRef<string | null>;
   /** The sizes the sheet's controls and rows take, as CSS variables (from design). */
   readonly sizeStyle: string;
   /** What the ? on the sheet's band opens: the sheet, then one line per row it shows for this box. */
@@ -81,7 +86,7 @@ export interface MobileSheetAPI {
 }
 
 export function useMobileSheet({ open, setOpen, mode }: MobileSheetDeps): MobileSheetAPI {
-  const {projectChanged} = useApp().appState;
+  const {appState: {projectChanged}, presentation} = useApp();
   const project = useFocusedProject();
   const session = createSheetSession({ project, projectChanged, mode });
   const featureUse = useFeatureUse();
@@ -109,6 +114,7 @@ export function useMobileSheet({ open, setOpen, mode }: MobileSheetDeps): Mobile
         break;
     }
     session.begin();
+    hintSeenAtOpen.value = presentation.ui.whatIfTapHintSeen === true;
     setOpen(true);
   }
 
@@ -138,6 +144,14 @@ export function useMobileSheet({ open, setOpen, mode }: MobileSheetDeps): Mobile
   }
 
   function reset(): void { session.reset(); }
+
+  const tapToSpin: TapToSpin | null = mode.tapsToSpin()
+    ? {holdToTypeMs: SheetMode.HOLD_TO_TYPE_MS, used: () => { presentation.ui.whatIfTapHintSeen = true; }}
+    : null;
+  // Read when the sheet opens, so a first use never pulls the rows up under the finger: the hint
+  // goes from the next opening on.
+  const hintSeenAtOpen = ref(presentation.ui.whatIfTapHintSeen === true);
+  const tapHint = computed(() => tapToSpin !== null && !hintSeenAtOpen.value ? SheetMode.TAP_SPIN_HINT : null);
 
   // The keyboard shrinks the visible screen, and the rows list (a few rows tall by then) is left
   // scrolled where the box was before: a box in the middle of the list ends up under the keyboard.
@@ -197,7 +211,7 @@ export function useMobileSheet({ open, setOpen, mode }: MobileSheetDeps): Mobile
   }
 
   return {
-    isOpen, lines: session.lines, rows: session.rows, rowSlots: session.rowSlots, mode,
+    isOpen, lines: session.lines, rows: session.rows, rowSlots: session.rowSlots, mode, tapToSpin, tapHint,
     sizeStyle: [...PhoneRowSizes.CLASSIC.cssVars(), ...PhoneRowColumns.STANDARD.cssVars()].map(([name, value]) => `${name}: ${value}`).join('; '), help,
     portEditor, portView, portValuePress, closePortEditor, sheetEl, rowsEl, sheetStyle, setValue, openSheet, close, reset,
     onTabDown, onTabUp, onHandleDown, onHandleMove, onHandleUp,

@@ -2,8 +2,26 @@ id: T789
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: in_progress
+why: 'John, 11 Nov 2026, board QO536: "the numpad coming up on the mobile what if is inconvenient"; on the mockup: "the tap message is ok but the rest of the mock doesn''t work well, but it''s good enough to prove it works ok"'
 goal: Phone What-if: a quick tap spins a digit, a long press types
-done_test: bash scripts/quiet-test.sh npm run typecheck
+goal_detail:
+  - "Phone What-if sheet number boxes only (Tune and other phone screens keep tap-to-type): a quick tap picks the digit under the finger for the arrows and the sideways drag and opens no keypad (inputmode none); a press held 500 ms switches that box to typing (inputmode decimal, focused, whole number selected); leaving the box puts it back."
+  - "A one-line hint under the What-if title, 'Tap a digit to spin it. Hold to type a number.', shown from each opening until the person has spun a digit or held a box once (presentation ui.whatIfTapHintSeen, saved with the view). It stays for the rest of that opening so the rows never move under the finger, and it goes while the keyboard is up."
+  - "Timing and hint text in packages/design SheetMode (HOLD_TO_TYPE_MS, TAP_SPIN_HINT, tapsToSpin()); the sheet provides the TapToSpin context (logic/tapToSpin.ts) to its boxes."
+  - "Done when: packages/ui/test/hooks/NumInput-hooks.test.ts, packages/ui/test/hooks/MobileSheet-hooks.test.ts and packages/ui/test/ui/mobile-what-if-tap-to-spin.browser.spec.ts pass at 374 x 705; field-layout-rules passes; typecheck green."
+done_test: bash scripts/test.sh packages/ui/test/ui/mobile-what-if-tap-to-spin.browser.spec.ts
 files:
   - tasks/T789.yml
+  - packages/design/fields/sheetMode.ts
+  - packages/ui/src/hooks/MobileSheet-hooks.ts
+  - packages/ui/src/hooks/NumInput-hooks.ts
+  - packages/ui/src/logic/presentationState.ts
+  - packages/ui/src/logic/tapToSpin.ts
+  - packages/ui/src/ui/components/NumInput.vue
+  - packages/ui/src/ui/shells/mobile/MobileSheet.vue
+  - packages/ui/src/ui/shells/mobile/MobileShell.vue
+  - packages/ui/test/hooks/MobileSheet-hooks.test.ts
+  - packages/ui/test/hooks/NumInput-hooks.test.ts
+  - packages/ui/test/ui/mobile-sheet-keyboard-resize.browser.spec.ts
+  - packages/ui/test/ui/mobile-what-if-tap-to-spin.browser.spec.ts

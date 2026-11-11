@@ -305,7 +305,8 @@ const diagnostics = injectDiagnosticsModal();
 .mobile-root.mob-sheet-typing :deep(.mob-chart-stack) { min-height: var(--gp-typing-chart-min); }
 /* QO427 (b), John 8 Nov 2026: the Auto Y / Close bar goes too; the keyboard's Done key closes the keyboard
    (logic/enterClosesKeyboard.ts) and the bar returns with it. */
-.mobile-root.mob-sheet-typing :deep(.mob-sheet-foot) { display: none; }
+.mobile-root.mob-sheet-typing :deep(.mob-sheet-foot),
+.mobile-root.mob-sheet-typing :deep(.mob-sheet-hint) { display: none; }
 /* ...and the height that bar frees goes to the chart, not to more rows (John 9 Nov 2026): the sheet's cap
    shrinks by the bar, and the chart's least height above grows by it (ChartPageSizes). */
 .mobile-root.mob-sheet-typing :deep(.mob-sheet) { max-height: calc(var(--gp-sheet-max) - var(--gp-sheet-foot-h)); }

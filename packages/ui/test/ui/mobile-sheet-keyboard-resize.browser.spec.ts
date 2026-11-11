@@ -6,6 +6,7 @@
  */
 import {expect, openAMobileProject, test} from '../fixtures.js';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
+import {SheetMode} from '@openisd/design/fields';
 import type {Locator, Page} from '@playwright/test';
 
 const FULL = {width: 374, height: 705};
@@ -23,6 +24,19 @@ async function openSheet(page: Page, mode: 'Tune' | 'What-if'): Promise<Locator>
   const sheet = page.locator('.mob-sheet');
   await expect(sheet).toBeVisible();
   return sheet;
+}
+
+/** What raises the keyboard on a box: a tap in Tune; in What-if a tap spins a digit, and a held press types (QO536). */
+async function startTyping(page: Page, mode: 'Tune' | 'What-if', input: Locator): Promise<void> {
+  if (mode === 'Tune') { await input.tap(); return; }
+  const b = await input.boundingBox();
+  if (b === null) throw new Error('box not on screen');
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x: b.x + b.width / 2, y: b.y + b.height / 2, id: 1}]});
+  await page.clock.runFor(SheetMode.HOLD_TO_TYPE_MS + 100);
+  await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
+  await expect(input).toHaveAttribute('inputmode', 'decimal');
+  await expect(input).toBeFocused();
 }
 
 /** What covers the box at its corners and centre, or '' when nothing does. */
@@ -49,6 +63,7 @@ async function whollyInLayout(page: Page, box: Locator): Promise<boolean> {
 for (const mode of ['Tune', 'What-if'] as const) {
   test(`${mode}: layout shrunk by the keyboard still shows the focused box and its neighbours`, async ({page}) => {
     const sheet = await openSheet(page, mode);
+    await page.clock.install();
     const inputs = sheet.locator('.ui-field').filter({hasNot: page.locator('.ui-field-label', {hasText: /^Port area$/})}).locator('input[data-numinput]');
     const every = sheet.locator('input[data-numinput]');
     const count = await inputs.count();
@@ -57,7 +72,7 @@ for (const mode of ['Tune', 'What-if'] as const) {
       await page.setViewportSize(FULL);
       const input = inputs.nth(index);
       await input.scrollIntoViewIfNeeded();
-      await input.tap();
+      await startTyping(page, mode, input);
       await page.setViewportSize(WITH_KEYBOARD);
       await expect.poll(() => page.evaluate(() => Math.round(document.querySelector('.mobile-root')!.getBoundingClientRect().height))).toBe(WITH_KEYBOARD.height);
       await expect.poll(async () => (await whollyInLayout(page, input)) ? await coveredBy(input) : 'outside the layout', {message: `box ${index} of ${count}`}).toBe('');
