@@ -4,11 +4,7 @@ repo: openisd
 owner: cover
 status: done
 goal: Phone Filters tab: the add-filter chips are a one-line carousel again, with a slightly smaller font
-why: |
-  John, 8 Nov 2026: "not a bug, the strip is a carousel". T734 replaced the carousel with wrapping chips, against that.
-  John, 11 Nov 2026: "make the font a little smaller and see if on mobile they fit on a single row". Ten chips do not fit one
-  row at 12 px or more, so the carousel comes back (one row, scrolls sideways inside the strip only, arrows beside it,
-  never over a chip) at 13 px with the 44 px tap height. The field layout gate treats a data-carousel strip as designed.
+why: "John, 8 Nov 2026: \"not a bug, the strip is a carousel\". T734 replaced the carousel with wrapping chips, against that. John, 11 Nov 2026: \"make the font a little smaller and see if on mobile they fit on a single row\". Ten chips do not fit one row at 12 px or more, so the carousel comes back (one row, scrolls sideways inside the strip only, arrows beside it, never over a chip) at 13 px with the 44 px tap height. The field layout gate treats a data-carousel strip as designed."
 done_test: bash scripts/test.sh packages/ui/test/ui/mobile-filters-tab.browser.spec.ts
 files:
   - tasks/T788.yml
