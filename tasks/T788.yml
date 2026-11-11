@@ -1,0 +1,9 @@
+id: T788
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Phone Filters tab: quick-add chips on one row, slightly smaller font
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T788.yml
