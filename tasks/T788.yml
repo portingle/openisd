@@ -2,7 +2,7 @@ id: T788
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Phone Filters tab: the add-filter chips are a one-line carousel again, with a slightly smaller font
 why: |
   John, 8 Nov 2026: "not a bug, the strip is a carousel". T734 replaced the carousel with wrapping chips, against that.
