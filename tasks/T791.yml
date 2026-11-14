@@ -2,7 +2,7 @@ id: T791
 release_note: internal
 repo: openisd
 owner: claude
-status: open
+status: done
 goal: Multi-coil drivers use their published Re/BL: no per-coil conversion or VCCon default in the T/S maths, measured wiring kept as stated (series|parallel|unknown, stored as names #514), wiring inference + DQ, schemaVersion 4 upgrade, per-coil 'N x r' Re rule (#512)
 why: John 14 Nov 2026: QO900, QO903-QO909, QO913, QO914, QO915, QO919 (local board questions.yml); replaces the work first claimed as T788, whose id collided with portingle PR #62
 done_test: bash scripts/quiet-test.sh npm run typecheck
