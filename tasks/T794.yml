@@ -16,3 +16,5 @@ files:
   - packages/design/test/fixtures/driver-snapshot/**
   - scripts/driver-snapshot.pin
   - scripts/driver-snapshot.dq-baseline.json
+  - packages/ui/test/visual/SOURCES.sha256
+  - bugs/BUG_20261115_mobile-wizard-box-type-select-width-varies.md
