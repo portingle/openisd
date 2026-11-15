@@ -46,4 +46,6 @@ no `dq_calculated` (load works it out again). The embedded driver in `saved` and
 copy from `packages/design/domain/project/slimDriver.ts`: identity, each parameter's state, value and
 stated precision, and the provided-by, comment and added texts; sources, readings and quality marks
 stay in the catalogue record. `.owpr` files and share links use the same slim copy. A one-time rewrite
-at start-up compacts older stores, behind a whole-store backup.
+at start-up compacts older stores and brings them to the current schemaVersion, in place and with no whole-store backup
+(T827, QO940): each key is written whole, the old text is held until the new one reads back, and a project that does not
+fit stays as saved (the reader upgrades it in memory) while the user is told.

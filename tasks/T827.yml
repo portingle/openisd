@@ -23,3 +23,4 @@ files:
   - packages/ui/src/main.ts
   - packages/ui/src/logic/upgradeLeftNotice.ts
   - packages/ui/test/logic/upgradeLeftNotice.test.ts
+  - docs/design/BROWSER_STORAGE_KEYS.md
