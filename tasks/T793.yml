@@ -49,7 +49,6 @@ files:
   - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-complete-project.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-announcements-current.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-confirm.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-conflict-notice.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-hint.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-reconnect-strip.png
@@ -109,7 +108,6 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-new-vented-volume-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-results-charts-choose.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-results-charts-data-table.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-cloud-account-and-activity.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-general.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-plot-window.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-your-data.png
@@ -135,8 +133,6 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-bin.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-chart-data.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-chart-picker.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-cloud-confirm.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-cloud.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-confirmation.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-crash.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-diagnostic-repairs.png
@@ -185,7 +181,6 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-cloud-reconnect-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-difference-cue.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-filter-card-body.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-flash-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-save-note.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-tuning-unreachable-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-update-strip.png
@@ -233,7 +228,6 @@ files:
 visual:
   - desktop-complete-project
   - desktop-dialog-announcements-current
-  - desktop-dialog-cloud-confirm
   - desktop-dialog-cloud-conflict-notice
   - desktop-dialog-cloud-hint
   - desktop-dialog-cloud-reconnect-strip
@@ -293,7 +287,6 @@ visual:
   - desktop-dialog-projects-new-vented-volume-warning
   - desktop-dialog-results-charts-choose
   - desktop-dialog-results-charts-data-table
-  - desktop-dialog-settings-cloud-account-and-activity
   - desktop-dialog-settings-options-general
   - desktop-dialog-settings-options-plot-window
   - desktop-dialog-settings-options-your-data
@@ -319,8 +312,6 @@ visual:
   - mobile-dialog-bin
   - mobile-dialog-chart-data
   - mobile-dialog-chart-picker
-  - mobile-dialog-cloud-confirm
-  - mobile-dialog-cloud
   - mobile-dialog-confirmation
   - mobile-dialog-crash
   - mobile-dialog-diagnostic-repairs
@@ -369,7 +360,6 @@ visual:
   - mobile-dialog-phone-cloud-reconnect-strip
   - mobile-dialog-phone-difference-cue
   - mobile-dialog-phone-filter-card-body
-  - mobile-dialog-phone-flash-strip
   - mobile-dialog-phone-save-note
   - mobile-dialog-phone-tuning-unreachable-warning
   - mobile-dialog-phone-update-strip
