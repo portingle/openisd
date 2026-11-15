@@ -1,0 +1,10 @@
+id: T821
+release_note: internal
+repo: openisd
+owner: claude-sub
+status: open
+goal: A calculated driver dimension that contradicts its own geometry (MagDepth outside 0..Depth) or whose uncertainty swamps it is not produced; the field stays not-available with a readable reason
+why: John via lead, 2026-11-15: Purifi PTT10.0X04/X08 show MagDepth 3.98 m on a 145 mm deep driver
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T821.yml
