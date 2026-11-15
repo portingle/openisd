@@ -1,0 +1,10 @@
+id: T807
+release_note: internal
+repo: openisd
+owner: ci-baselines
+status: open
+goal: retake-ci.sh reports a run it could not read as unreadable, polls gently, and can collect a finished run (--run <id>)
+why: John, 15 Nov 2026: baselines must match CI (QO923, QO924); T799's retake-ci reported a GitHub API rate limit as a failed run
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T807.yml
