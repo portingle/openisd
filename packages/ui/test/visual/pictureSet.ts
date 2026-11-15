@@ -25,6 +25,7 @@ export const SAME_VIEW: ReadonlyMap<string, {readonly kept: string; readonly why
 export const CANNOT_BE_SHOWN: ReadonlyMap<string, string> = new Map([
   ['desktop-dialog-projects-import-file', 'Import opens the browser\'s file chooser, which the page does not draw; nothing else opens, so the picture was the Box tab.'],
   ['desktop-dialog-driver-import-file', 'Import opens the browser\'s file chooser, which the page does not draw; the driver editor stays on its Parameters tab, which is pictured.'],
+  ['mobile-dialog-native-keyboard', 'The on-screen keyboard is drawn by the OS; the page only gets a shorter window, and the picture showed no keyboard.'],
   ['mobile-dialog-refresh', '/about/refresh/ clears the old app files and replaces itself with the app: the page a user is left on is the app, which is the base screen. Its own "Updating" text is on screen for a moment only.'],
 ]);
 

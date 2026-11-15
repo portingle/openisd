@@ -199,6 +199,36 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-ebp.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-placement.png
+  - packages/ui/test/visual/pictureSet.ts
+  - packages/ui/test/architecture/visual-baselines-distinct.test.ts
+  - packages/ui/test/fixtures/viewOpenRejected.ts
+  - packages/ui/test/fixtures/viewOpenShared.ts
+  - packages/ui/test/fixtures/viewOpenFaults.ts
+  - packages/ui/src/ui/components/OptionsModal.vue
+  - packages/ui/test/ui/unit-label-underline.browser.spec.ts
+  - packages/ui/test/ui/field-visual-contract.browser.spec.ts
+  - scripts/capture-approved-field-paint.ts
+  - scripts/visual/screen-names.mjs
+  - scripts/visual/screen-names.test.mjs
+  - bugs/BUG_20261115_crash-shows-two-boxes.md
+  - bugs/BUG_20261115_driver-identity-message-contradicts-banner.md
+  - bugs/BUG_20261115_graph-messages-show-internal-wording.md
+  - bugs/BUG_20261115_passive-radiator-pick-error-prints-catalogue-detail.md
+  - bugs/BUG_20261115_phone-alignment-sheet-label-clipped.md
+  - bugs/BUG_20261115_phone-driver-list-links-tiny.md
+  - bugs/BUG_20261115_phone-end-correction-select-truncated.md
+  - bugs/BUG_20261115_phone-graph-warning-pill-covers-axis-tick.md
+  - bugs/BUG_20261115_primary-button-dark-text-on-blue-and-serif-store-gate.md
+  - bugs/BUG_20261115_storage-warning-mixes-site-and-local-numbers.md
+  - bugs/BUG_20261115_crash-report-card-covers-diagnostics-buttons.md
+  - bugs/BUG_20261115_desktop-abc-1024-labels-cut-in-three-columns.md
+  - bugs/BUG_20261115_layout-scan-desktop-hardcoded-home-path.md
+  - bugs/BUG_20261115_mobile-wizard-bandpass4-box-type-drawn-twice.md
+  - bugs/BUG_20261115_mobile-wizard-box-type-select-width-varies.md
+  - bugs/BUG_20261115_multi-coil-znom-stored-per-coil.md
+  - bugs/BUG_20261115_phone-320-volume-box-text-area-16px.md
+  - bugs/BUG_20261115_phone-driver-name-button-clipped-under-header.md
+  - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
 visual:
   - desktop-dialog-announcements-current
   - desktop-dialog-cloud-conflict-notice

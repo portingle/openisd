@@ -96,6 +96,7 @@ const graphContextMenu = (skin: WalkSkin): OpenStep => ({root: '.ctx-menu', open
 const driverEditorIncomplete = (skin: WalkSkin): OpenStep => ({root: '.de-incomplete', open: async page => {
   await swapDriverFile(page, skin, {});
   await page.locator('.de-incomplete').first().waitFor({state: 'visible'});
+  await page.locator('.de-incomplete').first().scrollIntoViewIfNeeded();
 }});
 
 /** The Driver library's ? by the types. */

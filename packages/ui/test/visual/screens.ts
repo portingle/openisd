@@ -54,9 +54,13 @@ export class VisualSkin {
 export type BoxTypeName = 'sealed' | 'vented' | 'box-passive-radiator' | 'bandpass4' | 'bandpass6' | 'abc';
 export const BOX_TYPES: readonly BoxTypeName[] = ['sealed', 'vented', 'box-passive-radiator', 'bandpass4', 'bandpass6', 'abc'];
 
+export type ScreenKind = 'page' | 'base' | 'popup';
+
 export interface Screen {
   /** Lower-case words and hyphens; the baseline file name after the skin. */
   readonly name: string;
+  /** `page`: a screen of the app itself (empty, wizard step, tab, box type); `base`: the project the popups open from; `popup`: a dialog, sheet, menu or note over it. */
+  readonly kind: ScreenKind;
   readonly skin: VisualSkin;
   /** Brings the screen up, from a fresh page. */
   open(page: Page): Promise<void>;
@@ -67,8 +71,8 @@ export interface Screen {
 }
 
 function screen(skin: VisualSkin, name: string, open: (page: Page) => Promise<void>, mask: readonly string[] = [],
-  ownConsoleErrors: readonly RegExp[] = []): Screen {
-  return {name, skin, mask, ownConsoleErrors, open: async page => { await skin.start(page); await open(page); }};
+  ownConsoleErrors: readonly RegExp[] = [], kind: ScreenKind = 'page'): Screen {
+  return {name, kind, skin, mask, ownConsoleErrors, open: async page => { await skin.start(page); await open(page); }};
 }
 
 /**
@@ -104,7 +108,7 @@ function screens(): readonly Screen[] {
   for (const skin of VisualSkin.ALL) {
     all.push(screen(skin, 'empty', async () => undefined));
     // The screen every popup opens from: a popup picture equal to it never opened (architecture/visual-baselines-distinct.test.ts).
-    all.push(screen(skin, BASE_SCREEN, async page => { await skin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR); }));
+    all.push(screen(skin, BASE_SCREEN, async page => { await skin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR); }, [], [], 'base'));
     for (const type of BOX_TYPES) {
       // Step 5 of a passive-radiator project needs a radiator chosen first, which this walk does not do.
       const lastStep = type === 'box-passive-radiator' ? 4 : 5;
@@ -158,7 +162,7 @@ function screens(): readonly Screen[] {
       await plan.open(page);
       // A step that imports a file leaves its "… imported" strip fading over the screen: the picture waits it out.
       await expect(page.locator(FADING_STRIP)).toHaveCount(0, {timeout: 15_000});
-    }, MACHINE_DECIDED_PARTS, plan.ownConsoleErrors));
+    }, MACHINE_DECIDED_PARTS, plan.ownConsoleErrors, 'popup'));
   }
   return all;
 }
@@ -199,3 +203,10 @@ function dialogName(id: string): string {
 }
 
 export const SCREENS: readonly Screen[] = screens();
+
+/**
+ * The screens of the app itself, which the whole-screen contracts walk (`unit-label-underline`, `field-visual-contract`): they measure the page's own
+ * field surface and, for the units, compare it with a frozen reference taken per screen (`approvedJoinedPaint.json`, never refreshed from the app under test).
+ * A popup is not one: its page is only the backdrop, and its fields are measured by the view walk and `field-layout-rules`, which open every popup.
+ */
+export const PAGE_SCREENS: readonly Screen[] = SCREENS.filter(s => s.kind === 'page');

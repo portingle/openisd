@@ -72,7 +72,9 @@ async function wizardAtVentedAlignment(page: Page, skin: WalkSkin): Promise<void
   }
 }
 
-/** Narrow the design band to 1 to 2 litres and 1 to 2 Hz in Options, then design a vented box: its volume and tuning fall outside. */
+/** Narrow the design band to 1 to 2 litres and 1 to 2 Hz in Options, then design a vented box: its volume and tuning fall outside.
+ *  The band is set here on purpose (the default is 1 to 100 L and 10 to 150 Hz), so the warning's "1 L - 2 L / 1 Hz - 2 Hz band set in Settings" is true and the
+ *  picture is of a contrived but real state. Both warnings show at once, so volume and tuning are one screen (pictureSet.ts). */
 const ventedBandWarning = (skin: WalkSkin, testid: string): OpenStep => ({root: skin === P ? '.mob-np-overlay' : '.overlay.open .modal', open: async page => {
   await returningUser(page);
   await page.goto('/');
@@ -117,13 +119,15 @@ const passiveRadiatorPickError = (skin: WalkSkin): OpenStep => ({root: skin === 
   await page.locator('#np-pr-select').click();
   await page.locator('.pr-lib-item .pr-lib-name', {hasText: 'E150HE-PR'}).first().click();
   await page.locator('.np-pr-error').waitFor({state: 'visible'});
+  // On the phone the message sits below the form's first screen: a user scrolls to it, and so does the picture.
+  await page.locator('.np-pr-error').scrollIntoViewIfNeeded();
 }});
 
 /** A vented box tuned higher than its port can reach: the Box tab says so under the field. */
 const tuningUnreachable = (skin: WalkSkin): OpenStep => ({root: skin === P ? '.mob-content' : '.tab-section.active', open: async page => {
   await setFocusedBoxType(page, 'vented');
   switch (skin) {
-    case P: await fillAndBlur(page.locator('.mob-content .ui-field', {hasText: /Fb/}).locator('input').first(), '200'); await page.locator('.mob-chint-warn').first().waitFor({state: 'visible'}); break;
+    case P: await fillAndBlur(page.locator('.mob-content .ui-field', {hasText: /Fb/}).locator('input').first(), '200'); await page.locator('.mob-chint-warn').first().waitFor({state: 'visible'}); await page.locator('.mob-chint-warn').first().scrollIntoViewIfNeeded(); break;
     case D: await fillAndBlur(page.locator('#og-fb-target'), '200'); await page.locator('#og-fb-unreachable').waitFor({state: 'visible'}); break;
   }
 }});

@@ -1,6 +1,6 @@
 # BUG_20261115_visual-baselines-cover-no-dialogs
 
-**Status:** FIXED by T793 (the left-out views below are listed with their reasons)
+**Status:** FIXED by T793 (reworked after the T817 revert: see the last section) (the left-out views below are listed with their reasons)
 
 ## Symptom
 
@@ -109,3 +109,15 @@ Other findings: the Options dialogs showed "johnl" as the Username input's place
 so no storage screen reads the machine's quota. The phone Tune sheets' rows sit in `.mob-sheet-rows`, `overflow: auto`, 171 px high, and scroll: the cut row is at a scroll edge, reachable.
 The crash report card covering the diagnostics buttons is `BUG_20261115_crash-report-card-covers-diagnostics-buttons`. Masks now: the build version in the phone menu header
 (`[data-testid="app-version"]`, on every screen showing the phone menu: menus, confirmations, exports) and the phone About "Build · <date>" line (`[data-testid="about-version-line"]`).
+
+### After the T817 revert (rework)
+
+- The screen list is split by `Screen.kind`: `page` (empty, wizard steps, tabs, box types), `base` (`complete-project`, the project popups open from) and `popup`.
+  `unit-label-underline`, `field-visual-contract` and `scripts/capture-approved-field-paint.ts` walk `PAGE_SCREENS`: they measure the page's own field surface and
+  compare units with a frozen per-screen reference (`approvedJoinedPaint.json`, never refreshed from the app under test). A popup's page is only its backdrop, and a popup's
+  fields are measured by `view-layout-walk` and `field-layout-rules`, which open every popup. `driver-summary-contract` measures `body` and walks all screens.
+  `scripts/visual/screen-names.mjs` gives every popup and the base screen a plain name.
+- The outside review (REVIEW.md) is resolved: `native-keyboard` joins the cannot-be-shown list; the phone pick-error, tuning-unreachable and incomplete-warning steps scroll to their message
+  (it sat below the first screen); the crash step writes its own stack so no test-harness frame is in the picture; the vented warnings are one screen made with a deliberately narrowed band
+  (1-2 L, 1-2 Hz, set in Options by the step, so the text is true); the storage figures are the app's mixing of two measures (own bug file). `mobile-empty` is right (No project open).
+  The app defects it found each have a bug file dated 20261115.
