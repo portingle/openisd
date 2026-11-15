@@ -5,6 +5,7 @@ owner: search-builder
 status: open
 goal: On a short phone (412x600) with the filters open and no driver matching, the driver list still shows its Clear filters button: the phone filters block gives up height to the list
 why: Main red after T796 (suite run 43690654499, mobile-driver-browser spec, Clear filters not in viewport); John, 14 Nov 2026 issue 516
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/ui/test/ui/mobile-driver-browser.browser.spec.ts
 files:
   - tasks/T814.yml
+  - packages/ui/src/ui/components/DriverLibrary.vue

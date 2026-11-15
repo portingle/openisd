@@ -1114,7 +1114,7 @@ onMounted(openedLibrary);
 .driver-library.dl-phone .dl-filters-toggle { flex: none; height: 40px; padding: 0 12px; border: 1px solid #aaa; border-radius: 4px; background: #fff; font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; color: #000; }
 .driver-library.dl-phone .dl-filters-toggle.on { background: #e0efff; border-color: #7fb3ff; color: #0b4f9e; font-weight: 600; }
 .driver-library.dl-phone .type-row { flex: none; flex-wrap: wrap; gap: 6px; padding: 6px 16px; }
-.driver-library.dl-phone .filters-block { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 0; max-height: 50vh; overflow-y: auto; }
+.driver-library.dl-phone .filters-block { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 0; max-height: min(50vh, calc(100vh - 340px)); overflow-y: auto; }
 .driver-library.dl-phone .size-row { flex: none; gap: 6px; padding: 6px 16px; }
 .driver-library.dl-phone .dsize { font-size: 12px; color: #666; white-space: normal; }
 .driver-library.dl-phone .dl-sub .dsize + .dpdf::before { content: ' · '; }
