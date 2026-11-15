@@ -45,10 +45,10 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
     await expect(volts).toHaveValue(/^1\.1[23]/);
   });
 
-  test(`${skinName}: a parallel-measured driver (RSS265HO-44, 1.6 Ω, 9.39 Tm, wiring inferred) rewired in series: Re x 4 = 6.4 Ω, BL x 2 = 18.78 Tm`, async ({page}) => {
+  test(`${skinName}: a parallel-measured driver (RSS265HO-44, 1.6 Ω, 9.39 Tm, wiring stated on the maker's product page) rewired in series: Re x 4 = 6.4 Ω, BL x 2 = 18.78 Tm`, async ({page}) => {
     await skin.open(page);
     await selectDriver(page, RSS265HO);
-    await expect(page.getByTestId('coil-wiring-measured')).toContainText('Parallel (inferred)');
+    await expect(page.getByTestId('coil-wiring-measured')).toContainText('Parallel (stated)');
     await page.locator(skin.select).selectOption('series');
     await expect(page.getByTestId('coil-wiring-figures')).toContainText('As published: Re 1.60 Ω · BL 9.39 Tm');
     await expect(page.getByTestId('coil-wiring-figures')).toContainText('My wiring: Re 6.40 Ω · BL 18.78 Tm');
