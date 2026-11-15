@@ -51,6 +51,11 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-graph-blocked-message.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-graph-warning-pill.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-tab-driver.png
+  - packages/design/domain/driver/openISDDriver.ts
+  - packages/design/domain/driver/openISDDriverEmbedded.ts
+  - packages/design/domain/openisdSchema.ts
+  - packages/design/domain/project/openISDProject.ts
+  - packages/design/fields/options.ts
 visual:
   - desktop-dialog-driver-current-info
   - desktop-dialog-driver-disagreement-list
