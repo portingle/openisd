@@ -81,3 +81,31 @@ the phone Box page per box type): about 100 more. Those are screens, not popups,
 
 - The existing baselines `mobile-wizard-bandpass6-step3` and `mobile-wizard-bandpass4-step3` each failed once on a re-run: the same box-type width flake
   as BUG_20261115_mobile-wizard-box-type-select-width-varies. T793 left main's picture in place.
+
+## Review of the pictures (T816)
+
+A look at the CI-drawn pictures found baselines that did not show the view they were named for. `packages/ui/test/visual/pictureSet.ts` now names each case and
+`packages/ui/test/architecture/visual-baselines-distinct.test.ts` fails when a committed picture breaks it: no two pictures are equal unless declared
+(`SAME_PICTURE`), no `<skin>-dialog-*` picture equals the new base screen `<skin>-complete-project` (the project the popups open from), and a left-out view has no picture.
+
+| Picture | Verdict |
+| --- | --- |
+| `desktop-dialog-projects-import-file`, `desktop-dialog-driver-import-file` | Cannot be shown: Import raises the browser's file chooser; the page was left as the Box tab / the driver editor's Parameters tab. Removed. |
+| `mobile-dialog-refresh` | Cannot be shown: the page replaces itself with the app, so its picture is the base screen. Removed. |
+| `mobile-dialog-driver-import` | Same view as `mobile-dialog-driver-more` (Import is a row of the More menu). Kept the latter. |
+| `mobile-dialog-native-files` | Same view as `mobile-dialog-project-import`. Kept the latter. |
+| `desktop-dialog-shared-winisd-difference-entry` | Same view as `desktop-dialog-difference-cue`: the desktop dialog has every entry unfolded. The phone one (an entry unfolds) stays. |
+| `desktop-dialog-driver-search-filters` | Same dialog as `desktop-dialog-driver-library-overview`. Kept the latter. |
+| `*-vented-tuning-warning` (both skins) | Same screen as `*-vented-volume-warning`: both warnings show in the one wizard step. Kept the volume name. |
+| `mobile-dialog-menu-advanced` | The menu item opens the Advanced page, the tab `mobile-tab-advanced`. Removed. |
+| `mobile-dialog-menu-splashmodal` | Same About dialog as `mobile-dialog-about-version`. Kept the latter. |
+| `desktop-dialog-shared-chart-readout` | Own view: 0.3% of its pixels differ from the base screen, the read-out box. Kept. |
+| `*-losses-front` / `*-losses-rear`, `cloud-hint` / `cloud-reconnect-strip` | Own views (heading, chamber, strip text differ). Kept. |
+| `mobile-wizard-sealed-step1` = `step2` (and desktop) | A screens.ts fault: "step 1" pressed Next once and so showed step 2. Step 1 is now the driver list. |
+| Wizard step 4 (abc, bandpass6) and step 5 (five box types) | Same screen for those box types: declared in `SAME_PICTURE`. |
+
+Other findings: the Options dialogs showed "johnl" as the Username input's placeholder text, written in `OptionsModal.vue`; it is now "Your name". The storage line
+"1.2 MB of the 2.3 GB" on `options-your-data` is the stubbed quota of `VisualSkin.start`, not the runner's; the storage-warning screens set their own stub ("99 B of the 100 B"),
+so no storage screen reads the machine's quota. The phone Tune sheets' rows sit in `.mob-sheet-rows`, `overflow: auto`, 171 px high, and scroll: the cut row is at a scroll edge, reachable.
+The crash report card covering the diagnostics buttons is `BUG_20261115_crash-report-card-covers-diagnostics-buttons`. Masks now: the build version in the phone menu header
+(`[data-testid="app-version"]`, on every screen showing the phone menu: menus, confirmations, exports) and the phone About "Build · <date>" line (`[data-testid="about-version-line"]`).

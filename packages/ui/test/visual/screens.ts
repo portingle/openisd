@@ -4,6 +4,7 @@ import {forceMobileSkin, openMobileMenu} from '../fixtures/mobileSkin.js';
 import {FIXTURE_DATE} from '../fixtures/sampleProject.js';
 import {COMPLETE_DRIVER_PROJECT_OWPR} from '../fixtures.js';
 import {openTargets, WalkSkin} from '../fixtures/viewOpen.js';
+import {BASE_SCREEN, CANNOT_BE_SHOWN, SAME_VIEW} from './pictureSet.js';
 import {ViewKind} from '../fixtures/viewIndex.js';
 
 /**
@@ -89,7 +90,8 @@ async function wizardAt(page: Page, skin: VisualSkin, type: BoxTypeName, step: n
   await root.locator('.dlist .ditem').first().click();
   const footer = skin === VisualSkin.MOBILE ? page.locator('.mob-np-footer') : page.locator('.overlay.open .modal-footer');
   const next = footer.getByText(skin === VisualSkin.MOBILE ? 'Next ▸' : 'Next', {exact: true});
-  await next.click();
+  // Step 1 is the driver list with a driver chosen; each Next moves one step on.
+  if (step >= 2) await next.click();
   if (step >= 3) {
     await next.click();
     await page.locator('#np-box-type').selectOption(type);
@@ -101,6 +103,8 @@ function screens(): readonly Screen[] {
   const all: Screen[] = [];
   for (const skin of VisualSkin.ALL) {
     all.push(screen(skin, 'empty', async () => undefined));
+    // The screen every popup opens from: a popup picture equal to it never opened (architecture/visual-baselines-distinct.test.ts).
+    all.push(screen(skin, BASE_SCREEN, async page => { await skin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR); }));
     for (const type of BOX_TYPES) {
       // Step 5 of a passive-radiator project needs a radiator chosen first, which this walk does not do.
       const lastStep = type === 'box-passive-radiator' ? 4 : 5;
@@ -146,7 +150,10 @@ function screens(): readonly Screen[] {
   for (const {view, skin, plan} of openTargets()) {
     if (!POPUP_KINDS.has(view.kind) || NO_STABLE_PICTURE.has(view.id)) continue;
     const visualSkin = skin === WalkSkin.Phone ? VisualSkin.MOBILE : VisualSkin.DESKTOP;
-    all.push(screen(visualSkin, dialogName(view.id.replace(/^desktop\//, '')), async page => {
+    const name = dialogName(view.id.replace(/^desktop\//, ''));
+    // A view pictured under another name, or one a browser picture cannot show (pictureSet.ts), has no screen of its own.
+    if (SAME_VIEW.has(`${visualSkin.name}-${name}`) || CANNOT_BE_SHOWN.has(`${visualSkin.name}-${name}`)) continue;
+    all.push(screen(visualSkin, name, async page => {
       await visualSkin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
       await plan.open(page);
       // A step that imports a file leaves its "… imported" strip fading over the screen: the picture waits it out.
