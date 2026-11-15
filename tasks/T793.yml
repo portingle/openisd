@@ -51,12 +51,14 @@ files:
   - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-complete-project.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-announcements-current.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-confirm.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-conflict-notice.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-hint.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-reconnect-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-update-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-confirmation.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-crash.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-diagnostic-repairs.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-difference-cue.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-current-info.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-disagreement-list.png
@@ -109,6 +111,7 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-new-vented-volume-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-results-charts-choose.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-results-charts-data-table.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-cloud-account-and-activity.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-general.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-plot-window.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-your-data.png
@@ -117,14 +120,14 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-driver-editor-incomplete-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-driver-library-broken-entry.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-driver-type-help.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-flash-message.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-graph-blocked-message.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-graph-context-menu.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-graph-warning-pill.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-options-error.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-storage-restore-picker.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-storage-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-store-gate.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-storage-usage-warning.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-startup-failure.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-wizard-ebp-info.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-wizard-placement-info.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-wizard-sealed-step1.png
@@ -134,8 +137,11 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-bin.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-chart-data.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-chart-picker.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-cloud-confirm.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-cloud.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-confirmation.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-crash.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-diagnostic-repairs.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-dq.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-export.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-identity.png
@@ -181,6 +187,7 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-cloud-reconnect-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-difference-cue.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-filter-card-body.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-flash-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-save-note.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-tuning-unreachable-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-update-strip.png
@@ -190,7 +197,6 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-pr-picker.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-pr-save.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-project-actions.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-project-import.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-sealed-alignment.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-section-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-chart-readout.png
@@ -198,16 +204,16 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-driver-editor-incomplete-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-driver-library-broken-entry.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-driver-type-help.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-flash-message.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-graph-blocked-message.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-graph-context-menu.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-graph-warning-pill.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-options-error.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-storage-restore-picker.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-storage-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-store-gate.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-winisd-difference-entry.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-sheet-port.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-storage-usage.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-startup-failure.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-tune-abc.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-tune-bandpass4.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-tune-bandpass6.png
@@ -229,12 +235,14 @@ files:
 visual:
   - desktop-complete-project
   - desktop-dialog-announcements-current
+  - desktop-dialog-cloud-confirm
   - desktop-dialog-cloud-conflict-notice
   - desktop-dialog-cloud-hint
   - desktop-dialog-cloud-reconnect-strip
   - desktop-dialog-cloud-update-strip
   - desktop-dialog-confirmation
   - desktop-dialog-crash
+  - desktop-dialog-diagnostic-repairs
   - desktop-dialog-difference-cue
   - desktop-dialog-driver-current-info
   - desktop-dialog-driver-disagreement-list
@@ -287,6 +295,7 @@ visual:
   - desktop-dialog-projects-new-vented-volume-warning
   - desktop-dialog-results-charts-choose
   - desktop-dialog-results-charts-data-table
+  - desktop-dialog-settings-cloud-account-and-activity
   - desktop-dialog-settings-options-general
   - desktop-dialog-settings-options-plot-window
   - desktop-dialog-settings-options-your-data
@@ -295,14 +304,14 @@ visual:
   - desktop-dialog-shared-driver-editor-incomplete-warning
   - desktop-dialog-shared-driver-library-broken-entry
   - desktop-dialog-shared-driver-type-help
+  - desktop-dialog-shared-flash-message
   - desktop-dialog-shared-graph-blocked-message
   - desktop-dialog-shared-graph-context-menu
   - desktop-dialog-shared-graph-warning-pill
   - desktop-dialog-shared-options-error
   - desktop-dialog-shared-storage-restore-picker
-  - desktop-dialog-shared-storage-warning
   - desktop-dialog-shared-store-gate
-  - desktop-dialog-storage-usage-warning
+  - desktop-dialog-startup-failure
   - desktop-dialog-wizard-ebp-info
   - desktop-dialog-wizard-placement-info
   - desktop-wizard-sealed-step1
@@ -312,8 +321,11 @@ visual:
   - mobile-dialog-bin
   - mobile-dialog-chart-data
   - mobile-dialog-chart-picker
+  - mobile-dialog-cloud-confirm
+  - mobile-dialog-cloud
   - mobile-dialog-confirmation
   - mobile-dialog-crash
+  - mobile-dialog-diagnostic-repairs
   - mobile-dialog-driver-dq
   - mobile-dialog-driver-export
   - mobile-dialog-driver-identity
@@ -359,6 +371,7 @@ visual:
   - mobile-dialog-phone-cloud-reconnect-strip
   - mobile-dialog-phone-difference-cue
   - mobile-dialog-phone-filter-card-body
+  - mobile-dialog-phone-flash-strip
   - mobile-dialog-phone-save-note
   - mobile-dialog-phone-tuning-unreachable-warning
   - mobile-dialog-phone-update-strip
@@ -368,7 +381,6 @@ visual:
   - mobile-dialog-pr-picker
   - mobile-dialog-pr-save
   - mobile-dialog-project-actions
-  - mobile-dialog-project-import
   - mobile-dialog-sealed-alignment
   - mobile-dialog-section-help
   - mobile-dialog-shared-chart-readout
@@ -376,16 +388,16 @@ visual:
   - mobile-dialog-shared-driver-editor-incomplete-warning
   - mobile-dialog-shared-driver-library-broken-entry
   - mobile-dialog-shared-driver-type-help
+  - mobile-dialog-shared-flash-message
   - mobile-dialog-shared-graph-blocked-message
   - mobile-dialog-shared-graph-context-menu
   - mobile-dialog-shared-graph-warning-pill
   - mobile-dialog-shared-options-error
   - mobile-dialog-shared-storage-restore-picker
-  - mobile-dialog-shared-storage-warning
   - mobile-dialog-shared-store-gate
   - mobile-dialog-shared-winisd-difference-entry
   - mobile-dialog-sheet-port
-  - mobile-dialog-storage-usage
+  - mobile-dialog-startup-failure
   - mobile-dialog-tune-abc
   - mobile-dialog-tune-bandpass4
   - mobile-dialog-tune-bandpass6
