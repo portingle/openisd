@@ -21,6 +21,7 @@ files:
   - packages/ui/test/architecture/visual-baselines-distinct.test.ts
   - packages/ui/test/fixtures/viewOpenRejected.ts
   - packages/ui/test/fixtures/viewOpenShared.ts
+  - packages/ui/test/fixtures/viewOpenPhoneNotes.ts
   - packages/ui/test/fixtures/viewOpenFaults.ts
   - packages/ui/src/ui/components/OptionsModal.vue
   - packages/ui/test/ui/unit-label-underline.browser.spec.ts
