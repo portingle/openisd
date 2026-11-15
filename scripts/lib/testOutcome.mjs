@@ -5,20 +5,33 @@
 // failure (and a `test.fail` test that PASSES is unexpected). Main's red count was read as 67 when it was 59 real failures.
 // Every tool that summarises a run counts through these two functions.
 
-/** Last attempt's status of a JSON-report test, or undefined. */
-export function lastResult(test) {
-  return test.results?.[test.results.length - 1]?.status;
-}
-
 /** A telemetry `test-end` event (scripts/telemetry-reporter.mjs): `expected` is result.status === test.expectedStatus. */
 export function isUnexpectedEvent(event) {
   if (typeof event.expected === 'boolean') return !event.expected;
   return event.status !== 'passed' && event.status !== 'skipped'; // an event written before `expected` existed
 }
 
-/** A test of the Playwright JSON report: `outcome` is expected | unexpected | flaky | skipped. */
+/**
+ * A test of the Playwright JSON report. The reporter writes the outcome as the TEST-level `status`
+ * (expected | unexpected | flaky | skipped); there is no `outcome` key, and each result's `status` (passed | failed ...) is the
+ * attempt's own, which is what a test.fail test gets wrong. Checked against a real report: packages/ui/test/scripts/fixtures/pw-report-sample.json.
+ */
 export function isUnexpectedReportTest(test) {
-  if (test.outcome !== undefined) return test.outcome === 'unexpected';
-  const status = lastResult(test);
-  return status !== undefined && status !== 'passed' && status !== 'skipped';
+  if (typeof test.status !== 'string') throw new Error('report test has no test-level status; not a Playwright JSON report test');
+  return test.status === 'unexpected';
+}
+
+/** Every test of a Playwright JSON report: {title, file, status, resultStatus (last attempt), unexpected}. */
+export function reportTests(report) {
+  const out = [];
+  const walk = (suite) => {
+    for (const spec of suite.specs ?? []) {
+      for (const t of spec.tests ?? []) {
+        out.push({title: spec.title, file: spec.file, status: t.status, resultStatus: t.results?.[t.results.length - 1]?.status, unexpected: isUnexpectedReportTest(t)});
+      }
+    }
+    for (const child of suite.suites ?? []) walk(child);
+  };
+  for (const suite of report.suites ?? []) walk(suite);
+  return out;
 }

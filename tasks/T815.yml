@@ -32,3 +32,5 @@ files:
   - .claude/rules/shipping.md
   - .claude/rules/verify.md
   - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
+  - packages/ui/test/scripts/fixtures/pw-report-sample.json
+  - scripts/lib/testOutcome.d.mts

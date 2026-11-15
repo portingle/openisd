@@ -20,7 +20,7 @@
 //           passed: [leaf], failed: [{leaf,status}], noMatch: [leaf] }]
 import {existsSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
-import {isUnexpectedReportTest, lastResult} from './lib/testOutcome.mjs';
+import {reportTests} from './lib/testOutcome.mjs';
 
 const groupsAll = JSON.parse(readFileSync('build/failing-tests.json', 'utf8'));
 const wanted = process.argv.slice(2);
@@ -36,24 +36,14 @@ if (wanted.length && groups.length !== wanted.length) {
 const PORT = process.env.OPENISD_TEST_PORT || '4106';
 const CLI = 'node_modules/@playwright/test/cli.js';
 
-function collectSpec(spec, buckets) {
-  for (const t of spec.tests ?? []) {
-    const status = lastResult(t);
-    // by outcome: an expected failure (test.fail) is as expected, not still failing (T815)
-    if (!isUnexpectedReportTest(t) && status !== undefined) buckets.passed.push(spec.title);
-    else buckets.failed.push({ leaf: spec.title, status: status ?? 'unknown' });
-  }
-  for (const s of spec.specs ?? []) collectSpec(s, buckets);
-}
-
 function parseReport() {
   const report = JSON.parse(readFileSync('build/pw-report.json', 'utf8'));
   const buckets = { passed: [], failed: [] };
-  const walk = (suite) => {
-    for (const s of suite.suites ?? []) walk(s);
-    for (const spec of suite.specs ?? []) collectSpec(spec, buckets);
-  };
-  for (const suite of report.suites ?? []) walk(suite);
+  // by the test's own status (expected | unexpected | flaky | skipped), not the last attempt's result status: a test.fail test that fails as expected has result status failed (T815)
+  for (const t of reportTests(report)) {
+    if (t.unexpected) buckets.failed.push({ leaf: t.title, status: t.resultStatus ?? 'unknown' });
+    else buckets.passed.push(t.title);
+  }
   return buckets;
 }
 

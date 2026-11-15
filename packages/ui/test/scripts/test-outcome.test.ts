@@ -4,7 +4,8 @@
  */
 import {describe, it} from 'vitest';
 import assert from 'node:assert/strict';
-import {isUnexpectedEvent, isUnexpectedReportTest, lastResult} from '../../../../scripts/lib/testOutcome.mjs';
+import {readFileSync} from 'node:fs';
+import {isUnexpectedEvent, isUnexpectedReportTest, reportTests} from '../../../../scripts/lib/testOutcome.mjs';
 
 describe('isUnexpectedEvent (telemetry test-end events)', () => {
   it('does not count a test.fail test that failed as expected', () => {
@@ -25,21 +26,31 @@ describe('isUnexpectedEvent (telemetry test-end events)', () => {
   });
 });
 
-describe('isUnexpectedReportTest (Playwright JSON report tests)', () => {
-  const test = (outcome: string, statuses: string[]) => ({outcome, results: statuses.map((status) => ({status}))});
-  it('does not count an expected failure whose result status is failed', () => {
-    assert.equal(isUnexpectedReportTest(test('expected', ['failed'])), false);
+describe('the Playwright JSON report', () => {
+  // A real sample, not a hand-written one: tests cut from main's own suite reports (fixtures/pw-report-sample.json).
+  // Playwright's JSON reporter writes the outcome as the test-level `status` (expected|unexpected|flaky|skipped), and no `outcome` key.
+  const report: unknown = JSON.parse(readFileSync(new URL('./fixtures/pw-report-sample.json', import.meta.url), 'utf8'));
+  const tests = reportTests(report);
+
+  it('finds every test of the report with the result status of its last attempt', () => {
+    assert.deepEqual(tests.map((t) => t.resultStatus), ['passed', 'failed', 'failed']);
   });
-  it('counts outcome unexpected, and a flaky test is not a failure', () => {
-    assert.equal(isUnexpectedReportTest(test('unexpected', ['failed'])), true);
-    assert.equal(isUnexpectedReportTest(test('flaky', ['failed', 'passed'])), false);
-    assert.equal(isUnexpectedReportTest(test('skipped', ['skipped'])), false);
+  it('does not count a test.fail test that failed as expected, though its result status is failed', () => {
+    const expectedFail = tests.find((t) => t.title.startsWith('every number box on box-vented'));
+    assert.equal(expectedFail?.resultStatus, 'failed');
+    assert.equal(expectedFail?.unexpected, false);
   });
-  it('reads the last result when a report predates the outcome field', () => {
-    assert.equal(isUnexpectedReportTest({results: [{status: 'failed'}]}), true);
-    assert.equal(isUnexpectedReportTest({results: [{status: 'passed'}]}), false);
+  it('counts the test whose test status is unexpected, and only that one', () => {
+    assert.deepEqual(tests.filter((t) => t.unexpected).map((t) => t.title), ['under 8 px nothing changes, and a click selects one digit']);
   });
-  it('reads the last attempt', () => {
-    assert.equal(lastResult(test('flaky', ['failed', 'passed'])), 'passed');
+  it('counts a test.fail test that passed (test status unexpected) as a failure', () => {
+    assert.equal(isUnexpectedReportTest({status: 'unexpected', results: [{status: 'passed'}]}), true);
+  });
+  it('does not count flaky or skipped tests', () => {
+    assert.equal(isUnexpectedReportTest({status: 'flaky', results: [{status: 'failed'}, {status: 'passed'}]}), false);
+    assert.equal(isUnexpectedReportTest({status: 'skipped', results: [{status: 'skipped'}]}), false);
+  });
+  it('refuses a report test with no status instead of guessing from a result', () => {
+    assert.throws(() => isUnexpectedReportTest({results: [{status: 'failed'}]}), /no test-level status/);
   });
 });
