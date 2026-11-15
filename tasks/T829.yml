@@ -4,7 +4,7 @@ repo: openisd
 owner: unsaved-reload-agent
 status: done
 goal: What the app tells a user about unsaved work when it reloads onto a new version is true: unsaved edits are kept by the stored session and are not asked about; the question is asked only when a reload really loses something (the store refused the session, a read-only backup, driver editor values not applied, What-if values), and says exactly what
-why: John, 2026-11-15: 'pulling a new version says you lose unsaved but that's not true'
+why: John, 15 Nov 2026: "pulling a new version says you lose unsaved but that is not true" (BUG_20261115_reload-question-says-unsaved-changes-are-discarded-but-they-are-kept)
 done_test: bash scripts/test.sh packages/ui/test/hooks/appUpdateUi.test.ts
 files:
   - tasks/T829.yml
