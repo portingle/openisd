@@ -74,7 +74,7 @@ export class PhoneLabels {
   static readonly MAG_DEPTH = 'MagDpt';
   static readonly MAGNET = 'Magnet';
   static readonly BASKET = 'Basket';
-  static readonly OUTER = 'Outer';
+  static readonly OUTER = 'Outer dia';
   static readonly OUTER_X = 'OuterX';
   static readonly OUTER_Y = 'OuterY';
   static readonly WEIGHT = 'Weight';
