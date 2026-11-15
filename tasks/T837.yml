@@ -79,6 +79,7 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-box-passive-radiator.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-sealed.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-vented.png
+  - packages/ui/test/visual/pictureSet.ts
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-complete-project.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-conflict-notice.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-hint.png
@@ -168,7 +169,6 @@ visual:
   - desktop-box-bandpass6
   - desktop-box-box-passive-radiator
   - desktop-box-sealed
-  - desktop-box-vented
   - desktop-complete-project
   - desktop-dialog-cloud-conflict-notice
   - desktop-dialog-cloud-hint
