@@ -1,0 +1,10 @@
+id: T838
+release_note: internal
+repo: openisd
+owner: wiringrow
+status: open
+goal: The project's one coil-wiring control (desktop Voice coil connection, phone My wiring) converts Re and BL only, by WinISD's factors, for any coil count above 1, defaulting to the driver's measured wiring; one coil greyed on desktop, absent on phone; unknown wiring absent; the in-place rewrite and the always-Parallel display are listed as fixed WinISD bugs.
+why: John, 2026-11-15: the driver wiring is the measured setup and the project wiring is the usage of the driver (QO941.c14); for now replicate WinISD (QO941.c24); isolate the two issues (QO942.c2)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T838.yml
