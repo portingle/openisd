@@ -91,7 +91,7 @@ const EXTRA: readonly Screen[] = [
     await page.locator('.driver-library input.filter').fill('W5-1138SMF');
     await page.locator('.mob-np-body').getByText('Tang Band W5-1138SMF').first().click();
     await page.locator('.mob-np-footer').getByText('Next ▸', {exact: true}).click();
-    await page.locator('#np-wiring').waitFor();
+    await page.locator('#np-ndrivers').waitFor();
   }},
   {id: 'desktop New project wizard radiator step', skin: 'desktop', root: '.overlay.open .modal-body', open: async page => {
     await page.setViewportSize({width: 1280, height: 720});
@@ -264,26 +264,30 @@ async function dropdown(page: Page, id: string) {
   });
 }
 
-const COUNT_SCREENS: readonly {name: string; count: string; wiring: string; open: (page: Page) => Promise<void>}[] = [
-  {name: 'desktop Driver tab', count: 'og-ndrivers', wiring: 'og-wiring', open: async page => {
+const COUNT_SCREENS: readonly {name: string; count: string; wiring: string | null; open: (page: Page) => Promise<void>}[] = [
+  {name: 'desktop Driver tab', count: 'og-ndrivers', wiring: null, open: async page => {
     await startDesktop(page, 'sealed');
     await page.locator('.project-nav li', {hasText: 'Driver'}).click();
   }},
-  {name: 'wizard step 2', count: 'np-ndrivers', wiring: 'np-wiring', open: EXTRA[1]!.open},
+  {name: 'wizard step 2', count: 'np-ndrivers', wiring: null, open: EXTRA[1]!.open},
 ];
 
 for (const screen of COUNT_SCREENS) {
-  test(`${screen.name}: Num. of drivers and Voice coil connection are ${SHORT_DROPDOWN_PX} px, same edges, nothing cut off`, async ({page}) => {
+  test(`${screen.name}: Num. of drivers (and Voice coil connection where the screen has it) are ${SHORT_DROPDOWN_PX} px, same edges, nothing cut off`, async ({page}) => {
     await screen.open(page);
     const count = await dropdown(page, screen.count);
-    const wiring = await dropdown(page, screen.wiring);
     expect(count.width).toBeCloseTo(SHORT_DROPDOWN_PX, 0);
-    expect(wiring.width).toBeCloseTo(SHORT_DROPDOWN_PX, 0);
-    expect(wiring.left).toBeCloseTo(count.left, 1);
-    expect(wiring.right).toBeCloseTo(count.right, 1);
-    expect(wiring.fits, `"${wiring.longest}" ${wiring.textPx}px in ${wiring.width}px`).toBe(true);
     expect(count.fits, `"${count.longest}" ${count.textPx}px in ${count.width}px`).toBe(true);
-    expect(wiring.clipped || count.clipped).toBe(false);
+    if (screen.wiring !== null) {
+      // The one wiring control (greyed for this one-coil driver, as WinISD's), in the Voice coil connection place (QO941).
+      const wiring = await dropdown(page, screen.wiring);
+      expect(wiring.width).toBeCloseTo(SHORT_DROPDOWN_PX, 0);
+      expect(wiring.left).toBeCloseTo(count.left, 1);
+      expect(wiring.right).toBeCloseTo(count.right, 1);
+      expect(wiring.fits, `"${wiring.longest}" ${wiring.textPx}px in ${wiring.width}px`).toBe(true);
+      expect(wiring.clipped).toBe(false);
+    }
+    expect(count.clipped).toBe(false);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }

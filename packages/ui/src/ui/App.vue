@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {computed, onMounted, onUnmounted, ref, watch} from 'vue';
+import {flashRetiredArrayWiringNotice} from '../logic/arrayWiringNotice.js';
 import OriginalShell from './shells/original/OriginalShell.vue';
 import './joined-fields.css';
 import FieldCatalogue from './components/FieldCatalogue.vue';
@@ -100,6 +101,13 @@ provideDiagnosticsModal();
 /** Whether a project is focused right now. The overlays below are project-bound: the shell
  *  renders without one, they must not. */
 const projectOpen = computed(() => { void projectChanged.value; return focusedProject() !== null; });
+
+// A project saved before QO941 with several drivers is told once that its impedance chart changed.
+watch(() => { void projectChanged.value; return focusedProject(); }, project => {
+  const before = presentationState.ui.arrayWiringNoticed ?? [];
+  const after = flashRetiredArrayWiringNotice(project, before, msg => logging.flash(msg));
+  if (after !== before) presentationState.ui.arrayWiringNoticed = after;
+}, {immediate: true});
 
 async function handleHashChange() {
   const saved = await projectRepo.loadFromHash();

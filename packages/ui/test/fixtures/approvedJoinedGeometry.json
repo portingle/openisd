@@ -1356,7 +1356,7 @@
       {
         "field": "driver_nDrivers",
         "specimen": null,
-        "valueWidth": 172,
+        "valueWidth": 200,
         "rowHeight": 40,
         "rowWidth": 374,
         "unit": null
@@ -1364,7 +1364,7 @@
       {
         "field": "Fs_hz",
         "specimen": null,
-        "valueWidth": 172,
+        "valueWidth": 200,
         "rowHeight": 40,
         "rowWidth": 374,
         "unit": {
@@ -1377,7 +1377,7 @@
       {
         "field": "Qts",
         "specimen": null,
-        "valueWidth": 172,
+        "valueWidth": 200,
         "rowHeight": 40,
         "rowWidth": 374,
         "unit": null
@@ -1385,7 +1385,7 @@
       {
         "field": "Vas_m3",
         "specimen": null,
-        "valueWidth": 172,
+        "valueWidth": 200,
         "rowHeight": 40,
         "rowWidth": 374,
         "unit": {
@@ -1398,7 +1398,7 @@
       {
         "field": "Re_ohm",
         "specimen": null,
-        "valueWidth": 172,
+        "valueWidth": 200,
         "rowHeight": 40,
         "rowWidth": 374,
         "unit": {
@@ -1411,7 +1411,7 @@
       {
         "field": "Xmax_m",
         "specimen": null,
-        "valueWidth": 172,
+        "valueWidth": 200,
         "rowHeight": 40,
         "rowWidth": 374,
         "unit": {

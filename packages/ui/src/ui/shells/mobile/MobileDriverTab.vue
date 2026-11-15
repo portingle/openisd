@@ -10,7 +10,7 @@ import PhoneBand from './PhoneBand.vue';
 import PhoneClassicPage from './PhoneClassicPage.vue';
 import { useMobileDriverTab } from '../../../hooks/MobileDriverTab-hooks.js';
 
-const { project, fullName, keyFigures, consistencyReasons, browseDrivers, editDriver, showDisagreements, showDriverInfo, ARRAY_WIRING_OPTIONS, selectedOption } = useMobileDriverTab();
+const { project, fullName, keyFigures, consistencyReasons, browseDrivers, editDriver, showDisagreements, showDriverInfo } = useMobileDriverTab();
 </script>
 
 <template>
@@ -25,13 +25,6 @@ const { project, fullName, keyFigures, consistencyReasons, browseDrivers, editDr
     </div>
     <PhoneBand :section="PhoneHelp.DRIVER" />
     <UIFixedField class="mob-ui-field" input-id="mob-n-drivers" :field="NumberField.DRIVER_NDRIVERS" :label="PhoneLabels.DRIVERS" :value="project.nDrivers.value" @update:value="n => project.nDrivers.set(n)" />
-    <div class="mob-crow">
-      <label class="mob-crow-label" for="mob-wiring">{{ PhoneLabels.CONNECTION }}</label>
-      <select id="mob-wiring" class="mob-cselect" :value="project.wiring.value"
-              @change="e => { const w = selectedOption(e, ARRAY_WIRING_OPTIONS); if (w !== null) project.wiring.set(w); }">
-        <option v-for="o in ARRAY_WIRING_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
-      </select>
-    </div>
     <DriverCoilWiring phone />
 
     <PhoneBand :section="PhoneHelp.KEY_FIGURES" />

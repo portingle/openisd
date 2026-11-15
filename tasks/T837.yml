@@ -4,7 +4,71 @@ repo: openisd
 owner: wiringrow
 status: open
 goal: With several drivers the impedance chart is one driver's, as WinISD; the control that wired several drivers, the Per-driver impedance switch and its cue are gone; saved projects with several drivers are told once.
+ruling: QO941
 why: John, 2026-11-15: for now replicate WinISD (QO941.c24); the 5 Oct 2026 per-driver impedance classification was an agent's and John did not intend it (QO941.c33, c34); isolate the two issues (QO942.c2)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/design/test/domain/severalDriversImpedance.test.ts
 files:
+  - CLAUDE.md
+  - README.md
+  - bugs/archive/BUG_20261005_winisd-multi-driver-impedance-is-one-drivers.md
+  - docs/FIELD_REFERENCE.md
+  - docs/plans/PLAN_20261115_SEVERAL_DRIVERS_REPLICATE_WINISD.md
+  - docs/research/ACCURACY_IMPROVEMENTS.md
+  - docs/research/WINISD_EQUIVALENCE.md
+  - docs/research/WINISD_PARITY.md
+  - packages/design/domain/openisdSchema.ts
+  - packages/design/domain/openisdTransforms.ts
+  - packages/design/domain/project/compatSwitch.ts
+  - packages/design/domain/project/errorSwitches.ts
+  - packages/design/domain/project/openISDProject.ts
+  - packages/design/domain/project/projectAdvanced.ts
+  - packages/design/domain/project/projectSweep.ts
+  - packages/design/engine/circuit.ts
+  - packages/design/engine/simulation/SimulationEngine.ts
+  - packages/design/engine/types.ts
+  - packages/design/fields/desktopHelp.ts
+  - packages/design/fields/field.ts
+  - packages/design/fields/index.ts
+  - packages/design/fields/options.ts
+  - packages/design/fields/phoneText.ts
+  - packages/design/fields/phoneWizardText.ts
+  - packages/design/fields/winisdDeviation.ts
+  - packages/design/test/domain/compat-switch.test.ts
+  - packages/design/test/domain/error-switches.test.ts
+  - packages/design/test/domain/every-input-recalculates.test.ts
+  - packages/design/test/domain/project/project-sweep-source.test.ts
+  - packages/design/test/domain/severalDriversImpedance.test.ts
+  - packages/design/test/domain/winisdDriverCountModel.test.ts
+  - packages/design/test/engine/driver-count-winisd.test.ts
+  - packages/design/test/engine/find-impedance-peak.test.ts
+  - packages/design/test/engine/gen-golden.ts
+  - packages/design/test/engine/rg-placement.test.ts
+  - packages/design/test/engine/sweep-golden-master.test.ts
+  - packages/design/test/fields/connection-label.test.ts
+  - packages/design/test/fields/desktopHelp.test.ts
+  - packages/design/test/fields/field-registry.test.ts
+  - packages/design/test/fields/phoneText.test.ts
+  - packages/design/test/fixtures/golden/sealed-2drv-parallel.json
+  - packages/design/test/fixtures/golden/sealed-2drv.json
+  - packages/design/test/fixtures/golden/vented-2drv-series.json
+  - packages/design/test/fixtures/golden/vented-2drv.json
+  - packages/ui/src/hooks/MobileDriverTab-hooks.ts
+  - packages/ui/src/hooks/OriginalNewProject-hooks.ts
+  - packages/ui/src/hooks/OriginalShell-hooks.ts
+  - packages/ui/src/logic/arrayWiringNotice.ts
+  - packages/ui/src/logic/presentationState.ts
+  - packages/ui/src/ui/App.vue
+  - packages/ui/src/ui/shells/mobile/MobileAdvancedTab.vue
+  - packages/ui/src/ui/shells/mobile/MobileDriverTab.vue
+  - packages/ui/src/ui/shells/mobile/MobileNewProject.vue
+  - packages/ui/src/ui/shells/original/OriginalNewProject.vue
+  - packages/ui/src/ui/shells/original/OriginalShell.vue
+  - packages/ui/test/fixtures/fieldInventoryScenarios.ts
+  - packages/ui/test/hooks/OriginalNewProject-hooks.test.ts
+  - packages/ui/test/logic/arrayWiringNotice.test.ts
+  - packages/ui/test/ui/field-layout-rules.browser.spec.ts
+  - packages/ui/test/ui/mobile-advanced-tab.browser.spec.ts
+  - packages/ui/test/ui/mobile-driver-tab.browser.spec.ts
+  - packages/ui/test/ui/new-project-wizard-walk.browser.spec.ts
+  - packages/ui/test/ui/original-advanced-tab.browser.spec.ts
   - tasks/T837.yml
