@@ -2,7 +2,7 @@ id: T795
 release_note: internal
 repo: openisd
 owner: flake-fixer
-status: open
+status: done
 goal: The phone wizard step 3 label column is measured on every visit: phoneLabelColumn measures again when its root's style is rewritten (BUG_20261115_mobile-wizard-box-type-select-width-varies)
 why: John, 15 Nov 2026: layout is deterministic (BUG_20261115_mobile-wizard-box-type-select-width-varies)
 done_test: bash scripts/quiet-test.sh npm run typecheck
