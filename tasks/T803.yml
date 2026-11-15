@@ -1,0 +1,10 @@
+id: T803
+release_note: internal
+repo: openisd
+owner: my-wiring
+status: open
+goal: In the OpenISD app a multi-coil driver shows its measured wiring (stated or inferred) and the user chooses My wiring (series|parallel), a project setting; amplifier-side figures use converted values (issue 512)
+why: John, 14 Nov 2026: QO907 My wiring series|parallel (issue 512)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T803.yml
