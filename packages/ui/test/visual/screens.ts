@@ -160,6 +160,8 @@ function screens(): readonly Screen[] {
     all.push(screen(visualSkin, name, async page => {
       await visualSkin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
       await plan.open(page);
+      const message = SCROLL_TO_MESSAGE.get(view.id);
+      if (message !== undefined) await page.locator(message).first().scrollIntoViewIfNeeded();
       // A step that imports a file leaves its "… imported" strip fading over the screen: the picture waits it out.
       await expect(page.locator(FADING_STRIP)).toHaveCount(0, {timeout: 15_000});
     }, MACHINE_DECIDED_PARTS, plan.ownConsoleErrors, 'popup'));
@@ -185,6 +187,16 @@ const POPUP_KINDS: ReadonlySet<ViewKind> = new Set([
  */
 /** The strip that says what an action did and fades a few seconds later (desktop `.flash`, phone `flash-strip`). */
 const FADING_STRIP = '.flash:visible, [data-testid="flash-strip"]:visible';
+
+/**
+ * Views whose message sits below the popup's first screen on the phone: the picture scrolls it into view, as a user does to read it.
+ * (Not done in the open step: the layout walk measures the unscrolled popup, and a sticky header over scrolled rows would read as an overlap.)
+ */
+const SCROLL_TO_MESSAGE: ReadonlyMap<string, string> = new Map([
+  ['phone/wizard-passive-radiator-pick-error', '.np-pr-error'],
+  ['phone/tuning-unreachable-warning', '.mob-chint-warn'],
+  ['shared/driver-editor-incomplete-warning', '.de-incomplete'],
+]);
 
 const NO_STABLE_PICTURE: ReadonlySet<string> = new Set([
   // Fade out on their own a few seconds after they show: a picture holds whatever opacity the moment gave it.
