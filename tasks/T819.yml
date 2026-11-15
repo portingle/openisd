@@ -4,7 +4,7 @@ repo: openisd
 owner: claude
 status: done
 goal: admit.sh stops a killed run's job group at once, not after the 10 s KILL timer, so admit-term-group.test.sh no longer fails on a loaded runner
-why: Main red: suite on 63dc2681, 15 Nov 2026, admit-term-group.test.sh '2 members still alive 10 s after TERM'; John's rule that a flaky test is a defect with a cause
+why: John, 15 Nov 2026: main red on the suite run for 63dc2681; a flaky test is a defect with a cause (BUG_20261115_admit-stop-waits-out-kill-timer)
 done_test: bash scripts/land/test/admit-term-fast.test.sh
 files:
   - tasks/T819.yml
