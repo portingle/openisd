@@ -1,0 +1,10 @@
+id: T827
+release_note: internal
+repo: openisd
+owner: claude-upgrade-incremental
+status: open
+goal: Upgrading saved projects from schemaVersion 3 to 4 writes each project back one at a time with a one-record safety copy, never a whole-store backup, so it never fills the store, never skips silently, and survives an interrupted start
+why: John, 2026-11-15: 'incremental upgrade and write back?' after the release-readiness run showed the whole-store upgrade backup filling a 2.3 MB store to 96% and silently skipping the rewrite at 3.0 MB
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T827.yml
