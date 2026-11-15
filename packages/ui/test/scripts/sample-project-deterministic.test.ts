@@ -10,6 +10,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {z} from 'zod';
 import {COMPLETE_DRIVER_PROJECT_OWPR, SAMPLE_PROJECT_OWPR} from '../fixtures/sampleProject.js';
 
 const GENERATOR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'generateSample.ts');
@@ -30,8 +31,7 @@ describe('the generated sample projects', () => {
 
   it('carry different project ids, so a window holding both never renames one', () => {
     const {sample, complete} = generated();
-    const idOf = (text: string): unknown => (JSON.parse(text) as {id?: unknown}).id;
-    assert.equal(typeof idOf(sample), 'string');
+    const idOf = (text: string): string => z.object({id: z.string()}).parse(JSON.parse(text)).id;
     assert.notEqual(idOf(sample), idOf(complete));
   });
 });
