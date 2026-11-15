@@ -7,6 +7,7 @@ goal: Multi-coil drivers use their published Re/BL: no per-coil conversion or VC
 why: John 14 Nov 2026: QO900, QO903-QO909, QO913, QO914, QO915, QO919 (local board questions.yml); replaces the work first claimed as T788, whose id collided with portingle PR #62
 done_test: bash scripts/quiet-test.sh npm run typecheck
 ruling: QO900
+visual_note: No visible change. The baselines were re-taken on a new machine whose font anti-aliasing differs slightly from the old one (John, QO921).
 visual:
   - desktop-box-abc
   - desktop-box-bandpass4
