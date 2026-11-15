@@ -9,6 +9,8 @@ done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T793.yml
   - bugs/BUG_20261115_visual-baselines-cover-no-dialogs.md
+  - bugs/BUG_20261115_lr2-size-line-states-one-section-not-two.md
+  - bugs/BUG_20261115_qes-qms-qts-help-sentence-ambiguous.md
   - docs/design/VISUAL_BASELINES.md
   - packages/ui/test/visual/screens.ts
   - packages/ui/test/fixtures/viewOpenCloud.ts

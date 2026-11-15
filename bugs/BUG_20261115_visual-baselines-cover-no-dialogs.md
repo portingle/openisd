@@ -136,3 +136,6 @@ The crash report card covering the diagnostics buttons is `BUG_20261115_crash-re
 - Wizard step 1 is now the driver list as the wizard opens it. Before, "step 1" clicked a driver and pressed Next, so it was step 2 (desktop) or the driver summary (phone), and
   `wizard-sealed-step1` equalled `wizard-sealed-step2`. This corrects a mislabelled baseline on main.
 - `<skin>-complete-project` stays: popups open from the complete-driver project, `tab-box` is the sample project, so only it is the exact "nothing opened" picture the gate compares with.
+- The four driver-editor fields with a heavy border (Fs, Vas, Re, Sd on `desktop-dialog-driver-editor-parameters`) are the driver's mandatory inputs: the app sets
+  `de-input-mandatory` (2 px border) on them by design (`style.css`, `NumInput.vue`). Not a defect.
+- New defect files from the review: `lr2-size-line-states-one-section-not-two`, `qes-qms-qts-help-sentence-ambiguous`.
