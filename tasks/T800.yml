@@ -1,0 +1,10 @@
+id: T800
+release_note: internal
+repo: openisd
+owner: main-red
+status: open
+goal: main suite green: fix 15 specs stale after T742 fonts
+why: John, 15 Nov 2026: main suite must be green (QO923); SDLC: main red is fixed first
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T800.yml
