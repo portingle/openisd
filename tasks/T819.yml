@@ -5,6 +5,9 @@ owner: claude
 status: open
 goal: admit.sh stops a killed run's job group at once, not after the 10 s KILL timer, so admit-term-group.test.sh no longer fails on a loaded runner
 why: Main red: suite on 63dc2681, 15 Nov 2026, admit-term-group.test.sh '2 members still alive 10 s after TERM'; John's rule that a flaky test is a defect with a cause
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/land/test/admit-term-fast.test.sh
 files:
   - tasks/T819.yml
+  - scripts/admit.sh
+  - scripts/land/test/admit-term-fast.test.sh
+  - bugs/BUG_20261115_admit-stop-waits-out-kill-timer.md
