@@ -171,6 +171,37 @@ describe('projectRepo', () => {
     });
   });
 
+  // T829: the browser's storage swallows a write it cannot take (full, disabled), so a reload only brings
+  // an edit back when the stored session really holds it. The app asks the repo, never assumes.
+  describe('whether the stored session holds the open projects as they are now', () => {
+    /** A storage that stops taking writes when told, as the browser's does once it is full. */
+    function fillable() {
+      const inner = createMemoryStorage();
+      let full = false;
+      const storage: ListableStorage = {...inner, set(key, value) { if (!full) inner.set(key, value); }};
+      return {storage, fill: () => { full = true; }};
+    }
+
+    it('is true after the session was saved, and false once an edit has not reached the store', () => {
+      const {storage, fill} = fillable();
+      const repoHere = projectRepoOn(engine, noFiles, storage, 'http://localhost');
+      const project = ProjectBuilder.empty(engine);
+      project.name.set('first');
+      repoHere.saveOpenProjects([project], project, new Set());
+      expect(repoHere.openSessionIsStored([project], project, new Set())).toBe(true);
+
+      fill();
+      project.name.set('second');
+      repoHere.saveOpenProjects([project], project, new Set());
+      expect(repoHere.openSessionIsStored([project], project, new Set())).toBe(false);
+    });
+
+    it('is false when no session was ever stored', () => {
+      const project = ProjectBuilder.empty(engine);
+      expect(repo().openSessionIsStored([project], project, new Set())).toBe(false);
+    });
+  });
+
   describe('a stored box type this build knows is restored', () => {
     it('restores a project stored as "sealed"', () => {
       const result = repo().readProjectText(JSON.stringify(payloadWithBoxType('sealed')));
