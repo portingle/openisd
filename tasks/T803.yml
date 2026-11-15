@@ -33,5 +33,6 @@ files:
   - packages/design/test/winisd/wpr-my-wiring.test.ts
   - packages/ui/src/hooks/DriverCoilWiring-hooks.ts
   - packages/ui/src/ui/components/DriverCoilWiring.vue
+  - packages/ui/test/fixtures/branchMap/shared.ts
   - packages/ui/test/hooks/DriverCoilWiring-hooks.test.ts
   - packages/ui/test/ui/my-wiring.browser.spec.ts
