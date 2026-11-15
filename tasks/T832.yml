@@ -17,6 +17,8 @@ files:
   - packages/ui/test/visual/visual-fonts.browser.spec.ts
   - packages/ui/test/architecture/browser-time-zone-pinned.test.ts
   - playwright.config.js
+  - scripts/visual/compare-local.sh
+  - docs/design/VISUAL_BASELINES.md
   - packages/ui/test/ui/app-font-bundled.browser.spec.ts
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-abc.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-bandpass4.png
