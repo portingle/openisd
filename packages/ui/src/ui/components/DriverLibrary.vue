@@ -98,6 +98,7 @@ onMounted(openedLibrary);
         </template>
         <input v-else class="filter" v-model="filterQ" placeholder="Search drivers…" autofocus>
         <template v-if="!props.phone || filtersOpen">
+        <div class="filters-block">
         <div class="type-row">
           <button v-for="t in DRIVER_TYPES" :key="t.value"
                   class="type-chip"
@@ -205,6 +206,7 @@ onMounted(openedLibrary);
                   @click="toggleFavoritesOnly()">★ Favorites</button>
         </div>
 
+        </div><!-- end filters-block -->
         </template><!-- end the folded filters -->
 
         <PhoneBand v-if="props.phone" :section="props.host === DriverListMode.Manage ? PhoneHelp.DRIVER_LIST_MANAGE : PhoneHelp.DRIVER_LIST_PICK" />
@@ -454,7 +456,8 @@ onMounted(openedLibrary);
   background: #fff !important;
   border: 1px solid #ccc !important;
   border-radius: 4px !important;
-  min-height: 180px;
+  /* The list is the part that gives way: it shrinks (and scrolls) before the footer buttons are cut off. */
+  min-height: 96px;
 }
 .driver-library .dlist-section {
   background: #f0f0f0 !important;
@@ -831,6 +834,7 @@ onMounted(openedLibrary);
   flex-shrink: 0;
 }
 .driver-library .dsize { font-size: 10px; color: #555; white-space: nowrap; }
+.filters-block { display: contents; }
 .size-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .driver-library .dpdf {
   font-size: 9px;
@@ -1110,6 +1114,7 @@ onMounted(openedLibrary);
 .driver-library.dl-phone .dl-filters-toggle { flex: none; height: 40px; padding: 0 12px; border: 1px solid #aaa; border-radius: 4px; background: #fff; font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; color: #000; }
 .driver-library.dl-phone .dl-filters-toggle.on { background: #e0efff; border-color: #7fb3ff; color: #0b4f9e; font-weight: 600; }
 .driver-library.dl-phone .type-row { flex: none; flex-wrap: wrap; gap: 6px; padding: 6px 16px; }
+.driver-library.dl-phone .filters-block { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 0; max-height: 46vh; overflow-y: auto; }
 .driver-library.dl-phone .size-row { flex: none; gap: 6px; padding: 6px 16px; }
 .driver-library.dl-phone .dsize { font-size: 12px; color: #666; white-space: normal; }
 .driver-library.dl-phone .dl-sub .dsize + .dpdf::before { content: ' · '; }
