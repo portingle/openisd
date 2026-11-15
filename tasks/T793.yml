@@ -148,6 +148,9 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-limits-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-plot-window.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-your-data.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-cloud-conflict-notice.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-cloud-hint.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-cloud-reconnect-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-difference-cue.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-filter-card-body.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-save-note.png
@@ -331,6 +334,9 @@ visual:
   - mobile-dialog-options-limits-help
   - mobile-dialog-options-plot-window
   - mobile-dialog-options-your-data
+  - mobile-dialog-phone-cloud-conflict-notice
+  - mobile-dialog-phone-cloud-hint
+  - mobile-dialog-phone-cloud-reconnect-strip
   - mobile-dialog-phone-difference-cue
   - mobile-dialog-phone-filter-card-body
   - mobile-dialog-phone-save-note
