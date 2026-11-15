@@ -1,0 +1,10 @@
+id: T829
+release_note: internal
+repo: openisd
+owner: unsaved-reload-agent
+status: open
+goal: What the app tells a user about unsaved work when it reloads onto a new version is true: it asks only when something really would be lost, and says what.
+why: John, 2026-11-15: 'pulling a new version says you lose unsaved but that's not true'
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T829.yml
