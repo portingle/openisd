@@ -7,7 +7,83 @@ goal: Multi-coil drivers use their published Re/BL: no per-coil conversion or VC
 why: John 14 Nov 2026: QO900, QO903-QO909, QO913, QO914, QO915, QO919 (local board questions.yml); replaces the work first claimed as T788, whose id collided with portingle PR #62
 done_test: bash scripts/quiet-test.sh npm run typecheck
 ruling: QO900
+visual:
+  - desktop-box-abc
+  - desktop-box-bandpass4
+  - desktop-box-bandpass6
+  - desktop-box-box-passive-radiator
+  - desktop-box-sealed
+  - desktop-box-vented
+  - desktop-tab-advanced
+  - desktop-tab-box
+  - desktop-tab-driver
+  - desktop-tab-filters
+  - desktop-tab-project
+  - desktop-tab-signal
+  - mobile-menu
+  - mobile-tab-box
+  - mobile-tab-driver
+  - mobile-tab-enclosure
+  - mobile-tab-filters
+  - mobile-tab-signal
+  - mobile-wizard-abc-step3
+  - mobile-wizard-abc-step4
+  - mobile-wizard-abc-step5
+  - mobile-wizard-bandpass4-step3
+  - mobile-wizard-bandpass4-step4
+  - mobile-wizard-bandpass4-step5
+  - mobile-wizard-bandpass6-step3
+  - mobile-wizard-bandpass6-step4
+  - mobile-wizard-bandpass6-step5
+  - mobile-wizard-box-passive-radiator-step3
+  - mobile-wizard-box-passive-radiator-step4
+  - mobile-wizard-sealed-step1
+  - mobile-wizard-sealed-step2
+  - mobile-wizard-sealed-step3
+  - mobile-wizard-sealed-step4
+  - mobile-wizard-sealed-step5
+  - mobile-wizard-vented-step3
+  - mobile-wizard-vented-step4
+  - mobile-wizard-vented-step5
 files:
+  - packages/ui/test/visual/SOURCES.sha256
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-abc.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-bandpass4.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-bandpass6.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-box-passive-radiator.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-sealed.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-vented.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-tab-advanced.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-tab-box.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-tab-driver.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-tab-filters.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-tab-project.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-tab-signal.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-menu.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-box.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-driver.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-enclosure.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-filters.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-signal.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-abc-step3.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-abc-step4.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-abc-step5.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-bandpass4-step3.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-bandpass4-step4.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-bandpass4-step5.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-bandpass6-step3.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-bandpass6-step4.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-bandpass6-step5.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-box-passive-radiator-step3.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-box-passive-radiator-step4.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step1.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step2.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step3.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step4.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step5.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-vented-step3.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-vented-step4.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-vented-step5.png
   - packages/persistence/test/storedTextCompaction.test.ts
   - scripts/land/test/sync-driver-snapshot-dq.test.sh
   - bugs/BUG_20261114_bridge-writes-calculated-per-coil-values-as-entered.md
