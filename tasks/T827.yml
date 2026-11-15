@@ -18,7 +18,6 @@ files:
   - packages/persistence/src/repos/storageHistory.ts
   - packages/persistence/src/repos/storageSnapshot.ts
   - packages/persistence/src/repos/storedTextCompaction.ts
-  - packages/persistence/src/repos/upgradeSubstance.ts
   - packages/persistence/test/architecture-storage-writes-are-guarded.test.ts
   - packages/persistence/test/cloud/syncEngine.test.ts
   - packages/persistence/test/destructivePaths.test.ts
@@ -29,15 +28,13 @@ files:
   - packages/persistence/test/storageRefused.test.ts
   - packages/persistence/test/storageSnapshot.test.ts
   - packages/persistence/test/storedTextCompaction.test.ts
-  - packages/persistence/test/upgradeSubstance.test.ts
   - packages/design/fields/browserStorage.ts
   - packages/design/fields/index.ts
   - packages/design/test/fields/browserStorage.test.ts
   - packages/ui/src/main.ts
   - packages/ui/src/hooks/StorageHistory-hooks.ts
-  - packages/ui/src/logic/upgradeLeftNotice.ts
   - packages/ui/src/logic/upgradeRefusedNotice.ts
   - packages/ui/test/hooks/StorageHistory-hooks.test.ts
-  - packages/ui/test/logic/upgradeLeftNotice.test.ts
   - packages/ui/test/logic/upgradeRefusedNotice.test.ts
   - docs/design/BROWSER_STORAGE_KEYS.md
+  - packages/persistence/test/quarantineRetirement.test.ts
