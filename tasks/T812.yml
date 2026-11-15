@@ -1,0 +1,10 @@
+id: T812
+release_note: internal
+repo: openisd
+owner: spec-fix
+status: open
+goal: Fix browser specs whose typed Cms conflict vanished under 2.5% Vas allowance
+why: John, 15 Nov 2026: main suite must be green (QO923, QO930)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T812.yml
