@@ -8,3 +8,14 @@ why: John, 15 Nov 2026: layout is deterministic (QO924, BUG_20261115_mobile-wiza
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T798.yml
+  - packages/design/fields/phoneRowSizes.ts
+  - packages/design/test/fields/phoneRowColumns.test.ts
+  - packages/ui/src/hooks/MobileSheet-hooks.ts
+  - packages/ui/src/hooks/phoneLabelColumn.ts
+  - packages/ui/src/ui/components/PhoneDialogPage.vue
+  - packages/ui/src/ui/components/UIFieldBody.vue
+  - packages/ui/src/ui/components/driverEditorSkin.ts
+  - packages/ui/src/ui/shells/mobile/PhoneClassicPage.vue
+  - packages/ui/src/ui/shells/mobile/phoneClassicFieldVars.ts
+  - packages/ui/test/visual/SOURCES.sha256
+  - packages/ui/test/ui/phone-label-column-one-writer.browser.spec.ts
