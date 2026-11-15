@@ -4,7 +4,18 @@ repo: openisd
 owner: wiringrow
 status: done
 goal: The Driver tab of a multi-coil driver shows no Measured wiring row in either skin; My wiring stays and works as before, and the published-figures note names the wiring they were measured in, stated or inferred.
+ruling: QO941
 why: John, 2026-11-15: the measured wiring does not need to be on that screen, add a dq if necessary but it's clutter (QO941)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/ui/test/hooks/DriverCoilWiring-hooks.test.ts packages/design/test/domain/my-wiring.test.ts
 files:
   - tasks/T831.yml
+  - docs/FIELD_REFERENCE.md
+  - docs/plans/PLAN_20261115_COIL_WIRING_REPLICATES_WINISD.md
+  - packages/design/domain/project/projectCoilWiring.ts
+  - packages/design/test/domain/my-wiring.test.ts
+  - packages/ui/src/hooks/DriverCoilWiring-hooks.ts
+  - packages/ui/src/ui/components/DriverCoilWiring.vue
+  - packages/ui/src/ui/components/DriverEditorModal.vue
+  - packages/ui/test/hooks/DriverCoilWiring-hooks.test.ts
+  - packages/ui/test/ui/my-wiring.browser.spec.ts
+  - packages/ui/test/ui/wiring-dq-mark.browser.spec.ts
