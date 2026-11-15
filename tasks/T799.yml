@@ -5,6 +5,18 @@ owner: ci-baselines
 status: open
 goal: visual baselines match CI runner; repeatable CI re-take; gate against machine-drawn baselines
 why: John, 15 Nov 2026: main suite must be green; baselines must match CI (QO923, QO924)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/land/test/visual-ci.test.sh && bash scripts/land/test/visual.e2e.test.sh && bash scripts/land/test/ship.test.sh
 files:
   - tasks/T799.yml
+  - .github/workflows/visual-retake.yml
+  - .github/workflows/pr.yml
+  - scripts/visual/**
+  - scripts/test.sh
+  - scripts/ship.sh
+  - scripts/land/test/visual-ci.test.sh
+  - scripts/land/test/visual.e2e.test.sh
+  - scripts/land/test/ship.test.sh
+  - docs/design/VISUAL_BASELINES.md
+  - packages/ui/test/visual/**
+
+visual_note: The baseline pictures are redrawn by CI's test machine; the screens look as they did before T791 apart from the changes named in the pull request.
