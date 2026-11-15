@@ -289,6 +289,18 @@ sequenceDiagram
   - The domain may compute pure geometry, such as a vent's area from its dimensions.
   - Anything involving air, compliance or frequency is the engine's.
   - Rule of thumb: if two implementers could disagree on the model, it belongs in the engine.
+- **A multi-coil driver's Re, BL, Le and Znom are scaled by a coil count in the engine, in
+  `packages/design/engine/solvers/driverQuantities.ts`, and nowhere else.**
+  `architecture-coil-arithmetic-is-the-engines.test.ts` fails, naming file and line, when code
+  outside the engine multiplies or divides one of them by a coil count or a wiring factor.
+  | Formula | Function | Called by |
+  |---|---|---|
+  | The published figures in another wiring: series to parallel, Re, Le and Znom divided by N², BL by N; parallel to series the inverse | `convertWiring`, as `engine.driver.convertWiring` | `terminalMotor()` in `domain/driver/openIsdDriverSpec.ts`; `domain/project/projectCoilWiring.ts` |
+  | A figure printed per coil ("N x r", "r + r") as the whole driver's figure in its wiring: series times N, parallel divided by N; its read precision the same | `wholeDriverFromPerCoil`, as `engine.driver.wholeDriverFromPerCoil` | `DriverRecordConverter.#withPerCoilFiguresForWiring` in `domain/driverRecordConverter.ts` |
+  | The old per-coil Re and BL back to the published figures when a stored record of schema version 3 is upgraded: series Re and BL times N, parallel Re divided by N | not yet in the engine: `scaled` and `asPublishedSection` in `domain/multiCoilAsPublished.ts`, listed in the test's baseline | the version 3 to 4 step of `upgradeToCurrent` in `domain/schemaVersion.ts` |
+  The third has no engine to call: `upgradeToCurrent` is a free function run on parsed JSON by static
+  factories and by persistence, the engine door exports no loose function, and only a composition
+  root constructs the engine. It moves when the upgrade is handed an engine area.
 - **The sweep** is `Engine.sweep(driver, Le, boxType, params)`. The UI re-runs it on every
   change, throttled to about 30 per second, and holds the last result in `appState`. The UI
   maps its arrays onto chart series and does only axis ranges and unit scaling.

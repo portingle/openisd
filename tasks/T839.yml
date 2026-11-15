@@ -1,0 +1,17 @@
+id: T839
+release_note: internal
+repo: openisd
+owner: claude-coilcalc
+status: done
+goal: Every calculation on a driver's coil figures (Re, BL, Le, Znom by coil count or wiring) happens in the engine, one named function per formula, and an architecture test refuses a second place
+why: John, 2026-11-15: calcs only happen in the engine; 'I want to know that there isn't calc logic all over the place' (QO942 c29, c37)
+ruling: QO942
+done_test: bash scripts/test.sh packages/design/test/architecture-coil-arithmetic-is-the-engines.test.ts
+files:
+  - tasks/T839.yml
+  - packages/design/test/architecture-coil-arithmetic-is-the-engines.test.ts
+  - packages/design/test/engine/wiring-conversion.test.ts
+  - ARCHITECTURE.md
+  - packages/design/domain/driverRecordConverter.ts
+  - packages/design/engine/driver/DriverEngine.ts
+  - packages/design/engine/solvers/driverQuantities.ts
