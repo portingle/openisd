@@ -19,3 +19,4 @@ files:
   - packages/ui/test/fixtures/test-bundle-paths.json
   - packages/ui/test/ui/original-driver-bundle-selection.browser.spec.ts
   - packages/ui/test/ui/new-project-pick-fills-journey.browser.spec.ts
+  - packages/ui/test/visual/SOURCES.sha256
