@@ -2,7 +2,7 @@ id: T794
 release_note: internal
 repo: openisd
 owner: fixer
-status: open
+status: done
 goal: Multi-coil Znom printed per coil (2 + 2 ohms, 2 x 3 Ω) is stored as the measured wiring's value, like Re (QO915); snapshot multi-coil records brought to the VCCon-name model and re-projected; bundle synced
 why: John 2026-11-15: fix all the associated bugs of #512; snapshot rewrite authorised by script
 done_test: bash scripts/quiet-test.sh npm run typecheck
