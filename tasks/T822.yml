@@ -1,0 +1,10 @@
+id: T822
+release_note: internal
+repo: openisd
+owner: poop
+status: open
+goal: driver-summary-contract passes on the diagnostic-repairs and startup-failure screens, whose own console errors it ignored
+why: Main red after T793 (suite run 43721822026, issue 117): 4 driver-summary-contract cases fail on the screens that write their own console error
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T822.yml
