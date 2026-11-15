@@ -78,7 +78,7 @@ export class ProjectCoilWiring {
         return OPTIONS;
     }
 
-    /** Re, BL, Le and Znom as published, for the measured wiring. */
+    /** Re, BL, Le and Znom as published; Re and BL are for the measured wiring. */
     get published(): TerminalMotor {
         const s = this.#driver.specs;
         return {Re_ohm: s.Re_ohm.value, BL_Tm: s.BL_Tm.value, Le_H: s.Le_H.value, Znom_ohm: s.Znom_ohm.value};

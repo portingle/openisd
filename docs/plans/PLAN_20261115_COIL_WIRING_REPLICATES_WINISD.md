@@ -6,7 +6,7 @@ Labels used for WinISD facts:
 
 - **observed**: seen in WinISD's code, files or screens. The finding file or run is named.
 - **documented**: WinISD's own help text, quoted.
-- **inferred**: worked out from the above, not seen. Every inferred statement below is marked "to be confirmed by reverse engineering (in progress)": one agent is reading the WinISD executable, another is running WinISD under Wine.
+- **inferred**: worked out from the above, not seen. The reverse engineering of `winisd.exe` 0.7.0.950 is done (`R/findings/FINDING_20261115_voice-coil-connection-and-driver-count-in-the-code.md`, `R/GHIDRA_FINDINGS.md` section "2026-11-15 Voice coil connection, coil count and number of drivers"). Section (h) lists what it settled. A statement still marked "to be confirmed" is one the finding lists as not established; the Wine screen observations are still coming.
 
 Every OpenISD statement names the file it comes from.
 WinISD research files live in `winisd_research` (written `R/` below).
@@ -22,14 +22,14 @@ WinISD research files live in `winisd_research` (written `R/` below).
 
 1. **The control.** The project Driver tab has "Voice coil connection", next to "Num. of drivers".
    It is the wiring of ONE driver's voice coils.
-   Observed: `R/runs/nd-1/01_tab_driver.png` (greyed with one coil). That the project box fires the same Re and BL rewrite as the editor's box is inferred, to be confirmed by reverse engineering (in progress): only the editor's handler was decompiled.
+   Observed: `R/runs/nd-1/01_tab_driver.png` (greyed with one coil). That the project box fires the same rewrite as the editor's box is now read in the code (handler 0x4679a0 calls routine 0x461240); see (h).
    Observed: `R/findings/FINDING_20261005_multi-driver-impedance-is-one-drivers.md` ("it is the per-driver multi-coil setting").
 2. **Greyed with one coil.** Observed (same screenshot; greyed state with more than one driver is inferred, to be confirmed by reverse engineering (in progress)). With two coils it is live (`R/toys/qo96_vccon_impedance.py` docstring).
 3. **Flipping it rewrites the stored Re and BL in place.**
    Parallel to series: BL times N, Re times N squared. Series to parallel: the inverse.
    Observed in code: `R/GHIDRA_FINDINGS.md` l.994-996 (handler at 0x461242).
    Observed in a probe: Re 6, BL 8, two coils, Series gives 24 and 16; three coils 54 and 24; four coils 96 and 32 (`R/PROBE_FINDINGS.md` l.3348-3363, run vccon-probe-20261005).
-   Only Re and BL change. Le and Znom do not (inferred: nothing in the findings says they do; to be confirmed by reverse engineering (in progress), see point 4 of section (f)).
+   Only Re and BL change. Le and Znom do not (read in the code: the routine writes Re, BL and VCCon only; see (h)).
 4. **The rewrite is the only effect.** The simulation never reads the coil count or the connection. Observed: `R/PROBE_FINDINGS.md` FINDING-009 and `R/findings/FINDING_20261019_numvc-is-not-a-simulation-input.md`.
    The impedance chart moved when the project box was changed, because the stored Re moved (observed: `R/runs/qo96_vccon_live/results.jsonl`, peak 12 to 48 ohm, times 4).
 5. **Editing the coil count afterwards puts the box back to Parallel and does not undo the rewrite.** Observed: `R/PROBE_FINDINGS.md` l.3348-3363. Series, edit the count, Series again gives Re times 16 (`docs/research/WINISD_PARITY.md` l.978).
@@ -42,7 +42,7 @@ WinISD research files live in `winisd_research` (written `R/` below).
    "Connection mode can be changed by changing the combobox selection. The driver editor then converts Bl and Re values accordingly."
    and "If you enter resistance for parallel connection and get about half of advertised Bl, then you know that Bl was specified that way."
    So WinISD itself tells the user to type the published figures and use the box to match the maker's wiring.
-9. **Two coils in the project box and two drivers together (case d).** Inferred only: the coil rewrite acts on each driver, and the driver count acts on top. Never observed; to be confirmed by reverse engineering (in progress). See (f).
+9. **Two coils in the project box and two drivers together (case d).** Read in the code: the coil rewrite changes the stored Re and BL, and the driver count acts on top; no code multiplies or divides Re by the driver count. See (h).
 
 ## (c) What OpenISD does today
 
@@ -100,7 +100,7 @@ From the research report. Another agent is running WinISD under Wine. Leave this
 4. Whether the box scales Le and Znom. Code says no.
 5. Round trip: an OpenISD dual-coil `.wdr` run in WinISD, curves compared.
 
-**WINE RESULTS GO HERE (not yet filled in):**
+Points 1, 4 and the code part of 2 and 3 are now answered by (h). **WINE SCREEN RESULTS GO HERE (still coming):**
 
 - Point 1: pending.
 - Point 2: pending.
@@ -110,7 +110,7 @@ From the research report. Another agent is running WinISD under Wine. Leave this
 
 ## (g) The migration (a proposal, not decided)
 
-Everything in this section is a proposal. It rests on WinISD behaviour that is still being confirmed by reverse engineering (in progress); nothing here is built.
+Everything in this section is a proposal, except what (h) says is built (task T835).
 
 ### 1. Saved projects
 
@@ -126,6 +126,11 @@ Everything in this section is a proposal. It rests on WinISD behaviour that is s
   Read: `VCCon` becomes the driver's measured wiring (as today); the project's coil wiring stays absent.
   Written: the figures converted to the project's coil wiring, with that wiring as `VCCon` (as today). A `.wdr` keeps the published figures with the measured wiring.
 - Never written or read: the array wiring.
+- Worked case, Dayton MX6-22 (2 coils, published in series: Re 4.7 ohm, BL 12.3 Tm). Nothing is rescaled on load or save, in either program (read in the code, (h) point 7).
+  - OpenISD project, My wiring = Series (or untouched): writes Re 4.7, BL 12.3, numVC 2, VCCon 2. WinISD opens it and simulates with 4.7 and 12.3, the same numbers. Its Driver tab box shows "Parallel" (the WinISD display bug), but the numbers are right until the user moves the box.
+  - OpenISD project, My wiring = Parallel: writes Re 1.175, BL 6.15, Le 1.5 mH and Znom 4 as published, numVC 2, VCCon 1. WinISD simulates with 1.175 and 6.15, the same as OpenISD. WinISD's own Series-to-Parallel rewrite would give the same Re and BL.
+  - OpenISD `.wdr` of the driver: Re 4.7, BL 12.3, numVC 2, VCCon 2 (the measured wiring, as published).
+  - A WinISD file read into OpenISD: Re and BL as stored are the published figures, VCCon is taken as the measured wiring, My wiring is absent (follows the measured wiring). A file WinISD saved after its own flip holds the flipped figures labelled with the new wiring; OpenISD then treats them as published for that wiring, and the numbers are the same.
 
 ### 3. Tests and goldens that change
 
@@ -184,6 +189,38 @@ Recommendation: B, because it is what John's last words say and it removes a wir
 | `packages/design/domain/openisdSchema.ts` l.924-930 | "WinISD Driver tab: 'Voice coil connection'." on `wiring`, and for `coilWiring` "Not WinISD's 'Voice coil connection' above, which joins several drivers." | `coilWiring` carries the comment "WinISD Driver tab: 'Voice coil connection'"; `wiring` is marked unused (ticket 519). |
 | `packages/design/fields/desktopHelp.ts` `VOICE_COIL_CONNECTION` and `OriginalNewProject.vue` l.164 | label only | tooltip added saying it is the coil wiring |
 | `docs/research/ACCURACY_IMPROVEMENTS.md` l.61 and `WINISD_PARITY.md` l.1471 | the array's impedance per the project's wiring | marked superseded (candidate B) or kept (candidate A) |
+
+## (h) Confirmed by reading winisd.exe (15 Nov 2026)
+
+Source: `R/findings/FINDING_20261115_voice-coil-connection-and-driver-count-in-the-code.md`. "Read in the code" unless stated.
+
+1. One routine (0x461240) does coil wiring. The project Driver tab's "Voice coil connection" (handler 0x4679a0) and the driver editor's combo both call it.
+2. It acts only when Re > 0, BL > 0, numVC > 1 and the stored VCCon differs from the choice. Parallel to series: BL times numVC, Re times numVC squared. Series to parallel: the inverse. Then it sets VCCon.
+3. **It writes Re, BL and VCCon only.** Not Le, not Znom, not Qes, not the entered or calculated marks.
+4. The box is enabled exactly when numVC > 1. The number of drivers and the box type play no part.
+5. No simulation routine reads numVC or VCCon. The sweep uses Re and BL as they stand.
+6. The number of drivers never wires anything: Vas and Sd times Nd in one shared box, each driver fed P/Nd. The impedance chart is one driver's (Re is never multiplied or divided by Nd). Iso-Barik halves Vas and doubles the motional impedance. The Signal tab's "Driver input voltage (each)" is the square root of P times Re over Nd.
+7. Load and save never rescale Re or BL. `.wdr` and `.wpr` share one reader and one writer; numVC and VCCon are plain integers, default 1.
+8. **WinISD bug:** nothing sets the project box from the loaded VCCon. A loaded Series driver shows "Parallel"; choosing Parallel then divides Re and BL; choosing Series does nothing (observed in memory under Wine: Re 14.1526 and BL 6 unchanged; Parallel gives 3.538 and 3). A move of the box does not mark the project changed (observed in the saved `.wpr`).
+9. The 5 Oct "numVC edit resets the box to Parallel" probe is explained: Series chosen at numVC 1 never set VCCon (the numVC > 1 guard), so the refresh showed Parallel.
+
+Not established (finding): the sweep consuming rewritten Re and BL was not shown live (read in the code at 0x456835 only); what 0x463e10 does after the box moves (taken to be a redraw, inferred); an extra series term in 0x45e740 (unidentified).
+
+### What changed in OpenISD because of it (task T835, built)
+
+- **Le and Znom are no longer converted by "My wiring".** OpenISD converted them (Le and Znom divided by N squared going to parallel). WinISD does not. Removed: `convertWiring` now changes Re and BL only (`packages/design/engine/solvers/driverQuantities.ts`). Reason: replicate WinISD (QO941.c24) and the code evidence in point 3. Tests that pinned the old figures (MX6-22 Le 0.375 mH, Znom 1 ohm in parallel) were changed on purpose and name this finding.
+- "Scale Le and Znom with the coil wiring" is a possible improvement, not built. It belongs in the feature tickets (issue 519 and a new ticket for it), because Le and Znom do scale with the wiring in physics and WinISD leaves them.
+- The in-app list of fixed WinISD bugs has two new entries (`packages/design/fields/winisdFixedBug.ts`): the in-place rewrite of Re and BL, and the always-Parallel display.
+- Not changed, differs from WinISD: OpenISD refuses a rewiring for three coils; WinISD converts for any numVC above 1 (Re times 9, BL times 3 for three coils). OpenISD assumes identical coils and publishes in one configuration. Open question for John.
+
+### What does NOT change yet, and why (stop and report)
+
+The default of the impedance chart with more than one driver departs from WinISD, and a recorded ruling of John's says it should.
+
+- OpenISD today: one driver's figure times 1/N when the array wiring is Parallel (the default) or times N when Series, unless the yellow switch "Per-driver impedance" is on (`packages/design/engine/simulation/SimulationEngine.ts` `arrayImpedanceScale`; default `winisdDriverCountModel: false`, `openisdTransforms.ts` l.200). Everything else with more than one driver is already WinISD's: each driver in Vb/N, SPL, excursion and maximum power per `oneBoxOfN` (same file l.225 and l.464-471); the array wiring changes only the impedance chart.
+- The ruling: John, 4 Oct 2026, "Only a straight WinISD bug is yellow ... the per-driver impedance" (`CLAUDE.md`, "WinISD controls behave as native WinISD"); 5 Oct 2026 (`SimulationEngine.ts` l.218; commit 64a18829; `bugs/archive/BUG_20261005_winisd-multi-driver-impedance-is-one-drivers.md`; `docs/research/ACCURACY_IMPROVEMENTS.md` row "More than one driver").
+- Against it: "for now replicate WinISD" (QO941.c24) and the finding (one driver's impedance at any Nd, no wiring of drivers).
+- So the single project control (a), and removal of the array wiring, are NOT built in T835. The array control keeps the label "Voice coil connection" on the desktop and "Connection" on the phone, and "My wiring" stays. John to rule: keep the 4-5 Oct ruling (candidate A in (g) 5) or reverse it (candidate B).
 
 ### 7. Order of work
 

@@ -1,7 +1,8 @@
 /**
  * `.wpr` project export writes the figures in the user's wiring with that wiring (QO907, plan A4):
  * a project of the series-measured Dayton MX6-22 (Re 4.7 Ω, BL 12.3 T·m, Le 1.5 mH, Znom 4 Ω) set to
- * parallel writes Re 1.175, BL 6.15, Le 0.375 mH, Znom 1 and VCCon parallel (code 1). A project that
+ * parallel writes Re 1.175, BL 6.15, Le 1.5 mH and Znom 4 as published (WinISD's wiring routine
+ * writes Re and BL only) and VCCon parallel (code 1). A project that
  * kept the measured wiring writes the published figures with VCCon series (code 2). The saved
  * driver (`.wdr`) keeps the published figures with the measured wiring.
  */
@@ -38,14 +39,14 @@ describe('.wpr export and My wiring', () => {
     expect(w.cell('VCCon').value).toBe('2');
   });
 
-  it('parallel chosen: Re 1.175, BL 6.15, Le 0.000375, Znom 1, VCCon parallel (1)', () => {
+  it('parallel chosen: Re 1.175, BL 6.15, Le and Znom as published, VCCon parallel (1)', () => {
     const p = project();
     p.coilWiring.choose('parallel');
     const w = driverOfWpr(p);
     expect(Number(w.cell('Re').value)).toBeCloseTo(1.175, 9);
     expect(Number(w.cell('BL').value)).toBeCloseTo(6.15, 9);
-    expect(Number(w.cell('Le').value)).toBeCloseTo(0.000375, 12);
-    expect(Number(w.cell('Znom').value)).toBeCloseTo(1, 9);
+    expect(Number(w.cell('Le').value)).toBeCloseTo(0.0015, 12);
+    expect(Number(w.cell('Znom').value)).toBeCloseTo(4, 9);
     expect(w.cell('VCCon').value).toBe('1');
     expect(w.cell('VCCon').state).toBe('entered');
   });

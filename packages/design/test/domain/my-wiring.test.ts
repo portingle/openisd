@@ -7,7 +7,7 @@
  *
  * Expected values are worked by hand from the Dayton MX6-22 datasheet figures (measured with the
  * voice coils in series): Re 4.7 Ω, BL 12.3 T·m, Le 1.5 mH, Znom 4 Ω, 2 coils.
- *   series → parallel, N = 2: Re ÷ 4 = 1.175 Ω, BL ÷ 2 = 6.15 T·m, Le ÷ 4 = 0.375 mH, Znom ÷ 4 = 1 Ω.
+ *   series → parallel, N = 2: Re ÷ 4 = 1.175 Ω, BL ÷ 2 = 6.15 T·m; Le and Znom unchanged, as WinISD's wiring routine writes Re and BL only.
  *   Qes = 2π·Fs·Mms·Re/BL²: 2π·30·0.0638·4.7/12.3² = 0.37360 (series), 2π·30·0.0638·1.175/6.15² =
  *   0.37360 (parallel): the same.
  * The conversion is proved against a SINGLE-coil driver stating the converted figures: the two
@@ -70,12 +70,12 @@ describe('My wiring: the default is the measured wiring', () => {
 });
 
 describe('My wiring: parallel for the series-measured MX6-22', () => {
-  it('sweeps like a single-coil driver stating Re 1.175 Ω, BL 6.15 T·m, Le 0.375 mH', () => {
+  it('sweeps like a single-coil driver stating Re 1.175 Ω, BL 6.15 T·m, Le 1.5 mH', () => {
     const project = projectOf(MX6_22);
     project.coilWiring.choose('parallel');
     expectSame(
       curves(project),
-      curves(projectOf({...MOTOR, numVC: 1, Re_ohm: 1.175, BL_Tm: 6.15, Le_H: 0.000375})));
+      curves(projectOf({...MOTOR, numVC: 1, Re_ohm: 1.175, BL_Tm: 6.15, Le_H: 0.0015})));
   });
 
   it('shows the converted figures beside the published ones', () => {
@@ -86,8 +86,8 @@ describe('My wiring: parallel for the series-measured MX6-22', () => {
     expect(w.published).toEqual({Re_ohm: 4.7, BL_Tm: 12.3, Le_H: 0.0015, Znom_ohm: 4});
     expect(w.atMine.Re_ohm).toBeCloseTo(1.175, 12);
     expect(w.atMine.BL_Tm).toBeCloseTo(6.15, 12);
-    expect(w.atMine.Le_H).toBeCloseTo(0.000375, 15);
-    expect(w.atMine.Znom_ohm).toBeCloseTo(1, 12);
+    expect(w.atMine.Le_H).toBe(0.0015);
+    expect(w.atMine.Znom_ohm).toBe(4);
   });
 
   it('leaves the stored figures and every wiring-independent quantity as published', () => {

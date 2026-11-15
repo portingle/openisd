@@ -89,8 +89,9 @@ never read `VCCon`.
 The project carries **My wiring** (`driverEmbedding.coilWiring`, `series` or `parallel`): how the user will wire the
 coils. Absent means the measured wiring, so a project saved before it existed behaves as measured. Only the amplifier
 side reads it: impedance, SPL and excursion against voltage, power, and Rg loading use the figures converted from the
-measured wiring to My wiring, for N identical coils. Series to parallel: `Re` and `Le` and `Znom` divided by N², `BL`
-divided by N; parallel to series the inverse. `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
+measured wiring to My wiring, for N identical coils. Series to parallel: `Re` divided by N², `BL` divided by N;
+parallel to series the inverse. `Le` and `Znom` are not converted: WinISD's wiring routine writes `Re` and `BL` only
+(`winisd_research` FINDING_20261115, QO941). `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
 Dayton MX6-22 (series, 4.7 Ω, 12.3 Tm) in parallel is 1.175 Ω, 6.15 Tm, and `Qes` stays 0.373. The choice is
 disabled, with the reason shown, for a driver whose measured wiring is not stated, for three coils (published in one
 configuration) and for one coil. A different driver in the project resets it.

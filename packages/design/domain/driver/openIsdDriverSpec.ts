@@ -493,7 +493,7 @@ export class OpenIsdDriverSpec {
         };
     }
 
-    /** Re, BL, Le and Znom as the amplifier sees them: converted from the measured wiring to
+    /** Re and BL as the amplifier sees them (Le and Znom as published): converted from the measured wiring to
      *  "My wiring" when the project chose another one and the driver can be rewired, otherwise
      *  as published. The stored figures are never changed. */
     terminalMotor(): TerminalMotor {

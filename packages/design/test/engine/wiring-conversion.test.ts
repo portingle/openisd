@@ -1,8 +1,9 @@
 /**
  * Rewiring a multi-coil driver (QO900 R1; plan "How the wiring maths works after the fix"): the
  * published Re/BL/Le/Znom are for the measured wiring M; `convertWiring` gives them for the
- * user's wiring U, for N identical coils. Series → parallel: Re ÷ N², BL ÷ N, Le and Znom ÷ N².
- * Parallel → series: the inverse. Fs, Qes, Qms, Qts, Mms, Cms and Vas never change.
+ * user's wiring U, for N identical coils. Series → parallel: Re ÷ N², BL ÷ N; Le and Znom are not
+ * converted, as in WinISD, whose coil-wiring routine writes Re, BL and VCCon only (winisd_research
+ * FINDING_20261115_voice-coil-connection-and-driver-count-in-the-code; QO941). Parallel → series: the inverse. Fs, Qes, Qms, Qts, Mms, Cms and Vas never change.
  */
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '../../engine/Engine.js';
@@ -20,12 +21,12 @@ function converted(motor: WiredMotor, numVC: number | null, measured: 'series' |
 }
 
 describe('convertWiring', () => {
-  it('MX6-22 series → parallel: Re 4.7/4 = 1.175 Ω, BL 12.3/2 = 6.15 Tm, Le 1.5/4 = 0.375 mH, Znom 4/4 = 1 Ω', () => {
+  it('MX6-22 series → parallel: Re 4.7/4 = 1.175 Ω, BL 12.3/2 = 6.15 Tm; Le 1.5 mH and Znom 4 Ω stay as published', () => {
     const p = converted(MX6_22, 2, 'series', 'parallel');
     expect(p.Re_ohm).toBeCloseTo(1.175, 12);
     expect(p.BL_Tm).toBeCloseTo(6.15, 12);
-    expect(p.Le_H).toBeCloseTo(0.000375, 15);
-    expect(p.Znom_ohm).toBeCloseTo(1, 12);
+    expect(p.Le_H).toBe(0.0015);
+    expect(p.Znom_ohm).toBe(4);
   });
 
   it('parallel → series is the inverse: 1.175 Ω / 6.15 Tm → 4.7 Ω / 12.3 Tm', () => {
