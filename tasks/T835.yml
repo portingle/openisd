@@ -1,0 +1,10 @@
+id: T835
+release_note: internal
+repo: openisd
+owner: wiringrow
+status: open
+goal: A multi-coil driver's wiring conversion changes Re and BL only, by WinISD's factors (Re by N squared, BL by N); Le and Znom stay as published; the in-app list of fixed WinISD bugs names the in-place rewrite and the always-Parallel display.
+why: John, 2026-11-15: for now replicate WinISD (QO941.c24); winisd_research FINDING_20261115 voice-coil-connection-and-driver-count-in-the-code
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T835.yml
