@@ -3,8 +3,18 @@ release_note: internal
 repo: openisd
 owner: main-red-app
 status: open
-goal: main red: app fixes (Signal box 112 px, ABC columns at 1024, digit click drift)
+goal: Main red, app faults: the phone Signal box is a fixed 112 px (T720), the ABC vent columns share the pane at 1024 px, a click that drifts under the spin threshold still selects the pressed digit
 why: John, 15 Nov 2026: main suite must be green (QO923); SDLC: main red is fixed first
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/design/test/fields/phoneRowColumns.test.ts
 files:
   - tasks/T806.yml
+  - packages/design/fields/phoneRowSizes.ts
+  - packages/design/test/fields/phoneRowColumns.test.ts
+  - packages/ui/src/hooks/NumInput-hooks.ts
+  - packages/ui/src/style.css
+  - packages/ui/src/ui/shells/original/OriginalShell.vue
+  - packages/ui/test/fixtures/compactFieldContract.ts
+  - packages/ui/test/ui/layout-long-values.browser.spec.ts
+  - packages/ui/test/ui/mobile-signal-box-width.browser.spec.ts
+  - bugs/BUG_20261115_desktop-abc-1024-labels-cut-in-three-columns.md
+  - bugs/BUG_20261115_signal-box-112px-cannot-show-top-limit-power.md

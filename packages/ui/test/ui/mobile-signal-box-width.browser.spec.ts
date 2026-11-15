@@ -4,9 +4,8 @@ import {forceMobileSkin} from '../fixtures/mobileSkin.js';
 
 // T720: on the phone Signal tab the typing input of each number box is 60% of its old width.
 // Measured at 374x705 before the change: 186 px (input with its unit chip inside). 60% of 186 = 111.6.
-// T742 widened the label column: the Signal column is now 145 px and the share 77%, so the Signal box stays 112 px.
-const BOX_TAB_INPUT_WIDTH_PX = 145;
-const EXPECTED_WIDTH_PX = BOX_TAB_INPUT_WIDTH_PX * PhoneRowColumns.SIGNAL_INPUT_SHARE;
+// The Signal box is a fixed 112 px whatever the page's label column (T742 sized columns per page, which moved a share of it).
+const EXPECTED_WIDTH_PX = PhoneRowColumns.SIGNAL_INPUT_PX;
 
 test.use({viewport: {width: 374, height: 705}});
 

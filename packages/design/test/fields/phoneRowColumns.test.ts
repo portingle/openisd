@@ -18,7 +18,7 @@ describe('PhoneRowColumns', () => {
     for (const unit of ['Hz', 'L', 'Ω', 'mm']) expect(PhoneRowColumns.chipIsWide(unit)).toBe(false);
   });
 
-  it('gives the phone Signal tab typing box 60% of its column (T720)', () => {
-    expect(PhoneRowColumns.STANDARD.cssVars().get('--mob-col-input-share')).toBe('0.77');
+  it('gives the phone Signal tab typing box 60% of the old Box-tab box, 112 px, whatever its column (T720)', () => {
+    expect(PhoneRowColumns.STANDARD.cssVars().get('--mob-col-input-w')).toBe('112px');
   });
 });
