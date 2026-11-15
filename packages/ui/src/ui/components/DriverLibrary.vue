@@ -42,11 +42,11 @@ const { openNewDriver } = selection;
 // no controls for them. The custom-GitHub-URL loader they were grouped with has no
 // implementation anywhere in the codebase — dead, not merely hidden.
 const {
-  DRIVER_TYPES, DRIVER_TYPE_HELP_ROWS, DRIVER_SCOPES,
+  DRIVER_TYPES, DRIVER_TYPE_HELP_ROWS, DRIVER_SCOPES, SIZE_CLASSES,
   allDrivers, statusMsg, statusErr,
   filterQ, typeStates,
-  fsMin, fsMax, rangeFrom, rangeTo, rangeKeepUnstated, sdMin, sdMax, selZ, displayLimit,
-  toggleType, toggleZ, clearParamFilters, activeFilters, filtersOn, foldedFilterCount, clearAllFilters,
+  fsMin, fsMax, rangeFrom, rangeTo, rangeKeepUnstated, sdMin, sdMax, selZ, selSizes, displayLimit,
+  toggleType, toggleSize, sizeLabelOf, toggleZ, clearParamFilters, activeFilters, filtersOn, foldedFilterCount, clearAllFilters,
   filteredDrivers, displayedDrivers, listTruncated, listedCount,
   filteredMyDrivers, displayNameOf, driverId, editMyDriver, editOverviewDriver, deleteMyDriver,
   favoritesAvailable, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly,
@@ -107,7 +107,7 @@ onMounted(openedLibrary);
                   :title="t.title"
                   @click="toggleType(t.value)">{{ t.label }}</button>
 
-          <button v-if="Object.keys(typeStates).length || fsMin || fsMax || rangeFrom || rangeTo || !rangeKeepUnstated || sdMin || sdMax || selZ.length"
+          <button v-if="Object.keys(typeStates).length || fsMin || fsMax || rangeFrom || rangeTo || !rangeKeepUnstated || sdMin || sdMax || selZ.length || selSizes.length"
                   class="type-chip type-clear"
                   @click="clearParamFilters">✕ clear</button>
 
@@ -170,6 +170,17 @@ onMounted(openedLibrary);
                   :title="`Filter to nominal ${z}${znomUnit} impedance — stored as WinISD Znom (derived from Re when not entered; not fed back into the simulation)`"
                   @click="toggleZ(z)">{{ z }}{{ znomUnit }}</button>
           </span>
+        </div>
+
+        <!-- Size: the class worked out from Sd, for search only. It is not the maker's nominal size,
+             so the row and every label say "from Sd". -->
+        <div class="size-row">
+          <span class="plabel" :class="{ active: selSizes.length }"
+                title="Size class worked out from Sd, for searching only. It is not the maker's nominal size.">Size ≈</span>
+          <button v-for="c in SIZE_CLASSES" :key="c.value" class="zchip" :class="{ active: selSizes.includes(c.value) }"
+                  :title="`Drivers whose Sd gives a size class of about ${c.label} (worked out from Sd, not the maker's nominal size)`"
+                  @click="toggleSize(c.value)">{{ c.value }}</button>
+          <span class="plabel" :class="{ active: selSizes.length }">in (from Sd)</span>
         </div>
 
         <!-- The slot the All Sources dropdown vacated. Two chips that compose: scope says
@@ -257,6 +268,7 @@ onMounted(openedLibrary);
                   <span v-if="d.dq" class="dq-flag" title="Data quality issues detected — some core fields may be missing or have suspicious values (e.g. Fs=0). Open to review.">⚠</span>
                 </div>
                 <span class="dl-sub">
+                  <span v-if="sizeLabelOf(d)" class="dsize" title="Size class worked out from Sd, for searching. The maker's nominal size is not shown here.">{{ sizeLabelOf(d) }}</span>
                   <a v-if="d.datasheet" class="dpdf" :href="d.datasheet" target="_blank" rel="noopener"
                      title="Open manufacturer datasheet (PDF)" @click.stop>PDF</a>
                   <a v-if="d.productPage" class="dpdf" :href="d.productPage" target="_blank" rel="noopener"
@@ -273,6 +285,7 @@ onMounted(openedLibrary);
             <b>{{ d.name }}</b>
             <span v-if="d.dq" class="dq-flag" title="Data quality issues detected — some core fields may be missing or have suspicious values (e.g. Fs=0). Open to review.">⚠</span>
             <span class="dmeta">
+              <span v-if="sizeLabelOf(d)" class="dsize" title="Size class worked out from Sd, for searching. The maker's nominal size is not shown here.">{{ sizeLabelOf(d) }}</span>
               <a v-if="d.datasheet" class="dpdf"
                  :href="d.datasheet" target="_blank" rel="noopener"
                  title="Open manufacturer datasheet (PDF)" @click.stop>PDF</a>
@@ -817,6 +830,8 @@ onMounted(openedLibrary);
   gap: 6px;
   flex-shrink: 0;
 }
+.driver-library .dsize { font-size: 10px; color: #555; white-space: nowrap; }
+.size-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 .driver-library .dpdf {
   font-size: 9px;
   font-weight: 600;
@@ -1095,6 +1110,9 @@ onMounted(openedLibrary);
 .driver-library.dl-phone .dl-filters-toggle { flex: none; height: 40px; padding: 0 12px; border: 1px solid #aaa; border-radius: 4px; background: #fff; font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; color: #000; }
 .driver-library.dl-phone .dl-filters-toggle.on { background: #e0efff; border-color: #7fb3ff; color: #0b4f9e; font-weight: 600; }
 .driver-library.dl-phone .type-row { flex: none; flex-wrap: wrap; gap: 6px; padding: 6px 16px; }
+.driver-library.dl-phone .size-row { flex: none; gap: 6px; padding: 6px 16px; }
+.driver-library.dl-phone .dsize { font-size: 12px; color: #666; white-space: normal; }
+.driver-library.dl-phone .dl-sub .dsize + .dpdf::before { content: ' · '; }
 .driver-library.dl-phone .type-chip, .driver-library.dl-phone .zchip { height: 30px; padding: 0 10px; border-radius: 15px; font-size: 13px; }
 .driver-library.dl-phone .param-row { display: flex; flex: none; flex-direction: column; align-items: stretch; gap: 0; }
 .driver-library.dl-phone .pgroup { display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; }
