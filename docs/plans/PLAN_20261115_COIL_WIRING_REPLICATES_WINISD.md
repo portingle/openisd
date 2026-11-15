@@ -60,6 +60,14 @@ WinISD research files live in `winisd_research` (written `R/` below).
    Read: `[Box] Nd` (l.595) and the driver block through the driver importer, which reads `VCCon` as the driver's measured wiring (`packages/design/domain/winIsdDriverImport.ts`). The project's coil wiring stays absent, so it follows the measured wiring. The array wiring is not read; a loaded project gets parallel.
 7. **A WinISD-difference list entry for the coil rewrite does not exist.** `packages/design/fields/winisdFixedBug.ts` and `winisdDifferenceSection.ts` do not mention it (research report section 4).
 
+## How the coil wiring is calculated (John, QO942.c29)
+
+The driver's entered values and its measured wiring go to the solver together with the project's coil wiring. The amplifier-side Re and BL are CALCULATED at that moment. Nothing is stored, nothing is held in a second place ("it's not a copy it's just a calc").
+
+- The arithmetic lives in ONE function, `convertWiring` (`packages/design/engine/solvers/driverQuantities.ts`).
+- It is reached through ONE door, `terminalMotor()` (`packages/design/domain/driver/openIsdDriverSpec.ts`): the solver's Re and BL, the sweep's Le, the Driver tab's one line, the `.wpr` export. `projectCoilWiring.ts` also asks it "can this be rewired" with a probe.
+- The gate `packages/design/test/architecture-coil-wiring-arithmetic-has-one-site.test.ts` fails if a second caller or a factor of the coil count appears outside them. It names two other places that multiply by the coil count, both turning a figure printed PER COIL into the published figure for the measured wiring, not the amplifier-side conversion: the record bridge (`driverRecordConverter.ts`) and the one-time schema 3 to 4 upgrade (`multiCoilAsPublished.ts`).
+
 ## (d) The end state John ruled
 
 - The driver's wiring is the measured setup. It is data of the driver and is edited only in the driver editor ("Coil wiring").

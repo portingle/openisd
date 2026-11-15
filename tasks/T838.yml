@@ -26,3 +26,4 @@ files:
   - packages/ui/test/hooks/DriverCoilWiring-hooks.test.ts
   - packages/ui/test/ui/my-wiring.browser.spec.ts
   - tasks/T838.yml
+  - packages/design/test/architecture-coil-wiring-arithmetic-has-one-site.test.ts
