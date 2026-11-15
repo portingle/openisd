@@ -16,7 +16,7 @@ declaring string literals. `packages/ui/src/diagnostics/faultLog.ts` declares it
 | `openisd_favourite_drivers` | Favourite IDs for bundled or user-saved drivers |
 | `openisd_quarantine_driver` | Temporary diagnostic backup for a refused driver record |
 | `openisd_app_settings` | Options: air defaults, vented limits |
-| `openisd_refused_<UTC stamp>[_<nn>]` | A project that would not load, kept whole. JSON `{at, reason, name, text}`; `text` is the stored project text verbatim; `reason` is `wouldNotLoad`. Written by `StorageBackup.refuse`, listed by `refusedCopies`, read by `readRefused`, removed only by `discardRefused`. Outside whole-store backups; nothing drops it for room except a whole-store backup, and an identical text is kept once |
+| `openisd_refused_<UTC stamp>[_<nn>]` | A project that would not load, kept whole. JSON `{at, reason, name, text}`; `text` is the stored project text verbatim; `reason` is `wouldNotLoad`, or `beforeUpgrade` for the stored text of a project as it was before an update changed it in substance (T827). Written by `StorageBackup.refuse`, listed by `refusedCopies`, read by `readRefused`, removed only by `discardRefused`. Outside whole-store backups; nothing drops it for room except a whole-store backup, and an identical text is kept once |
 | `openisd_backup_<build>_<time>` | Whole-store backup, taken before any destructive write |
 
 ## One store per deployment
