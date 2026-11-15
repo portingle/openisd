@@ -1,0 +1,10 @@
+id: T823
+release_note: internal
+repo: openisd
+owner: claude-sub
+status: open
+goal: An exact printed zero in a physically positive driver field raises no physical-limit data-quality line, because the field is not provided (QO935)
+why: John, QO935 2026-11-15: 'the Accuton zero + a zero is same as not provided surely'
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T823.yml
