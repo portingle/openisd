@@ -1,0 +1,10 @@
+id: T834
+release_note: internal
+repo: openisd
+owner: visualgate
+status: open
+goal: The stored-data sizes on dialog-options-your-data and dialog-shared-storage-restore-picker (both skins) are deterministic: the random project id of the generated fixture project is fixed, and the masks over those figures are removed
+why: John, 2026-11-15: a picture's content is deterministic and a mask is not a way to hide variation that has a cause (QO924); T830 masked the sizes instead
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T834.yml
