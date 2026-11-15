@@ -45,6 +45,10 @@ Labels: **read in the code** and **observed** are in WinISD 0.7.0.950, from `win
 - Replaced: `winisdDriverCountModel.test.ts` by `severalDriversImpedance.test.ts`. Changed, each naming the finding: `error-switches`, `compat-switch`, `every-input-recalculates`, `project-sweep-source`, `find-impedance-peak`, `rg-placement`, `field-registry`, the Original and phone Advanced-tab specs, the wizard walk, the phone Driver tab spec, the field-layout rule for the Driver tab dropdowns, the phone field inventory.
 - `driver-count-winisd.test.ts` (WinISD captures for two drivers) now runs on the default; it no longer sets the switch.
 
+## No wiring arithmetic is left in the simulation (John, QO942.c29)
+
+The coil wiring is CALCULATED at the moment the solver is given the driver's entered values, its measured wiring and the project's coil wiring (PR A; "it's not a copy it's just a calc"). After this PR the simulation engine and the circuit hold no wiring arithmetic at all: the array scaling in `circuit.ts` and `arrayImpedanceScale` are gone. The gate `packages/design/test/architecture-coil-wiring-arithmetic-has-one-site.test.ts` fails if a series or parallel branch, a conversion call or a terminal-motor read appears there, or if `convertWiring` is named outside its four allowed files.
+
 ## If only this PR is merged
 
 - Desktop Driver tab: Num. of drivers, Standard / Iso-Barik, then the coil block ("This driver's voice coils", "My wiring"). No "Voice coil connection" box.
