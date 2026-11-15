@@ -2,7 +2,7 @@ id: T832
 release_note: internal
 repo: openisd
 owner: leader
-status: blocked
+status: done
 goal: Every glyph the app draws comes from the bundled fonts: the phone colour key's square and the desktop What-if note are drawn without a font glyph, the store gate takes the bundled font, and a browser spec fails when any element on any visual screen is drawn by a system font
 why: John, 2026-11-15: the fonts are baked into the app, so why would they differ (QO466 ruling of 2026-11-10: never a device default)
 done_test: bash scripts/test.sh packages/ui/test/ui/font-glyph-coverage.test.ts
@@ -345,4 +345,3 @@ visual:
   - mobile-wizard-vented-step3
   - mobile-wizard-vented-step4
   - mobile-wizard-vented-step5
-blocked_reason: merge of portingle/main conflicts in: docs/design/VISUAL_BASELINES.md 
