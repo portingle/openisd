@@ -1,0 +1,10 @@
+id: T815
+release_note: internal
+repo: openisd
+owner: ship-guards
+status: open
+goal: Ship guards: recurring PR mistakes of 14-15 Nov are refused or caught before the PR opens
+why: John, 15 Nov 2026: decided ways of working are written down and enforced (QO923)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T815.yml
