@@ -1,0 +1,10 @@
+id: T837
+release_note: internal
+repo: openisd
+owner: wiringrow
+status: open
+goal: With several drivers the impedance chart is one driver's, as WinISD; the control that wired several drivers, the Per-driver impedance switch and its cue are gone; saved projects with several drivers are told once.
+why: John, 2026-11-15: for now replicate WinISD (QO941.c24); the 5 Oct 2026 per-driver impedance classification was an agent's and John did not intend it (QO941.c33, c34); isolate the two issues (QO942.c2)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T837.yml
