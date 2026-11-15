@@ -5,6 +5,10 @@ owner: phone-title
 status: open
 goal: On the phone Driver tab the driver name button shows all of a long driver name, wrapped on three lines with the first line clipped under the header; it shows one line with an ellipsis, nothing clipped
 why: John, 15 Nov 2026: nothing clipped (field-layout rule 2; QO923)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/ui/test/ui/mobile-long-driver-name-fits.browser.spec.ts
 files:
   - tasks/T809.yml
+  - bugs/BUG_20261115_phone-driver-name-button-clipped-under-header.md
+  - packages/ui/src/style.css
+  - packages/ui/test/ui/mobile-long-driver-name-fits.browser.spec.ts
+  - packages/ui/test/visual/SOURCES.sha256
