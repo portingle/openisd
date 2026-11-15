@@ -9,6 +9,7 @@ done_test: bash scripts/test.sh packages/design/test/domain/my-wiring.test.ts
 ruling: QO907
 files:
   - tasks/T803.yml
+  - packages/ui/test/visual/SOURCES.sha256
   - docs/FIELD_REFERENCE.md
   - docs/research/WINISD_PARITY.md
   - packages/design/domain/driver/openISDDriver.ts
