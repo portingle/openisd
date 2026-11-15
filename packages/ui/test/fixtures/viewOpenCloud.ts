@@ -29,6 +29,27 @@ async function savedAccount(page: Page, kind: 'token' | 'reconnect'): Promise<vo
   }, [CURRENT_STORAGE_LAYOUT, kind] as const);
 }
 
+/** Google Drive's stand-in for a signed-in account: it answers every Drive call as Drive does (the stub of `stubGoogleApis` answers a create with a file list, so sync failed). */
+async function driveStandIn(page: Page, drive = new DriveEmulator()): Promise<void> {
+  // Drive answers one request at a time, in the order they were asked: the app sends several creates at once, and the Activity
+  // list is newest first, so the order they finish in is the order the list shows. Answered in any order, the list order varies.
+  let queue: Promise<unknown> = Promise.resolve();
+  await page.route('**/www.googleapis.com/**', async route => {
+    const request = route.request();
+    const answer = queue.then(async () => {
+      const reply = await drive.fetch(request.url(), {method: request.method(), headers: request.headers(), body: request.postData() ?? undefined});
+      await route.fulfill({status: reply.status, contentType: reply.headers.get('content-type') ?? 'application/json', body: await reply.text()});
+    });
+    queue = answer.catch(() => undefined);
+    await answer;
+  });
+}
+
+/** The Cloud sync dialog says Synced: the first run has ended and the run it set off after it has too (the badge reads busy and "will sync in a moment" between). */
+async function waitForSynced(page: Page, skin: WalkSkin): Promise<void> {
+  await expect(page.locator(dialogRoot(skin)).locator('.cloud-sync-headline').first()).toContainText(/^\s*Synced/);
+}
+
 /** Starts the app and opens a project, as the walk's first screen does, in the skin. */
 async function launch(page: Page, skin: WalkSkin): Promise<void> {
   await page.goto('/');
@@ -51,15 +72,19 @@ const dialogRoot = (skin: WalkSkin) => skin === WalkSkin.Phone ? '.mob-dlg' : '.
 /** Signed in: the dialog shows the account and the activity. */
 const cloudDialog = (skin: WalkSkin): OpenStep => ({root: dialogRoot(skin), open: async page => {
   await savedAccount(page, 'token');
+  await driveStandIn(page);
   await launch(page, skin);
   await openCloudDialog(page, skin);
+  await waitForSynced(page, skin);
 }});
 
 /** Signed in, Disconnect pressed: the app asks first. */
 const cloudConfirm = (skin: WalkSkin): OpenStep => ({root: '.confirm-overlay', open: async page => {
   await savedAccount(page, 'token');
+  await driveStandIn(page);
   await launch(page, skin);
   await openCloudDialog(page, skin);
+  await waitForSynced(page, skin);
   await page.locator(dialogRoot(skin)).locator('button', {hasText: 'Disconnect'}).click();
   await page.locator('.confirm-overlay').waitFor({state: 'visible'});
 }});

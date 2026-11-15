@@ -10,7 +10,9 @@ import {createHash} from 'node:crypto';
 import {existsSync, readdirSync, readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {BASE_SCREEN, CANNOT_BE_SHOWN, SAME_PICTURE, SAME_VIEW} from '../visual/pictureSet.js';
+import {BASE_SCREEN, CANNOT_BE_SHOWN, SAME_PICTURE, SAME_VIEW, WAITING_FOR_FIX} from '../visual/pictureSet.js';
+
+const BUGS = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', 'bugs');
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'visual', 'visual.browser.spec.ts-snapshots');
 const SKINS = ['desktop', 'mobile'];
@@ -60,8 +62,13 @@ describe('visual baselines each show their own view', () => {
   }
 
   it('a same-view alias or a view that cannot be shown has no picture', () => {
-    const left = [...SAME_VIEW.keys(), ...CANNOT_BE_SHOWN.keys()].filter(key => names.includes(key));
+    const left = [...SAME_VIEW.keys(), ...CANNOT_BE_SHOWN.keys(), ...WAITING_FOR_FIX.keys()].filter(key => names.includes(key));
     expect(left).toEqual([]);
+  });
+
+  it('a view waiting for a fix names a bug file that exists', () => {
+    const missing = [...WAITING_FOR_FIX.values()].filter(bug => !existsSync(join(BUGS, `${bug}.md`)));
+    expect(missing).toEqual([]);
   });
 
   it('an alias keeps a picture under its kept name', () => {

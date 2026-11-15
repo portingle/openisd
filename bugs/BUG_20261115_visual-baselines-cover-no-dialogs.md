@@ -121,3 +121,18 @@ The crash report card covering the diagnostics buttons is `BUG_20261115_crash-re
   (it sat below the first screen); the crash step writes its own stack so no test-harness frame is in the picture; the vented warnings are one screen made with a deliberately narrowed band
   (1-2 L, 1-2 Hz, set in Options by the step, so the text is true); the storage figures are the app's mixing of two measures (own bug file). `mobile-empty` is right (No project open).
   The app defects it found each have a bug file dated 20261115.
+
+### Second review round (PR 114)
+
+- Left out of the set, each with its reason in `pictureSet.ts`: `mobile-dialog-project-import` (Open a file raises the browser's file chooser; the picture was the phone menu), and the four
+  storage screens (`WAITING_FOR_FIX`): a real user can see "99% full (1 project, 20.7 KB of 5 MB used)" when the site's allowance is full and the local store is not, so the sentence is an app defect
+  (`BUG_20261115_storage-warning-mixes-site-and-local-numbers`) and a baseline must not freeze it. The architecture test checks the named bug file exists.
+- Nothing is left in a "no stable picture" list any more; each was a cause, not a difficulty:
+  - `flash-message`, `phone/flash-strip`: the strip is a 2 s JS timer (`logging/flash.ts`); the picture pauses the page clock (`page.clock.pauseAt`) the moment the strip shows.
+  - `diagnostic-repairs`, `startup-failure`: the fault text names the build's hashed bundle and address; those parts (the stack lines, the "did not load" line) are masked on those views only. The value belongs to the build.
+  - the four signed-in cloud dialogs: their Google stand-in answered Drive's create with a file list, so sync failed ("Retrying at <time>"). They now use the Drive emulator answering in the order asked
+    (the app sends several creates at once and the Activity list shows the order they finish in), and wait for "Synced".
+- `about-version` scrolls to the Version section and masks its heading and stamp (the running build's own date).
+- Wizard step 1 is now the driver list as the wizard opens it. Before, "step 1" clicked a driver and pressed Next, so it was step 2 (desktop) or the driver summary (phone), and
+  `wizard-sealed-step1` equalled `wizard-sealed-step2`. This corrects a mislabelled baseline on main.
+- `<skin>-complete-project` stays: popups open from the complete-driver project, `tab-box` is the sample project, so only it is the exact "nothing opened" picture the gate compares with.

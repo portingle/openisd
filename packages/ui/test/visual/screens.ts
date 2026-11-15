@@ -4,7 +4,7 @@ import {forceMobileSkin, openMobileMenu} from '../fixtures/mobileSkin.js';
 import {FIXTURE_DATE} from '../fixtures/sampleProject.js';
 import {COMPLETE_DRIVER_PROJECT_OWPR} from '../fixtures.js';
 import {openTargets, WalkSkin} from '../fixtures/viewOpen.js';
-import {BASE_SCREEN, CANNOT_BE_SHOWN, SAME_VIEW} from './pictureSet.js';
+import {BASE_SCREEN, CANNOT_BE_SHOWN, SAME_VIEW, WAITING_FOR_FIX} from './pictureSet.js';
 import {ViewKind} from '../fixtures/viewIndex.js';
 
 /**
@@ -91,10 +91,10 @@ async function wizardAt(page: Page, skin: VisualSkin, type: BoxTypeName, step: n
   if (skin === VisualSkin.MOBILE) await page.getByText('New project').first().click();
   else await page.locator('.tb-btn[title*="New project"]').click();
   const root = skin === VisualSkin.MOBILE ? page.locator('.mob-np-body') : page.locator('.overlay.open .modal-body');
-  await root.locator('.dlist .ditem').first().click();
+  // Step 1 is the driver list as the wizard opens it; from step 2 a driver is chosen and each Next moves one step on.
+  if (step >= 2) await root.locator('.dlist .ditem').first().click();
   const footer = skin === VisualSkin.MOBILE ? page.locator('.mob-np-footer') : page.locator('.overlay.open .modal-footer');
   const next = footer.getByText(skin === VisualSkin.MOBILE ? 'Next ▸' : 'Next', {exact: true});
-  // Step 1 is the driver list with a driver chosen; each Next moves one step on.
   if (step >= 2) await next.click();
   if (step >= 3) {
     await next.click();
@@ -152,19 +152,29 @@ function screens(): readonly Screen[] {
     }));
   }
   for (const {view, skin, plan} of openTargets()) {
-    if (!POPUP_KINDS.has(view.kind) || NO_STABLE_PICTURE.has(view.id)) continue;
+    if (!POPUP_KINDS.has(view.kind)) continue;
     const visualSkin = skin === WalkSkin.Phone ? VisualSkin.MOBILE : VisualSkin.DESKTOP;
     const name = dialogName(view.id.replace(/^desktop\//, ''));
     // A view pictured under another name, or one a browser picture cannot show (pictureSet.ts), has no screen of its own.
-    if (SAME_VIEW.has(`${visualSkin.name}-${name}`) || CANNOT_BE_SHOWN.has(`${visualSkin.name}-${name}`)) continue;
+    const key = `${visualSkin.name}-${name}`;
+    if (SAME_VIEW.has(key) || CANNOT_BE_SHOWN.has(key) || WAITING_FOR_FIX.has(key)) continue;
     all.push(screen(visualSkin, name, async page => {
-      await visualSkin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      // The flash views are the "Project imported" strip itself: the project is opened without waiting for the strip to go.
+      if (FLASH_VIEWS.has(view.id)) {
+        if (visualSkin === VisualSkin.MOBILE) await openAMobileProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
+        else await openAProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      } else await visualSkin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
       await plan.open(page);
       const message = SCROLL_TO_MESSAGE.get(view.id);
       if (message !== undefined) await page.locator(message).first().scrollIntoViewIfNeeded();
+      if (FLASH_VIEWS.has(view.id)) {
+        const now = await page.evaluate(() => Date.now());
+        await page.clock.pauseAt(now + 10);
+        return;
+      }
       // A step that imports a file leaves its "… imported" strip fading over the screen: the picture waits it out.
       await expect(page.locator(FADING_STRIP)).toHaveCount(0, {timeout: 15_000});
-    }, MACHINE_DECIDED_PARTS, plan.ownConsoleErrors, 'popup'));
+    }, [...MACHINE_DECIDED_PARTS, ...(VIEW_MASKS.get(view.id) ?? [])], plan.ownConsoleErrors, 'popup'));
   }
   return all;
 }
@@ -196,17 +206,24 @@ const SCROLL_TO_MESSAGE: ReadonlyMap<string, string> = new Map([
   ['phone/wizard-passive-radiator-pick-error', '.np-pr-error'],
   ['phone/tuning-unreachable-warning', '.mob-chint-warn'],
   ['shared/driver-editor-incomplete-warning', '.de-incomplete'],
+  ['about-version', '.sp-versions'],
 ]);
 
-const NO_STABLE_PICTURE: ReadonlySet<string> = new Set([
-  // Fade out on their own a few seconds after they show: a picture holds whatever opacity the moment gave it.
-  'shared/flash-message', 'phone/flash-strip',
-  // The fault report prints a stack trace naming the build's hashed bundle (main-<hash>.js) and the test port.
-  'diagnostic-repairs', 'desktop/diagnostic-repairs', 'startup-failure', 'desktop/startup-failure',
-  // The signed-in dialog shows "Sync failed ... Retrying at <time>": the Google stand-in of these steps (stubGoogleApis) answers
-  // Drive's create with a file list, so the sync fails and the retry time is now plus the delay. The step needs the Drive
-  // emulator the conflict notice uses, and to wait for "Synced" (not done in T793).
-  'cloud', 'cloud-confirm', 'desktop/settings/cloud/account-and-activity', 'desktop/cloud-confirm',
+/** A strip that goes by itself: `Logging.flash` shows it for 2 s on a JS timer, so the picture pauses the page's clock the moment it shows. */
+const FLASH_VIEWS: ReadonlySet<string> = new Set(['shared/flash-message', 'phone/flash-strip']);
+
+/**
+ * Parts only some views have that belong to the build, masked there (not on every popup):
+ * - the diagnostics fault report's stack: its first frames name the build's hashed bundle (`main-<hash>.js`), which changes with every build;
+ * - the start-up failure's "A file of the app did not load: <address>", the same bundle's address;
+ * - the About version section's heading and stamp: "OpenISD 7.0.952 · <date>" and the stamp are the running build's own.
+ */
+const VIEW_MASKS: ReadonlyMap<string, readonly string[]> = new Map([
+  ['diagnostic-repairs', ['.dg-msg + pre.dg-stack']],
+  ['desktop/diagnostic-repairs', ['.dg-msg + pre.dg-stack']],
+  ['about-version', ['[data-testid="running-heading"]', '[data-testid="running-stamp"]']],
+  ['startup-failure', ['#boot-failed .why']],
+  ['desktop/startup-failure', ['#boot-failed .why']],
 ]);
 
 /** A view id as a baseline name: `driver/editor/general` → `dialog-driver-editor-general`. */
