@@ -5,8 +5,13 @@ owner: main-red-app
 status: done
 goal: Main red, app faults: the phone Signal box is the narrowest that holds its longest value (rule 11, with T720), the ABC vent columns share the pane at 1024 px, a click that drifts under the spin threshold selects the pressed digit
 why: John, 15 Nov 2026: main suite must be green (QO923); SDLC: main red is fixed first
+visual_note: On the phone Signal tab the number boxes are narrower (about 132 px, were 169 px): wide enough for the longest value, 100000.00, and its unit, and no wider. The arrows move left with them.
+visual:
+  - mobile-tab-signal
 done_test: bash scripts/test.sh packages/design/test/fields/phoneRowColumns.test.ts
 files:
+  - packages/ui/test/visual/SOURCES.sha256
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-signal.png
   - tasks/T806.yml
   - packages/design/fields/phoneRowSizes.ts
   - packages/design/test/fields/phoneRowColumns.test.ts
