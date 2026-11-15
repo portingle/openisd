@@ -1,0 +1,10 @@
+id: T810
+release_note: internal
+repo: openisd
+owner: ci-baselines
+status: open
+goal: visual pictures match their sources is proven by the visual spec on the merged result, not by a committed hash; retake-ci takes an empty re-take; whole shell directory runs when scripts change
+why: John, 15 Nov 2026: main suite must be green, baselines must match CI (QO923, QO924); lead: SOURCES.sha256 conflicts serialise UI pull requests
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T810.yml
