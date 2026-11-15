@@ -1,0 +1,10 @@
+id: T831
+release_note: internal
+repo: openisd
+owner: wiringrow
+status: open
+goal: The Driver tab of a multi-coil driver shows no Measured wiring row in either skin; My wiring stays and works as before, and the published-figures note names the wiring they were measured in, stated or inferred.
+why: John, 2026-11-15: the measured wiring does not need to be on that screen, add a dq if necessary but it's clutter (QO941)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T831.yml
