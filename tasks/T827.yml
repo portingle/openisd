@@ -24,3 +24,5 @@ files:
   - packages/ui/src/logic/upgradeLeftNotice.ts
   - packages/ui/test/logic/upgradeLeftNotice.test.ts
   - docs/design/BROWSER_STORAGE_KEYS.md
+  - packages/persistence/test/cloud/syncEngine.test.ts
+  - packages/persistence/test/destructivePaths.test.ts
