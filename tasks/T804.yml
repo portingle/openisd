@@ -2,7 +2,7 @@ id: T804
 release_note: internal
 repo: openisd
 owner: dq-checks
-status: open
+status: done
 goal: two false DQ warning families (Purifi EBP, Vas precision) go away because causes are fixed
 why: John, 14 Nov 2026: make the DQ warnings go away by fixing causes (issue 513, QO903 R5, QO923)
 done_test: bash scripts/test.sh packages/design/test/engine/driver-vas-print-precision.test.ts packages/design/test/winisd/printed-ebp-definition.test.ts packages/design/test/domain/driver-consistency-solver-golden.test.ts
