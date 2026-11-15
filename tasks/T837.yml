@@ -158,6 +158,9 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-placement.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-driver.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step2.png
+  - packages/ui/test/fixtures/approvedJoinedGeometry.json
+  - packages/ui/test/ui/new-project-wizard-selects.browser.spec.ts
+  - packages/ui/test/ui/phone-field-inventory.browser.spec.ts
 visual:
   - desktop-box-abc
   - desktop-box-bandpass4
