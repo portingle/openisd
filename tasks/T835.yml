@@ -18,3 +18,11 @@ files:
   - packages/design/test/domain/my-wiring.test.ts
   - packages/design/test/engine/wiring-conversion.test.ts
   - packages/design/test/winisd/wpr-my-wiring.test.ts
+  - packages/ui/src/hooks/DriverCoilWiring-hooks.ts
+  - packages/ui/src/ui/components/DriverCoilWiring.vue
+  - packages/ui/src/ui/components/DriverEditorModal.vue
+  - packages/ui/test/fixtures/branchMap/shared.ts
+  - packages/ui/test/hooks/DriverCoilWiring-hooks.test.ts
+  - packages/ui/test/ui/my-wiring.browser.spec.ts
+  - packages/ui/test/ui/wiring-dq-mark.browser.spec.ts
+  - tasks/T831.yml
