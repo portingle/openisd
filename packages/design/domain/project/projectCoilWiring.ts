@@ -1,5 +1,5 @@
 /**
- * "My wiring" (QO907, issue 512): how the user will wire a multi-coil driver's own voice coils,
+ * "Coil wiring" (QO907, issue 512): how the user will wire a multi-coil driver's own voice coils,
  * beside the wiring the maker measured Re and BL in. A project setting, `series` or `parallel`,
  * absent until chosen, when it follows the measured wiring. It is not the project's `wiring`,
  * which joins several drivers.
@@ -51,7 +51,7 @@ export class ProjectCoilWiring {
         return this.#driver.specs.VCCon.entered ? 'stated' : 'inferred';
     }
 
-    /** Why My wiring cannot be chosen; null when it can. */
+    /** Why Coil wiring cannot be chosen; null when it can. */
     get unavailableReason(): string | null {
         const numVC = this.#driver.specs.numVC.value;
         if (numVC === null) return 'The number of voice coils is not stated, so there is no wiring to choose.';
@@ -84,12 +84,12 @@ export class ProjectCoilWiring {
         return {Re_ohm: s.Re_ohm.value, BL_Tm: s.BL_Tm.value, Le_H: s.Le_H.value, Znom_ohm: s.Znom_ohm.value};
     }
 
-    /** The same figures for My wiring: what the amplifier sees. */
+    /** The same figures for Coil wiring: what the amplifier sees. */
     get atMine(): TerminalMotor {
         return this.#driver.specs.terminalMotor();
     }
 
-    /** A standalone copy of the project's driver stating the figures for My wiring, with My wiring
+    /** A standalone copy of the project's driver stating the figures for Coil wiring, with Coil wiring
      *  as its wiring: what a project file carries. The project's own driver keeps the published
      *  figures. Where nothing is converted (no choice, or one equal to the measured wiring) it is
      *  a plain copy. */
@@ -116,9 +116,18 @@ export class ProjectCoilWiring {
         return figuresText(this.published);
     }
 
-    /** Re and BL for My wiring, in words. */
+    /** Re and BL for Coil wiring, in words. */
     get mineFigures(): string {
         return figuresText(this.atMine);
+    }
+
+    /** The one line the project's Driver tab shows under the wiring control: the coil count and the figures in use,
+     *  "2 coils · Re 4.70 Ω · BL 12.30 Tm" (John, QO942.c9: the datasheet's wiring is shown only in the Driver
+     *  editor). Empty for a driver with fewer than 2 coils. */
+    get inUseLine(): string {
+        const n = this.#driver.specs.numVC.value;
+        if (n === null || n < 2) return '';
+        return `${n} coils · ${figuresText(this.atMine)}`;
     }
 
     choose(wiring: Wiring): void {

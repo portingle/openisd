@@ -80,23 +80,24 @@ rating. OpenISD adds `power_peak_W` for the datasheet's separate peak number. It
 from or written to a `.wdr`/`.wpr` file: a driver imported from WinISD reads it as not-entered,
 and a driver saved back to `.wdr` never carries it.
 
-**Voice-coil wiring: measured wiring and "My wiring" (QO900, QO907, issue 512).** `Re`, `BL`, `Le` and `Znom` are
+**Voice-coil wiring: measured wiring and "Coil wiring" (QO900, QO907, issue 512).** `Re`, `BL`, `Le` and `Znom` are
 stored as the maker published them, for the wiring the maker measured in. `VCCon` is that measured wiring: `series`,
 `parallel`, or unknown, with no default. It is stated (entered), inferred from a printed per-coil impedance (calculated;
 the Driver editor shows it as calculated, and the Driver tab does not show the measured wiring at all, QO941), or not stated. The Thiele/Small relations and the consistency checks run on the stored figures and
 never read `VCCon`.
 
-The project carries **My wiring** (`driverEmbedding.coilWiring`, `series` or `parallel`): how the user will wire the
+The project carries **Coil wiring** (`driverEmbedding.coilWiring`, `series` or `parallel`): how the user will wire the
 coils. Absent means the measured wiring, so a project saved before it existed behaves as measured. Only the amplifier
 side reads it: impedance, SPL and excursion against voltage, power, and Rg loading use the figures converted from the
-measured wiring to My wiring, for N identical coils. Series to parallel: `Re` and `Le` and `Znom` divided by N², `BL`
-divided by N; parallel to series the inverse. `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
+measured wiring to Coil wiring, for N identical coils. Series to parallel: `Re` and `Le` and `Znom` divided by N², `BL`
+divided by N; parallel to series the inverse. (WinISD converts `Re` and `BL` only; a yellow switch for that is awaiting John, QO942.c22.) `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
 Dayton MX6-22 (series, 4.7 Ω, 12.3 Tm) in parallel is 1.175 Ω, 6.15 Tm, and `Qes` stays 0.373. The choice is
-disabled, with the reason shown, for a driver whose measured wiring is not stated, for three coils (published in one
-configuration) and for one coil. A different driver in the project resets it.
+absent for a driver whose measured wiring is not stated, and for one coil on the phone (greyed on the desktop, as in
+WinISD). Any number of coils above one converts, as WinISD does. It is labelled "Coil wiring" on both skins
+(John, QO942.c12; "Connection" is WinISD's own word). A different driver in the project resets it.
 
 Files: the driver `.wdr` and `.owdr` carry the stored figures with the measured wiring. A `.wpr` project carries the
-figures converted to My wiring, with My wiring as its `VCCon`. WinISD's own wiring combo is a one-shot rewrite of the
+figures converted to Coil wiring, with Coil wiring as its `VCCon`. WinISD's own wiring combo is a one-shot rewrite of the
 stored `Re` and `BL` that leaves the result marked entered (`winisd_research` FINDING-009); OpenISD never rewrites a
 stored figure. The project's "Voice coil connection" control is a different thing: how several drivers (Num. of
 drivers) are joined to the amplifier, as in WinISD. See `docs/research/WINISD_PARITY.md` §11b and

@@ -95,8 +95,7 @@ export const SHARED_BRANCH_MAP:BranchMap={
   'native-ui-c382f453397ca34c':{kind:'notAView',reason:'close button of the driver browser'}, // components/DriverBrowser.vue:75
   'conditional-branch-0fdf5743a6c58221':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:14
   'conditional-branch-6c3da573b565bf6c':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:29
-  'conditional-branch-6f29c8f6bed1d302':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:21
-  'conditional-branch-6f29c8f6bed1d302-2':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:32
+  'conditional-branch-6535160958d208ad':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:32
   'conditional-branch-b989dd12d68f1ae3':{kind:'notAView',reason:'summary button that opens the driver disagreements list'}, // components/DriverConsistencyList.vue:12
   'surface-root-45df5e0dad260e9f':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:703
   'surface-root-f94135dc62e865bf':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:704

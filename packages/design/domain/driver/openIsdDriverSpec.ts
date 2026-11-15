@@ -222,7 +222,7 @@ export class OpenIsdDriverSpec {
     /** The record's title, which may print a per-coil nominal impedance. */
     readonly #title: () => string;
     #issues: readonly DriverIssue[] = [];
-    /** The wiring the user builds with (the project's "My wiring"); undefined follows the measured one. */
+    /** The wiring the user builds with (the project's "Coil wiring"); undefined follows the measured one. */
     readonly #myWiring: () => Wiring | undefined;
 
     constructor(
@@ -239,7 +239,7 @@ export class OpenIsdDriverSpec {
          *  durable instance and keeps its own. Same rule, and same reason, as the vent/PR groups
          *  (`entryField`'s `issuesSource`). */
         durableIssues?: () => readonly DriverIssue[],
-        /** The project's "My wiring" choice; omitted by a standalone driver, which is not wired. */
+        /** The project's "Coil wiring" choice; omitted by a standalone driver, which is not wired. */
         myWiring: () => Wiring | undefined = () => undefined,
     ) {
         this.#myWiring = myWiring;
@@ -494,7 +494,7 @@ export class OpenIsdDriverSpec {
     }
 
     /** Re, BL, Le and Znom as the amplifier sees them: converted from the measured wiring to
-     *  "My wiring" when the project chose another one and the driver can be rewired, otherwise
+     *  "Coil wiring" when the project chose another one and the driver can be rewired, otherwise
      *  as published. The stored figures are never changed. */
     terminalMotor(): TerminalMotor {
         const published: TerminalMotor = {

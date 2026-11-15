@@ -175,7 +175,7 @@ export class OpenISDProject {
         return defaultedField(focus(this.#slot('driverEmbedding'), 'nDrivers'), 1);
     }
 
-    /** "My wiring": how the user wires a multi-coil driver's own coils, beside the wiring it was
+    /** "Coil wiring": how the user wires a multi-coil driver's own coils, beside the wiring it was
      *  measured in. The amplifier-side figures use it; the stored ones stay as published. */
     get coilWiring(): ProjectCoilWiring {
         return new ProjectCoilWiring(this.#slot('driverEmbedding'), this.driver, this.#engine);

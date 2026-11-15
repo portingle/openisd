@@ -130,7 +130,7 @@ export abstract class OpenISDDriver extends OpenISDDevice {
         airProvider: () => Air,
         /** See `OpenIsdDriverSpec`'s own parameter — only an embedded driver supplies one. */
         durableIssues?: () => readonly DriverIssue[],
-        /** The project's "My wiring"; only an embedded driver supplies one. */
+        /** The project's "Coil wiring"; only an embedded driver supplies one. */
         myWiring?: () => Wiring | undefined,
     ) {
         super(record);

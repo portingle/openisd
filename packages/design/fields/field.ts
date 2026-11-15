@@ -1427,7 +1427,7 @@ export class EnumField extends Field {
     value: "VCCon",
     label: "Coil wiring",
     options: VC_CONNECTION_OPTIONS,
-    description: "Measured Wiring\nHow the voice coils of a multi-coil driver were wired when the maker measured Re and BL: series, parallel, or not stated. Re, BL, Le and Znom are kept as published for this wiring. Your own wiring is set in the project (Driver tab, My wiring).",
+    description: "Measured Wiring\nHow the voice coils of a multi-coil driver were wired when the maker measured Re and BL: series, parallel, or not stated. Re, BL, Le and Znom are kept as published for this wiring. The project's own wiring is set on the Driver tab (Coil wiring).",
   });
   static readonly DRIVER_ARRAYWIRING = new EnumField({
     value: "driver_ArrayWiring",

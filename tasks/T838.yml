@@ -4,7 +4,25 @@ repo: openisd
 owner: wiringrow
 status: open
 goal: The project's one coil-wiring control (desktop Voice coil connection, phone My wiring) converts Re and BL only, by WinISD's factors, for any coil count above 1, defaulting to the driver's measured wiring; one coil greyed on desktop, absent on phone; unknown wiring absent; the in-place rewrite and the always-Parallel display are listed as fixed WinISD bugs.
+ruling: QO941
 why: John, 2026-11-15: the driver wiring is the measured setup and the project wiring is the usage of the driver (QO941.c14); for now replicate WinISD (QO941.c24); isolate the two issues (QO942.c2)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/design/test/engine/wiring-conversion.test.ts
 files:
+  - docs/FIELD_REFERENCE.md
+  - docs/plans/PLAN_20261115_COIL_WIRING_REPLICATES_WINISD.md
+  - docs/research/WINISD_PARITY.md
+  - packages/design/domain/driver/openIsdDriverSpec.ts
+  - packages/design/domain/project/projectCoilWiring.ts
+  - packages/design/engine/solvers/driverQuantities.ts
+  - packages/design/fields/field.ts
+  - packages/design/fields/winisdFixedBug.ts
+  - packages/design/test/domain/multi-coil-goldens.test.ts
+  - packages/design/test/domain/my-wiring.test.ts
+  - packages/design/test/engine/wiring-conversion.test.ts
+  - packages/design/test/winisd/wpr-my-wiring.test.ts
+  - packages/ui/src/hooks/DriverCoilWiring-hooks.ts
+  - packages/ui/src/ui/components/DriverCoilWiring.vue
+  - packages/ui/test/fixtures/branchMap/shared.ts
+  - packages/ui/test/hooks/DriverCoilWiring-hooks.test.ts
+  - packages/ui/test/ui/my-wiring.browser.spec.ts
   - tasks/T838.yml

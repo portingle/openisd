@@ -34,7 +34,7 @@ export class OpenISDDriverEmbedded extends OpenISDDriver {
         durableIssues: () => readonly DriverIssue[],
         /** The app's id source: a driver leaving the project becomes an entity and gets an id. */
         newId: () => string,
-        /** The project's "My wiring" (undefined: the measured wiring). */
+        /** The project's "Coil wiring" (undefined: the measured wiring). */
         myWiring: () => Wiring | undefined,
     ): OpenISDDriverEmbedded {
         return new OpenISDDriverEmbedded(slot, engine, airProvider, durableIssues, newId, myWiring);
