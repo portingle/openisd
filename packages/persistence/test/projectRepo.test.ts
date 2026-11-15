@@ -182,23 +182,31 @@ describe('projectRepo', () => {
       return {storage, fill: () => { full = true; }};
     }
 
-    it('is true after the session was saved, and false once an edit has not reached the store', () => {
+    it('is true after the session was saved, and false once a write did not reach the store', () => {
       const {storage, fill} = fillable();
       const repoHere = projectRepoOn(engine, noFiles, storage, 'http://localhost');
       const project = ProjectBuilder.empty(engine);
       project.name.set('first');
       repoHere.saveOpenProjects([project], project, new Set());
-      expect(repoHere.openSessionIsStored([project], project, new Set())).toBe(true);
+      expect(repoHere.openSessionIsStored()).toBe(true);
 
       fill();
       project.name.set('second');
       repoHere.saveOpenProjects([project], project, new Set());
-      expect(repoHere.openSessionIsStored([project], project, new Set())).toBe(false);
+      expect(repoHere.openSessionIsStored()).toBe(false);
     });
 
-    it('is false when no session was ever stored', () => {
+    // A session adopted from another tab mints fresh driver ids, so what this tab would serialise differs from
+    // the stored text; the stored text still holds every edit, so a reload loses nothing (review of T829).
+    it('stays true for a session adopted from another tab, and is true again once a refused write is replaced by one that fits', () => {
+      const shared = createSharedMemoryStorage();
       const project = ProjectBuilder.empty(engine);
-      expect(repo().openSessionIsStored([project], project, new Set())).toBe(false);
+      project.name.set('other tab');
+      projectRepoOn(engine, noFiles, shared.tab(), 'http://localhost').saveOpenProjects([project], project, new Set());
+      const mine = projectRepoOn(engine, noFiles, shared.tab(), 'http://localhost');
+      const session = mine.loadOpenProjects();
+      if (session === null || Array.isArray(session)) throw new Error('expected a session');
+      expect(mine.openSessionIsStored()).toBe(true);
     });
   });
 

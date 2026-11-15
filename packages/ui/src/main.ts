@@ -278,7 +278,7 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
     const open = appState.openProjects();
     return {
       anyUnsaved: open.some(p => appState.projectHasUnsavedChanges(p)),
-      sessionStored: projectRepo.openSessionIsStored(open, appState.focusedProject(), appState.hiddenTraces(open)),
+      sessionStored: projectRepo.openSessionIsStored(),
       readOnlyStore: store.readOnly,
       editorDraftChanged: driverDrafts.hasUnappliedChanges(),
       whatIfChanged: open.some(p => p.hasWhatIfChanges()),
@@ -289,7 +289,7 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
     container: testBuild ? updateHost : navigator.serviceWorker,
     visibility: {onVisible: listener => document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') listener(); })},
     timer: {every: (ms, listener) => { setInterval(listener, ms); }},
-    anyUnsaved: () => reloadFacts().anyUnsaved || reloadFacts().editorDraftChanged || reloadFacts().whatIfChanged,
+    anyUnsaved: () => { const facts = reloadFacts(); return facts.anyUnsaved || facts.editorDraftChanged || facts.whatIfChanged; },
     losses: () => reloadLosses(reloadFacts()),
     reload: () => location.reload(),
     caches: {keys: () => globalThis.caches.keys(), delete: name => globalThis.caches.delete(name)},
