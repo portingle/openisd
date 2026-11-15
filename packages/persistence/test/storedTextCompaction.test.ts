@@ -11,7 +11,7 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {compactedStoredText} from '@openisd/design';
 import {createEngine} from '@openisd/design/engine';
-import {changesInSubstance} from '../src/repos/upgradeSubstance.js';
+import {createUpgradeSubstance} from '../src/repos/upgradeSubstance.js';
 import {createStoredTextCompaction, projectTextsLeft} from '../src/repos/storedTextCompaction.js';
 import {OPENISD_BACKUP_PREFIX, OPENISD_MY_DRIVERS_KEY, OPENISD_OPEN_SESSIONS_KEY, OPENISD_PROJECTS_KEY, OPENISD_QUARANTINE_SESSION_KEY, OPENISD_STATE_KEY} from '../src/repos/storageKeys.js';
 import {createMemoryStorage, type ListableStorage} from '../src/storage/keyValueStorage.js';
@@ -101,6 +101,7 @@ describe('run', () => {
 
 // --- the upgrade of a store of version-3 projects (T827) ---------------------------------------
 
+const substance = createUpgradeSubstance();
 const LIMIT = 5 * 1024 * 1024;
 /** The `entries` of a stored bucket: each with its id and project text. */
 function entriesIn(bucket: string): {id: string; text: string}[] {
@@ -151,7 +152,7 @@ describe.each([0.4, 0.46, 0.6])('a store of version-3 projects at %s of capacity
       assert.equal(entry.text, upgradedOf(list[i].text), entry.id);
     }
     const needed = OPENISD_PROJECTS_KEY.length + JSON.stringify({entries: after.map(e => ({id: e.id, text: e.text, modified: '2026-01-01T00:00:00.000Z'}))}).length;
-    const copied = list.filter(e => changesInSubstance(e.text, upgradedOf(e.text)));
+    const copied = list.filter(e => substance.changesInSubstance(e.text, upgradedOf(e.text)));
     const copyChars = copied.reduce((n, e) => n + e.text.length, 0);
     assert.ok(copied.length > 0 && copied.length < list.length, 'the store holds both kinds of project');
     assert.ok(usedBy(storage) <= needed + 1.2 * copyChars, `used ${usedBy(storage)}, upgraded data needs ${needed}, copies ${copyChars}`);
@@ -164,7 +165,7 @@ describe.each([0.4, 0.46, 0.6])('a store of version-3 projects at %s of capacity
     const backup = backupOn(storage);
     const kept = backup.refusedCopies().map(c => ({reason: c.reason, text: backup.readRefused(c.key)?.text}));
     assert.ok(kept.every(c => c.reason === 'beforeUpgrade'));
-    const expected = [...new Set(list.filter(e => changesInSubstance(e.text, upgradedOf(e.text))).map(e => e.text))].sort();
+    const expected = [...new Set(list.filter(e => substance.changesInSubstance(e.text, upgradedOf(e.text))).map(e => e.text))].sort();
     assert.deepEqual(kept.map(c => c.text).sort(), expected.length === 0 ? [] : expected);
   });
 

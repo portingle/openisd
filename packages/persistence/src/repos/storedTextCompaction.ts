@@ -20,7 +20,7 @@
 import {compactedStoredText} from '@openisd/design';
 import type {ListableStorage} from '../storage/keyValueStorage.js';
 import type {StorageBackup} from './storageBackup.js';
-import {changesInSubstance} from './upgradeSubstance.js';
+import {createUpgradeSubstance} from './upgradeSubstance.js';
 import {OPENISD_OPEN_SESSIONS_KEY, OPENISD_PROJECTS_KEY, OPENISD_QUARANTINE_SESSION_KEY, OPENISD_STATE_KEY} from './storageKeys.js';
 
 export type CompactionOutcome =
@@ -94,11 +94,12 @@ function nameOf(text: string): string {
 
 /** `keepUseBelowChars`: a copy is kept only while the store, with it, holds no more than this. */
 export function createStoredTextCompaction(storage: ListableStorage, backup: StorageBackup, projectRewritten: ProjectRewritten, keepUseBelowChars = Infinity): StoredTextCompaction {
+  const substance = createUpgradeSubstance();
   const useChars = (): number => storage.keys().reduce((sum, key) => sum + key.length + (storage.get(key)?.length ?? 0), 0);
 
   /** True when `entry` needs no copy, or its copy is kept now. */
   function protectedBy(entry: EntryRewrite): boolean {
-    if (!changesInSubstance(entry.before, entry.after)) return true;
+    if (!substance.changesInSubstance(entry.before, entry.after)) return true;
     if (useChars() + JSON.stringify(entry.before).length + 80 > keepUseBelowChars) return false;
     return backup.refuse('beforeUpgrade', nameOf(entry.before), entry.before);
   }

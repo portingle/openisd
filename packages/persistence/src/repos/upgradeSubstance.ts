@@ -38,7 +38,13 @@ function differs(before: Json, after: Json): boolean {
   return before !== after;
 }
 
-export function changesInSubstance(before: string, after: string): boolean {
+/** Compares stored project texts with their upgraded form. */
+export interface UpgradeSubstance {
+  /** True when `after` differs from `before` in anything but what the header says is not counted. */
+  changesInSubstance(before: string, after: string): boolean;
+}
+
+function changesInSubstance(before: string, after: string): boolean {
   try {
     const parsedBefore: Json = JSON.parse(before);
     const parsedAfter: Json = JSON.parse(after);
@@ -46,4 +52,8 @@ export function changesInSubstance(before: string, after: string): boolean {
   } catch {
     return true;
   }
+}
+
+export function createUpgradeSubstance(): UpgradeSubstance {
+  return {changesInSubstance};
 }
