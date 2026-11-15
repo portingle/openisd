@@ -80,17 +80,20 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
     await expect(page.getByText('Coil wiring', {exact: true})).toHaveCount(0);
   });
 
-  // WinISD greys "Voice coil connection" with one coil (observed, winisd_research runs/nd-1; read in the code: enabled
-  // only when numVC > 1). The desktop skin replicates that screen; the phone shows nothing. QO941.
-  test(`${skinName}: a driver with no coil count: ${skinName === 'desktop' ? 'the control is there, greyed, reading Parallel' : 'no control'}`, async ({page}) => {
-    await skin.open(page);
-    await selectDriver(page, CE28M);
-    if (skinName === 'desktop') {
-      await expect(page.locator(skin.select)).toBeDisabled();
-      await expect(page.locator(skin.select)).toHaveValue('parallel');
-      await expect(page.getByTestId('coil-wiring-figures')).toHaveCount(0);
-    } else {
-      await expect(page.locator(skin.select)).toHaveCount(0);
-    }
-  });
 }
+
+// WinISD greys its coil-wiring box with one coil (observed, winisd_research runs/nd-1; read in the code: enabled only when
+// numVC > 1). The desktop skin replicates that screen; the phone shows nothing. QO941.
+test('desktop: a driver with no coil count: the control is there, greyed, reading Parallel', async ({page}) => {
+  await DESKTOP.open(page);
+  await selectDriver(page, CE28M);
+  await expect(page.locator(DESKTOP.select)).toBeDisabled();
+  await expect(page.locator(DESKTOP.select)).toHaveValue('parallel');
+  await expect(page.getByTestId('coil-wiring-figures')).toHaveCount(0);
+});
+
+test('phone: a driver with no coil count: no control', async ({page}) => {
+  await PHONE.open(page);
+  await selectDriver(page, CE28M);
+  await expect(page.locator(PHONE.select)).toHaveCount(0);
+});

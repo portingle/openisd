@@ -56,6 +56,7 @@ files:
   - packages/design/domain/openisdSchema.ts
   - packages/design/domain/project/openISDProject.ts
   - packages/design/fields/options.ts
+visual_note: The Driver tab has one Coil wiring box (greyed on the desktop for a one-coil driver, absent on the phone) and, for two or more coils, one line such as 2 coils, Re 4.70, BL 12.30.
 visual:
   - desktop-dialog-driver-current-info
   - desktop-dialog-driver-disagreement-list
