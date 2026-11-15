@@ -2,7 +2,7 @@ id: T796
 release_note: internal
 repo: openisd
 owner: search-builder
-status: open
+status: done
 goal: Driver library can be searched by size: a size chip row filters drivers by nominal-size class worked out from Sd, shown as derived and never stored
 why: John, 14 Nov 2026: search by size, size from Sd for search only (issue 516, QO923)
 done_test: bash scripts/test.sh packages/design/test/filter/sizeClass.test.ts
