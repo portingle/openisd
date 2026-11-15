@@ -155,3 +155,13 @@ export function convertWiring(motor: WiredMotor, numVC: number | null, measured:
     motor: {Re_ohm: motor.Re_ohm * n * n, BL_Tm: motor.BL_Tm * n, Le_H: scaled(motor.Le_H), Znom_ohm: scaled(motor.Znom_ohm)},
   };
 }
+
+/**
+ * A figure printed for ONE of `coils` identical voice coils (Re or Znom, "2 x 2.5 ohm"), as the
+ * whole driver's figure in `wiring`: series, the coils add, `value x coils`; parallel,
+ * `value x (1 / coils)`. The same factor scales a figure's read precision. Not checked for
+ * `coils` of 2 or more; the caller owns that guard.
+ */
+export function wholeDriverFromPerCoil(value: number, coils: number, wiring: Wiring): number {
+  return value * (wiring === 'series' ? coils : 1 / coils);
+}

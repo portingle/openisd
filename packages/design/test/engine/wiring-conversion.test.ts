@@ -6,7 +6,7 @@
  */
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '../../engine/Engine.js';
-import {convertWiring} from '../../engine/solvers/driverQuantities.js';
+import {convertWiring, wholeDriverFromPerCoil} from '../../engine/solvers/driverQuantities.js';
 import type {WiredMotor} from '../../engine/solvers/driverQuantities.js';
 
 /** Dayton MX6-22, measured in series (datasheet): Re 4.7 Ω, BL 12.3 Tm, Le 1.5 mH, Znom 4 Ω
@@ -81,5 +81,21 @@ describe('convertWiring', () => {
 
   it('is the driver area\'s own function', () => {
     expect(createEngine().driver.convertWiring).toBe(convertWiring);
+  });
+});
+
+describe('wholeDriverFromPerCoil', () => {
+  it('series adds the coils, parallel divides them (SB Acoustics SW26: 2 x 2.4 ohm)', () => {
+    expect(wholeDriverFromPerCoil(2.4, 2, 'series')).toBe(4.8);
+    expect(wholeDriverFromPerCoil(2.4, 2, 'parallel')).toBe(1.2);
+  });
+
+  it('is x (1 / coils), not / coils, so the last digit matches the figure stored before the move', () => {
+    expect(wholeDriverFromPerCoil(2.4, 3, 'parallel')).toBe(0.7999999999999999);
+    expect(wholeDriverFromPerCoil(2.4, 3, 'series')).toBe(7.199999999999999);
+  });
+
+  it('is the driver area\'s own function', () => {
+    expect(createEngine().driver.wholeDriverFromPerCoil).toBe(wholeDriverFromPerCoil);
   });
 });

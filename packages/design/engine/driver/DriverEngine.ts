@@ -28,7 +28,7 @@ import type {CalculationIssue, CalculationPrerequisite, OutOfRangeIssue, WiringI
 import {geometryRefusal} from '../dvolRelation.js';
 import {checkRange, isPhysicallyPlausible, rangeIssue} from '../physicalRange.js';
 import type {DriverWorkingSet} from '../solvers/driverQuantities.js';
-import {convertWiring, hotRe} from '../solvers/driverQuantities.js';
+import {convertWiring, hotRe, wholeDriverFromPerCoil} from '../solvers/driverQuantities.js';
 import type {WiringConversion, WiredMotor} from '../solvers/driverQuantities.js';
 import type {EbpSuitability, SweepResult, Wiring} from '../types.js';
 import {
@@ -152,6 +152,10 @@ export interface DriverEngine {
   /** A multi-coil driver's published Re/BL/Le/Znom, measured in `measured`, as they are in
    *  `target`, for `numVC` identical coils; or why not. Never written over the stored figures. */
   convertWiring(motor: WiredMotor, numVC: number | null, measured: Wiring | null, target: Wiring): WiringConversion;
+  /** A figure (Re, Znom, or its read precision) printed for one of `coils` identical voice coils, as the
+   *  whole driver's figure in `wiring`: series `value x coils`, parallel `value x (1 / coils)`. The caller
+   *  has checked that there are 2 or more coils. */
+  wholeDriverFromPerCoil(value: number, coils: number, wiring: Wiring): number;
   /** Re at a voice-coil temperature rise: `Re·(1 + alfaVC·ΔT)`. WinISD drives from it and
    *  states maximum power into it. */
   hotRe(Re_ohm: number, alfaVC_per_K: number, dT_K: number): number;
@@ -174,6 +178,7 @@ export class DriverEngineImpl implements DriverEngine {
    *  area publishes them as-is. */
   readonly ebp = ebp;
   readonly convertWiring = convertWiring;
+  readonly wholeDriverFromPerCoil = wholeDriverFromPerCoil;
   readonly hotRe = hotRe;
   readonly isPhysicallyPlausible = isPhysicallyPlausible;
   readonly rangeIssue = rangeIssue;
