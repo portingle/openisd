@@ -117,7 +117,6 @@ onMounted(async () => {
     projectRepo,
     viewStateRepo,
     logging,
-    editProjectDriver: () => selection.editProjectDriver(),
     appState,
     presentation: presentationState,
     recordedProjectId,

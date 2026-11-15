@@ -1,6 +1,6 @@
 # BUG_20261115_reload-question-says-unsaved-changes-are-discarded-but-they-are-kept
 
-**Status:** RESOLVED (T829), except the last item under Cause, which is left open
+**Status:** RESOLVED (T829)
 
 ## Symptom
 John, 15 Nov 2026, on the test site: "pulling a new version says you lose unsaved but that's not true".
@@ -42,8 +42,7 @@ whole open-project session (saved and edited layers, `toStoredText`) on every ch
 restored by `bootApplication`. What is not in the session: a driver editor draft (a detached driver until OK),
 a What-if layer (`cloneSession` leaves it out), and any write the browser's storage refused (`createWebStorage.set`
 swallows the error, so nothing tells the app). On a read-only backup (store opened in memory) nothing is stored.
-Left open: after a plain browser reload the desktop skin reopens the driver editor or What-if panel (the view
-state keeps the open flags) with the draft values gone.
+A plain browser reload no longer reopens the driver editor or What-if panel (T829): their values are never stored.
 
 ## Fix
 The question is asked only when something is lost, and says what: the store refused the session, the app runs
