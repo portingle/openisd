@@ -7,6 +7,7 @@ goal: What the app tells a user about unsaved work when it reloads onto a new ve
 why: John, 15 Nov 2026: "pulling a new version says you lose unsaved but that is not true" (BUG_20261115_reload-question-says-unsaved-changes-are-discarded-but-they-are-kept)
 done_test: bash scripts/test.sh packages/ui/test/hooks/appUpdateUi.test.ts
 files:
+  - packages/ui/test/ui/what-if-panel.browser.spec.ts
   - packages/ui/test/logic/boot.test.ts
   - packages/ui/src/logic/boot.ts
   - tasks/T829.yml
