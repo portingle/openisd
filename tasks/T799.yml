@@ -1,0 +1,10 @@
+id: T799
+release_note: internal
+repo: openisd
+owner: ci-baselines
+status: open
+goal: visual baselines match CI runner; repeatable CI re-take; gate against machine-drawn baselines
+why: John, 15 Nov 2026: main suite must be green; baselines must match CI (QO923, QO924)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T799.yml
