@@ -31,17 +31,10 @@ async function savedAccount(page: Page, kind: 'token' | 'reconnect'): Promise<vo
 
 /** Google Drive's stand-in for a signed-in account: it answers every Drive call as Drive does (the stub of `stubGoogleApis` answers a create with a file list, so sync failed). */
 async function driveStandIn(page: Page, drive = new DriveEmulator()): Promise<void> {
-  // Drive answers one request at a time, in the order they were asked: the app sends several creates at once, and the Activity
-  // list is newest first, so the order they finish in is the order the list shows. Answered in any order, the list order varies.
-  let queue: Promise<unknown> = Promise.resolve();
   await page.route('**/www.googleapis.com/**', async route => {
     const request = route.request();
-    const answer = queue.then(async () => {
-      const reply = await drive.fetch(request.url(), {method: request.method(), headers: request.headers(), body: request.postData() ?? undefined});
-      await route.fulfill({status: reply.status, contentType: reply.headers.get('content-type') ?? 'application/json', body: await reply.text()});
-    });
-    queue = answer.catch(() => undefined);
-    await answer;
+    const reply = await drive.fetch(request.url(), {method: request.method(), headers: request.headers(), body: request.postData() ?? undefined});
+    await route.fulfill({status: reply.status, contentType: reply.headers.get('content-type') ?? 'application/json', body: await reply.text()});
   });
 }
 

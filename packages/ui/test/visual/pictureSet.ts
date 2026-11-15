@@ -18,6 +18,7 @@ export const SAME_VIEW: ReadonlyMap<string, {readonly kept: string; readonly why
   ['desktop-dialog-projects-new-vented-tuning-warning', {kept: 'desktop-dialog-projects-new-vented-volume-warning', why: 'The volume and the tuning warning are both on screen in the same wizard step: one screen.'}],
   ['mobile-dialog-phone-wizard-vented-tuning-warning', {kept: 'mobile-dialog-phone-wizard-vented-volume-warning', why: 'The volume and the tuning warning are both on screen in the same wizard step: one screen.'}],
   ['mobile-dialog-menu-splashmodal', {kept: 'mobile-dialog-about-version', why: 'The menu\'s About item and the About version view are the same About dialog (the build date is masked, so the pictures were identical).'}],
+  ['mobile-dialog-phone-flash-strip', {kept: 'mobile-dialog-shared-flash-message', why: 'Pressing Save raises a note under the Save button (`phone-save-note`), not the strip; the strip on screen was the "Project imported" one, which is the shared flash message.'}],
   ['mobile-dialog-menu-advanced', {kept: 'mobile-tab-advanced', why: 'The menu\'s Advanced item opens the Advanced page, which is the tab already pictured.'}],
 ]);
 
@@ -40,6 +41,10 @@ export const WAITING_FOR_FIX: ReadonlyMap<string, string> = new Map([
   ['mobile-dialog-storage-usage', 'BUG_20261115_storage-warning-mixes-site-and-local-numbers'],
   ['desktop-dialog-shared-storage-warning', 'BUG_20261115_storage-warning-mixes-site-and-local-numbers'],
   ['mobile-dialog-shared-storage-warning', 'BUG_20261115_storage-warning-mixes-site-and-local-numbers'],
+  ['desktop-dialog-settings-cloud-account-and-activity', 'BUG_20261115_sync-activity-order-follows-network-completion'],
+  ['desktop-dialog-cloud-confirm', 'BUG_20261115_sync-activity-order-follows-network-completion'],
+  ['mobile-dialog-cloud', 'BUG_20261115_sync-activity-order-follows-network-completion'],
+  ['mobile-dialog-cloud-confirm', 'BUG_20261115_sync-activity-order-follows-network-completion'],
 ]);
 
 /** Screens that draw the same picture because the screen is the same, each group named. */

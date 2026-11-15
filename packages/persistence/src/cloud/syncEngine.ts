@@ -628,9 +628,6 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         push.kind === 'pushCreate' && !heldDocKeys.has(docIdKey(push.docId)));
     let nextCreate = 0;
     let createFailure: CloudError | null = null;
-    // Activity is told after the uploads, by name: the order Drive finishes them in is the network's, and the order they are planned in is the order of the stored
-    // ids (random per project). A list a user reads should not vary with either.
-    const createdMoves: {readonly name: string; readonly tell: () => void}[] = [];
     async function createWorker(): Promise<void> {
       while (createFailure === null && nextCreate < creates.length) {
         const push = creates[nextCreate++];
@@ -657,12 +654,10 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         });
         pushedCount++;
         deps.progress.pushed(pushedCount);
-        const name = nameOf(push.bucket, { id: push.docId, body: push.body, layout: deps.layout });
-        createdMoves.push({ name, tell: () => moved('up', 'saved', push.docId, name, '') });
+        moved('up', 'saved', push.docId, nameOf(push.bucket, { id: push.docId, body: push.body, layout: deps.layout }), '');
       }
     }
     await Promise.all(Array.from({ length: Math.min(CREATE_CONCURRENCY, creates.length) }, createWorker));
-    for (const { tell } of [...createdMoves].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) tell();
     if (createFailure !== null) {
       return mapCloudError(createFailure, pushedCount);
     }
