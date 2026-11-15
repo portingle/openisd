@@ -38,7 +38,8 @@ case "${1:-}" in
     open_num="$(head -n 1 <<< "$open_num")"
     if [ -n "$open_num" ]; then
       [[ "$open_num" =~ ^[0-9]+$ ]] || die "gh listed no pull request number for $3: $open_num"
-      gh_net pr edit "$open_num" --repo "$REPO" --title "$4" --body-file "$5" > /dev/null 2>&1 \
+      # REST, not `gh pr edit`: that is a GraphQL call and fails on this repo (Projects classic deprecation), which made every re-ship refuse (T815)
+      gh_net api -X PATCH "repos/$REPO/pulls/$open_num" -f "title=$4" -F "body=@$5" > /dev/null 2>&1 \
         || die "gh could not retitle pull request #$open_num on $3"
       echo "pull request #$open_num was already open on $3; this run reuses it" >&2
       echo "$open_num"

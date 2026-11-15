@@ -26,11 +26,11 @@ cat > "$SCRATCH/gh" <<EOF2
 #!/usr/bin/env bash
 ( IFS='|'; echo "\$*" ) >> "$CALLS"
 case "\$1 \$2" in
-  "pr list") echo "" ;;
+  "pr list") [ -e "$SCRATCH/pr.exists" ] && echo 7 || echo "" ;;
   "pr create") echo "https://github.com/o/r/pull/7" ;;
   "pr merge") [ -e "$NOOP" ] || : > "$AUTO"; echo "auto-merge enabled" ;;
   "pr view") s=OPEN; [ -e "$PRSTATE.merged" ] && s=MERGED; if [ -e "$AUTO" ]; then echo "\$s auto"; else echo "\$s none"; fi ;;
-  "pr edit") case "\$*" in *--add-label*) echo "GraphQL: Projects (classic) is being deprecated" >&2; exit 1 ;; esac ;;
+  "pr edit") case "\$*" in *) echo "GraphQL: Projects (classic) is being deprecated" >&2; exit 1 ;; esac ;;
   "api graphql") if [ -e "$INQUEUE" ]; then echo true; else echo false; fi ;;
 esac
 exit 0
@@ -40,7 +40,7 @@ export LAND_GH="$SCRATCH/gh"
 
 # setup [<extra ship.conf lines>]: main checkout "main", task worktree "wt" on branch t1 with one change.
 setup() {
-  rm -rf "$SCRATCH/w" "$CALLS" "$AUTO" "$INQUEUE" "$NOOP" "$PRSTATE.merged"; mkdir -p "$SCRATCH/w"; cd "$SCRATCH/w" || exit 2
+  rm -rf "$SCRATCH/w" "$SCRATCH/pr.exists" "$CALLS" "$AUTO" "$INQUEUE" "$NOOP" "$PRSTATE.merged"; mkdir -p "$SCRATCH/w"; cd "$SCRATCH/w" || exit 2
   git init -q --bare -b main origin.git
   git -C origin.git config receive.denyNonFastForwards true
   git clone -q origin.git main 2> /dev/null; cd main || exit 2
@@ -146,7 +146,9 @@ fix="$SCRATCH/w/main-t1"
   && ok "7 pr-fix.sh T1 makes a worktree on t1 at the pushed tip" || fail "7 pr-fix (r=$r): $out"
 if [ -n "${wt:-}" ]; then
   echo fix >> "$wt/a.txt"; rm -f "$AUTO"
+  : > "$SCRATCH/pr.exists"
   (cd "$wt" && timeout 120 bash scripts/ship.sh T1 > "$SCRATCH/out" 2>&1); r=$?
+  grep -q '^api|-X|PATCH|repos/o/r/pulls/7|' "$CALLS" && ! grep -q '^pr|edit' "$CALLS" && ok "7 a re-ship retitles the open pull request with REST, not gh pr edit" || fail "7 retitle: $(cat "$CALLS")"
   [ $r = 0 ] && [ "$(git -C "$ORIGIN" show t1:a.txt | tail -1)" = fix ] && ok "7 the fix ships from that worktree and the pull request is queued again" || fail "7 re-ship (r=$r): $(tail -5 "$SCRATCH/out")"
 fi
 out="$(cd "$SCRATCH/w/main" && bash scripts/land/pr-fix.sh T9 2>&1)"; r=$?
