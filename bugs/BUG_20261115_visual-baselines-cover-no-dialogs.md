@@ -26,8 +26,8 @@ skins". John: "every screen in the app is meant to have regression testing".
 
 `screens.ts` now adds one screen per popup in `openTargets()`: kinds dialog, sheet, menu, help, field note,
 warning popup, error popup, inline expansion and driver browser. Each tab of a tabbed dialog is its own view.
-Each opens from the complete-driver project, through the same open steps the layout walk uses. That makes 182
-new baselines (82 desktop, 100 phone); with the 60 before, 242 screens. Pages, tabs and wizard steps were
+Each opens from the complete-driver project, through the same open steps the layout walk uses. That makes 185
+new baselines (82 desktop, 103 phone); with the 60 before, 245 screens. Pages, tabs and wizard steps were
 already pictured.
 
 ### Found on the way: a frozen clock broke clicks
@@ -38,13 +38,28 @@ equal, so a parent's `@click.stop` never ran. Example: the phone menu's Save As 
 then reached the document listener, which closed it again. The clock now starts at `FIXTURE_DATE` and runs
 (`clock.install` + `clock.resume`). All 60 earlier baselines came out unchanged.
 
-### Masked parts (each on every popup screen; a selector that matches nothing masks nothing)
+### Screens that drew two ways, fixed at the open step (CI run 43678501129 and a local two-pass sweep)
 
-| Part                                                         | Selector                             | Why                                                        |
-| ------------------------------------------------------------ | ------------------------------------ | ---------------------------------------------------------- |
-| "This site uses … of the … this browser allows"              | `.su-site`                           | The browser works the storage quota out from the disk.      |
-| "Projects saved in this browser at http://localhost:<port>/" | `.store-label`                       | The test server's port is one of a pool (4100-4107).        |
-| Phone About "Build · <date>"                                 | `[data-testid="about-version-line"]` | The build's own date.                                       |
+- `desktop/cloud/conflict-notice`: the notice shows while the first sync run is still ending. The toolbar badge then
+  reads "2 changes will sync in a moment" (busy glyph) and the project rows are "not on Drive yet"; the app's 3 s
+  sync debounce then runs a second run that uploads the conflict copy, and the badge settles on "kept both ... Tap
+  to see them" (alert glyph, red badge) with every row on Drive. The app always ends in that one state (probe: same
+  sequence in every run, nothing after 7.5 s), so it is not an app bug: the open step now waits for the badge's
+  tooltip to say so.
+- `desktop/cloud/reconnect-strip`: the strip reads "1 change not synced" at once and "2 changes not synced" when
+  the same debounce fires; the step waits for the second.
+- `refresh` (phone): `/about/refresh/` replaces itself with the app; the picture was the "Updating" page, the app
+  starting, or the app, by chance. The step waits for the address to move to `/?_openisd_refresh=` and the project's
+  Box page to show.
+- The three phone cloud screens left out for the box-type width flake are pictured again: that flake was fixed (T795, T798).
+
+### Masked parts (only one on the popup screens; a selector that matches nothing masks nothing)
+
+| Part                                                         | How                                                             | Why                                                        |
+| ------------------------------------------------------------ | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| "This site uses … of the … this browser allows"              | not masked: `VisualSkin.start` fixes `navigator.storage.estimate` | The browser works the quota out from the disk; the screen gets a fixed answer. |
+| "Projects saved in this browser at http://localhost:<port>/" | not masked                                                      | The suite and the re-take serve on port 4300 (`OPENISD_TEST_PORT`); only a local pooled port differs, and a local run cannot match CI's pictures anyway. |
+| Phone About "Build · <date>" (`[data-testid="about-version-line"]`) | masked                                                   | The build's own date; it belongs to the build. |
 
 The build stamp in the toolbar was masked before T793 and still is.
 
@@ -55,8 +70,7 @@ The build stamp in the toolbar was masked before T793 and still is.
 | `shared/flash-message`, `phone/flash-strip`                           | both    | Fade out by design a few seconds after they show; no stable picture.                                    |
 | `diagnostic-repairs`, `desktop/diagnostic-repairs`                    | both    | The fault report prints a stack trace naming the hashed bundle (`main-<hash>.js`) and the test port.    |
 | `startup-failure`, `desktop/startup-failure`                          | both    | Same: a stack trace with the bundle hash and the port.                                                  |
-| `phone/cloud-reconnect-strip`, `phone/cloud-conflict-notice`, `phone/cloud-hint` | phone   | The Box page behind the strip differs between runs: BUG_20261115_mobile-wizard-box-type-select-width-varies. |
-| `cloud`, `cloud-confirm`, `desktop/settings/cloud/account-and-activity`, `desktop/cloud-confirm` | both | The Cloud sync dialog says "Retrying at <time>": now plus the retry delay, so the minute depends on how long the run took (13:00 in one run, 13:01 in the next). |
+| `cloud`, `cloud-confirm`, `desktop/settings/cloud/account-and-activity`, `desktop/cloud-confirm` | both | The signed-in step's Google stand-in (`stubGoogleApis`) answers Drive's create with a file list, so the dialog shows "Sync failed ... Retrying at <time>" (now plus the retry delay). Needs the Drive emulator the conflict notice uses, and a wait for "Synced". |
 | `native-select`, `native-colour`, `native-title`, `desktop/projects/trace-colour-picker` | as listed | Drawn by the browser or the OS (`NoOpenReason.BrowserOwned`).                         |
 | `cross-tab`, `desktop/cross-tab-notice`, `shared/driver-library-storage-note`, `phone/response-model-pending-notice`, `desktop/enclosure/response-model-pending-notice`, `desktop/results/chart-unavailable-notice`, `desktop/wizard-help` | as listed | The index lists a view the app cannot show (`NoOpenReason.IndexDisagrees`). |
 

@@ -28,6 +28,11 @@ export class VisualSkin {
     await page.clock.install({time: FIXTURE_DATE});
     await page.clock.resume();
     await page.setViewportSize(this.viewport);
+    // The browser answers "how much does this site use, of how much it allows" from the disk it runs on: the screen is
+    // taken with a fixed answer, as the Drive stand-in gives Google's.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.storage, 'estimate', {configurable: true, value: async () => ({usage: 1_258_291, quota: 2_469_606_195})});
+    });
     if (this === VisualSkin.MOBILE) await forceMobileSkin(page);
     else await page.addInitScript(() => {
       localStorage.setItem('openisd_view', JSON.stringify({ui: {splashSeen: true}}));
@@ -66,13 +71,12 @@ function screen(skin: VisualSkin, name: string, open: (page: Page) => Promise<vo
 }
 
 /**
- * Parts of a dialog the machine or the build decides, masked on every dialog screen (a selector that
- * matches nothing masks nothing):
- * - "This site uses … of the … this browser allows": the storage quota, which the browser works out from the disk;
- * - "Projects saved in this browser at http://localhost:<port>/": the test server's port, one of a pool;
- * - the phone About's "Build · <date>" line: the build's own date.
+ * Parts of a dialog the build decides, masked on every dialog screen (a selector that matches nothing masks nothing):
+ * - the phone About's "Build · <date>" line: the build's own date, which differs with every build.
+ * The storage quota line is not masked: `VisualSkin.start` fixes the browser's answer. The "saved in this browser at
+ * http://localhost:<port>/" line is not masked: the suite and the re-take both serve on port 4300 (OPENISD_TEST_PORT).
  */
-const MACHINE_DECIDED_PARTS: readonly string[] = ['.su-site', '.store-label', '[data-testid="about-version-line"]'];
+const MACHINE_DECIDED_PARTS: readonly string[] = ['[data-testid="about-version-line"]'];
 
 const DESKTOP_TABS = ['Box', 'Driver', 'Signal', 'Filters', 'Advanced', 'Project'] as const;
 const MOBILE_TABS = ['Box', 'Driver', 'Signal', 'Filters', 'Graph'] as const;
@@ -176,9 +180,9 @@ const NO_STABLE_PICTURE: ReadonlySet<string> = new Set([
   'shared/flash-message', 'phone/flash-strip',
   // The fault report prints a stack trace naming the build's hashed bundle (main-<hash>.js) and the test port.
   'diagnostic-repairs', 'desktop/diagnostic-repairs', 'startup-failure', 'desktop/startup-failure',
-  // The phone Box page behind the strip differs between runs (BUG_20261115_mobile-wizard-box-type-select-width-varies).
-  'phone/cloud-reconnect-strip', 'phone/cloud-conflict-notice', 'phone/cloud-hint',
-  // "Retrying at <time>": now plus the retry delay, so the minute depends on how long the run took.
+  // The signed-in dialog shows "Sync failed ... Retrying at <time>": the Google stand-in of these steps (stubGoogleApis) answers
+  // Drive's create with a file list, so the sync fails and the retry time is now plus the delay. The step needs the Drive
+  // emulator the conflict notice uses, and to wait for "Synced" (not done in T793).
   'cloud', 'cloud-confirm', 'desktop/settings/cloud/account-and-activity', 'desktop/cloud-confirm',
 ]);
 

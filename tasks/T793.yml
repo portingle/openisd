@@ -11,6 +11,8 @@ files:
   - bugs/BUG_20261115_visual-baselines-cover-no-dialogs.md
   - docs/design/VISUAL_BASELINES.md
   - packages/ui/test/visual/screens.ts
+  - packages/ui/test/fixtures/viewOpenCloud.ts
+  - packages/ui/test/fixtures/viewOpenSteps.ts
   - packages/ui/test/visual/visual.browser.spec.ts
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-announcements-current.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-conflict-notice.png
