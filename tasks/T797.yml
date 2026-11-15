@@ -8,3 +8,4 @@ why: John, 15 Nov 2026: layout is deterministic (QO924, BUG_20261115_mobile-wiza
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T797.yml
+  - bugs/BUG_20261115_mobile-wizard-bandpass4-box-type-drawn-twice.md
