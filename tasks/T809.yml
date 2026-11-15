@@ -1,0 +1,10 @@
+id: T809
+release_note: internal
+repo: openisd
+owner: phone-title
+status: open
+goal: On the phone Driver tab the driver name button shows all of a long driver name, wrapped on three lines with the first line clipped under the header; it shows one line with an ellipsis, nothing clipped
+why: John, 15 Nov 2026: nothing clipped (field-layout rule 2; QO923)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T809.yml
