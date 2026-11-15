@@ -2,7 +2,7 @@ id: T818
 release_note: internal
 repo: openisd
 owner: claude-review
-status: open
+status: done
 goal: Automatic Claude PR review and baseline picture review in CI
 why: John, 15 Nov 2026: reviews run by the gates themselves; Claude app and secret set up by John (QO923)
 done_test: bash scripts/land/test/claude-review-workflows.test.sh
