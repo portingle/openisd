@@ -466,12 +466,19 @@ describe('Engine.solveDriver', () => {
       expect(refusals(issues)).toMatchObject([{target: 'Depth_m'}]);
     });
 
-    it('a Magnet narrower than the voice coil is refused (comes out 20 mm against a 25 mm coil)', () => {
-      const p = driverParams({Dd_m: 0.090, Vcd_m: 0.025, Depth_m: 0.055, MagDepth_m: 0.020, DVol_m3: 0.00010684687514552788});
+    it('a Magnet whose DVol is too small for the cone is refused (no real diameter fits)', () => {
+      const p = driverParams({Dd_m: 0.090, Vcd_m: 0.025, Depth_m: 0.055, MagDepth_m: 0.020, DVol_m3: 1e-5});
       const issues = engine.driver.solve(p, AIR_E);
       expect(p.Magnet_m.value).toBeNull();
       expect(refusals(issues)).toMatchObject([{target: 'Magnet_m'}]);
     });
+
+    it('a Magnet narrower than the voice coil is still calculated: the relation does not rule it out', () => {
+      const p = driverParams({Dd_m: 0.090, Vcd_m: 0.025, Depth_m: 0.055, MagDepth_m: 0.020, DVol_m3: 0.00010684687514552788});
+      const issues = engine.driver.solve(p, AIR_E);
+      expect(refusals(issues)).toEqual([]);
+      expect(p.Magnet_m.value).toBeCloseTo(0.020, 9);
+  });
   });
 
   // A calculated value's half-width is the guaranteed first-order bound its entered inputs give

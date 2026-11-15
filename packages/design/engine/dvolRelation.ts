@@ -24,8 +24,8 @@
  * WinISD applies the formulas to any positive inputs and writes whatever comes out; OpenISD
  * does not (BUG_20261115_calculated-dimension-contradicts-its-own-geometry): a result that
  * contradicts the geometry it came from is refused. The model fixes the bounds:
- *   - the cone height `Depth - MagDepth` is positive, so `0 < MagDepth < Depth`;
- *   - the magnet carries the voice coil, so `Magnet >= Vcd`.
+ *   - the cone height `Depth - MagDepth` is positive, so `0 < MagDepth < Depth`.
+ * No bound on `Magnet` beyond its radicand being positive: the relation itself says nothing more of it.
  * A refused direction leaves its field not-available, and `geometryRefusal` says why.
  */
 
@@ -91,12 +91,11 @@ export function magDepthFromDims(i: {Dd: number; Vcd: number; DVol: number; Dept
   return magDepth !== null && magDepth > 0 && magDepth < i.Depth ? magDepth : null;
 }
 
-/** `Magnet` from `DVol` and the other three. Refused when the radicand is not positive, and when
- *  the magnet comes out narrower than the voice coil it must hold. */
+/** `Magnet` from `DVol` and the other three. Refused when the radicand is not positive. */
 export function magnetFromDims(i: {Dd: number; Vcd: number; DVol: number; Depth: number; MagDepth: number}): number | null {
   if (!positive(i.Dd, i.Vcd, i.DVol, i.Depth, i.MagDepth)) return null;
   const magnet = rawMagnet(i);
-  return magnet !== null && magnet >= i.Vcd ? magnet : null;
+  return magnet;
 }
 
 export type GeometryTarget = 'DVol' | 'Depth' | 'MagDepth' | 'Magnet';
@@ -138,8 +137,7 @@ export function geometryRefusal(target: GeometryTarget, v: Partial<Record<'Dd' |
       if (DVol === undefined || Depth === undefined || MagDepth === undefined || !positive(DVol, Depth, MagDepth)) return null;
       const r = rawMagnet({Dd, Vcd, DVol, Depth, MagDepth});
       if (r === null) return `Magnet was not calculated: DVol is too small for a cone ${mm(Depth - MagDepth)} tall, so no magnet diameter fits. ${tail}`;
-      return r >= Vcd ? null
-        : `Magnet was not calculated: the other dimensions give ${mm(r)}, narrower than the voice coil (Vcd ${mm(Vcd)}). ${tail}`;
+      return null;
     }
   }
 }
