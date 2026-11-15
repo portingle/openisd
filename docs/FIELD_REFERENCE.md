@@ -100,7 +100,7 @@ figures converted to My wiring, with My wiring as its `VCCon`. WinISD's own wiri
 stored `Re` and `BL` that leaves the result marked entered (`winisd_research` FINDING-009); OpenISD never rewrites a
 stored figure. The project's "Voice coil connection" control is a different thing: how several drivers (Num. of
 drivers) are joined to the amplifier, as in WinISD. See `docs/research/WINISD_PARITY.md` §11b and
-`docs/plans/PLAN_20261114_DVC_WIRING_AND_DQ.md`.
+`docs/plans/PLAN_20261114_DVC_WIRING_AND_DQ.md`. That sentence is wrong about WinISD (it has no wiring of several drivers); the correction and the migration are in `docs/plans/PLAN_20261115_COIL_WIRING_REPLICATES_WINISD.md`.
 
 ## Driver — sensitivity
 
