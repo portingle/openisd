@@ -209,7 +209,9 @@ describe('space', () => {
   });
 
   it('when it cannot fit even then, says so, writes nothing and refuses the destructive write', () => {
-    const storage = createQuotaStorage(600, {[OPENISD_PROJECTS_KEY]: data});
+    // Text that does not compress (the backup is stored compressed), and more than a copy's room.
+    const data = Array.from({length: 500}, (_, i) => String.fromCharCode(33 + ((i * 7919 + (i * i) % 89) % 90))).join('');
+    const storage = createQuotaStorage(850, {[OPENISD_PROJECTS_KEY]: data});
     const backup = createStorageBackup(storage, () => FIXED_NOW_MS);
     let ran = false;
 
@@ -217,7 +219,7 @@ describe('space', () => {
     assert.equal(taken.kind, 'noRoom');
     // The sizes it saw: a copy bigger than the room left, and the live data the store held.
     if (taken.kind === 'noRoom') {
-      assert.ok(taken.shortfall.copyChars > data.length);
+      assert.ok(taken.shortfall.copyChars > 850 - (OPENISD_PROJECTS_KEY.length + data.length));
       assert.equal(taken.shortfall.storeChars, OPENISD_PROJECTS_KEY.length + data.length);
     }
     const guarded = backup.guard('delete', () => { ran = true; });
@@ -318,37 +320,6 @@ describe('guard', () => {
   it('runs the write on a store with nothing in it', () => {
     const storage = createMemoryStorage();
     assert.deepEqual(createStorageBackup(storage, () => FIXED_NOW_MS).guard('delete', () => 'fresh'), {kind: 'ran', value: 'fresh'});
-  });
-});
-
-describe('rewriteInPlace', () => {
-  it('replaces the text of a key and takes no backup', () => {
-    const storage = createMemoryStorage({[OPENISD_PROJECTS_KEY]: 'before'});
-    const backup = createStorageBackup(storage, () => FIXED_NOW_MS);
-    assert.equal(backup.rewriteInPlace(OPENISD_PROJECTS_KEY, 'after'), 'done');
-    assert.equal(storage.get(OPENISD_PROJECTS_KEY), 'after');
-    assert.deepEqual(backup.list(), []);
-  });
-
-  it('keeps the old text, and drops no backup and no other key, when the new text does not fit', () => {
-    const held = backupText(5, '20260101T000000Z', 'v20260101T0000Z');
-    const initial = {[OPENISD_PROJECTS_KEY]: 'before', [keyOf('v20260101T0000Z')]: held, [OPENISD_MY_DRIVERS_KEY]: 'drivers'};
-    const used = Object.entries(initial).reduce((n, [k, v]) => n + k.length + v.length, 0);
-    const storage = createQuotaStorage(used + 2, initial);
-    const backup = createStorageBackup(storage, () => FIXED_NOW_MS);
-
-    assert.equal(backup.rewriteInPlace(OPENISD_PROJECTS_KEY, 'a much longer text than before'), 'noRoom');
-    assert.equal(storage.get(OPENISD_PROJECTS_KEY), 'before');
-    assert.equal(storage.get(keyOf('v20260101T0000Z')), held);
-    assert.equal(storage.get(OPENISD_MY_DRIVERS_KEY), 'drivers');
-  });
-
-  it('puts the old text back when the store holds something else after the write', () => {
-    const inner = createMemoryStorage({[OPENISD_PROJECTS_KEY]: 'before'});
-    let sets = 0;
-    const storage: ListableStorage = {...inner, set: (key, value) => { sets += 1; inner.set(key, sets === 1 ? 'half' : value); }};
-    assert.equal(createStorageBackup(storage, () => FIXED_NOW_MS).rewriteInPlace(OPENISD_PROJECTS_KEY, 'after'), 'noRoom');
-    assert.equal(storage.get(OPENISD_PROJECTS_KEY), 'before');
   });
 });
 

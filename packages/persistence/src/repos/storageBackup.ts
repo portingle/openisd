@@ -6,6 +6,15 @@
  *  replaces a stored key — restore, delete, migrate, repair write-back, reset — first goes
  *  through `guard`. There is no path without it, and `storageBackup.test.ts` enumerates them.
  *
+ *  Compressed (T827, QO940.c4, John 15 Nov 2026: "compress"): the copy is written packed, by lz-string's
+ *  `compressToUTF16`, as a JSON envelope that declares `encoding` and its version (`storageSnapshot.ts`).
+ *  A real store packs to about 10 to 13% of its plain text, so a backup no longer takes a 46% store to the
+ *  nearly-full popup or fails to fit at 60%. Every space rule below is measured in stored (packed)
+ *  characters. A downloaded or exported backup is plain text. A reader switches on the declared
+ *  encoding; one it does not know refuses the backup with a message and keeps it untouched. A build that
+ *  knows no encodings reads the envelope's `layout` (stated as 1000) as "written by a newer OpenISD", lists,
+ *  counts, keeps and drops it like any backup, and restores nothing from it.
+ *
  *  Space: the copy is measured by writing it. When it does not fit, these go, in order, until it
  *  does: the older backups (oldest first), then the pre-repair copies, then the newest backup of
  *  each layout — a copy of live data outranks a copy of yesterday's (John, 14 Oct 2026, T153).
@@ -14,18 +23,6 @@
  *
  *  One backup per guarded operation: a guard that starts while another runs takes none, since
  *  the outer backup already holds the whole store (a sync run's pulled writes, T153).
- *
- *  The one exception, `rewriteInPlace` (T827, QO940, John 15 Nov 2026: "incremental upgrade and write
- *  back?"): the start-up rewrite of stored project texts to the current schemaVersion. It removes
- *  nothing the user holds: the new text is the same project, the reader already upgrades the old
- *  text in memory on every load, and the key is written whole or not at all. The old text is held
- *  until the new text reads back, and is put back if it does not; no backup and no other key goes
- *  for room. Against a defect in an upgrade step, which a read-back cannot see, the caller first
- *  keeps the stored text of each project the upgrade changes in substance as a refused copy
- *  (`refuse('beforeUpgrade', ...)`, one project each, listed on the Backups page, exportable as a
- *  project file), and leaves the project as saved when that copy does not fit. A whole-store copy of this optional rewrite took a 46%-full store to the nearly-full
- *  popup, and above about half a full store it did not fit, so the rewrite was skipped without a
- *  word. Repair, sync, delete, restore, reset and layout migration still go through `guard`.
  *
  *  Count: the newest three backups are kept; after each new one the older ones are removed
  *  (John, 14 Oct 2026). The newest backup of each older layout is outside that count. Each backup
@@ -59,9 +56,8 @@ export interface BackupInfo {
   readonly size: number;
 }
 
-/** Why a project was kept as a refused copy: it would not load, or it is the text as it was before an
- *  update changed it in substance (T827). */
-export type RefusedReason = 'wouldNotLoad' | 'beforeUpgrade';
+/** Why a project was kept as a refused copy. */
+export type RefusedReason = 'wouldNotLoad';
 
 /** One refused copy as the Backups page lists it. `at`, `reason` and `name` are '' when the
  *  copy's own record is damaged; it can still be discarded. */
@@ -104,10 +100,6 @@ export interface StorageBackup {
   /** Run `destructive` only after the whole store is backed up; refuse it when the backup does
    *  not fit. THE door for every write that removes or replaces a stored key. */
   guard<T>(reason: BackupReason, destructive: () => T): Guarded<T>;
-  /** Replace the text of one key with `text` that is the same data upgraded, with no backup. `done`
-   *  once `text` reads back; `noRoom` when it does not, with the old text as it was. Removes nothing
-   *  for room. Only for a rewrite the reader would make in memory anyway (see the file header). */
-  rewriteInPlace(key: string, text: string): 'done' | 'noRoom';
   /** Every backup held, newest first. */
   list(): BackupInfo[];
   /** The backup text under `key` (an envelope, as `readEnvelope` reads it), or null. */
@@ -196,7 +188,7 @@ function refusedRecordOf(stored: string | null): RefusedRecord | null {
   try { parsed = JSON.parse(stored); } catch { return null; }
   if (typeof parsed !== 'object' || parsed === null) return null;
   if (!('at' in parsed) || typeof parsed.at !== 'string') return null;
-  if (!('reason' in parsed) || (parsed.reason !== 'wouldNotLoad' && parsed.reason !== 'beforeUpgrade')) return null;
+  if (!('reason' in parsed) || parsed.reason !== 'wouldNotLoad') return null;
   if (!('name' in parsed) || typeof parsed.name !== 'string') return null;
   if (!('text' in parsed) || typeof parsed.text !== 'string') return null;
   return {at: parsed.at, reason: parsed.reason, name: parsed.name, text: parsed.text};
@@ -206,8 +198,8 @@ export function createStorageBackup(storage: ListableStorage, now: () => number)
   const snapshots = createStorageSnapshot(storage, now);
   function infoOf(key: string): BackupInfo {
     const text = storage.get(key) ?? '';
-    const read = readEnvelope(text);
-    if (read.kind === 'invalid') return {key, layout: 0, build: null, takenAt: '', reason: null, size: text.length};
+    const read = readEnvelope(text, {headerOnly: true});
+    if (read.kind === 'invalid') return {key, layout: read.layout ?? 0, build: null, takenAt: '', reason: null, size: text.length};
     return {key, layout: read.snapshot.layout, build: read.snapshot.build, takenAt: read.snapshot.exportedAt, reason: read.reason, size: text.length};
   }
 
@@ -289,7 +281,7 @@ export function createStorageBackup(storage: ListableStorage, now: () => number)
   /** `base`, or `base_01` .. `base_99` when a backup is already held under it (same build, same second). */
   function freeKey(base: string): string | null {
     if (storage.get(base) === null) return base;
-    for (let n = 1; n <= 9999; n++) {
+    for (let n = 1; n <= 99; n++) {
       const key = `${base}_${String(n).padStart(2, '0')}`;
       if (storage.get(key) === null) return key;
     }
@@ -304,7 +296,7 @@ export function createStorageBackup(storage: ListableStorage, now: () => number)
   function take(reason: BackupReason): BackupResult {
     const snapshot = snapshots.take();
     if (snapshot === null) return {kind: 'nothingToBackUp'};
-    const text = envelopeText(snapshot, false, reason);
+    const text = envelopeText(snapshot, false, reason, true);
     const noRoom = (): BackupResult => ({kind: 'noRoom', shortfall: {copyChars: text.length, storeChars: storeChars()}});
     const key = freeKey(`${OPENISD_BACKUP_PREFIX}${snapshot.build.text}_${snapshot.exportedAt}`);
     if (key === null) return noRoom();
@@ -350,14 +342,6 @@ export function createStorageBackup(storage: ListableStorage, now: () => number)
       } finally {
         guarding = false;
       }
-    },
-    rewriteInPlace(key, text) {
-      const held = storage.get(key);
-      storage.set(key, text);
-      if (storage.get(key) === text) return 'done';
-      if (held === null) storage.remove(key);
-      else if (storage.get(key) !== held) storage.set(key, held);
-      return 'noRoom';
     },
     list,
     read: key => storage.get(key),

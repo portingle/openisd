@@ -32,22 +32,6 @@ describe('refuse', () => {
     ]);
   });
 
-  it('keeps a project as it was before an update, under its own reason', () => {
-    const backup = backupOn(createMemoryStorage({}));
-    assert.equal(backup.refuse('beforeUpgrade', 'Desk', '{"v3":1}'), true);
-    const [copy] = backup.refusedCopies();
-    assert.deepEqual({reason: copy.reason, name: copy.name}, {reason: 'beforeUpgrade', name: 'Desk'});
-    assert.equal(backup.readRefused(copy.key)?.text, '{"v3":1}');
-    assert.equal(backup.refuse('wouldNotLoad', 'Desk', '{"v3":1}'), true);
-    assert.equal(backup.refusedCopies().length, 2, 'the same text kept for another reason is another copy');
-  });
-
-  it('keeps more than a hundred copies taken in one second', () => {
-    const backup = backupOn(createMemoryStorage({}));
-    for (let i = 0; i < 250; i++) assert.equal(backup.refuse('beforeUpgrade', `p${i}`, `text ${i}`), true, `copy ${i}`);
-    assert.equal(backup.refusedCopies().length, 250);
-  });
-
   it('keeps one copy of the same text however often it is refused', () => {
     const backup = backupOn(createMemoryStorage({}));
     backup.refuse('wouldNotLoad', 'A', 'same');

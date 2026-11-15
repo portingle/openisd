@@ -33,7 +33,6 @@ import {
     createProjectBin,
     createProjectBinMarks,
     createStoredTextCompaction,
-    projectTextsLeft,
     createQuarantineRetirement,
     createLedgerFollowsMigration,
     createLedgerFollowsRewrite,
@@ -59,7 +58,7 @@ import {provideCloudSync} from './hooks/CloudSync-hooks.js';
 import {handleOAuthBoot} from './logic/boot.js';
 import {createLogging} from './logging/flash.js';
 import {flashStartupUse} from './logic/startupUsageNotice.js';
-import {announceProjectsLeft} from './logic/upgradeLeftNotice.js';
+import {announceUpgradeRefused} from './logic/upgradeRefusedNotice.js';
 import {storedUseOf} from './logic/storedUse.js';
 import {createFaultLog} from './diagnostics/faultLog.js';
 import {createDriverSelection} from './logic/driverSelection.js';
@@ -95,7 +94,7 @@ import {announcementEndpointsForHostname, createAnnouncementCenter} from './logi
 import {newUuid} from '@openisd/design';
 import {DesktopSizes, PhoneRowSizes, SkinFonts, trailOfLocation} from '@openisd/design/fields';
 import {createEngine} from '@openisd/design/engine';
-import {basicUtc, browserNameOf, formatDateTime, LOCAL_STORE_LIMIT_BYTES, persistenceLine, STORAGE_FULL_FROM} from '@openisd/design/fields';
+import {basicUtc, browserNameOf, formatDateTime, persistenceLine} from '@openisd/design/fields';
 import {announceLostKeys} from './logic/lostKeyNotice.js';
 import '@fontsource/roboto/latin-400.css';
 import './fonts.css';
@@ -237,11 +236,10 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
   const featureUse = new FeatureUse(telemetry, recentActions);
   const driverPicked = driverPickRecorder(telemetry, driverRepo);
   const selection = createDriverSelection({ appState, presentation, driverPicked });
-  // Stored projects written by earlier builds are indented, carry dq_calculated or an older schemaVersion: rewritten
-  // in place (no whole-store backup, T827), and Cloud sync follows it so it sees no edit. A project the upgrade changes in
-  // substance keeps its old text as a copy first, never taking storage to the nearly-full line; one that does not fit
-  // stays as saved and the user is told below. A read-only view of a backup is never written.
-  const projectsLeft = store.readOnly ? 0 : projectTextsLeft(createStoredTextCompaction(storage, storageBackup, createLedgerFollowsRewrite(storage, randomBytes), STORAGE_FULL_FROM * LOCAL_STORE_LIMIT_BYTES).run());
+  // Stored projects written by earlier builds are indented and carry dq_calculated: rewritten once,
+  // behind the whole-store backup, and Cloud sync follows it so it sees no edit. A read-only view of a backup is never written.
+  // The backup that must come first is compressed; when it still does not fit, nothing is rewritten and the user is told below.
+  const upgrade = store.readOnly ? {kind: 'nothingToDo' as const} : createStoredTextCompaction(storage, storageBackup, createLedgerFollowsRewrite(storage, randomBytes)).run();
   // Refused copies replace the old quarantine copy of the session: it is removed once, behind the backup.
   if (!store.readOnly) createQuarantineRetirement(storage, storageBackup).run();
   const projectRepo = createProjectRepo(engine, fileStorage, storage, new URL('./', window.location.href).href, storageBackup, exportedFiles, report => faultLog.recordRepair(report), saves.notify);
@@ -474,7 +472,7 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
   overlay?.onAppMounted();
   flashStartupUse(storedUseOf(projectRepo, storageUsage), createUsageNoticeTab(tabStore), logging.flash);
   if (store.readOnly) logging.flash('Showing a backup read-only. Nothing you change is saved.');
-  void announceProjectsLeft(projectsLeft, confirmPort.port);
+  void announceUpgradeRefused(upgrade, confirmPort.port);
   // A key that was here at the last start and is gone now: say so, and wait for a click.
   void announceLostKeys(store.lostKeys, {
     confirm: confirmPort.port,
