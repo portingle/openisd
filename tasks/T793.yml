@@ -122,6 +122,7 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-storage-usage-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-wizard-ebp-info.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-wizard-placement-info.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-wizard-sealed-step1.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-complete-project.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-about-version.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-announcements-current.png
@@ -219,6 +220,7 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-ebp.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-placement.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step1.png
 visual:
   - desktop-complete-project
   - desktop-dialog-announcements-current
@@ -298,6 +300,7 @@ visual:
   - desktop-dialog-storage-usage-warning
   - desktop-dialog-wizard-ebp-info
   - desktop-dialog-wizard-placement-info
+  - desktop-wizard-sealed-step1
   - mobile-complete-project
   - mobile-dialog-about-version
   - mobile-dialog-announcements-current
@@ -395,3 +398,4 @@ visual:
   - mobile-dialog-wizard-ebp
   - mobile-dialog-wizard-help
   - mobile-dialog-wizard-placement
+  - mobile-wizard-sealed-step1
