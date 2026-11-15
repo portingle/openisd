@@ -17,6 +17,7 @@ files:
   - scripts/land/test/visual.e2e.test.sh
   - scripts/land/test/ship.test.sh
   - docs/design/VISUAL_BASELINES.md
+  - .claude/rules/verify.md
   - packages/ui/test/visual/**
 
 visual_note: The baseline pictures are redrawn by CI's test machine; the screens look as they did before T791 apart from the changes named in the pull request.
