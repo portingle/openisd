@@ -11,6 +11,7 @@ import ProvenanceLegend from '../../components/ProvenanceLegend.vue';
 import UIField from '../../components/UIField.vue';
 import PortShapeToggle from '../../components/PortShapeToggle.vue';
 import DriverConsistencyList from '../../components/DriverConsistencyList.vue';
+import DriverCoilWiring from '../../components/DriverCoilWiring.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import UIPickField from '../../components/UIPickField.vue';
 import UISettlingField from '../../components/UISettlingField.vue';
@@ -476,6 +477,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
                   <select id="og-wiring" :value="project.wiring.value" @change="e => { const w = selectedOption(e, ARRAY_WIRING_OPTIONS); if (w !== null) project.wiring.set(w); }"><option v-for="o in ARRAY_WIRING_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option></select>
                 </UIPickField>
               </div>
+              <DriverCoilWiring />
             </div>
             <div>
               <DesktopBand :section="advancedOptionsHelp" @help="openSectionHelp" />
@@ -1343,6 +1345,12 @@ provideCellScope({ revision: projectChanged, written: () => {} });
   .port-columns .vent-groups:has(> .vent-col:nth-child(3)) > .vent-col { min-width:0; grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
   .port-columns .vent-groups:has(> .vent-col:nth-child(3)) > .vent-col .vent-port-row > .field:not(.ui-field) { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
   .port-columns .vent-groups:has(> .vent-col:nth-child(3)) > .vent-col .field select { width:100%; min-width:0; }
+  /* The columns share the pane: a column asks for 266 px (the count field and its Round/Slotted toggle on one line), three would be 810 px.
+     Here the toggle drops to a line of its own under the count, so the label and the select keep their room. */
+  .port-columns .vent-groups:has(> .vent-col:nth-child(3)) > .vent-col { width:auto; flex:1 1 0; }
+  .port-columns .vent-groups:has(> .vent-col:nth-child(3)) > .vent-col .vent-port-row.port-count-row { flex-wrap:wrap; row-gap:2px; grid-column:1 / -1; }
+  .port-columns .vent-groups:has(> .vent-col:nth-child(3)) > .vent-col .vent-port-row > .field:not(.ui-field):not(.port-count-field) { grid-column:1 / -1; }
+  .port-columns .vent-groups:has(> .vent-col:nth-child(3)) > .vent-col .vent-port-row.port-count-row > .field.port-count-field:not(.ui-field) { flex:1 1 100%; min-width:0; }
 }
 .vent-col { flex:none; }
 .vent-col-band { margin-bottom:4px; }
