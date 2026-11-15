@@ -5,6 +5,8 @@ owner: revert-t793
 status: open
 goal: Take T793 (PR 76) back out: it turned main red (unit-label-underline, field-visual-contract and a shell test fail on the new dialog screens) and merged before its review findings were dealt with
 why: John, 15 Nov 2026: main red is fixed first (QO923; SDLC policy)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/quiet-test.sh npx vitest run packages/ui/test/architecture/visual-covers-phone-advanced-tab.test.ts
 files:
   - tasks/T817.yml
+  - tasks/T793.yml
+  - bugs/BUG_20261115_visual-baselines-cover-no-dialogs.md
