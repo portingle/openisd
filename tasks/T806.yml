@@ -10,7 +10,6 @@ visual:
   - mobile-tab-signal
 done_test: bash scripts/test.sh packages/design/test/fields/phoneRowColumns.test.ts
 files:
-  - packages/ui/test/visual/SOURCES.sha256
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-signal.png
   - tasks/T806.yml
   - packages/design/fields/phoneRowSizes.ts
