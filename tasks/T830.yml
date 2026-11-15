@@ -1,0 +1,10 @@
+id: T830
+release_note: internal
+repo: openisd
+owner: claude-upgrade-incremental
+status: open
+goal: The four baseline pictures that show backup sizes (dialog-options-your-data and dialog-shared-storage-restore-picker, desktop and phone) are re-drawn for the packed backup sizes, so main is green again
+why: John, 2026-11-15: main must stay green (T827's compressed backups changed the sizes those four screens show; the PR gate's visual job did not run)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T830.yml
