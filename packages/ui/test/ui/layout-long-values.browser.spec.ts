@@ -37,8 +37,6 @@ const KNOWN: ReadonlyMap<string, string> = new Map([
   ['box-bandpass4', 'BUG_20261110_layout-scan-first-run'],
   ['box-bandpass6', 'BUG_20261110_layout-scan-first-run'],
   ['box-abc', 'BUG_20261110_layout-scan-first-run'],
-  // The Signal box is 112 px (T720, John 8 Nov 2026): it cannot show 100000.00 W (71 px, the box holds 54 px).
-  ['tab-signal', 'BUG_20261115_signal-box-112px-cannot-show-top-limit-power'],
 ]);
 
 for (const surface of PAGES) {

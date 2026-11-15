@@ -1,3 +1,5 @@
+import {NumberField} from './field.js';
+import {PHONE_MAX_SIGNIFICANT} from './format.js';
 import {SheetSizes} from './sheetSizes.js';
 
 /**
@@ -68,10 +70,14 @@ export class PhoneRowColumns {
   static readonly MODEL_CUE_PX = 24;
   static readonly CONTROL_GAP_PX = 8;
   /**
-   * The width of the Signal tab's typing box (unit chip inside). T720 (John, 8 Nov 2026) set 60% of the 186 px a Box-tab box had: 112 px.
-   * A fixed width, not a share of the column: each page sizes its own label column to its labels, so a share of the column moved with them (T742 gave 169 px on the Signal tab).
+   * The Signal tab's typing box is the narrowest box that holds the longest value its fields show, in characters (rule 11, John, 10 Nov 2026:
+   * "a value is never cut"). T720 (John, 8 Nov 2026) asked for it narrower than the 186 px a Box-tab box had; its aim was a box not needlessly wide,
+   * not the 112 px it measured, which cannot show 100000.00 W. The box is that many digit widths (CSS `ch`) plus the text gutter and the unit chip.
    */
-  static readonly SIGNAL_INPUT_PX = 112;
+  static signalInputChars(): number {
+    const fields = [NumberField.SIGNAL_PIN_W, NumberField.SIGNAL_DRIVEV_V, NumberField.SIGNAL_RS_OHM];
+    return Math.max(...fields.flatMap(field => [field.limits.min, field.limits.max].map(limit => field.format(limit, null, undefined, PHONE_MAX_SIGNIFICANT).length)));
+  }
 
   /** Side margin of a row, each side. */
   static readonly EDGE_PX = 16;
@@ -122,7 +128,7 @@ export class PhoneRowColumns {
       ['--mob-col-gap', `${PhoneRowColumns.CONTROL_GAP_PX}px`],
       ['--mob-col-gutter', `${this.textGutterPx}px`],
       ['--mob-col-edge', `${this.edgePx}px`],
-      ['--mob-col-input-w', `${PhoneRowColumns.SIGNAL_INPUT_PX}px`],
+      ['--mob-col-input-chars', `${PhoneRowColumns.signalInputChars()}`],
     ]);
   }
 }
