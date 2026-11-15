@@ -9,3 +9,4 @@ done_test: bash scripts/test.sh packages/ui/test/architecture/visual-baselines-d
 files:
   - tasks/T830.yml
   - packages/ui/test/visual/screens.ts
+  - bugs/BUG_20261115_pr-visual-job-skipped-when-sources-and-lockfile-both-change.md
