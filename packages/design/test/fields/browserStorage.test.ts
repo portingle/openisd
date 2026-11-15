@@ -187,7 +187,7 @@ describe('the notice for projects the start-up update left as saved', () => {
   it('says what happened, that the projects are intact and still open, and what to do', () => {
     expect(projectsLeftNotice(1)).toEqual({
       title: 'Some projects were not updated',
-      message: '1 project could not be updated for this version of OpenISD, because this browser has no room left. '
+      message: '1 project could not be updated for this version of OpenISD, because this browser does not have enough room to keep a copy of each as it was. '
         + 'It is exactly as you saved it, still opens as usual, and nothing is lost. '
         + 'To finish the update, free some space (delete projects you no longer need, or export them), then restart OpenISD.',
     });

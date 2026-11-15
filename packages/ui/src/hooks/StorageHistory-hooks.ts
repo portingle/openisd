@@ -176,7 +176,7 @@ function refusedView(refused: RefusedCopy): RefusedRowView {
     kind: 'refused',
     key: refused.key,
     takenAt: timeText(refused.at, 'Unknown'),
-    reason: 'Would not load',
+    reason: refused.reason === 'beforeUpgrade' ? 'Before update' : 'Would not load',
     size: formatByteSize(refused.size),
     holds: refused.name === '' ? 'Project (unreadable)' : `Project "${refused.name}"`,
   };

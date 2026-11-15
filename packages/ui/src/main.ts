@@ -95,7 +95,7 @@ import {announcementEndpointsForHostname, createAnnouncementCenter} from './logi
 import {newUuid} from '@openisd/design';
 import {DesktopSizes, PhoneRowSizes, SkinFonts, trailOfLocation} from '@openisd/design/fields';
 import {createEngine} from '@openisd/design/engine';
-import {basicUtc, browserNameOf, formatDateTime, persistenceLine} from '@openisd/design/fields';
+import {basicUtc, browserNameOf, formatDateTime, LOCAL_STORE_LIMIT_BYTES, persistenceLine, STORAGE_FULL_FROM} from '@openisd/design/fields';
 import {announceLostKeys} from './logic/lostKeyNotice.js';
 import '@fontsource/roboto/latin-400.css';
 import './fonts.css';
@@ -238,9 +238,10 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
   const driverPicked = driverPickRecorder(telemetry, driverRepo);
   const selection = createDriverSelection({ appState, presentation, driverPicked });
   // Stored projects written by earlier builds are indented, carry dq_calculated or an older schemaVersion: rewritten
-  // in place (no whole-store backup, T827), and Cloud sync follows it so it sees no edit. A project that does not fit
+  // in place (no whole-store backup, T827), and Cloud sync follows it so it sees no edit. A project the upgrade changes in
+  // substance keeps its old text as a copy first, never taking storage to the nearly-full line; one that does not fit
   // stays as saved and the user is told below. A read-only view of a backup is never written.
-  const projectsLeft = store.readOnly ? 0 : projectTextsLeft(createStoredTextCompaction(storage, storageBackup, createLedgerFollowsRewrite(storage, randomBytes)).run());
+  const projectsLeft = store.readOnly ? 0 : projectTextsLeft(createStoredTextCompaction(storage, storageBackup, createLedgerFollowsRewrite(storage, randomBytes), STORAGE_FULL_FROM * LOCAL_STORE_LIMIT_BYTES).run());
   // Refused copies replace the old quarantine copy of the session: it is removed once, behind the backup.
   if (!store.readOnly) createQuarantineRetirement(storage, storageBackup).run();
   const projectRepo = createProjectRepo(engine, fileStorage, storage, new URL('./', window.location.href).href, storageBackup, exportedFiles, report => faultLog.recordRepair(report), saves.notify);

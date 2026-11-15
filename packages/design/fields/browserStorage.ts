@@ -37,7 +37,7 @@ export function projectsLeftNotice(left: number): {readonly title: string; reado
   const one = left === 1;
   return {
     title: 'Some projects were not updated',
-    message: `${formatCountOf(left, 'project')} could not be updated for this version of OpenISD, because this browser has no room left. `
+    message: `${formatCountOf(left, 'project')} could not be updated for this version of OpenISD, because this browser does not have enough room to keep a copy of each as it was. `
       + `${one ? 'It is' : 'They are'} exactly as you saved ${one ? 'it' : 'them'}, still ${one ? 'opens' : 'open'} as usual, and nothing is lost. `
       + 'To finish the update, free some space (delete projects you no longer need, or export them), then restart OpenISD.',
   };

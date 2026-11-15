@@ -188,7 +188,8 @@ export function createStorageHistory(
     exportRefused(key) {
       const record = backup.readRefused(key);
       if (record === null) return null;
-      return {fileName: `openisd-would-not-load-${record.at === '' ? 'undated' : record.at}.owpr`, text: record.text};
+      const what = record.reason === 'beforeUpgrade' ? 'before-update' : 'would-not-load';
+      return {fileName: `openisd-${what}-${record.at === '' ? 'undated' : record.at}.owpr`, text: record.text};
     },
     removeRefused: key => backup.discardRefused(key),
     exportCopy(kind) {

@@ -186,5 +186,14 @@ describe('storage history actions', () => {
     assert.equal(history.removeRefused(key), true);
     assert.equal(history.entries().some(e => e.kind === 'refused'), false);
   });
+
+  it('names the file of a project kept from before an update for what it is', () => {
+    const storage = createMemoryStorage({[OPENISD_PROJECTS_KEY]: projects(1)});
+    assert.equal(createStorageBackup(storage, () => FIXED_NOW_MS).refuse('beforeUpgrade', 'Desk', '{"v3":true}'), true);
+    const history = historyOver(storage);
+    const held = history.entries().find(e => e.kind === 'refused');
+    const key = held?.kind === 'refused' ? held.refused.key : '';
+    assert.match(history.exportRefused(key)?.fileName ?? '', /^openisd-before-update-\d{8}T\d{6}Z\.owpr$/);
+  });
 });
 

@@ -26,3 +26,11 @@ files:
   - docs/design/BROWSER_STORAGE_KEYS.md
   - packages/persistence/test/cloud/syncEngine.test.ts
   - packages/persistence/test/destructivePaths.test.ts
+  - packages/persistence/src/repos/upgradeSubstance.ts
+  - packages/persistence/test/upgradeSubstance.test.ts
+  - packages/persistence/test/storageRefused.test.ts
+  - packages/persistence/src/repos/storageHistory.ts
+  - packages/persistence/test/storageHistory.test.ts
+  - packages/ui/src/hooks/StorageHistory-hooks.ts
+  - packages/ui/test/hooks/StorageHistory-hooks.test.ts
+  - bugs/BUG_20261115_rewritten-project-uploads-as-v4-in-mixed-rollout.md

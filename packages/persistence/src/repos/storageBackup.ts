@@ -20,7 +20,10 @@
  *  nothing the user holds: the new text is the same project, the reader already upgrades the old
  *  text in memory on every load, and the key is written whole or not at all. The old text is held
  *  until the new text reads back, and is put back if it does not; no backup and no other key goes
- *  for room. A whole-store copy of this optional rewrite took a 46%-full store to the nearly-full
+ *  for room. Against a defect in an upgrade step, which a read-back cannot see, the caller first
+ *  keeps the stored text of each project the upgrade changes in substance as a refused copy
+ *  (`refuse('beforeUpgrade', ...)`, one project each, listed on the Backups page, exportable as a
+ *  project file), and leaves the project as saved when that copy does not fit. A whole-store copy of this optional rewrite took a 46%-full store to the nearly-full
  *  popup, and above about half a full store it did not fit, so the rewrite was skipped without a
  *  word. Repair, sync, delete, restore, reset and layout migration still go through `guard`.
  *
@@ -56,8 +59,9 @@ export interface BackupInfo {
   readonly size: number;
 }
 
-/** Why a project was kept as a refused copy. */
-export type RefusedReason = 'wouldNotLoad';
+/** Why a project was kept as a refused copy: it would not load, or it is the text as it was before an
+ *  update changed it in substance (T827). */
+export type RefusedReason = 'wouldNotLoad' | 'beforeUpgrade';
 
 /** One refused copy as the Backups page lists it. `at`, `reason` and `name` are '' when the
  *  copy's own record is damaged; it can still be discarded. */
@@ -192,7 +196,7 @@ function refusedRecordOf(stored: string | null): RefusedRecord | null {
   try { parsed = JSON.parse(stored); } catch { return null; }
   if (typeof parsed !== 'object' || parsed === null) return null;
   if (!('at' in parsed) || typeof parsed.at !== 'string') return null;
-  if (!('reason' in parsed) || parsed.reason !== 'wouldNotLoad') return null;
+  if (!('reason' in parsed) || (parsed.reason !== 'wouldNotLoad' && parsed.reason !== 'beforeUpgrade')) return null;
   if (!('name' in parsed) || typeof parsed.name !== 'string') return null;
   if (!('text' in parsed) || typeof parsed.text !== 'string') return null;
   return {at: parsed.at, reason: parsed.reason, name: parsed.name, text: parsed.text};
@@ -285,7 +289,7 @@ export function createStorageBackup(storage: ListableStorage, now: () => number)
   /** `base`, or `base_01` .. `base_99` when a backup is already held under it (same build, same second). */
   function freeKey(base: string): string | null {
     if (storage.get(base) === null) return base;
-    for (let n = 1; n <= 99; n++) {
+    for (let n = 1; n <= 9999; n++) {
       const key = `${base}_${String(n).padStart(2, '0')}`;
       if (storage.get(key) === null) return key;
     }

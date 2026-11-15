@@ -9,7 +9,7 @@ import {createConfirmPort} from '../../src/logic/confirmPort.js';
 import {createLogging} from '../../src/logging/flash.js';
 import {useStorageHistory, type StorageHistoryAPI} from '../../src/hooks/StorageHistory-hooks.js';
 import {
-  createMemoryStorage, OPENISD_BACKUP_KEYS, OPENISD_BACKUP_PREFIX, OPENISD_PROJECTS_KEY, OPENISD_STORAGE_BUILD_KEY, OPENISD_STORAGE_LAYOUT_KEY,
+  createMemoryStorage, createStorageBackup, OPENISD_BACKUP_KEYS, OPENISD_BACKUP_PREFIX, OPENISD_PROJECTS_KEY, OPENISD_STORAGE_BUILD_KEY, OPENISD_STORAGE_LAYOUT_KEY,
   type HistoryFile, type ListableStorage,
 } from '@openisd/persistence';
 import {testAppLogic} from './testAppLogic.js';
@@ -147,6 +147,14 @@ describe('useStorageHistory', () => {
     await api.deleteRow(copy);
     expect(storage.get(OPENISD_BACKUP_KEYS.projects)).toBeNull();
     expect(api.rows.value.filter(r => r.kind === 'copy')).toEqual([]);
+  });
+
+  it('lists a project kept from before an update as "Before update", holding the project by name', async () => {
+    const storage = seeded();
+    createStorageBackup(storage, () => 0).refuse('beforeUpgrade', 'Desk', '{"v3":true}');
+    const {api} = await renderHook(true, storage);
+    const row = api.rows.value.find(r => r.kind === 'refused');
+    expect(row).toMatchObject({kind: 'refused', reason: 'Before update', holds: 'Project "Desk"'});
   });
 
   it('Delete of a copy does nothing when the user says no', async () => {

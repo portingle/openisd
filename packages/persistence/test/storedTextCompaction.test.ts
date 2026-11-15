@@ -11,7 +11,8 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {compactedStoredText} from '@openisd/design';
 import {createEngine} from '@openisd/design/engine';
-import {createStoredTextCompaction} from '../src/repos/storedTextCompaction.js';
+import {changesInSubstance} from '../src/repos/upgradeSubstance.js';
+import {createStoredTextCompaction, projectTextsLeft} from '../src/repos/storedTextCompaction.js';
 import {OPENISD_BACKUP_PREFIX, OPENISD_MY_DRIVERS_KEY, OPENISD_OPEN_SESSIONS_KEY, OPENISD_PROJECTS_KEY, OPENISD_QUARANTINE_SESSION_KEY, OPENISD_STATE_KEY} from '../src/repos/storageKeys.js';
 import {createMemoryStorage, type ListableStorage} from '../src/storage/keyValueStorage.js';
 import {createQuotaStorage} from './fixtures/quotaStorage.js';
@@ -114,12 +115,13 @@ const v3 = entriesIn(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 
 const usedBy = (storage: ListableStorage) => storage.keys().reduce((n, k) => n + k.length + (storage.get(k) ?? '').length, 0);
 const idOf = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
-/** A projects bucket of version-3 texts (the fixture's two, repeated under new ids), `fraction` of LIMIT. */
-function bucketAt(fraction: number): {bucket: string; list: {id: string; text: string}[]} {
+/** A projects bucket of version-3 texts under new ids, `fraction` of LIMIT: by default one project in eight is the
+ *  dual-coil one and the rest are single-coil; the fixture's texts are real. */
+function bucketAt(fraction: number, baseOf: (n: number) => {id: string; text: string} = n => v3[n % 8 === 0 ? 1 : 0]): {bucket: string; list: {id: string; text: string}[]} {
   const list: {id: string; text: string}[] = [];
   let bucket = '';
   do {
-    const base = v3[list.length % v3.length];
+    const base = baseOf(list.length);
     const id = idOf(list.length);
     list.push({id, text: base.text.split(base.id).join(id)});
     bucket = JSON.stringify({entries: list.map(e => ({id: e.id, text: e.text, modified: '2026-01-01T00:00:00.000Z'}))});
@@ -149,9 +151,21 @@ describe.each([0.4, 0.46, 0.6])('a store of version-3 projects at %s of capacity
       assert.equal(entry.text, upgradedOf(list[i].text), entry.id);
     }
     const needed = OPENISD_PROJECTS_KEY.length + JSON.stringify({entries: after.map(e => ({id: e.id, text: e.text, modified: '2026-01-01T00:00:00.000Z'}))}).length;
-    const oneRecord = Math.max(...list.map(e => e.text.length));
-    assert.ok(usedBy(storage) <= needed + oneRecord, `used ${usedBy(storage)}, upgraded data needs ${needed}`);
+    const copied = list.filter(e => changesInSubstance(e.text, upgradedOf(e.text)));
+    const copyChars = copied.reduce((n, e) => n + e.text.length, 0);
+    assert.ok(copied.length > 0 && copied.length < list.length, 'the store holds both kinds of project');
+    assert.ok(usedBy(storage) <= needed + 1.2 * copyChars, `used ${usedBy(storage)}, upgraded data needs ${needed}, copies ${copyChars}`);
     assert.ok(usedBy(storage) < 0.8 * LIMIT, 'not nearly full');
+  });
+
+  it('keeps the stored text, as it was, of every project the upgrade changes in substance, and of no other', () => {
+    const storage = createQuotaStorage(LIMIT, {[OPENISD_PROJECTS_KEY]: bucket});
+    createStoredTextCompaction(storage, backupOn(storage), () => undefined).run();
+    const backup = backupOn(storage);
+    const kept = backup.refusedCopies().map(c => ({reason: c.reason, text: backup.readRefused(c.key)?.text}));
+    assert.ok(kept.every(c => c.reason === 'beforeUpgrade'));
+    const expected = [...new Set(list.filter(e => changesInSubstance(e.text, upgradedOf(e.text))).map(e => e.text))].sort();
+    assert.deepEqual(kept.map(c => c.text).sort(), expected.length === 0 ? [] : expected);
   });
 
   it('gives each project the same figures as reading its version-3 text in memory', () => {
@@ -180,7 +194,7 @@ const projectTextAt = (storage: ListableStorage, key: string): string => {
 describe('a start interrupted half-way (the tab closed)', () => {
   const texts: Record<string, string> = {[OPENISD_PROJECTS_KEY]: entries(v3[1].text), [OPENISD_OPEN_SESSIONS_KEY]: entries(v3[1].text), [OPENISD_STATE_KEY]: v3[1].text};
 
-  it.each([1, 2, 3])('after write %s leaves every key readable, and the next start finishes the job', dieAt => {
+  it.each([1, 2, 3, 4])('after write %s leaves every key readable, and the next start finishes the job', dieAt => {
     const inner = createMemoryStorage({...texts});
     let sets = 0;
     const dying = {...inner, set: (key: string, value: string) => { sets += 1; if (sets === dieAt) throw new Error('tab closed'); inner.set(key, value); }};
@@ -222,5 +236,64 @@ describe('a store with room for some records and not for the rest', () => {
     const outcome = createStoredTextCompaction(storage, backupOn(storage), () => undefined).run();
     assert.deepEqual(outcome, {kind: 'left', left: 4});
     assert.equal(storage.get(OPENISD_PROJECTS_KEY), seeded[OPENISD_PROJECTS_KEY]);
+  });
+});
+
+describe('the protection of a project the upgrade changes in substance', () => {
+  const multi = v3[1];
+  const bucketOfMulti = (n: number) => {
+    const list = Array.from({length: n}, (_, i) => ({id: idOf(i), text: multi.text.split(multi.id).join(idOf(i))}));
+    return {list, bucket: JSON.stringify({entries: list.map(e => ({id: e.id, text: e.text, modified: ''}))})};
+  };
+  const copiesOf = (storage: ListableStorage) => { const b = backupOn(storage); return b.refusedCopies().map(c => b.readRefused(c.key)?.text); };
+
+  it('keeps the v3 text before it writes the v4 one, so a user can export the project as it was', () => {
+    const {list, bucket} = bucketOfMulti(3);
+    const storage = createMemoryStorage({[OPENISD_PROJECTS_KEY]: bucket});
+    createStoredTextCompaction(storage, backupOn(storage), () => undefined).run();
+    assert.deepEqual(copiesOf(storage).sort(), list.map(e => e.text).sort());
+    const history = backupOn(storage).refusedCopies();
+    assert.ok(history.every(c => c.reason === 'beforeUpgrade' && c.name !== ''));
+  });
+
+  it('leaves a project as saved, and counts it, when its copy does not fit', () => {
+    const {list, bucket} = bucketOfMulti(4);
+    const seeded = {[OPENISD_PROJECTS_KEY]: bucket};
+    const room = list[0].text.length * 2.5; // two copies, not four
+    const storage = createQuotaStorage(usedBy(createMemoryStorage(seeded)) + room, seeded);
+    const outcome = createStoredTextCompaction(storage, backupOn(storage), () => undefined).run();
+
+    const after = storedEntries(storage);
+    assert.equal(after.length, 4);
+    const rewritten = after.filter(e => /"schemaVersion":4,/.test(e.text));
+    assert.ok(rewritten.length < 4, 'not every project could be written');
+    assert.equal(projectTextsLeft(outcome), 4 - rewritten.length);
+    for (const [i, entry] of after.entries()) {
+      if (rewritten.includes(entry)) assert.ok(copiesOf(storage).includes(list[i].text), `a copy of ${entry.id}`);
+      else assert.equal(entry.text, list[i].text, `${entry.id} stays as saved`);
+    }
+  });
+
+  it('writes no project whose copy is not kept, and keeps no copy of a project it did not write', () => {
+    const {list, bucket} = bucketOfMulti(2);
+    const seeded = {[OPENISD_PROJECTS_KEY]: bucket};
+    const storage = createQuotaStorage(usedBy(createMemoryStorage(seeded)) + 10, seeded);
+    const outcome = createStoredTextCompaction(storage, backupOn(storage), () => undefined).run();
+    assert.deepEqual(outcome, {kind: 'left', left: 2});
+    assert.equal(storage.get(OPENISD_PROJECTS_KEY), bucket);
+    assert.deepEqual(copiesOf(storage), []);
+    assert.equal(list.length, 2);
+  });
+
+  it('does not take the store over the line it is told to stay under, for any number of such projects', () => {
+    const {bucket} = bucketOfMulti(60);
+    const seeded = {[OPENISD_PROJECTS_KEY]: bucket};
+    const limit = Math.ceil(usedBy(createMemoryStorage(seeded)) * 1.3);
+    const storage = createQuotaStorage(10 * limit, seeded);
+    const outcome = createStoredTextCompaction(storage, backupOn(storage), () => undefined, limit).run();
+    assert.ok(usedBy(storage) <= limit, `used ${usedBy(storage)} of ${limit}`);
+    const rewritten = storedEntries(storage).filter(e => /"schemaVersion":4,/.test(e.text)).length;
+    assert.ok(rewritten > 0 && rewritten < 60);
+    assert.equal(projectTextsLeft(outcome), 60 - rewritten);
   });
 });
