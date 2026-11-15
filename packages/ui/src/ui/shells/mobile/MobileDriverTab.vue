@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The mobile Driver tab — identity, driver count, voice-coil wiring and the driver's key figures.
 // Thin: all state and domain reads/writes live in useMobileDriverTab() (src/hooks/MobileDriverTab-hooks.ts).
-import {NumberField, PhoneHelp, PhoneLabels} from '@openisd/design/fields';
+import {EnumField, NumberField, PhoneHelp, PhoneLabels} from '@openisd/design/fields';
 import DriverConsistencyList from '../../components/DriverConsistencyList.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import DriverCoilWiring from '../../components/DriverCoilWiring.vue';
@@ -14,7 +14,7 @@ const { project, fullName, keyFigures, consistencyReasons, browseDrivers, editDr
 </script>
 
 <template>
-  <PhoneClassicPage>
+  <PhoneClassicPage :reserve-labels="[EnumField.VCCON.label]">
     <div class="mob-crow">
       <button type="button" class="mob-cname mob-cname-button" :title="fullName" @click="browseDrivers">{{ fullName || 'No driver selected' }}</button>
     </div>
