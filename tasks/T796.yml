@@ -28,3 +28,5 @@ files:
   - bugs/BUG_20261110_layout-gate-misses-screens.md
   - scripts/driver-snapshot.pin
   - packages/ui/test/fixtures/branchMap/shared.ts
+  - packages/persistence/test/bundledDriverRepo.test.ts
+  - packages/ui/test/logic/driverPick.test.ts
