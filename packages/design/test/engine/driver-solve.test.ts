@@ -438,7 +438,7 @@ describe('Engine.solveDriver', () => {
    * Depth 145 mm, Magnet 140 mm, all printed on the datasheet) gave MagDepth 3.98 m.
    */
   describe('DVol geometry lock — a result outside the driver is refused, with a reason', () => {
-    const refusals = (issues: readonly {kind: string}[]) => issues.filter(i => i.kind === 'result-refused');
+    const refusals = (issues: ReturnType<typeof engine.driver.solve>) => issues.flatMap(i => i.kind === 'result-refused' ? [i] : []);
 
     it('Purifi PTT10.0X04: MagDepth is not calculated (the relation gives 3.98 m, deeper than the 145 mm driver) and says why', () => {
       const p = driverParams({Sd_m2: 0.036, Vcd_m: 0.052, DVol_m3: 0.0014, Depth_m: 0.145, Magnet_m: 0.14});
@@ -446,7 +446,7 @@ describe('Engine.solveDriver', () => {
       expect(p.MagDepth_m.value).toBeNull();
       expect(p.MagDepth_m.calculated).toBe(false);
       expect(refusals(issues)).toMatchObject([{kind: 'result-refused', target: 'MagDepth_m'}]);
-      const text = String((refusals(issues)[0] as unknown as {text: string}).text);
+      const text = refusals(issues)[0]?.text ?? '';
       expect(text).toMatch(/MagDepth/);
       expect(text).toMatch(/3\d{3} mm/);
       expect(text).toMatch(/145 mm/);
