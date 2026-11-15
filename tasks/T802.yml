@@ -8,3 +8,4 @@ why: John, 15 Nov 2026: main suite must be green (QO923); QO900
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T802.yml
+  - packages/ui/test/ui/new-project-pick-fills-journey.browser.spec.ts
