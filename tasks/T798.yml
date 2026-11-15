@@ -20,3 +20,4 @@ files:
   - packages/ui/test/visual/SOURCES.sha256
   - packages/ui/test/ui/phone-label-column-one-writer.browser.spec.ts
   - bugs/BUG_20261115_mobile-wizard-box-type-select-width-varies.md
+  - packages/ui/test/architecture/mobile-number-field-sizes-owned-by-shell.test.ts
