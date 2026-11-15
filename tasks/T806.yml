@@ -1,0 +1,10 @@
+id: T806
+release_note: internal
+repo: openisd
+owner: main-red-app
+status: open
+goal: main red: app fixes (Signal box 112 px, ABC columns at 1024, digit click drift)
+why: John, 15 Nov 2026: main suite must be green (QO923); SDLC: main red is fixed first
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T806.yml
