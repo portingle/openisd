@@ -27,3 +27,4 @@ files:
   - packages/ui/test/ui/field-layout-rules.browser.spec.ts
   - bugs/BUG_20261110_layout-gate-misses-screens.md
   - scripts/driver-snapshot.pin
+  - packages/ui/test/fixtures/branchMap/shared.ts
