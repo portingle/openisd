@@ -34,3 +34,7 @@ files:
   - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
   - packages/ui/test/scripts/fixtures/pw-report-sample.json
   - scripts/lib/testOutcome.d.mts
+  - scripts/ci/check-hold.sh
+  - scripts/land/test/hold.test.sh
+  - .github/workflows/pr.yml
+  - scripts/land/test/land-pull-request.e2e.test.sh

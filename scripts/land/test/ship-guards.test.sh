@@ -31,6 +31,7 @@ case "\$1 \$2" in
   "pr merge") [ -e "$NOOP" ] || : > "$AUTO"; echo "auto-merge enabled" ;;
   "pr view") s=OPEN; [ -e "$PRSTATE.merged" ] && s=MERGED; if [ -e "$AUTO" ]; then echo "\$s auto"; else echo "\$s none"; fi ;;
   "pr edit") case "\$*" in *) echo "GraphQL: Projects (classic) is being deprecated" >&2; exit 1 ;; esac ;;
+  "api repos/o/r/issues/7/labels") [ -e "$SCRATCH/pr.labels" ] && cat "$SCRATCH/pr.labels" ;;
   "api graphql") if [ -e "$INQUEUE" ]; then echo true; else echo false; fi ;;
 esac
 exit 0
@@ -40,7 +41,7 @@ export LAND_GH="$SCRATCH/gh"
 
 # setup [<extra ship.conf lines>]: main checkout "main", task worktree "wt" on branch t1 with one change.
 setup() {
-  rm -rf "$SCRATCH/w" "$SCRATCH/pr.exists" "$CALLS" "$AUTO" "$INQUEUE" "$NOOP" "$PRSTATE.merged"; mkdir -p "$SCRATCH/w"; cd "$SCRATCH/w" || exit 2
+  rm -rf "$SCRATCH/w" "$SCRATCH/pr.labels" "$SCRATCH/pr.exists" "$CALLS" "$AUTO" "$INQUEUE" "$NOOP" "$PRSTATE.merged"; mkdir -p "$SCRATCH/w"; cd "$SCRATCH/w" || exit 2
   git init -q --bare -b main origin.git
   git -C origin.git config receive.denyNonFastForwards true
   git clone -q origin.git main 2> /dev/null; cd main || exit 2
@@ -131,9 +132,14 @@ TASK_EXTRA='label: fixes
 grep -qx 'api|-X|POST|repos/o/r/issues/7/labels|-f|labels\[\]=fixes' "$CALLS" && [ $r = 0 ] \
   && ok "5 a task with label: fixes is labelled without the flag" || fail "5 task label (r=$r): $(cat "$CALLS")"
 setup; ship T1; r=$?
-! grep -q 'issues/7/labels' "$CALLS" && ok "5 no label unless asked" || fail "5 unrequested label: $(cat "$CALLS")"
+! grep -q 'POST|repos/o/r/issues/7/labels' "$CALLS" && ok "5 no label unless asked" || fail "5 unrequested label: $(cat "$CALLS")"
 ! grep -v '^ *#' "$REPO/scripts/ship.sh" "$REPO/scripts/land/pr.sh" "$REPO/scripts/land/pr-fix.sh" "$REPO/scripts/land/pr-queue.sh" 2> /dev/null | grep -q -- '--add-label' \
   && ok "5 no script calls gh pr edit --add-label" || fail "5 a script still calls --add-label"
+
+# 9. a pull request the lead holds (label hold) is pushed but never queued by ship.sh, and says so loudly
+setup; printf 'hold\n' > "$SCRATCH/pr.labels"; ship T1; r=$?
+! grep -q '^pr|merge' "$CALLS" && grep -q 'HELD' "$SCRATCH/out" && [ -n "$(remote_t1)" ] \
+  && ok "9 a held pull request is pushed, not queued, and ship says HELD" || fail "9 held (r=$r): $(tail -5 "$SCRATCH/out"); $(cat "$CALLS")"
 
 # 7. the worktree goes at once; one command makes a fresh one from the branch, and ship.sh names it
 setup; ship T1; r=$?

@@ -212,8 +212,12 @@ remote_sha="$(net git ls-remote "$SHIP_REMOTE" "refs/heads/$BRANCH" | cut -f1)"
 title="$(pr_title "(auto) $LABEL" "$goal")"
 pr="$(ACTIONS_REPO="$REPO" LAND_GH="$GH" bash "$HERE/land/pr.sh" open "$ID" "$BRANCH" "$title" "$WORK/body.md")" \
   || { echo "ship: no pull request; branch $BRANCH is on GitHub, nothing removed" >&2; exit 1; }
-queued="$(ACTIONS_REPO="$REPO" LAND_GH="$GH" bash "$HERE/land/pr.sh" queue "$pr" 2> "$WORK/queue.err")" \
-  || { cat "$WORK/queue.err" >&2; echo "ship: pull request #$pr is NOT queued (auto-merge not set); nothing removed. Fix: bash scripts/land/pr-queue.sh $pr" >&2; exit 1; }
+queued="$(ACTIONS_REPO="$REPO" LAND_GH="$GH" bash "$HERE/land/pr.sh" queue "$pr" 2> "$WORK/queue.err")"; qrc=$?
+HELD=""
+if [ "$qrc" = 4 ]; then HELD=1; cat "$WORK/queue.err" >&2
+elif [ "$qrc" != 0 ]; then
+  cat "$WORK/queue.err" >&2; echo "ship: pull request #$pr is NOT queued (auto-merge not set); nothing removed. Fix: bash scripts/land/pr-queue.sh $pr" >&2; exit 1
+fi
 label="$(task_field "$TASK" label)"; [ -z "$FIXES" ] || label=fixes
 if [ -n "$label" ]; then
   ACTIONS_REPO="$REPO" LAND_GH="$GH" bash "$HERE/land/pr.sh" label "$pr" "$label" \
@@ -230,5 +234,6 @@ for ob in "${GONE[@]}"; do
   if [ -n "$wt" ]; then git worktree remove "$wt" 2> /dev/null || { echo "ship: left $wt (not clean); remove it when its work is safe" >&2; continue; }; fi
   git branch -q -D "$ob" 2> /dev/null || true
 done
-echo "ship: $LABEL shipped: https://github.com/$REPO/pull/$pr (auto-merge on; ${queued}; worktree removed)"
+[ -z "$HELD" ] || { echo "ship: $LABEL PUSHED BUT HELD: pull request #$pr has the label hold and is NOT queued; the holder lifts it (remove the label) and queues it. Do not queue it yourself" >&2; }
+echo "ship: $LABEL shipped: https://github.com/$REPO/pull/$pr (${HELD:+HELD, not queued; }${HELD:-auto-merge on; ${queued}; }worktree removed)"
 echo "ship: if a check fails, make a fresh worktree from the branch with: bash scripts/land/pr-fix.sh $ID  (a queue ejection: bash scripts/land/pr-queue.sh $pr)"

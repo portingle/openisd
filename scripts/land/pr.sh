@@ -12,6 +12,7 @@
 #                                                       the pull request that way; exit 1 and prints NOT queued otherwise (T815)
 #   pr.sh queue <number>                                gh pr merge --auto --squash, then `queued`: exit 1 when GitHub still has
 #                                                       no request and no queue entry (the merge call can exit 0 and leave none)
+#                                                       exit 4 and `HELD` when the pull request carries the label `hold` (nothing is queued)
 #   pr.sh label <number> <label>                        adds a label with the REST call. `gh pr edit --add-label` fails on this
 #                                                       repo (Projects classic GraphQL deprecation); never use it
 #
@@ -78,6 +79,13 @@ case "${1:-}" in
     ;;
   queue)
     [ $# = 2 ] || die "usage: pr.sh queue <number>"
+    # A pull request a lead or reviewer holds (label `hold`) is never queued by an author (T815). Exit 4: HELD. Labels that cannot be read refuse (exit 1).
+    labels="$(gh_net api "repos/$REPO/issues/$2/labels" --jq '.[].name' 2> /dev/null)" \
+      || { echo "NOT queued: cannot read the labels of pull request #$2, so a hold cannot be ruled out" >&2; exit 1; }
+    if grep -qx hold <<< "$labels"; then
+      echo "HELD: pull request #$2 has the label hold; not queued. Whoever set the hold removes the label, then: bash scripts/land/pr-queue.sh $2" >&2
+      exit 4
+    fi
     out="$(gh_net pr merge "$2" --repo "$REPO" --auto --squash 2>&1)"; mrc=$?
     if verdict="$(bash "${BASH_SOURCE[0]}" queued "$2")"; then echo "queued: $verdict"; exit 0; fi
     printf '%s\n' "$out" | tail -3 >&2

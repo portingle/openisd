@@ -135,6 +135,7 @@ other ids' worktrees go if they are clean and their branches if their commits ar
 4. Push `t<nnn>` (never forced; refused if the remote branch holds a commit this branch lacks), open or reuse the pull request, `gh pr merge --auto --squash`, then ask
    GitHub whether the pull request is queued (auto-merge request or merge-queue entry): not queued exits 1, nothing removed.
    `--fixes`, or `label: fixes` in the task, adds the label with the REST call (`gh pr edit --add-label` fails on this repo).
+   A pull request labelled `hold` is pushed but not queued (`ship.sh` says HELD) and `pr-gate`'s `hold` job is red until the label is removed (T815).
    A queue ejection drops the request: `bash scripts/land/pr-queue.sh <n>` re-queues and confirms.
 5. Delete the worktree.
 
