@@ -34,3 +34,7 @@ files:
   - packages/ui/test/logic/driverDraft.test.ts
   - packages/ui/test/logic/reloadLosses.test.ts
   - packages/ui/test/ui/app-update.browser.spec.ts
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-update.png
+visual:
+  - mobile-dialog-update
+visual_note: The phone's reload question after a new version now reads "Some of your unsaved changes could not be kept in this browser's storage, so reloading loses them." instead of "Reloading discards all unsaved changes."; it appears only when the browser's storage refused the edits.
