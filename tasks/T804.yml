@@ -15,3 +15,5 @@ files:
   - packages/design/test/winisd/printed-ebp-definition.test.ts
   - packages/design/test/fixtures/printedRecord.ts
   - packages/design/test/fixtures/driverSolverGolden.ts
+  - packages/ui/test/visual/SOURCES.sha256
+  - packages/ui/test/hooks/OriginalNewProject-hooks.test.ts
