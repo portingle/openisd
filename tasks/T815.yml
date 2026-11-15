@@ -2,7 +2,7 @@ id: T815
 release_note: internal
 repo: openisd
 owner: ship-guards
-status: claimed
+status: done
 goal: Ship guards: recurring PR mistakes of 14-15 Nov are refused or caught before the PR opens
 why: John, 15 Nov 2026: decided ways of working are written down and enforced (QO923)
 done_test: bash scripts/land/test/ship-guards.test.sh && bash scripts/test.sh packages/ui/test/scripts/test-outcome.test.ts packages/ui/test/scripts/type-reach.test.ts
