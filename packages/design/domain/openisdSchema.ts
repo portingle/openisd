@@ -30,7 +30,6 @@ import {READER_VALUES} from './reader.js';
 import type {OpenISDDriver} from './driver/openISDDriver.js';
 import type {BoxType, Filter, PassFamily} from '../engine/index.js';
 import type {VentShape} from './vent.js';
-import {VoiceCoilWiring} from './voiceCoilWiring.js';
 
 /**
  * One SOURCE'S READING of one field, as the scraper recorded it. Names are the corpus's own.
@@ -291,7 +290,7 @@ export type RejectedReadingJson =
 
 /** The voice-coil wiring as a stored value: its name (QO914, #514). WinISD's 1/2 code exists only
  *  in the `.wdr`/`.wpr` adapter. */
-const wiringValueSchema = z.enum([VoiceCoilWiring.Series, VoiceCoilWiring.Parallel]);
+const wiringValueSchema = z.enum(['series', 'parallel']);
 
 /** A source's reading of VCCon with the wiring read: `read_value` is the name, `actual_reading`
  *  the quote that states it (QO914). A wiring is not a measurement, so there is no
