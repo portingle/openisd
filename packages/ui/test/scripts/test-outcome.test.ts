@@ -5,7 +5,7 @@
 import {describe, it} from 'vitest';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {isUnexpectedEvent, isUnexpectedReportTest, reportTests} from '../../../../scripts/lib/testOutcome.mjs';
+import {isUnexpectedEvent, isUnexpectedReportTest, reportTests, testEndEvents} from '../../../../scripts/lib/testOutcome.mjs';
 
 describe('isUnexpectedEvent (telemetry test-end events)', () => {
   it('does not count a test.fail test that failed as expected', () => {
@@ -52,5 +52,28 @@ describe('the Playwright JSON report', () => {
   });
   it('refuses a report test with no status instead of guessing from a result', () => {
     assert.throws(() => isUnexpectedReportTest({results: [{status: 'failed'}]}), /no test-level status/);
+  });
+});
+
+describe('the event path and the report path agree on one real run', () => {
+  // fixtures/pw-run-report.json and pw-run-events.jsonl are the json reporter's and scripts/telemetry-reporter.mjs's output for the
+  // SAME run: a plain pass, a test.fail that fails, a test.fail that passes, and a serial describe whose first test fails
+  // (Playwright then SKIPS the rest, and the telemetry event for a skipped test says expected:false, which is not a failure).
+  const report = reportTests(JSON.parse(readFileSync(new URL('./fixtures/pw-run-report.json', import.meta.url), 'utf8')));
+  const events = testEndEvents(readFileSync(new URL('./fixtures/pw-run-events.jsonl', import.meta.url), 'utf8'));
+
+  it('has the same tests in both', () => {
+    assert.deepEqual(events.map((e) => e.title).sort(), report.map((t) => t.title).sort());
+  });
+  it('calls each test a failure or not in the same way', () => {
+    for (const e of events) {
+      assert.equal(isUnexpectedEvent(e), report.find((t) => t.title === e.title)?.unexpected, e.title);
+    }
+  });
+  it('counts exactly the plain failure and the test.fail that passed', () => {
+    assert.deepEqual(events.filter((e) => isUnexpectedEvent(e)).map((e) => e.title).sort(), ['expected failure that passes', 'first fails']);
+  });
+  it('does not count a test skipped after an earlier failure in a serial describe', () => {
+    assert.equal(isUnexpectedEvent({status: 'skipped', expected: false}), false);
   });
 });

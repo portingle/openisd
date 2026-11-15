@@ -7,6 +7,9 @@
 
 /** A telemetry `test-end` event (scripts/telemetry-reporter.mjs): `expected` is result.status === test.expectedStatus. */
 export function isUnexpectedEvent(event) {
+  // Playwright's report calls a test it skipped 'skipped' whatever its expected status; the reporter's `expected` is false for it
+  // (a serial describe skips the rest after a failure), which is not a failure. Checked on a real run: fixtures/pw-run-*.
+  if (event.status === 'skipped') return false;
   if (typeof event.expected === 'boolean') return !event.expected;
   return event.status !== 'passed' && event.status !== 'skipped'; // an event written before `expected` existed
 }
@@ -34,4 +37,9 @@ export function reportTests(report) {
   };
   for (const suite of report.suites ?? []) walk(suite);
   return out;
+}
+
+/** The test-end events of a telemetry events.jsonl text. */
+export function testEndEvents(text) {
+  return text.split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l)).filter((e) => e.event === 'test-end');
 }

@@ -38,3 +38,5 @@ files:
   - scripts/land/test/hold.test.sh
   - .github/workflows/pr.yml
   - scripts/land/test/land-pull-request.e2e.test.sh
+  - packages/ui/test/scripts/fixtures/pw-run-report.json
+  - packages/ui/test/scripts/fixtures/pw-run-events.jsonl
