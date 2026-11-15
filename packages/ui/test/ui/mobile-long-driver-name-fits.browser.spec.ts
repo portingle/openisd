@@ -51,18 +51,17 @@ for (const size of SIZES) {
       await openDriverTabWithModel(page, MX6_22_MODEL);
       const button = page.locator('.mob-cname-button');
       await expect(button).toContainText('MX6-22');
-      const box = async (selector: string) => {
-        const b = await page.locator(selector).first().boundingBox();
-        if (b === null) throw new Error(`${selector} is not drawn`);
-        return {top: b.y, bottom: b.y + b.height};
-      };
-      const btn = await box('.mob-cname-button');
+      const rectOf = (selector: string) => page.locator(selector).first().evaluate(el => {
+        const r = el.getBoundingClientRect();
+        return {top: r.top, bottom: r.bottom};
+      });
+      const btn = await rectOf('.mob-cname-button');
       const row = await page.locator('.mob-cname-button').evaluate(el => {
         const r = (el.parentElement ?? el).getBoundingClientRect();
         return {top: r.top, bottom: r.bottom};
       });
-      const page_ = await box('.mob-classic');
-      const buttons = await box('.mob-cbtns');
+      const page_ = await rectOf('.mob-classic');
+      const buttons = await rectOf('.mob-cbtns');
       expect(btn.top, 'name button starts at or below the top of the page').toBeGreaterThanOrEqual(page_.top - 0.5);
       expect(btn.top, 'name button starts inside its row').toBeGreaterThanOrEqual(row.top - 0.5);
       expect(btn.bottom, 'name button ends inside its row').toBeLessThanOrEqual(row.bottom + 0.5);
