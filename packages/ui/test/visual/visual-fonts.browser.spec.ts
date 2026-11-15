@@ -11,28 +11,52 @@ import {SCREENS} from './screens.js';
  */
 
 interface CdpNode {
-  nodeId: number;
-  nodeName: string;
-  nodeType: number;
-  attributes?: string[];
-  children?: CdpNode[];
-  pseudoElements?: CdpNode[];
-  shadowRoots?: CdpNode[];
-  contentDocument?: CdpNode;
+  readonly nodeId: number;
+  readonly nodeName: string;
+  readonly nodeType: number;
+  readonly attributes: readonly string[];
+  readonly children: readonly CdpNode[];
+  readonly pseudoElements: readonly CdpNode[];
+  readonly shadowRoots: readonly CdpNode[];
+  readonly contentDocument: CdpNode | null;
 }
 
-interface PlatformFont {familyName: string; postScriptName: string; isCustomFont: boolean; glyphCount: number}
+interface PlatformFont {readonly familyName: string; readonly postScriptName: string; readonly isCustomFont: boolean; readonly glyphCount: number}
 
 /** One element drawn, wholly or partly, in a font that is not bundled. */
 export interface SystemFontUse {readonly element: string; readonly text: string; readonly characters: string; readonly font: string; readonly glyphs: number}
 
-function describe(node: CdpNode): string {
-  const attrs = node.attributes ?? [];
-  const get = (name: string): string => { const at = attrs.indexOf(name); return at < 0 ? '' : attrs[at + 1] ?? ''; };
-  const cls = get('class').trim().split(/\s+/).filter(c => c !== '').join('.');
-  const id = get('id');
-  return `${node.nodeName.toLowerCase()}${id === '' ? '' : `#${id}`}${cls === '' ? '' : `.${cls}`}`;
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+
+function parseNode(value: unknown): CdpNode {
+  if (!isRecord(value) || typeof value['nodeId'] !== 'number' || typeof value['nodeName'] !== 'string' || typeof value['nodeType'] !== 'number') throw new Error('CDP sent a node of an unknown shape');
+  const list = (key: string): CdpNode[] => { const items = value[key]; return Array.isArray(items) ? items.map(parseNode) : []; };
+  const attributes = value['attributes'];
+  const content = value['contentDocument'];
+  return {
+    nodeId: value['nodeId'], nodeName: value['nodeName'], nodeType: value['nodeType'],
+    attributes: Array.isArray(attributes) ? attributes.map(String) : [],
+    children: list('children'), pseudoElements: list('pseudoElements'), shadowRoots: list('shadowRoots'),
+    contentDocument: content === undefined ? null : parseNode(content),
+  };
 }
+
+function parseFonts(value: unknown): PlatformFont[] {
+  if (!isRecord(value) || !Array.isArray(value['fonts'])) throw new Error('CDP sent fonts of an unknown shape');
+  return value['fonts'].map(font => {
+    if (!isRecord(font) || typeof font['isCustomFont'] !== 'boolean') throw new Error('CDP sent a font of an unknown shape');
+    return {familyName: String(font['familyName']), postScriptName: String(font['postScriptName']), isCustomFont: font['isCustomFont'], glyphCount: Number(font['glyphCount'])};
+  });
+}
+
+function selectorOf(node: CdpNode): string {
+  const get = (name: string): string => { const at = node.attributes.indexOf(name); return at < 0 ? '' : node.attributes[at + 1] ?? ''; };
+  const classes = get('class').trim().split(/\s+/).filter(c => c !== '').join('.');
+  const id = get('id');
+  return `${node.nodeName.toLowerCase()}${id === '' ? '' : `#${id}`}${classes === '' ? '' : `.${classes}`}`;
+}
+
+const NOT_TEXT = new Set(['SCRIPT', 'STYLE', 'HEAD', 'NOSCRIPT', 'CANVAS']);
 
 /** The elements on the page (pseudo-elements included) that draw any glyph in a font that is not one of the app's own. */
 export async function systemFontUses(page: Page): Promise<SystemFontUse[]> {
@@ -40,25 +64,25 @@ export async function systemFontUses(page: Page): Promise<SystemFontUse[]> {
   try {
     await cdp.send('DOM.enable');
     await cdp.send('CSS.enable');
-    const {root} = await cdp.send('DOM.getDocument', {depth: -1, pierce: true}) as {root: CdpNode};
+    const root = parseNode((await cdp.send('DOM.getDocument', {depth: -1, pierce: true})).root);
     const found: SystemFontUse[] = [];
-    const visit = async (node: CdpNode, path: string): Promise<void> => {
-      const here = node.nodeType === 1 || node.nodeName.startsWith('::') ? `${path} > ${describe(node)}` : path;
+    const visit = async (node: CdpNode, path: readonly string[]): Promise<void> => {
+      const isBox = node.nodeType === 1 || node.nodeName.startsWith('::');
+      const here = isBox ? [...path, selectorOf(node)] : path;
       // A parent's report includes its children's text: only an element with a text node of its own (or a ::before/::after) is asked.
-      const ownText = (node.children ?? []).some(child => child.nodeType === 3) || node.nodeName.startsWith('::') || (node.pseudoElements ?? []).length === 0 && /^(INPUT|TEXTAREA|SELECT)$/.test(node.nodeName);
-      if (node.nodeType === 1 || node.nodeName.startsWith('::')) {
-        if (ownText && !['SCRIPT', 'STYLE', 'HEAD', 'NOSCRIPT', 'CANVAS'].includes(node.nodeName)) {
-          const {fonts} = await cdp.send('CSS.getPlatformFontsForNode', {nodeId: node.nodeId}).catch(() => ({fonts: [] as PlatformFont[]})) as {fonts: PlatformFont[]};
-          for (const font of fonts.filter(f => !f.isCustomFont)) {
-            const text = await cdp.send('DOM.getOuterHTML', {nodeId: node.nodeId}).then(r => (r as {outerHTML: string}).outerHTML.replace(/<[^>]*>/g, '').trim().slice(0, 60)).catch(() => '');
-            const characters = Array.from(new Set(Array.from(text).filter(c => c.codePointAt(0)! > 127))).map(c => `${c} U+${c.codePointAt(0)!.toString(16).toUpperCase()}`).join(' ');
-            found.push({element: here.split(' > ').slice(-3).join(' > '), text, characters, font: font.familyName || font.postScriptName, glyphs: font.glyphCount});
-          }
+      const ownText = node.children.some(child => child.nodeType === 3) || node.nodeName.startsWith('::') || /^(INPUT|TEXTAREA|SELECT)$/.test(node.nodeName);
+      if (isBox && ownText && !NOT_TEXT.has(node.nodeName)) {
+        const fonts = parseFonts(await cdp.send('CSS.getPlatformFontsForNode', {nodeId: node.nodeId}));
+        for (const font of fonts.filter(f => !f.isCustomFont)) {
+          const html = await cdp.send('DOM.getOuterHTML', {nodeId: node.nodeId}).then(r => r.outerHTML, () => '');
+          const text = html.replace(/<[^>]*>/g, '').trim().slice(0, 60);
+          const characters = Array.from(new Set(Array.from(text).filter(c => (c.codePointAt(0) ?? 0) > 127))).map(c => `${c} U+${(c.codePointAt(0) ?? 0).toString(16).toUpperCase()}`).join(' ');
+          found.push({element: here.slice(-3).join(' > '), text, characters, font: font.familyName || font.postScriptName, glyphs: font.glyphCount});
         }
       }
-      for (const child of [...(node.pseudoElements ?? []), ...(node.shadowRoots ?? []), ...(node.children ?? []), ...(node.contentDocument ? [node.contentDocument] : [])]) await visit(child, here);
+      for (const child of [...node.pseudoElements, ...node.shadowRoots, ...node.children, ...(node.contentDocument === null ? [] : [node.contentDocument])]) await visit(child, here);
     };
-    await visit(root, '');
+    await visit(root, []);
     return found;
   } finally {
     await cdp.detach().catch(() => undefined);
