@@ -628,9 +628,12 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         push.kind === 'pushCreate' && !heldDocKeys.has(docIdKey(push.docId)));
     let nextCreate = 0;
     let createFailure: CloudError | null = null;
+    // Activity is told in the order the items were planned, not the order Drive finished them in: that order is the network's, and the list a user reads should not vary with it.
+    const createdMoves: (() => void)[] = [];
     async function createWorker(): Promise<void> {
       while (createFailure === null && nextCreate < creates.length) {
-        const push = creates[nextCreate++];
+        const planned = nextCreate++;
+        const push = creates[planned];
         if (push === undefined) return;
         const meta: WriteMeta = {
           parentRevision: null,
@@ -654,10 +657,11 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         });
         pushedCount++;
         deps.progress.pushed(pushedCount);
-        moved('up', 'saved', push.docId, nameOf(push.bucket, { id: push.docId, body: push.body, layout: deps.layout }), '');
+        createdMoves[planned] = () => moved('up', 'saved', push.docId, nameOf(push.bucket, { id: push.docId, body: push.body, layout: deps.layout }), '');
       }
     }
     await Promise.all(Array.from({ length: Math.min(CREATE_CONCURRENCY, creates.length) }, createWorker));
+    for (const tell of createdMoves) tell?.();
     if (createFailure !== null) {
       return mapCloudError(createFailure, pushedCount);
     }

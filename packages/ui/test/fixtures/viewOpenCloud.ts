@@ -48,6 +48,8 @@ async function driveStandIn(page: Page, drive = new DriveEmulator()): Promise<vo
 /** The Cloud sync dialog says Synced: the first run has ended and the run it set off after it has too (the badge reads busy and "will sync in a moment" between). */
 async function waitForSynced(page: Page, skin: WalkSkin): Promise<void> {
   await expect(page.locator(dialogRoot(skin)).locator('.cloud-sync-headline').first()).toContainText(/^\s*Synced/);
+  // Both projects of the list have been sent: Activity has a line for each. The second can arrive in a later run than the first, so "Synced" alone is not the end.
+  await expect(page.locator(dialogRoot(skin)).locator('.cloud-sync-activity-line')).toHaveCount(2);
 }
 
 /** Starts the app and opens a project, as the walk's first screen does, in the skin. */
