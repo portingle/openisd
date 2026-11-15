@@ -5,6 +5,13 @@ owner: leader
 status: open
 goal: Every glyph the app draws comes from the bundled fonts: the phone colour key's square and the desktop What-if note are drawn without a font glyph, the store gate takes the bundled font, and a browser spec fails when any element on any visual screen is drawn by a system font
 why: John, 2026-11-15: the fonts are baked into the app, so why would they differ (QO466 ruling of 2026-11-10: never a device default)
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/ui/test/ui/font-glyph-coverage.test.ts
 files:
   - tasks/T832.yml
+  - bugs/BUG_20261115_glyphs-and-store-gate-drawn-in-system-fonts.md
+  - packages/ui/src/main.ts
+  - packages/ui/src/ui/components/StoreGate.vue
+  - packages/ui/src/ui/shells/mobile/MobileKeyStrip.vue
+  - packages/ui/src/ui/shells/original/OriginalShell.vue
+  - packages/ui/test/ui/font-glyph-coverage.test.ts
+  - packages/ui/test/visual/visual-fonts.browser.spec.ts
