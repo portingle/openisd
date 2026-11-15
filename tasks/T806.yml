@@ -2,7 +2,7 @@ id: T806
 release_note: internal
 repo: openisd
 owner: main-red-app
-status: open
+status: done
 goal: Main red, app faults: the phone Signal box is a fixed 112 px (T720), the ABC vent columns share the pane at 1024 px, a click that drifts under the spin threshold still selects the pressed digit
 why: John, 15 Nov 2026: main suite must be green (QO923); SDLC: main red is fixed first
 done_test: bash scripts/test.sh packages/design/test/fields/phoneRowColumns.test.ts
