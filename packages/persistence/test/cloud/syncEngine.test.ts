@@ -256,8 +256,8 @@ describe('SyncEngine — Drive sync plan P1-10 (sections 5.1–5.5)', () => {
       expect(progress.filter(p => p.startsWith('pushed'))).toHaveLength(10);
     });
 
-    it('Activity lists the items in the order they were planned, not the order Drive finished them in (the first upload is the slowest)', async () => {
-      localProjects.docs = newProjects(3);
+    it('Activity lists uploaded items by name, not in the order Drive finished them in (the first upload is the slowest)', async () => {
+      localProjects.docs = newProjects(3).reverse();
       const create = cloud.create.bind(cloud);
       let call = 0;
       cloud.create = async (id, body, meta) => {

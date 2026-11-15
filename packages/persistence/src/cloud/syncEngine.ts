@@ -628,12 +628,12 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         push.kind === 'pushCreate' && !heldDocKeys.has(docIdKey(push.docId)));
     let nextCreate = 0;
     let createFailure: CloudError | null = null;
-    // Activity is told in the order the items were planned, not the order Drive finished them in: that order is the network's, and the list a user reads should not vary with it.
-    const createdMoves: (() => void)[] = [];
+    // Activity is told after the uploads, by name: the order Drive finishes them in is the network's, and the order they are planned in is the order of the stored
+    // ids (random per project). A list a user reads should not vary with either.
+    const createdMoves: {readonly name: string; readonly tell: () => void}[] = [];
     async function createWorker(): Promise<void> {
       while (createFailure === null && nextCreate < creates.length) {
-        const planned = nextCreate++;
-        const push = creates[planned];
+        const push = creates[nextCreate++];
         if (push === undefined) return;
         const meta: WriteMeta = {
           parentRevision: null,
@@ -657,11 +657,12 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         });
         pushedCount++;
         deps.progress.pushed(pushedCount);
-        createdMoves[planned] = () => moved('up', 'saved', push.docId, nameOf(push.bucket, { id: push.docId, body: push.body, layout: deps.layout }), '');
+        const name = nameOf(push.bucket, { id: push.docId, body: push.body, layout: deps.layout });
+        createdMoves.push({ name, tell: () => moved('up', 'saved', push.docId, name, '') });
       }
     }
     await Promise.all(Array.from({ length: Math.min(CREATE_CONCURRENCY, creates.length) }, createWorker));
-    for (const tell of createdMoves) tell?.();
+    for (const { tell } of [...createdMoves].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) tell();
     if (createFailure !== null) {
       return mapCloudError(createFailure, pushedCount);
     }
