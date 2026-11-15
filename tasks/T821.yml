@@ -5,6 +5,16 @@ owner: claude-sub
 status: open
 goal: A calculated driver dimension that contradicts its own geometry (MagDepth outside 0..Depth) or whose uncertainty swamps it is not produced; the field stays not-available with a readable reason
 why: John via lead, 2026-11-15: Purifi PTT10.0X04/X08 show MagDepth 3.98 m on a 145 mm deep driver
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/design/test/engine/driver-solve.test.ts
 files:
   - tasks/T821.yml
+  - bugs/BUG_20261115_calculated-dimension-contradicts-its-own-geometry.md
+  - bugs/BUG_20261115_calculated-value-with-uncertainty-as-large-as-itself-is-shown.md
+  - bugs/BUG_20261115_physical-limits-too-loose-and-trips-are-ignored.md
+  - docs/research/ACCURACY_IMPROVEMENTS.md
+  - packages/design/engine/dvolRelation.ts
+  - packages/design/engine/consistency.ts
+  - packages/design/engine/driver/DriverEngine.ts
+  - packages/design/domain/driver/openISDDriver.ts
+  - packages/design/test/engine/driver-solve.test.ts
+  - packages/design/test/fixtures/driverSolverRun.ts
