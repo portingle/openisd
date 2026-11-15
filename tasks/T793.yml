@@ -14,6 +14,37 @@ files:
   - packages/ui/test/fixtures/viewOpenCloud.ts
   - packages/ui/test/fixtures/viewOpenSteps.ts
   - packages/ui/test/visual/visual.browser.spec.ts
+  - packages/ui/test/visual/pictureSet.ts
+  - packages/ui/test/architecture/visual-baselines-distinct.test.ts
+  - packages/ui/test/fixtures/viewOpenRejected.ts
+  - packages/ui/test/fixtures/viewOpenShared.ts
+  - packages/ui/test/fixtures/viewOpenFaults.ts
+  - packages/ui/src/ui/components/OptionsModal.vue
+  - packages/ui/test/ui/unit-label-underline.browser.spec.ts
+  - packages/ui/test/ui/field-visual-contract.browser.spec.ts
+  - scripts/capture-approved-field-paint.ts
+  - scripts/visual/screen-names.mjs
+  - scripts/visual/screen-names.test.mjs
+  - bugs/BUG_20261115_crash-shows-two-boxes.md
+  - bugs/BUG_20261115_driver-identity-message-contradicts-banner.md
+  - bugs/BUG_20261115_graph-messages-show-internal-wording.md
+  - bugs/BUG_20261115_passive-radiator-pick-error-prints-catalogue-detail.md
+  - bugs/BUG_20261115_phone-alignment-sheet-label-clipped.md
+  - bugs/BUG_20261115_phone-driver-list-links-tiny.md
+  - bugs/BUG_20261115_phone-end-correction-select-truncated.md
+  - bugs/BUG_20261115_phone-graph-warning-pill-covers-axis-tick.md
+  - bugs/BUG_20261115_primary-button-dark-text-on-blue-and-serif-store-gate.md
+  - bugs/BUG_20261115_storage-warning-mixes-site-and-local-numbers.md
+  - bugs/BUG_20261115_crash-report-card-covers-diagnostics-buttons.md
+  - bugs/BUG_20261115_desktop-abc-1024-labels-cut-in-three-columns.md
+  - bugs/BUG_20261115_layout-scan-desktop-hardcoded-home-path.md
+  - bugs/BUG_20261115_mobile-wizard-bandpass4-box-type-drawn-twice.md
+  - bugs/BUG_20261115_mobile-wizard-box-type-select-width-varies.md
+  - bugs/BUG_20261115_multi-coil-znom-stored-per-coil.md
+  - bugs/BUG_20261115_phone-320-volume-box-text-area-16px.md
+  - bugs/BUG_20261115_phone-driver-name-button-clipped-under-header.md
+  - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-complete-project.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-announcements-current.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-conflict-notice.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-cloud-hint.png
@@ -39,12 +70,10 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-editor-parameters.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-export-format.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-identity-message.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-import-file.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-library-overview.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-library-save.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-project-select.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-rename.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-search-filters.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-abc-losses-front.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-abc-losses-rear.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-bandpass-4th-order-losses-front.png
@@ -70,10 +99,8 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-options-limits-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-close-unsaved.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-export-formats.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-import-file.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-library-actions.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-new-passive-radiator-pick-error.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-new-vented-tuning-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-projects-new-vented-volume-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-results-charts-choose.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-results-charts-data-table.png
@@ -92,10 +119,10 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-storage-restore-picker.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-storage-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-store-gate.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-winisd-difference-entry.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-storage-usage-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-wizard-ebp-info.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-wizard-placement-info.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-complete-project.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-about-version.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-announcements-current.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-bin.png
@@ -106,7 +133,6 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-dq.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-export.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-identity.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-import.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-info.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-more.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-picker.png
@@ -133,17 +159,13 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-losses-box-passive-radiator-rear.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-losses-sealed-rear.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-losses-vented-rear.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-advanced.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-announcementsmodal.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-diagnosticsmodal.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-manage-drivers.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-project-details.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-projects.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-splashmodal.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-winisddifferencesmodal.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-native-files.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-native-keyboard.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-general.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-limits-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-plot-window.png
@@ -158,13 +180,11 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-update-strip.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-wizard-isobarik-note.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-wizard-passive-radiator-pick-error.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-wizard-vented-tuning-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-wizard-vented-volume-warning.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-pr-picker.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-pr-save.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-project-actions.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-project-import.png
-  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-refresh.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-sealed-alignment.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-section-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-chart-readout.png
@@ -199,37 +219,8 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-ebp.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-help.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-wizard-placement.png
-  - packages/ui/test/visual/pictureSet.ts
-  - packages/ui/test/architecture/visual-baselines-distinct.test.ts
-  - packages/ui/test/fixtures/viewOpenRejected.ts
-  - packages/ui/test/fixtures/viewOpenShared.ts
-  - packages/ui/test/fixtures/viewOpenFaults.ts
-  - packages/ui/src/ui/components/OptionsModal.vue
-  - packages/ui/test/ui/unit-label-underline.browser.spec.ts
-  - packages/ui/test/ui/field-visual-contract.browser.spec.ts
-  - scripts/capture-approved-field-paint.ts
-  - scripts/visual/screen-names.mjs
-  - scripts/visual/screen-names.test.mjs
-  - bugs/BUG_20261115_crash-shows-two-boxes.md
-  - bugs/BUG_20261115_driver-identity-message-contradicts-banner.md
-  - bugs/BUG_20261115_graph-messages-show-internal-wording.md
-  - bugs/BUG_20261115_passive-radiator-pick-error-prints-catalogue-detail.md
-  - bugs/BUG_20261115_phone-alignment-sheet-label-clipped.md
-  - bugs/BUG_20261115_phone-driver-list-links-tiny.md
-  - bugs/BUG_20261115_phone-end-correction-select-truncated.md
-  - bugs/BUG_20261115_phone-graph-warning-pill-covers-axis-tick.md
-  - bugs/BUG_20261115_primary-button-dark-text-on-blue-and-serif-store-gate.md
-  - bugs/BUG_20261115_storage-warning-mixes-site-and-local-numbers.md
-  - bugs/BUG_20261115_crash-report-card-covers-diagnostics-buttons.md
-  - bugs/BUG_20261115_desktop-abc-1024-labels-cut-in-three-columns.md
-  - bugs/BUG_20261115_layout-scan-desktop-hardcoded-home-path.md
-  - bugs/BUG_20261115_mobile-wizard-bandpass4-box-type-drawn-twice.md
-  - bugs/BUG_20261115_mobile-wizard-box-type-select-width-varies.md
-  - bugs/BUG_20261115_multi-coil-znom-stored-per-coil.md
-  - bugs/BUG_20261115_phone-320-volume-box-text-area-16px.md
-  - bugs/BUG_20261115_phone-driver-name-button-clipped-under-header.md
-  - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
 visual:
+  - desktop-complete-project
   - desktop-dialog-announcements-current
   - desktop-dialog-cloud-conflict-notice
   - desktop-dialog-cloud-hint
@@ -255,12 +246,10 @@ visual:
   - desktop-dialog-driver-editor-parameters
   - desktop-dialog-driver-export-format
   - desktop-dialog-driver-identity-message
-  - desktop-dialog-driver-import-file
   - desktop-dialog-driver-library-overview
   - desktop-dialog-driver-library-save
   - desktop-dialog-driver-project-select
   - desktop-dialog-driver-rename
-  - desktop-dialog-driver-search-filters
   - desktop-dialog-enclosure-abc-losses-front
   - desktop-dialog-enclosure-abc-losses-rear
   - desktop-dialog-enclosure-bandpass-4th-order-losses-front
@@ -286,10 +275,8 @@ visual:
   - desktop-dialog-options-limits-help
   - desktop-dialog-projects-close-unsaved
   - desktop-dialog-projects-export-formats
-  - desktop-dialog-projects-import-file
   - desktop-dialog-projects-library-actions
   - desktop-dialog-projects-new-passive-radiator-pick-error
-  - desktop-dialog-projects-new-vented-tuning-warning
   - desktop-dialog-projects-new-vented-volume-warning
   - desktop-dialog-results-charts-choose
   - desktop-dialog-results-charts-data-table
@@ -308,10 +295,10 @@ visual:
   - desktop-dialog-shared-storage-restore-picker
   - desktop-dialog-shared-storage-warning
   - desktop-dialog-shared-store-gate
-  - desktop-dialog-shared-winisd-difference-entry
   - desktop-dialog-storage-usage-warning
   - desktop-dialog-wizard-ebp-info
   - desktop-dialog-wizard-placement-info
+  - mobile-complete-project
   - mobile-dialog-about-version
   - mobile-dialog-announcements-current
   - mobile-dialog-bin
@@ -322,7 +309,6 @@ visual:
   - mobile-dialog-driver-dq
   - mobile-dialog-driver-export
   - mobile-dialog-driver-identity
-  - mobile-dialog-driver-import
   - mobile-dialog-driver-info
   - mobile-dialog-driver-more
   - mobile-dialog-driver-picker
@@ -349,17 +335,13 @@ visual:
   - mobile-dialog-losses-box-passive-radiator-rear
   - mobile-dialog-losses-sealed-rear
   - mobile-dialog-losses-vented-rear
-  - mobile-dialog-menu-advanced
   - mobile-dialog-menu-announcementsmodal
   - mobile-dialog-menu-diagnosticsmodal
   - mobile-dialog-menu-manage-drivers
   - mobile-dialog-menu-project-details
   - mobile-dialog-menu-projects
-  - mobile-dialog-menu-splashmodal
   - mobile-dialog-menu-winisddifferencesmodal
   - mobile-dialog-menu
-  - mobile-dialog-native-files
-  - mobile-dialog-native-keyboard
   - mobile-dialog-options-general
   - mobile-dialog-options-limits-help
   - mobile-dialog-options-plot-window
@@ -374,13 +356,11 @@ visual:
   - mobile-dialog-phone-update-strip
   - mobile-dialog-phone-wizard-isobarik-note
   - mobile-dialog-phone-wizard-passive-radiator-pick-error
-  - mobile-dialog-phone-wizard-vented-tuning-warning
   - mobile-dialog-phone-wizard-vented-volume-warning
   - mobile-dialog-pr-picker
   - mobile-dialog-pr-save
   - mobile-dialog-project-actions
   - mobile-dialog-project-import
-  - mobile-dialog-refresh
   - mobile-dialog-sealed-alignment
   - mobile-dialog-section-help
   - mobile-dialog-shared-chart-readout
