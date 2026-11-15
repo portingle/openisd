@@ -19,3 +19,4 @@ files:
   - packages/ui/src/ui/shells/mobile/phoneClassicFieldVars.ts
   - packages/ui/test/visual/SOURCES.sha256
   - packages/ui/test/ui/phone-label-column-one-writer.browser.spec.ts
+  - bugs/BUG_20261115_mobile-wizard-box-type-select-width-varies.md
