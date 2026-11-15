@@ -125,6 +125,7 @@ export {
   browserNameOf,
   persistenceLine,
   persistenceWarning,
+  projectsLeftNotice,
   savedNotice,
   startupNotice,
   siteStorageLine,

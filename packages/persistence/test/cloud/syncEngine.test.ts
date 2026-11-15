@@ -38,6 +38,7 @@ class FakeBackup implements StorageBackup {
   }
 
   take(): BackupResult { return { kind: 'nothingToBackUp' }; }
+  rewriteInPlace(): 'done' | 'noRoom' { return 'done'; }
   list(): BackupInfo[] { return []; }
   read(): string | null { return null; }
   discard(): boolean { return false; }

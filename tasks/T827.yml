@@ -3,8 +3,23 @@ release_note: internal
 repo: openisd
 owner: claude-upgrade-incremental
 status: open
-goal: Upgrading saved projects from schemaVersion 3 to 4 writes each project back one at a time with a one-record safety copy, never a whole-store backup, so it never fills the store, never skips silently, and survives an interrupted start
+goal: Upgrading saved projects from schemaVersion 3 to 4 is written back in place, key by key and record by record when a key does not fit, with the old text held until the new one reads back and no whole-store backup, so it never fills the store, never skips silently, and survives an interrupted start
 why: John, 2026-11-15: 'incremental upgrade and write back?' after the release-readiness run showed the whole-store upgrade backup filling a 2.3 MB store to 96% and silently skipping the rewrite at 3.0 MB
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/persistence/test/storedTextCompaction.test.ts
+ruling: QO940
 files:
   - tasks/T827.yml
+  - bugs/BUG_20261115_upgrade-backup-fills-store-and-skips-silently.md
+  - packages/persistence/src/repos/storageBackup.ts
+  - packages/persistence/src/repos/storedTextCompaction.ts
+  - packages/persistence/test/storedTextCompaction.test.ts
+  - packages/persistence/test/storageBackup.test.ts
+  - packages/persistence/test/fixtures/stored-v3-projects.json
+  - packages/persistence/test/architecture-storage-writes-are-guarded.test.ts
+  - packages/persistence/src/index.ts
+  - packages/design/fields/browserStorage.ts
+  - packages/design/fields/index.ts
+  - packages/design/test/fields/browserStorage.test.ts
+  - packages/ui/src/main.ts
+  - packages/ui/src/logic/upgradeLeftNotice.ts
+  - packages/ui/test/logic/upgradeLeftNotice.test.ts

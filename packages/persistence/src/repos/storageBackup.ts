@@ -15,6 +15,15 @@
  *  One backup per guarded operation: a guard that starts while another runs takes none, since
  *  the outer backup already holds the whole store (a sync run's pulled writes, T153).
  *
+ *  The one exception, `rewriteInPlace` (T827, QO940, John 15 Nov 2026: "incremental upgrade and write
+ *  back?"): the start-up rewrite of stored project texts to the current schemaVersion. It removes
+ *  nothing the user holds: the new text is the same project, the reader already upgrades the old
+ *  text in memory on every load, and the key is written whole or not at all. The old text is held
+ *  until the new text reads back, and is put back if it does not; no backup and no other key goes
+ *  for room. A whole-store copy of this optional rewrite took a 46%-full store to the nearly-full
+ *  popup, and above about half a full store it did not fit, so the rewrite was skipped without a
+ *  word. Repair, sync, delete, restore, reset and layout migration still go through `guard`.
+ *
  *  Count: the newest three backups are kept; after each new one the older ones are removed
  *  (John, 14 Oct 2026). The newest backup of each older layout is outside that count. Each backup
  *  records why it was taken. */
@@ -91,6 +100,10 @@ export interface StorageBackup {
   /** Run `destructive` only after the whole store is backed up; refuse it when the backup does
    *  not fit. THE door for every write that removes or replaces a stored key. */
   guard<T>(reason: BackupReason, destructive: () => T): Guarded<T>;
+  /** Replace the text of one key with `text` that is the same data upgraded, with no backup. `done`
+   *  once `text` reads back; `noRoom` when it does not, with the old text as it was. Removes nothing
+   *  for room. Only for a rewrite the reader would make in memory anyway (see the file header). */
+  rewriteInPlace(key: string, text: string): 'done' | 'noRoom';
   /** Every backup held, newest first. */
   list(): BackupInfo[];
   /** The backup text under `key` (an envelope, as `readEnvelope` reads it), or null. */
@@ -333,6 +346,14 @@ export function createStorageBackup(storage: ListableStorage, now: () => number)
       } finally {
         guarding = false;
       }
+    },
+    rewriteInPlace(key, text) {
+      const held = storage.get(key);
+      storage.set(key, text);
+      if (storage.get(key) === text) return 'done';
+      if (held === null) storage.remove(key);
+      else if (storage.get(key) !== held) storage.set(key, held);
+      return 'noRoom';
     },
     list,
     read: key => storage.get(key),

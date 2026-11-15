@@ -16,6 +16,7 @@
  */
 import {describe, it} from 'vitest';
 import assert from 'node:assert/strict';
+import {readdirSync, readFileSync} from 'node:fs';
 import {basename, dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {Node, Project as TsProject, SyntaxKind} from 'ts-morph';
@@ -75,5 +76,18 @@ describe('every write that removes or replaces a stored key goes through the bac
     const found = [...counts.entries()].sort(([a], [b]) => a.localeCompare(b));
     const allowed = [...ORDINARY_SAVES.entries()].sort(([a], [b]) => a.localeCompare(b));
     assert.deepEqual(found, allowed, `Unguarded storage.set calls: ${JSON.stringify(sites)}. A write that replaces a stored key goes in backup.guard; an ordinary save is counted in ORDINARY_SAVES.`);
+  });
+});
+
+describe('the one write that skips the whole-store backup', () => {
+  /** T827 (QO940): `rewriteInPlace` replaces a key with its own data upgraded, with no backup. Its
+   *  reason is in the header of `storageBackup.ts`; a second caller needs that reason again. */
+  const ALLOWED_CALLERS = ['storedTextCompaction.ts'];
+
+  it('has one caller: the start-up rewrite of stored project texts', () => {
+    const callers = readdirSync(join(PACKAGE, 'src', 'repos'))
+      .filter(name => name.endsWith('.ts') && name !== 'storageBackup.ts')
+      .filter(name => readFileSync(join(PACKAGE, 'src', 'repos', name), 'utf8').includes('.rewriteInPlace('));
+    assert.deepEqual(callers, ALLOWED_CALLERS);
   });
 });

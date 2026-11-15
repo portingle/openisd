@@ -7,6 +7,7 @@ import {
   savedNotice,
   siteStorageLine,
   startupNotice,
+  projectsLeftNotice,
   acknowledgementInPlaceOfBannerMark,
   storagePopup,
   storagePopupAfterSave,
@@ -175,5 +176,22 @@ describe('the storage popup after a save', () => {
     expect(storagePopupAfterSave(above, {...above, ...rest})).toEqual({kind: 'none'});
     expect(storagePopupAfterSave(below, {...below, ...rest})).toEqual({kind: 'none'});
     expect(storagePopupAfterSave(above, {...below, ...rest})).toEqual({kind: 'none'});
+  });
+});
+
+describe('the notice for projects the start-up update left as saved', () => {
+  it('says nothing when none was left', () => {
+    expect(projectsLeftNotice(0)).toBeNull();
+  });
+
+  it('says what happened, that the projects are intact and still open, and what to do', () => {
+    expect(projectsLeftNotice(1)).toEqual({
+      title: 'Some projects were not updated',
+      message: '1 project could not be updated for this version of OpenISD, because this browser has no room left. '
+        + 'It is exactly as you saved it, still opens as usual, and nothing is lost. '
+        + 'To finish the update, free some space (delete projects you no longer need, or export them), then restart OpenISD.',
+    });
+    expect(projectsLeftNotice(3)?.message.startsWith('3 projects could not be updated')).toBe(true);
+    expect(projectsLeftNotice(3)?.message).toContain('They are exactly as you saved them, still open as usual');
   });
 });

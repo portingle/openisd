@@ -8,6 +8,12 @@
  *   2. it was written BEFORE the first change to any other key,
  *   3. when the backup cannot be made (no room), the path is refused and the data is kept.
  * A new destructive path goes in this table; one that is not here is not proved.
+ *
+ * One path is deliberately not in the table (T827, QO940): the start-up rewrite of stored project
+ * texts to the current schemaVersion (`storedTextCompaction.ts`, `rewriteInPlace`). It replaces a
+ * key with its own data upgraded, the reader already upgrades the old text in memory, and a whole-store
+ * backup of it filled the store. Its protection is proved in `storedTextCompaction.test.ts` and
+ * `storageBackup.test.ts`; `architecture-storage-writes-are-guarded.test.ts` allows one caller.
  */
 import {describe, it} from 'vitest';
 import assert from 'node:assert/strict';

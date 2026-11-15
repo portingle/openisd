@@ -81,7 +81,7 @@ export {
 } from './repos/projectRepo.js';
 
 export { createLedgerFollowsMigration, createLedgerFollowsRewrite } from './cloud/ledgerFollowsRewrite.js';
-export { type CompactionOutcome, createStoredTextCompaction } from './repos/storedTextCompaction.js';
+export { type CompactionOutcome, createStoredTextCompaction, projectTextsLeft } from './repos/storedTextCompaction.js';
 export { createQuarantineRetirement, type QuarantineRetirementOutcome } from './repos/quarantineRetirement.js';
 
 export {

@@ -30,6 +30,19 @@ export function storageUseLine(use: StoredUse): string {
   return `${formatCountOf(use.projectCount, 'project')}, ${formatByteSize(use.localBytes)} of ${limit} used`;
 }
 
+/** What the start-up update of saved projects tells the user when `left` of them could not be written
+ *  for want of room; null when none was left. The projects are as saved and still open. */
+export function projectsLeftNotice(left: number): {readonly title: string; readonly message: string} | null {
+  if (left <= 0) return null;
+  const one = left === 1;
+  return {
+    title: 'Some projects were not updated',
+    message: `${formatCountOf(left, 'project')} could not be updated for this version of OpenISD, because this browser has no room left. `
+      + `${one ? 'It is' : 'They are'} exactly as you saved ${one ? 'it' : 'them'}, still ${one ? 'opens' : 'open'} as usual, and nothing is lost. `
+      + 'To finish the update, free some space (delete projects you no longer need, or export them), then restart OpenISD.',
+  };
+}
+
 /** The Diagnostics line: "Persistent storage: granted"; "asking" before the browser answers. */
 export function persistenceLine(outcome: PersistOutcome | null): string {
   return `Persistent storage: ${outcome ?? 'asking'}`;
