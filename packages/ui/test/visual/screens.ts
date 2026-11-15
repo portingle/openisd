@@ -2,6 +2,9 @@ import type {Page} from '@playwright/test';
 import {expect, openAMobileProject, openAProject, setFocusedBoxType} from '../fixtures.js';
 import {forceMobileSkin, openMobileMenu} from '../fixtures/mobileSkin.js';
 import {FIXTURE_DATE} from '../fixtures/sampleProject.js';
+import {COMPLETE_DRIVER_PROJECT_OWPR} from '../fixtures.js';
+import {openTargets, WalkSkin} from '../fixtures/viewOpen.js';
+import {ViewKind} from '../fixtures/viewIndex.js';
 
 /**
  * Every screen the visual baselines cover. A screen is a name, a skin and the steps that bring it up;
@@ -16,10 +19,14 @@ export class VisualSkin {
   static readonly ALL: readonly VisualSkin[] = Object.freeze([VisualSkin.MOBILE, VisualSkin.DESKTOP]);
   private constructor(readonly name: string, readonly viewport: {width: number; height: number}) {}
 
-  /** Opens the app in this skin, on its empty state, on FIXTURE_DATE (timers still run; only the date and time are fixed).
+  /** Opens the app in this skin, on its empty state, with the clock started at FIXTURE_DATE and running.
+   *  The clock runs, never stands still: Vue skips a handler attached at or after an event's Date.now() stamp,
+   *  so with a frozen clock a parent's `@click.stop` never runs and a click meant for a menu reaches the
+   *  document and closes it (the phone's Save As / Export menu never opened).
    *  `waitUntil` 'domcontentloaded' for a test that holds a font: the page's load event waits for fonts it uses. */
   async start(page: Page, waitUntil: 'load' | 'domcontentloaded' = 'load'): Promise<void> {
-    await page.clock.setFixedTime(FIXTURE_DATE);
+    await page.clock.install({time: FIXTURE_DATE});
+    await page.clock.resume();
     await page.setViewportSize(this.viewport);
     if (this === VisualSkin.MOBILE) await forceMobileSkin(page);
     else await page.addInitScript(() => {
@@ -28,10 +35,10 @@ export class VisualSkin {
     await page.goto('/', {waitUntil});
   }
 
-  /** Opens the sample project in this skin. */
-  async openProject(page: Page): Promise<void> {
-    if (this === VisualSkin.MOBILE) await openAMobileProject(page);
-    else await openAProject(page);
+  /** Opens a project file in this skin; the sample project unless another is named. */
+  async openProject(page: Page, file?: string): Promise<void> {
+    if (this === VisualSkin.MOBILE) await openAMobileProject(page, file);
+    else await openAProject(page, file);
     // The "Project imported" message floats over the screen for a few seconds, fading as it goes: a picture
     // taken while it shows holds it at whatever opacity the load gave it. The picture is of the screen.
     await expect(page.getByText(/Project imported/)).toBeHidden();
@@ -47,11 +54,25 @@ export interface Screen {
   readonly skin: VisualSkin;
   /** Brings the screen up, from a fresh page. */
   open(page: Page): Promise<void>;
+  /** CSS selectors of parts the machine decides, masked in the picture (the build stamp is always masked). */
+  readonly mask: readonly string[];
+  /** The console errors the screen's own fault writes (a fault view); any other console error fails it. */
+  readonly ownConsoleErrors: readonly RegExp[];
 }
 
-function screen(skin: VisualSkin, name: string, open: (page: Page) => Promise<void>): Screen {
-  return {name, skin, open: async page => { await skin.start(page); await open(page); }};
+function screen(skin: VisualSkin, name: string, open: (page: Page) => Promise<void>, mask: readonly string[] = [],
+  ownConsoleErrors: readonly RegExp[] = []): Screen {
+  return {name, skin, mask, ownConsoleErrors, open: async page => { await skin.start(page); await open(page); }};
 }
+
+/**
+ * Parts of a dialog the machine or the build decides, masked on every dialog screen (a selector that
+ * matches nothing masks nothing):
+ * - "This site uses … of the … this browser allows": the storage quota, which the browser works out from the disk;
+ * - "Projects saved in this browser at http://localhost:<port>/": the test server's port, one of a pool;
+ * - the phone About's "Build · <date>" line: the build's own date.
+ */
+const MACHINE_DECIDED_PARTS: readonly string[] = ['.su-site', '.store-label', '[data-testid="about-version-line"]'];
 
 const DESKTOP_TABS = ['Box', 'Driver', 'Signal', 'Filters', 'Advanced', 'Project'] as const;
 const MOBILE_TABS = ['Box', 'Driver', 'Signal', 'Filters', 'Graph'] as const;
@@ -118,7 +139,52 @@ function screens(): readonly Screen[] {
       await setFocusedBoxType(page, type);
     }));
   }
+  for (const {view, skin, plan} of openTargets()) {
+    if (!POPUP_KINDS.has(view.kind) || NO_STABLE_PICTURE.has(view.id)) continue;
+    const visualSkin = skin === WalkSkin.Phone ? VisualSkin.MOBILE : VisualSkin.DESKTOP;
+    all.push(screen(visualSkin, dialogName(view.id.replace(/^desktop\//, '')), async page => {
+      await visualSkin.openProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      await plan.open(page);
+      // A step that imports a file leaves its "… imported" strip fading over the screen: the picture waits it out.
+      await expect(page.locator(FADING_STRIP)).toHaveCount(0, {timeout: 15_000});
+    }, MACHINE_DECIDED_PARTS, plan.ownConsoleErrors));
+  }
   return all;
+}
+
+/**
+ * Every popup of the view index (fixtures/viewIndex.ts) in each skin it has an open step for
+ * (fixtures/viewOpen.ts: the same real-UI steps the layout walk uses), each from the complete-driver project:
+ * dialogs and each tab of a tabbed dialog, sheets, menus, help, field notes, warning and error popups, inline
+ * expansions and the driver browsers. Pages, tabs and wizard steps are pictured above; a view with no open step
+ * has its NoOpenReason there.
+ */
+const POPUP_KINDS: ReadonlySet<ViewKind> = new Set([
+  ViewKind.Dialog, ViewKind.Sheet, ViewKind.Menu, ViewKind.Help, ViewKind.FieldNote, ViewKind.WarningPopup,
+  ViewKind.ErrorPopup, ViewKind.InlineExpansion, ViewKind.Browser,
+]);
+
+/**
+ * Popups with no stable picture, left out until the cause is fixed (bugs/BUG_20261115_visual-baselines-cover-no-dialogs.md).
+ * The layout walk still opens and measures each of them.
+ */
+/** The strip that says what an action did and fades a few seconds later (desktop `.flash`, phone `flash-strip`). */
+const FADING_STRIP = '.flash:visible, [data-testid="flash-strip"]:visible';
+
+const NO_STABLE_PICTURE: ReadonlySet<string> = new Set([
+  // Fade out on their own a few seconds after they show: a picture holds whatever opacity the moment gave it.
+  'shared/flash-message', 'phone/flash-strip',
+  // The fault report prints a stack trace naming the build's hashed bundle (main-<hash>.js) and the test port.
+  'diagnostic-repairs', 'desktop/diagnostic-repairs', 'startup-failure', 'desktop/startup-failure',
+  // The phone Box page behind the strip differs between runs (BUG_20261115_mobile-wizard-box-type-select-width-varies).
+  'phone/cloud-reconnect-strip', 'phone/cloud-conflict-notice', 'phone/cloud-hint',
+  // "Retrying at <time>": now plus the retry delay, so the minute depends on how long the run took.
+  'cloud', 'cloud-confirm', 'desktop/settings/cloud/account-and-activity', 'desktop/cloud-confirm',
+]);
+
+/** A view id as a baseline name: `driver/editor/general` → `dialog-driver-editor-general`. */
+function dialogName(id: string): string {
+  return 'dialog-' + id.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 export const SCREENS: readonly Screen[] = screens();

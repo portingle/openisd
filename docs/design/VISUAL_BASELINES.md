@@ -9,7 +9,7 @@ seen, named and approved; it is never a surprise.
 | The spec | `packages/ui/test/visual/visual.browser.spec.ts`, one `toHaveScreenshot` per screen |
 | Baselines | `packages/ui/test/visual/visual.browser.spec.ts-snapshots/<skin>-<screen>.png` |
 | Windows | phone 390×844, desktop 1880×1000 (`VisualSkin`) |
-| Tolerance | none; the build stamp is the one masked element |
+| Tolerance | none; the build stamp is masked, and so is any part the machine decides, named per screen in `Screen.mask` (on dialogs: the storage quota, the test server's address, the phone About's build date) |
 
 ## Rules
 
