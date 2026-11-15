@@ -2,7 +2,7 @@ id: T825
 release_note: internal
 repo: openisd
 owner: claude-sub
-status: open
+status: done
 goal: The app knows the scraper rejection reason out-of-physical-range: a refused out-of-range reading raises no unrecognised-reason line and reads sensibly where rejected readings are shown
 why: John, 15 Nov 2026 (QO934, QO935): the scraper starts writing out-of-physical-range; BUG_20261115_out-of-physical-range-reason-unknown-to-the-app
 ruling: QO934
