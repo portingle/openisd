@@ -82,8 +82,8 @@ and a driver saved back to `.wdr` never carries it.
 
 **Voice-coil wiring: measured wiring and "My wiring" (QO900, QO907, issue 512).** `Re`, `BL`, `Le` and `Znom` are
 stored as the maker published them, for the wiring the maker measured in. `VCCon` is that measured wiring: `series`,
-`parallel`, or unknown, with no default. It is stated (entered), inferred from a printed per-coil impedance (calculated,
-shown as "inferred"), or not stated. The Thiele/Small relations and the consistency checks run on the stored figures and
+`parallel`, or unknown, with no default. It is stated (entered), inferred from a printed per-coil impedance (calculated;
+the Driver editor shows it as calculated, and the Driver tab does not show the measured wiring at all, QO941), or not stated. The Thiele/Small relations and the consistency checks run on the stored figures and
 never read `VCCon`.
 
 The project carries **My wiring** (`driverEmbedding.coilWiring`, `series` or `parallel`): how the user will wire the
