@@ -13,3 +13,4 @@ files:
   - bugs/BUG_20261115_provenance-view-cannot-show-a-refused-sibling-reading.md
   - packages/design/domain/openisdSchema.ts
   - packages/design/test/winisd/driverYmlToOpenisdAndWdr.test.ts
+  - scripts/schemagen/out/driver_model.py
