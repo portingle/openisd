@@ -2,7 +2,7 @@ id: T806
 release_note: internal
 repo: openisd
 owner: main-red-app
-status: blocked
+status: done
 goal: Main red, app faults: the phone Signal box is the narrowest that holds its longest value (rule 11, with T720), the ABC vent columns share the pane at 1024 px, a click that drifts under the spin threshold selects the pressed digit
 why: John, 15 Nov 2026: main suite must be green (QO923); SDLC: main red is fixed first
 visual_note: On the phone Signal tab the number boxes are narrower (about 132 px, were 169 px): wide enough for the longest value, 100000.00, and its unit, and no wider. The arrows move left with them.
@@ -24,4 +24,3 @@ files:
   - bugs/BUG_20261115_desktop-abc-1024-labels-cut-in-three-columns.md
   - bugs/BUG_20261115_layout-scan-desktop-hardcoded-home-path.md
   - bugs/BUG_20261115_suite-summary-reads-result-status-not-outcome.md
-blocked_reason: merge of portingle/main conflicts in: packages/ui/test/visual/SOURCES.sha256 
