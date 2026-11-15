@@ -2,7 +2,7 @@ id: T800
 release_note: internal
 repo: openisd
 owner: main-red
-status: open
+status: done
 goal: Main red, stale expectations: the phone and catalogue specs, the number-format specs and the unit chip specs brought to the layout and number format John ruled in T742 (QO466, QO478), and the Signal and Dimensions rows
 why: John, 15 Nov 2026: main suite must be green (QO923); SDLC: main red is fixed first
 done_test: bash scripts/test.sh packages/design/test/fields/field-four-significant.test.ts
