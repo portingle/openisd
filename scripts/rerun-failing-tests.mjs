@@ -20,6 +20,7 @@
 //           passed: [leaf], failed: [{leaf,status}], noMatch: [leaf] }]
 import {existsSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
+import {isUnexpectedReportTest, lastResult} from './lib/testOutcome.mjs';
 
 const groupsAll = JSON.parse(readFileSync('build/failing-tests.json', 'utf8'));
 const wanted = process.argv.slice(2);
@@ -37,8 +38,9 @@ const CLI = 'node_modules/@playwright/test/cli.js';
 
 function collectSpec(spec, buckets) {
   for (const t of spec.tests ?? []) {
-    const status = t.results?.[t.results.length - 1]?.status;
-    if (status === 'passed') buckets.passed.push(spec.title);
+    const status = lastResult(t);
+    // by outcome: an expected failure (test.fail) is as expected, not still failing (T815)
+    if (!isUnexpectedReportTest(t) && status !== undefined) buckets.passed.push(spec.title);
     else buckets.failed.push({ leaf: spec.title, status: status ?? 'unknown' });
   }
   for (const s of spec.specs ?? []) collectSpec(s, buckets);
