@@ -127,7 +127,7 @@ EMPTY="$SCRATCH/empty"; mkdir -p "$EMPTY"; : > "$EMPTY/MANIFEST.sha256"; ( . scr
 sed -i "s#cp -r \"\$FIX/.\"#cp -r \"\${FIX_DIR:-\$FIX}/.\"#" "$SCRATCH/gh3"
 git status --short > "$SCRATCH/before"
 FIX_DIR="$EMPTY" VISUAL_GH="$SCRATCH/gh3" bash scripts/visual/retake-ci.sh --run 55 > "$SCRATCH/out" 2>&1 && ok "an empty re-take (no pictures folder, empty manifest) is taken" || fail "empty re-take: $(cat "$SCRATCH/out")"
-[ "$(git status --short)" = "$(cat "$SCRATCH/before")" ] && ok "an empty re-take changes nothing" || fail "empty re-take changed files: $(git status --short)"
+grep -q "no picture changed" "$SCRATCH/out" && [ "$(git status --short)" = "$(cat "$SCRATCH/before")" ] && ok "an empty re-take says no picture changed and changes nothing" || fail "empty re-take changed files: $(git status --short)"
 echo wrong > "$FIX/SOURCES.sha256"
 # a CI result whose sources hash differs from this tree's (the tree moved after the push) is refused
 bash scripts/visual/update.sh > "$SCRATCH/out" 2>&1 && fail "a result for other sources was taken" || { grep -q "sources" "$SCRATCH/out" && ok "a result drawn from other sources is refused" || fail "text: $(cat "$SCRATCH/out")"; }

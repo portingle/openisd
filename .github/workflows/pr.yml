@@ -208,11 +208,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: bash scripts/ci/pr-setup.sh "$EVENT" "$GROUP_BASE"
+      # No pr-setup.sh here: its OPENISD_CI_RUNNER and runtime-dir variables change what some shell tests see (yield-and-slice
+      # failed under them); this job runs the tests as the suite's `shell` job does.
       - id: scripts
         name: does this change reach the scripts
         run: |
-          if git diff --name-only origin/main HEAD | grep -q -e '^scripts/' -e '^land.conf$' -e '^\.github/workflows/'; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+          if [ "$EVENT" = merge_group ]; then base="$GROUP_BASE"; else base="$(git rev-parse HEAD^1)"; fi
+          git cat-file -e "$base^{commit}" 2> /dev/null || git fetch -q origin "$base"
+          if git diff --name-only "$base" HEAD | grep -q -e '^scripts/' -e '^land.conf$' -e '^\.github/workflows/'; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
       - if: steps.scripts.outputs.run == 'true'
         run: |
           git config --global user.email ci@example.invalid

@@ -46,6 +46,8 @@ fi
 if [ -s "$work/r/MANIFEST.sha256" ]; then
   [ -d "$work/r/pictures" ] && ( cd "$work/r/pictures" && sha256sum -c --quiet "$work/r/MANIFEST.sha256" ) || { echo "retake-ci: a downloaded picture does not match the run's manifest; nothing taken" >&2; exit 1; }
   mkdir -p "$VISUAL_SNAPSHOT_DIR"; cp -f "$work"/r/pictures/*.png "$VISUAL_SNAPSHOT_DIR/"
+else
+  echo "retake-ci: no picture changed"
 fi
 git status --short -- packages/ui/test/visual | sed -n 's#^.. .*/\([^/]*\)\.png$#visual: changed \1#p'
 echo "retake-ci: done (run $run); list the changed screens under visual: and commit"
