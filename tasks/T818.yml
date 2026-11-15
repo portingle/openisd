@@ -17,5 +17,6 @@ files:
   - scripts/visual/review-pictures-prep.py
   - scripts/land/test/claude-review-workflows.test.sh
   - docs/design/CLAUDE_REVIEW.md
+  - bugs/BUG_20261115_claude-hook-names-another-machines-path.md
   - docs/design/VISUAL_BASELINES.md
   - DOCUMENTATION.md

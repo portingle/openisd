@@ -71,6 +71,14 @@ for (const [file, skill] of Object.entries(FILES)) {
   check(!list.some(t => /^(Edit|NotebookEdit|WebFetch|WebSearch|Bash)$/.test(t) || /^Bash\((git (push|commit|add|checkout|reset|rebase|merge|fetch)|gh (api|pr (merge|edit|close|review|create)|workflow|secret|run))/.test(t)),
     tag('no tool that pushes, merges, edits, calls the API freely or reaches the web'));
   check(list.every(t => /^(Read|Grep|Glob|Write|mcp__github_inline_comment__create_inline_comment|Bash\((git (diff|log|show|blame|rev-parse)|gh pr (view|comment)):\*\))$/.test(t)), tag('every allowed tool is on the known list'));
+  // The repository's own hooks must never run in the review session: a hook that names a path of a developer machine exits 2
+  // on a runner and blocks every tool call (Codex, PR 113). The hook config stays; the session switches hooks off.
+  const settingsJson = JSON.parse(read('.claude/settings.json'));
+  const hookCommands = JSON.stringify(settingsJson.hooks ?? {});
+  check(w.settings && JSON.parse(w.settings).disableAllHooks === true, tag('the action input settings turns all hooks off for the runner session'));
+  check(/--settings '\{"disableAllHooks": true\}'/.test(args), tag('claude_args --settings turns all hooks off (the form tried locally: a failing project hook blocks Bash, this lets it run)'));
+  check(!/--setting-sources/.test(args), tag('project settings are still loaded (skills live there)'));
+  if (/\/home\//.test(hookCommands)) ok(tag('.claude/settings.json hooks name a /home path, which the two checks above neutralise'));
   const verdict = job.steps.find(s => /claude-review-verdict\.sh/.test(s.run || ''));
   check(!!verdict && /!cancelled\(\)/.test(String(verdict.if)), tag('a verdict step turns Claude\'s verdict into the check colour, also after a failed Claude step'));
 }
