@@ -17,7 +17,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures, prTwoTimesRule,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
 } = useMobileEnclosureTab();
@@ -80,6 +80,7 @@ const {
     <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-sd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_SD_CM2" :value="prKeyFigures.Sd_m2" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-xmax" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_XMAX_MM" :value="prKeyFigures.Xmax_m" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-vd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.VD_M3" :value="prKeyFigures.Vd_m3" readonly plain />
+    <p v-if="prTwoTimesRule" id="mob-pr-two-times" class="mob-cnote">{{ prTwoTimesRule }}</p>
     </section>
 
     <section class="mob-csection">

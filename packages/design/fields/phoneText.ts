@@ -91,6 +91,12 @@ export class PhoneBoxText {
   /** The passive radiator's name row (QO946.c115): its figures are in the editor it opens. */
   static readonly PR_EDIT_TIP = 'Edit this passive radiator: its name and figures, OK, Cancel or Save to My PRs.';
   static readonly PR_UNNAMED = 'Unnamed passive radiator';
+  /** The line under the radiator's Key figures (John, 16 Nov 2026 13:00): the "2×" rule of thumb as a count of this
+   *  radiator. `required_m3` is twice the drivers' displacement; `count` the engine's smallest count reaching it. */
+  static twoTimesRule(required_m3: number, count: number): string {
+    const need = `2× rule: radiators need ≥ ${Math.round(required_m3 * 1e6)} cm³`;
+    return count <= 1 ? `${need} — 1 of these is enough` : `${need} — needs ${count} of these`;
+  }
 }
 
 /** One quick-add chip of the phone Filters tab, in WinISD's Filter Editor order, then the two OpenISD-only shelves. */

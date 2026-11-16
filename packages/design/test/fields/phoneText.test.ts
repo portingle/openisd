@@ -111,4 +111,11 @@ describe('phone text', () => {
     expect(PhoneHelp.DRIVER.rows.map(r => r.label)).toEqual(['Select driver', 'Edit', 'Drivers', 'Connection']);
     expect(PhoneHelp.KEY_FIGURES.intro).toContain('Tap one to edit the driver.');
   });
+
+describe('the passive radiator\'s 2× rule line (John, 16 Nov 2026 13:00)', () => {
+  it('names the displacement the radiators need and how many of this radiator give it', () => {
+    expect(PhoneBoxText.twoTimesRule(173.9e-6, 1)).toBe('2× rule: radiators need ≥ 174 cm³ — 1 of these is enough');
+    expect(PhoneBoxText.twoTimesRule(400e-6, 3)).toBe('2× rule: radiators need ≥ 400 cm³ — needs 3 of these');
+  });
+});
 });

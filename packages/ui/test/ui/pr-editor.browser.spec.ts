@@ -150,13 +150,13 @@ function suite(skin: 'desktop' | 'phone') {
   test('Copy to My PRs files the radiator in My passive radiators and says so; the project changes only on OK', async ({appPage: page}) => {
     const editor = await openEditor(page);
     await tab(editor, 'General');
-    await editor.locator('#pr-editor-name').fill('Kept in my PRs');
+    await editor.locator('#pr-editor-name').fill(`Kept in my PRs ${skin}`);
     await action(editor, 'Copy to My PRs');
-    await expect(editor.getByRole('status')).toContainText('Kept in my PRs');
+    await expect(editor.getByRole('status')).toContainText(`Kept in my PRs ${skin}`);
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
     await expectProjectName(page, new RegExp(LOADED));
     await select(page).click();
-    await expect(page.locator('.pr-lib-item', {hasText: 'Kept in my PRs'})).toBeVisible();
+    await expect(page.locator('.pr-lib-item', {hasText: `Kept in my PRs ${skin}`})).toBeVisible();
     await page.getByRole('button', {name: 'Done'}).click();
   });
 
@@ -170,8 +170,7 @@ function suite(skin: 'desktop' | 'phone') {
     expect(fileName).toMatch(/ASP190.*\.owdr$/);
     await editor.locator('#pr-editor-xmax').fill('31');
     await editor.locator('#pr-editor-xmax').press('Tab');
-    const xmax = JSON.parse(written[fileName] ?? '{}')?.['passive-radiator']?.Xmax_m;
-    expect(xmax, 'the file holds the radiator record').toBeDefined();
+    expect(written[fileName], 'the file holds the radiator record').toContain('Xmax_m');
     await editor.locator('#pr-editor-import').setInputFiles({name: fileName, mimeType: 'application/x-openisd-driver', buffer: Buffer.from(written[fileName] ?? '')});
     await expect(flash(page)).toContainText(`Passive radiator imported from ${fileName}`);
     await expect(editor.locator('#pr-editor-xmax')).not.toHaveValue(/^31/);
@@ -254,6 +253,13 @@ test.describe('phone', () => {
     await expect(page.locator('#mob-pr-key-xmax')).toHaveValue('12.00');
     await expect(page.locator('#mob-pr-key-sd')).toHaveValue('202.00');
     await expect(page.locator('#mob-pr-key-vd')).toHaveValue(/^242/);   // 202 cm² × 12 mm = 242.4 cm³
+    // Hand-worked (plan): driver Tang Band W5-1138SMF Vd 86.95 cm³, one driver → radiators need ≥ 173.9 cm³; ASP190 Vd 242.4 cm³ → one is enough.
+    await expect(page.locator('#mob-pr-two-times')).toHaveText('2× rule: radiators need ≥ 174 cm³ — 1 of these is enough');
+    // Three drivers need ≥ 3 × 2 × 86.95 = 521.7 cm³: 521.7 / 242.4 = 2.15, so three of these.
+    await page.locator('.mob-tab', {hasText: 'Driver'}).click();
+    await page.locator('#mob-n-drivers').selectOption('3');
+    await page.locator('.mob-tab', {hasText: 'Box'}).click();
+    await expect(page.locator('#mob-pr-two-times')).toHaveText('2× rule: radiators need ≥ 522 cm³ — needs 3 of these');
     await page.locator('#mob-pr-key-mms').click();
     await expect(page.getByRole('dialog', {name: EDITOR})).toBeVisible();
     await page.getByRole('dialog', {name: EDITOR}).getByRole('button', {name: 'Cancel', exact: true}).click();

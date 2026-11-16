@@ -13,7 +13,7 @@ import {createVentReadouts, FB_TARGET_TIP, VENT_GEOMETRY_TIP} from './ventReadou
 import {createPassiveRadiatorActions} from './passiveRadiatorActions.js';
 import {useRadiatorPicks} from './telemetryContext.js';
 import {computed} from 'vue';
-import {END_CORRECTION_OPTIONS, PhoneHelp, VENT_SHAPE_OPTIONS} from '@openisd/design/fields';
+import {END_CORRECTION_OPTIONS, PhoneBoxText, PhoneHelp, VENT_SHAPE_OPTIONS} from '@openisd/design/fields';
 
 
 /** The radiator's Key figures on the phone Box tab. */
@@ -53,6 +53,18 @@ export function useMobileEnclosureTab() {
     };
   });
 
+  /** The "2×" rule line under the radiator's Key figures (John, 16 Nov 2026 13:00): what the radiators need and how many of
+   *  this radiator give it, from the engine; null when a displacement is missing. */
+  const prTwoTimesRule = computed<string | null>(() => {
+    void projectChanged.value;
+    const p = project.value;
+    const driverVd = p.driver.specs.Vd_m3.value;
+    const n = p.nDrivers.value;
+    const required = engine.pr.twiceDriverDisplacement(driverVd, n);
+    const count = engine.pr.countForTwiceDisplacement(prKeyFigures.value.Vd_m3, driverVd, n);
+    return required === null || count === null ? null : PhoneBoxText.twoTimesRule(required, count);
+  });
+
   /** The box types whose unreachable-tuning sentence also shows as a note under the vent; ABC and the 6th order bandpass show it once, in the warning mark's popup. */
   const tuningNoteShown = computed(() => selectedBox.value === 'vented' || selectedBox.value === 'bandpass4');
   /** One section per vent the box draws, each with its own help sheet and the tuning row that heads it. */
@@ -63,7 +75,7 @@ export function useMobileEnclosureTab() {
     project, selectedBox,
     activeVent, activeTuning, ventPorts, portPipeResonance_hz, fbUnreachable, fbUnreachableMsg, tuningField,
     prResonanceMassDq, prFsMass_hz, prNaturalFh,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures, prTwoTimesRule,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
     VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
     FB_TARGET_TIP, VENT_GEOMETRY_TIP,

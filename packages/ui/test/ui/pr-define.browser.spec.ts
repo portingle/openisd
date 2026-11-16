@@ -77,7 +77,7 @@ function suite(skin: 'desktop' | 'phone') {
     await open(page);
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
-    await editor.locator('#pr-editor-name').fill('My new PR');
+    await editor.locator('#pr-editor-name').fill(`My new PR ${skin}`);
     await editor.getByRole('tab', {name: 'Parameters'}).click();
     await editor.locator('#pr-editor-fs').fill('21');
     await editor.locator('#pr-editor-vas').fill('60');
@@ -86,23 +86,23 @@ function suite(skin: 'desktop' | 'phone') {
     await editor.getByRole('button', {name: 'OK'}).click();
     await expect(editor).toHaveCount(0);
     await expect(page.locator('.pr-filter')).toHaveCount(0);
-    await expectName(page, 'My new PR');
+    await expectName(page, `My new PR ${skin}`);
   });
 
   test('Copy to My PRs files the new radiator in the library; the project keeps its own until OK', async ({appPage: page}) => {
     await open(page);
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
-    await editor.locator('#pr-editor-name').fill('Filed PR');
+    await editor.locator('#pr-editor-name').fill(`Filed PR ${skin}`);
     if (skin === 'phone') {
       await editor.getByRole('button', {name: /More/}).click();
       await editor.getByRole('menuitem', {name: 'Copy to My PRs'}).click();
     } else {
       await editor.getByRole('button', {name: 'Copy to My PRs'}).click();
     }
-    await expect(editor.getByRole('status')).toContainText('Filed PR');
+    await expect(editor.getByRole('status')).toContainText(`Filed PR ${skin}`);
     await editor.getByRole('button', {name: 'Cancel'}).click();
-    await expect(page.locator('.pr-lib-item', {hasText: 'Filed PR'})).toBeVisible();
+    await expect(page.locator('.pr-lib-item', {hasText: `Filed PR ${skin}`})).toBeVisible();
     await page.getByRole('button', {name: 'Done'}).click();
     await expectName(page, new RegExp(LOADED));
   });
