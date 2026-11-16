@@ -86,7 +86,7 @@ export interface DriverSpecsSection {
     readonly Dd_m?: SpecEntryJson;
     readonly EBP_hz?: SpecEntryJson;
     readonly numVC?: SpecEntryJson;
-    readonly VCCon?: SpecEntryJson;
+    readonly VCCon?: WiringEntryJson;
     // Ordinarily derived, but WinISD lets a human TYPE any of them, and an entered value is a fact.
     readonly Vd_m3?: SpecEntryJson;
     readonly no?: SpecEntryJson;
@@ -201,8 +201,10 @@ const usableReadingJsonSchema = z.strictObject({
  *  (John, 2026-10-20: "the scraper collects facts it read"). One list per variant; add a reason
  *  here and every exhaustive match sees it. */
 export const UNPARSED_REJECTION_REASONS = ['no-numeric-value', 'unit-not-recognised', 'multiple-values'] as const;
-/** Why a number WAS read but is refused. */
-export const PARSED_REJECTION_REASONS = ['ohm-glyph-merged-as-digit'] as const;
+/** Why a number WAS read but is refused: a digit merged in from an ohm glyph, or a number outside the
+ *  field's physical band (a unit slip such as `750 kHz` for 750 Hz, or `-0.55 mH`). The refused number
+ *  stays in `read_value`; it never wins (ruling QO934, QO935). */
+export const PARSED_REJECTION_REASONS = ['ohm-glyph-merged-as-digit', 'out-of-physical-range'] as const;
 export type UnparsedRejectionReason = typeof UNPARSED_REJECTION_REASONS[number];
 export type ParsedRejectionReason = typeof PARSED_REJECTION_REASONS[number];
 
@@ -253,7 +255,7 @@ const rejectedUnrecognisedParsedReadingJsonSchema = z.strictObject({
  *
  * - Usable `{actual_reading?, read_value: number}`: the printed text parsed to a number.
  * - RejectedParsed `{actual_reading, read_value, rejected}`: a number was read and refused, e.g.
- *   `ohm-glyph-merged-as-digit`.
+ *   `ohm-glyph-merged-as-digit` or `out-of-physical-range`.
  * - RejectedUnparsed `{actual_reading?, rejected}`: no number was read, e.g. `no-numeric-value`.
  *   It has no `read_value`.
  *
@@ -287,6 +289,25 @@ export type RejectedUnrecognisedUnparsedReadingJson = z.infer<typeof rejectedUnr
 export type RejectedReadingJson =
     | RejectedParsedReadingJson | RejectedUnparsedReadingJson
     | RejectedUnrecognisedParsedReadingJson | RejectedUnrecognisedUnparsedReadingJson;
+
+/** The voice-coil wiring as a stored value: its name (QO914, #514). WinISD's 1/2 code exists only
+ *  in the `.wdr`/`.wpr` adapter. */
+const wiringValueSchema = z.enum(['series', 'parallel']);
+
+/** A source's reading of VCCon with the wiring read: `read_value` is the name, `actual_reading`
+ *  the quote that states it (QO914). A wiring is not a measurement, so there is no
+ *  `read_precision`; a numeric `read_value` (the retired 1/2 code) is refused. */
+const usableWiringReadingJsonSchema = z.strictObject({
+    ...readingCommonShape,
+    read_value: wiringValueSchema,
+    note: z.string().optional(),
+});
+/** One source's reading of VCCon: the wiring read, or rejected with no value read. */
+export const wiringReadingJsonSchema = z.union([
+    usableWiringReadingJsonSchema, rejectedUnparsedReadingJsonSchema, rejectedUnrecognisedUnparsedReadingJsonSchema,
+]);
+export type WiringReadingJson = z.infer<typeof wiringReadingJsonSchema>;
+export type UsableWiringReadingJson = z.infer<typeof usableWiringReadingJsonSchema>;
 
 /** An entered spec entry: a `value` plus `state:'E'`, and the precision it states. Nothing else is
  *  stored (QO395, John 3 Nov 2026: openisd.json is the slim model): which source won, every
@@ -340,6 +361,18 @@ export const specEntryJsonSchema =
     z.discriminatedUnion('state', [enteredEntrySchema, calculatedEntrySchema, notAvailableEntrySchema]);
 
 export type SpecEntryJson = z.infer<typeof specEntryJsonSchema>;
+/**
+ * VCCon, the wiring Re and BL were measured in (QO914, #514): `state` + the wiring's NAME, and no
+ * `precision` (a name is not a measurement). An unknown wiring is an absent key; `N` is a
+ * reading that gave no wiring, as on every spec field.
+ */
+export const wiringEntryJsonSchema = z.discriminatedUnion('state', [
+    z.strictObject({state: z.literal('E'), value: wiringValueSchema}),
+    z.strictObject({state: z.literal('C'), value: wiringValueSchema}),
+    notAvailableEntrySchema,
+]);
+export type WiringEntryJson = z.infer<typeof wiringEntryJsonSchema>;
+
 /** The Entered and Calculated variants alone: a value that is never not-available, so it fits a spec
  *  entry and a signal entry alike. */
 export type EnteredEntryJson = z.infer<typeof enteredEntrySchema>;
@@ -390,7 +423,7 @@ const driverSpecsSectionJsonSchema = (e: typeof specEntryJsonSchema) => z.strict
     Fs_hz: e, Re_ohm: e, Le_H: e, fLe_hz: e, KLe_H_sqrtHz: e, Znom_ohm: e,
     Qts: e, Qes: e, Qms: e, Vas_m3: e, Sd_m2: e, BL_Tm: e,
     Mms_kg: e, Cms_m_per_N: e, Rms_kg_per_s: e, Xmax_m: e, Xlim_m: e, SPL_dB: e,
-    Pe_W: e, Dd_m: e, EBP_hz: e, numVC: e, VCCon: e,
+    Pe_W: e, Dd_m: e, EBP_hz: e, numVC: e, VCCon: wiringEntryJsonSchema,
     Vd_m3: e, no: e, SPLmax_dB: e, SPLmaxLF_dB: e, USPL_dB: e, alfaVC_per_K: e,
     Rt_K_per_W: e, Ct_J_per_K: e, gamma_m_per_s2_A: e, Rme_kg_per_s: e, Mpow_N_per_sqrtW: e, Mcost_kg_per_s: e,
     Gloss: e, c_m_per_s: e, roo_kg_per_m3: e, Vcd_m: e, Hg_m: e, Hc_m: e,
@@ -890,6 +923,12 @@ const openISDDriverEmbeddingJsonSchema = z.strictObject({
     nDrivers: z.number(),
     // WinISD Driver tab: "Voice coil connection".
     wiring: z.enum(['series', 'parallel']),
+    // "My wiring" (QO907): how the user wires a multi-coil driver's own voice coils. Absent means
+    // the wiring the maker measured in. Deliberately NOT a schemaVersion bump (coordinator ruling,
+    // 15 Nov 2026): the key is optional, absent in every project saved before it, and no released
+    // build sits between. Not WinISD's "Voice coil connection" above, which joins
+    // several drivers.
+    coilWiring: z.enum(['series', 'parallel']).optional(),
     // WinISD Driver tab: "Voice coil temp rise".
     vcTempRise_K: z.number(),
     Rs_ohm: z.number(),

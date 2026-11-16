@@ -74,12 +74,17 @@ fi
 # because its done_test ran a single method). Refused selectors: unittest Class or Class.method after the file's module
 # name, pytest ::, -k, vitest -t, --testNamePattern, --test-name-pattern, --grep/-g. Not seen (accepted): a selector inside a
 # wrapper script or environment variable. A touched test file that adds `.only(` is refused too.
+dt_problem="$(task_done_test_problem "$(task_field "$TASK" done_test)")"
+[ -z "$dt_problem" ] || fail done_test "$TASK: $dt_problem"
 if [ -n "$PR_MODE" ]; then
   dt="$(task_field "$TASK" done_test)"
   while read -r f; do
     case "$f" in *_test.*|*.test.*|*.spec.*|*/test_*.py) ;; *) continue ;; esac
     stem="$(basename "${f%.*}")"
-    if git diff "$BASE" "$HEAD_REF" -- "$f" | grep -Eq '^\+.*\.only\('; then
+    # the whole diff is read before it is searched: `git diff | grep -q` leaves at the first match, git dies of SIGPIPE and
+    # pipefail answers "no .only(" for a long diff (T833). A diff that cannot be read refuses.
+    file_diff="$(git diff "$BASE" "$HEAD_REF" -- "$f")" || { fail done_test "cannot read the diff of $f"; continue; }
+    if grep -Eq '^\+.*\.only\(' <<< "$file_diff"; then
       fail done_test "$f adds .only(, which runs one test and hides the rest"
     fi
     grep -qwF "$stem" <<< "$dt" || continue

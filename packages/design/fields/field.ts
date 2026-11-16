@@ -1144,6 +1144,33 @@ export class NumberField extends Field {
     precision: 2,
     description: "Outer Mounting Diameter\nOverall diameter of the front mounting flange.",
   });
+  static readonly OUTERX_M = new NumberField({
+    value: "OuterX_m",
+    label: "Frame Size X (OuterX)",
+    display: {kind: 'switchable', group: 'length', base: 'mm'},
+    limits: {min: 0, max: 5},
+    floor: "positive",
+    precision: 2,
+    description: "Rectangular Frame Size, X\nOne side of the frame, for a driver with a rectangular (not round) frame. WinISD has no such field.",
+  });
+  static readonly OUTERY_M = new NumberField({
+    value: "OuterY_m",
+    label: "Frame Size Y (OuterY)",
+    display: {kind: 'switchable', group: 'length', base: 'mm'},
+    limits: {min: 0, max: 5},
+    floor: "positive",
+    precision: 2,
+    description: "Rectangular Frame Size, Y\nThe other side of the frame, for a driver with a rectangular (not round) frame. WinISD has no such field.",
+  });
+  static readonly WEIGHT_KG = new NumberField({
+    value: "weight_kg",
+    label: "Driver Weight (Weight)",
+    display: {kind: 'switchable', group: 'mass', base: 'kg'},
+    limits: {min: 0, max: 500},
+    floor: "positive",
+    precision: 3,
+    description: "Driver Weight\nHow much the whole driver weighs, as the maker states it. It is for planning the baffle and mounting. WinISD has no such field.",
+  });
   static readonly VCD_M = new NumberField({
     value: "Vcd_m",
     label: "Voice Coil Dia (Vcd)",
@@ -1398,15 +1425,15 @@ export class EnumField extends Field {
   // ── Driver ────────────────────────────────────────────────────────────────────────────────
   static readonly VCCON = new EnumField({
     value: "VCCon",
-    label: "Connection",
+    label: "Coil wiring",
     options: VC_CONNECTION_OPTIONS,
-    description: "Voice Coil Wiring\nSeries or parallel — sets the driver's total terminal Re and BL for a multi-coil driver.",
+    description: "Measured Wiring\nHow the voice coils of a multi-coil driver were wired when the maker measured Re and BL: series, parallel, or not stated. Re, BL, Le and Znom are kept as published for this wiring. Your own wiring is set in the project (Driver tab, My wiring).",
   });
   static readonly DRIVER_ARRAYWIRING = new EnumField({
     value: "driver_ArrayWiring",
     label: "Voice coil connection",
     options: ARRAY_WIRING_OPTIONS,
-    description: "Driver Array Wiring\nParallel or series — sets the total load impedance seen by the amplifier.",
+    description: "Driver Array Wiring\nHow several drivers (Num. of drivers) are joined to the amplifier: parallel or series. With one driver there is nothing to join and it changes nothing. The wiring of one driver's own voice coils is My wiring.",
   });
 
   // ── Filters ───────────────────────────────────────────────────────────────────────────────
@@ -1541,7 +1568,7 @@ export class ToggleField extends Field {
   static readonly ADV_WINISDSEALEDPICKER = new ToggleField({
     value: "adv_WinisdSealedPicker",
     label: "Sealed picker volume",
-    description: "Sealed picker volume: WinISD's sealed alignment picker gives a box volume whose Qtc on the Box tab is not the Qtc you picked.\nTicked: OpenISD works as WinISD does. The picker leaves out the box's leakage losses (Ql) and the project's own Rg and Qa. It adds a fixed Rg of 0.1 Ω to Qes and a fixed Qa of 100: Qt = 1/(1/Qts′ + 1/100), with Qts′ using Qes·(Re + 0.1)/Re. Vb = Vas/((Qtc/Qt)² − 1).\nUnticked (default): OpenISD gives the volume at which the Box tab shows the picked Qtc. It counts the project's Rg and every box loss.\nQtc: the picked total Q. Qts′: the driver's Qts with Rg in it. Vas: the driver's equivalent air volume.",
+    description: "Sealed picker volume: WinISD's sealed alignment picker suggests a box volume for the Qtc you pick, but the Box tab then shows a different Qtc: the picker uses a fixed Rg of 0.1 Ω and a fixed Qa of 100 and leaves out your own box losses (Ql), Rg and Qa, while the charts use them.\nTicked: OpenISD works as WinISD does. The picker leaves out the box's leakage losses (Ql) and the project's own Rg and Qa. It adds a fixed Rg of 0.1 Ω to Qes and a fixed Qa of 100: Qt = 1/(1/Qts′ + 1/100), with Qts′ using Qes·(Re + 0.1)/Re. Vb = Vas/((Qtc/Qt)² − 1).\nUnticked (default): OpenISD gives the volume at which the Box tab shows the picked Qtc. It counts the project's Rg and every box loss.\nQtc: the picked total Q. Qts′: the driver's Qts with Rg in it. Vas: the driver's equivalent air volume.",
   }, "the sealed alignment picker in the New Project wizard and on the Box tab. W5-1138SMF (Qts 0.49, Vas 4.85 L), Ql 10: Qtc 0.800 picked gives 3.13 L, and the Box tab shows 0.787. OpenISD gives 2.96 L, and the Box tab shows 0.800.");
   static readonly ADV_WINISDBESSELHIGHPASS = new ToggleField({
     value: "adv_WinisdBesselHighpass",

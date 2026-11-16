@@ -1,5 +1,5 @@
 import {type Engine, FixedAir} from '../../engine/index.js';
-import type { Air, DriverError, DriverIssue, EbpSuitability, SealedParams, VentedAlignment, VentedDesign } from '../../engine/index.js';
+import type { Air, DriverError, Wiring, DriverIssue, EbpSuitability, SealedParams, VentedAlignment, VentedDesign } from '../../engine/index.js';
 import { realAppContext } from '../appContext.js';
 import type { AppContext } from '../appContext.js';
 import { ReadableFieldImpl, SetOnlyFieldImpl, absentCell, enteredCell, resolvingField } from '../cell.js';
@@ -130,13 +130,15 @@ export abstract class OpenISDDriver extends OpenISDDevice {
         airProvider: () => Air,
         /** See `OpenIsdDriverSpec`'s own parameter — only an embedded driver supplies one. */
         durableIssues?: () => readonly DriverIssue[],
+        /** The project's "My wiring"; only an embedded driver supplies one. */
+        myWiring?: () => Wiring | undefined,
     ) {
         super(record);
         this.engine = engine;
         this.record = record;
         this.airProvider = airProvider;
         this.durableIssues = durableIssues;
-        this.specs = new OpenIsdDriverSpec(record, 'woofer', engine.driver, engine.issues, airProvider, durableIssues);
+        this.specs = new OpenIsdDriverSpec(record, 'woofer', engine.driver, engine.issues, airProvider, durableIssues, myWiring);
     }
 
     /** T11/S2-7c: resolve this driver's spec — write every derivable quantity back
@@ -182,7 +184,11 @@ export abstract class OpenISDDriver extends OpenISDDevice {
                     return [{subject: this.engine.issues.plainNames(issue.target), text: this.engine.issues.plainNames(`cannot be calculated yet — needs ${issue.routes.map(r => r.missing.join(', ')).join(' or ')}`)}];
                 case 'inconsistent-inputs':
                 case 'approximate-charts':
+                case 'result-refused':
                 case 'out-of-range':
+                case 'wiring-not-stated':
+                case 'wiring-inferred':
+                case 'multi-coil-without-numvc':
                     return [];
             }
         });
@@ -278,7 +284,11 @@ export abstract class OpenISDDriver extends OpenISDDevice {
                     }];
                 case 'missing-dependencies':
                 case 'approximate-charts':
+                case 'result-refused':
                 case 'out-of-range':
+                case 'wiring-not-stated':
+                case 'wiring-inferred':
+                case 'multi-coil-without-numvc':
                     return [];
             }
         });
@@ -292,10 +302,17 @@ export abstract class OpenISDDriver extends OpenISDDevice {
         return this.issues().flatMap((issue): DriverError[] => {
             switch (issue.kind) {
                 case 'out-of-range':
+                case 'wiring-not-stated':
+                case 'multi-coil-without-numvc':
                     return [{level: 'warn', field: issue.field, message: issue.text}];
                 case 'inconsistent-inputs':
                 case 'approximate-charts':
                     return [{level: 'warn', field: issue.target, message: issue.text}];
+                // A note, not a warning: the wiring was inferred, and the issue says from what.
+                // A refused calculation is a note too: the field says why it is empty, and the data
+                // quality count does not move for a value the app declined to invent.
+                case 'result-refused':
+                case 'wiring-inferred':
                 case 'missing-dependencies':
                     return [];
             }

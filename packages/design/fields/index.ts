@@ -2,7 +2,7 @@ export {
   type SelectorOption,
   END_CORRECTION_OPTIONS, END_CORRECTION_ONE_FLANGED_END_M, END_CORRECTION_TWO_FREE_ENDS_M,
   VENT_SHAPE_OPTIONS,
-  VC_CONNECTION_OPTIONS,
+  VC_CONNECTION_OPTIONS, MEASURED_WIRING_NOT_STATED_LABEL,
   ARRAY_WIRING_OPTIONS,
   SEALED_ALIGNMENT_OPTIONS,
   VENTED_ALIGNMENT_OPTIONS,
@@ -125,6 +125,7 @@ export {
   browserNameOf,
   persistenceLine,
   persistenceWarning,
+  UPGRADE_REFUSED_NOTICE,
   savedNotice,
   startupNotice,
   siteStorageLine,
@@ -166,7 +167,7 @@ export { type EbpBadge, type WizardInfoCard, PhoneWizardText, PhoneWizardHelp } 
 export { DesktopSizes, PickWidth } from './desktopSizes.js';
 export { SheetMode, type SheetEdits } from './sheetMode.js';
 export { NO_PROJECT_OPEN } from './noProject.js';
-export { APP_UPDATE_TEXT, UNSAVED_RELOAD_CONFIRM } from './appUpdateText.js';
+export { APP_UPDATE_TEXT, reloadLossConfirm, type ReloadLoss } from './appUpdateText.js';
 
 export { TuneText } from './tuneText.js';
 export { PhoneDialogHelp, ImportChoiceText, AboutText } from './phoneDialogText.js';

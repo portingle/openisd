@@ -74,7 +74,10 @@ export class PhoneLabels {
   static readonly MAG_DEPTH = 'MagDpt';
   static readonly MAGNET = 'Magnet';
   static readonly BASKET = 'Basket';
-  static readonly OUTER = 'Outer';
+  static readonly OUTER = 'Outer dia';
+  static readonly OUTER_X = 'OuterX';
+  static readonly OUTER_Y = 'OuterY';
+  static readonly WEIGHT = 'Weight';
   static readonly VCD = 'Vcd';
   static readonly DVOL = 'DVol';
 }
@@ -275,7 +278,7 @@ export class PhoneHelp {
   static readonly EDITOR_MISCELLANEOUS = new PhoneHelpSection("Miscellaneous parameters", "These fields describe sensitivity, rated load and wiring. Optional reference figures are not additional core requirements.", [
     {"label": "Efficiency, SPL and USPL", "text": "Efficiency and sensitivity describe how much sound is produced for a stated input. Power-based and voltage-based sensitivities use different reference conditions; they are not interchangeable."},
     {"label": "Znom", "text": "Nominal impedance rating, such as 4 or 8 ohms, for amplifier matching. Re is the measured DC resistance."},
-    {"label": "Voicecoils and Connection", "text": "The number of voice coils and how they are connected. These determine the driver’s terminal electrical properties; enter the configuration you intend to model."},
+    {"label": "Voicecoils and Connection", "text": "The number of voice coils, and the wiring the maker measured Re and BL in (series, parallel or not stated). Re and BL stay as published for that wiring. Your own wiring is My wiring, on the project’s Driver tab."},
     {"label": "Peak power — optional reference", "text": "Short-term power rating. It is not the continuous Pe rating used for thermal limits."},
   ]);
   static readonly EDITOR_THERMAL = new PhoneHelpSection("Thermal parameters", "Thermal information is separate from the core small-signal inputs.", [
@@ -297,6 +300,8 @@ export class PhoneHelp {
   static readonly EDITOR_DIMENSIONS = new PhoneHelpSection("Dimensions", "Physical fit and reference information. These dimensions are not the core inputs that determine the bass response.", [
     {"label": "Frame, basket and mounting dimensions", "text": "Use these to check the cut-out, fixing clearance and outside size against the manufacturer’s drawing."},
     {"label": "Depth and magnet dimensions", "text": "Check space behind the baffle and clearance around the magnet, including any ventilation space required by the manufacturer."},
+    {"label": "Rectangular frame size", "text": "OuterX and OuterY are the two sides of a rectangular frame, for drivers whose frame is not round. WinISD has no such fields."},
+    {"label": "Weight", "text": "How much the whole driver weighs, as the maker states it. WinISD has no such field."},
     {"label": "Voice-coil diameter", "text": "Physical coil size; it is not the effective radiating cone diameter used to determine Sd."},
     {"label": "Driver volume", "text": "The volume occupied by the driver. Useful when planning net enclosure volume; keep physical displacement separate from the acoustic Vas parameter."},
   ]);
@@ -335,7 +340,7 @@ export class PhoneHelp {
     bugLine(ToggleField.ADV_WINISDBESSELHIGHPASS, 'WinISD\'s Bessel high-pass is not the mirror of its low-pass.', WinisdFilterDeviation.BESSEL_HIGHPASS),
     bugLine(ToggleField.ADV_WINISDABCGROUPDELAY, 'WinISD\'s ABC group delay leaves the driver out.', WinisdDeviation.ABC_GROUP_DELAY),
     bugLine(ToggleField.ADV_WINISDDRIVERCOUNTMODEL, 'with more than one driver, WinISD\'s impedance chart shows one driver.', WinisdDeviation.DRIVER_COUNT),
-    bugLine(ToggleField.ADV_WINISDSEALEDPICKER, 'WinISD\'s sealed picker gives a volume whose Qtc is not the one you picked.', WinisdDeviation.SEALED_PICKER),
+    bugLine(ToggleField.ADV_WINISDSEALEDPICKER, 'WinISD\'s sealed picker suggests a volume for your Qtc, but the Box tab then shows a different Qtc.', WinisdDeviation.SEALED_PICKER),
     bugLine(ToggleField.ADV_WINISDTLPORTNOENDCORRECTION, 'with the transmission line model on, WinISD leaves out the port end correction and tunes the box higher.', WinisdDeviation.TL_PORT_END_CORRECTION),
   ]);
   static readonly ADVANCED_SECTIONS: readonly PhoneHelpSection[] = [
