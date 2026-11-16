@@ -2,7 +2,7 @@ id: T850
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Phone Box tab: Vb top limit 10,000 L so its longest value fits the box
 # QO946.c187 (lead): Vb and Vf top limit 10,000 L
 why: Lead decision QO946.c187 under John's "Clipping is a bug: fix it, don't ask" (5 Nov 2026) and "I approve uncontroversial fixes": the Vb top limit in cm3 (100000000) is 76 px wide and the phone Box tab's box text area is 68 px
