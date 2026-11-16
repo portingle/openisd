@@ -199,7 +199,7 @@ export interface AppState {
   boxTypeIsSimulatable(boxType: BoxType): boolean;
   readonly IMPLEMENTED_BOX_TYPES: readonly BoxType[];
   newProjectBoxTypeOptions(): readonly SelectorOption<BoxType>[];
-  definePassiveRadiator(): void;
+  definePassiveRadiator(radiator?: OpenISDPassiveRadiatorStandalone): void;
   /** `details` names and describes the project before it opens: opening is when it is stored. */
   createProject(driver: OpenISDDriver, box: (b: ProjectBuilder) => BoxProjectBuilder, details: (project: OpenISDProject) => void): OpenISDProject;
   openProjectFromDriver(driver: OpenISDDriver, name: string): void;
@@ -776,9 +776,8 @@ export function createAppState(deps: AppStateDeps): AppState {
    *  does. A blank one rather than a form of its own: the editor that fills in an existing
    *  radiator is the same editor, and a second form stating the same fields would be a second
    *  place to keep them right. */
-  function definePassiveRadiator(): void {
-    requireFocusedProject().box.passiveRadiator.configurePR(
-      OpenISDPassiveRadiatorStandalone.empty(appContext));
+  function definePassiveRadiator(radiator: OpenISDPassiveRadiatorStandalone = OpenISDPassiveRadiatorStandalone.empty(appContext)): void {
+    requireFocusedProject().box.passiveRadiator.configurePR(radiator);
   }
 
   /** A new project around `driver`, its box chosen through the domain's builder — the wizard's

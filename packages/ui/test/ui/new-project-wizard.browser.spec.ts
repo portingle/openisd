@@ -47,6 +47,10 @@ async function choosePassiveRadiator(page: Page): Promise<void> {
   await expect(footerNext(page)).toBeDisabled();
   await modal.locator('#np-pr-select').click();
   await page.locator('button', { hasText: 'Define new passive radiator' }).click();
+  // The editor opens on a blank radiator (issue 522); OK with a name puts it on the step, its boxes blank.
+  const editor = page.getByRole('dialog', { name: 'Define new passive radiator' });
+  await editor.locator('#pr-define-name').fill('Defined PR');
+  await editor.getByRole('button', { name: 'OK' }).click();
 }
 
 /** Puts drivers in My Drivers the way a user does: Load File… in the wizard's driver list, one `.owdr` file

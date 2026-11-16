@@ -2,6 +2,7 @@
 // The New Project wizard's passive-radiator step, as WinISD's wizard has it: choose a saved or
 // bundled radiator, or define one, then its eight figures, each stated or calculated. Both skins show it.
 import {NumberField, PhoneWizardText, PickWidth, WinisdDeviation} from '@openisd/design/fields';
+import type {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
 import UIField from './UIField.vue';
 import UIPickField from './UIPickField.vue';
 import PRBrowser from './PRBrowser.vue';
@@ -23,7 +24,7 @@ defineProps<Props>();
 const emit = defineEmits<{
   loadSaved: [string];
   loadBundled: [string];
-  define: [];
+  define: [OpenISDPassiveRadiatorStandalone];
   browse: [];
   closeBrowse: [];
   rename: [string];
@@ -34,7 +35,7 @@ const emit = defineEmits<{
   <div class="np-pr-step">
     <button id="np-pr-select" class="np-pr-browse" :class="{'np-pr-browse-classic': classic}" title="Choose a saved or bundled passive radiator, or define a new one." @click="emit('browse')">{{ classic ? PhoneWizardText.SELECT_PR : 'Select passive radiator ▸' }}</button>
     <PRBrowser v-if="browsing" @close="emit('closeBrowse')"
-      @load="id => emit('loadSaved', id)" @load-bundled="id => emit('loadBundled', id)" @define="emit('define')" />
+      @load="id => emit('loadSaved', id)" @load-bundled="id => emit('loadBundled', id)" @define="pr => emit('define', pr)" />
     <p class="np-pr-hint">{{ PhoneWizardText.SELECT_OR_DEFINE_PR }}</p>
 
     <div v-if="classic" class="mob-crow">

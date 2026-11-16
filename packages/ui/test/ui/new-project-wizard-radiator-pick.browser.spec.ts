@@ -36,6 +36,9 @@ test.describe('desktop', () => {
   test('defining a radiator stays on the step, so its values can be typed', async ({appPage: page}) => {
     await page.locator('#np-pr-select').click();
     await page.locator('button', {hasText: 'Define new passive radiator'}).click();
+    const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
+    await editor.locator('#pr-define-name').fill('Defined PR');
+    await editor.getByRole('button', {name: 'OK'}).click();
     await expect(page.locator('#np-pr-vas')).toBeVisible();
     await expect(page.locator('#np-pr-vas')).toHaveValue('');
   });

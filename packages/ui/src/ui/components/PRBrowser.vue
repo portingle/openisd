@@ -2,6 +2,9 @@
 import {useEscToClose} from '../../logic/useEscToClose.js';
 import {usePRBrowser} from '../../hooks/PRBrowser-hooks.js';
 import {PhonePrBrowserText} from '@openisd/design/fields';
+import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
+import {shallowRef} from 'vue';
+import PRDefineDialog from './PRDefineDialog.vue';
 
 // PR browser — a popup mirroring the driver browser (DriverBrowserMd.vue): two
 // sections, "Saved" (your localStorage PR library) and "Bundled" (passive radiators
@@ -16,10 +19,14 @@ const emit = defineEmits<{
   close: [];
   load: [string];
   loadBundled: [string];
-  define: [];
+  define: [OpenISDPassiveRadiatorStandalone];
 }>();
 
 const {filter, fSaved, fBundled, bundledStatus, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly, remove, close} = usePRBrowser(emit);
+// "+ Define new passive radiator" opens an editor on a blank draft; only its OK hands the draft up.
+const draft = shallowRef<OpenISDPassiveRadiatorStandalone | null>(null);
+function openDefine() { draft.value = OpenISDPassiveRadiatorStandalone.empty(); }
+function confirmDefine() { const pr = draft.value; draft.value = null; if (pr) emit('define', pr); }
 function onBackdrop(e: MouseEvent) { if (e.target === e.currentTarget) close(); }
 useEscToClose(() => true, close);
 </script>
@@ -70,10 +77,11 @@ useEscToClose(() => true, close);
         </div>
       </div>
       <div class="btns pr-footer">
-        <button @click="emit('define')" title="Define a brand-new passive radiator from scratch">+ Define new passive radiator</button>
+        <button class="pr-define-btn" @click="openDefine" title="Define a brand-new passive radiator from scratch">+ Define new passive radiator</button>
         <button class="pri" @click="close" title="Close">Done</button>
       </div>
     </div>
+    <PRDefineDialog v-if="draft" :radiator="draft" :phone="props.phone" @ok="confirmDefine" @cancel="draft = null" />
   </div>
 </template>
 
