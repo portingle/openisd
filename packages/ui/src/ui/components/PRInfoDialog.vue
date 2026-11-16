@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The passive radiator's Info (MOCK, John 16 Nov 2026 11:42: "the same select info edit setup and workflow as the driver"):
+// The passive radiator's Info (John 16 Nov 2026, QO946.c117 "the same select info edit setup and workflow as the driver"; c119 the Type row):
 // read-only, laid out as the driver's Info: its name, its figures, then who made it and where it came from.
 import type {PassiveRadiatorInfo} from '../../hooks/passiveRadiatorActions.js';
 import {useEscToClose} from '../../logic/useEscToClose.js';
@@ -14,11 +14,11 @@ useEscToClose(() => true, () => emit('close'));
     <div class="pri-panel" role="dialog" :aria-label="info.title">
       <div class="pri-head"><span>{{ info.title }}</span><button type="button" class="pri-x" aria-label="Close" @click="emit('close')">&#10005;</button></div>
       <div class="pri-body">
-        <div class="pri-star">&#9734;</div>
-        <div class="pri-grid">
+                <div class="pri-grid">
           <div v-for="f in info.figures" :key="f.label" class="pri-cell"><span class="pri-l">{{ f.label }}</span><b class="pri-v">{{ f.value }}</b><span class="pri-u">{{ f.unit }}</span></div>
+          <div class="pri-cell pri-type"><span class="pri-l">Type</span><b class="pri-t">{{ info.type }}</b></div>
         </div>
-        <div class="pri-links"><a>Datasheet (PDF) &#8599;</a><a>Manufacturer page &#8599;</a></div>
+        <div v-if="info.links.length > 0" class="pri-links"><a v-for="l in info.links" :key="l.url" :href="l.url" target="_blank" rel="noopener">{{ l.label }}</a></div>
         <div v-for="l in info.lines" :key="l.label" class="pri-line"><span>{{ l.label }}</span><span>{{ l.value }}</span></div>
       </div>
       <div class="pri-foot"><button type="button" class="pri-close" @click="emit('close')">Close</button></div>
@@ -37,6 +37,8 @@ useEscToClose(() => true, () => emit('close'));
 .pri-cell { display: grid; grid-template-columns: 70px 50px 40px; align-items: center; padding: 3px 0; border-bottom: 1px solid #e3e3e3; margin-right: 10px; }
 .pri-v { text-align: right; padding-right: 6px; font-size: 11px; }
 .pri-u { color: #666; }
+.pri-type { grid-template-columns: 70px auto; }
+.pri-t { font-size: 11px; }
 .pri-links { display: flex; gap: 10px; margin-bottom: 14px; }
 .pri-links a { color: #1565c0; }
 .pri-line { display: grid; grid-template-columns: 94px 1fr; padding: 3px 0; }

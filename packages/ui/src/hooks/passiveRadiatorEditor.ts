@@ -237,7 +237,8 @@ export function createPassiveRadiatorEditor({myPassiveRadiators, resolve, files}
     },
     saveToMyPRs() {
       const pr = draft.value;
-      if (pr === null || !canSave.value) return;
+      if (pr === null) return;
+      if (!canSave.value) { savedNote.value = 'Not copied: give it a name first (General tab); a radiator is filed under its name.'; return; }
       const copy = copyOf(pr);
       copy.model.set(name.value.trim());
       const result = myPassiveRadiators.upsert(copy, savedUuid);

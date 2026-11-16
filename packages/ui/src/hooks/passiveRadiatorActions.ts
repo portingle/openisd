@@ -19,8 +19,13 @@ export interface PassiveRadiatorInfoFigure { readonly label: string; readonly va
 /** One identity line in the radiator's Info view. */
 export interface PassiveRadiatorInfoLine { readonly label: string; readonly value: string; }
 /** The radiator's Info view, as the driver's Info shows a driver. */
+/** A link the Info view shows: the radiator's datasheet or maker's page, when its record carries one. */
+export interface PassiveRadiatorInfoLink { readonly label: string; readonly url: string; }
 export interface PassiveRadiatorInfo {
   readonly title: string;
+  /** "Passive Radiator": the Info says what it is, as the driver's says its type (QO946.c119). */
+  readonly type: string;
+  readonly links: readonly PassiveRadiatorInfoLink[];
   readonly figures: readonly PassiveRadiatorInfoFigure[];
   readonly lines: readonly PassiveRadiatorInfoLine[];
 }
@@ -77,6 +82,11 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
       ({ label, value: formatFixedOrDash(v === null ? null : v * scale, dp), unit });
     return {
       title: [r.brand.value, r.model.value].filter(t => t !== '').join(' ') || 'Unnamed passive radiator',
+      type: 'Passive Radiator',
+      links: [
+        { label: 'Datasheet (PDF) ↗', url: r.dataSource('manufacturer_datasheet') ?? '' },
+        { label: 'Manufacturer page ↗', url: r.dataSource('manufacturer_product_page') ?? '' },
+      ].filter(l => l.url !== ''),
       figures: [
         fig('Vas', sp.Vas_m3.value, 1000, 2, 'L'), fig('Qms', sp.Qms.value, 1, 2, ''),
         fig('Fpr', sp.Fs_hz.value, 1, 2, 'Hz'), fig('Sd', sp.Sd_m2.value, 10000, 2, 'cm²'),

@@ -3,14 +3,13 @@
 // vent the box draws, the passive radiator (by name: its figures are in the passive-radiator editor, QO946.c115), and the Chart section holding the velocity limit.
 // Thin: all state and domain reads/writes live in useMobileEnclosureTab()
 // (src/hooks/MobileEnclosureTab-hooks.ts). PRBrowser is the app's existing overlay, reused unchanged.
-import {NumberField, PhoneBoxText, PhoneHelp, PhoneLabels, TextField, WinisdDeviation} from '@openisd/design/fields';
+import {NumberField, PhoneBoxText, PhoneHelp, PhoneLabels, WinisdDeviation} from '@openisd/design/fields';
 import {selectedOption} from '../../../logic/domEvents.js';
 import UIField from '../../components/UIField.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import PRBrowser from '../../components/PRBrowser.vue';
 import PREditorDialog from '../../components/PREditorDialog.vue';
 import PRInfoDialog from '../../components/PRInfoDialog.vue';
-import SaveToLibraryDialog from '../../components/SaveToLibraryDialog.vue';
 import PhoneBand from './PhoneBand.vue';
 import {useMobileEnclosureTab} from '../../../hooks/MobileEnclosureTab-hooks.js';
 
@@ -19,7 +18,6 @@ const {
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
   prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
-  prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
 } = useMobileEnclosureTab();
@@ -64,12 +62,9 @@ const {
     </div>
     <div class="mob-cbtns">
       <button type="button" class="mob-btn mob-btn-primary" @click="prBrowseOpen = true">Select PR</button>
-      <button type="button" class="mob-btn mob-btn-secondary mob-pr-info" title="View information about this project’s passive radiator" @click="prInfoOpen = true">Info</button>
+      <button type="button" class="mob-btn mob-btn-secondary mob-pr-info" id="mob-pr-info" title="View information about this project’s passive radiator" @click="prInfoOpen = true">Info</button>
       <button id="mob-pr-edit" type="button" class="mob-btn mob-btn-secondary" :title="PhoneBoxText.PR_EDIT_TIP" @click="startEditPR">Edit</button>
     </div>
-    <SaveToLibraryDialog v-if="prSaveOpen" title="Save passive radiator to library"
-      note="The name the copy has in your library. The project's passive radiator keeps its own name."
-      :fields="prSaveFields" :can-save="prSaveCanSave" save-label="Save" phone @save="confirmPRSave" @cancel="cancelPRSave" />
     <PRBrowser v-if="prBrowseOpen" phone :editor="prEditor" @close="prBrowseOpen = false"
       @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
     <PRInfoDialog v-if="prInfoOpen" phone :info="prInfo" @close="prInfoOpen = false" />

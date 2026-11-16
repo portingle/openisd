@@ -36,7 +36,6 @@ import DesktopHelpPanel from '../../components/DesktopHelpPanel.vue';
 import {injectWinisdDifferencesModal} from '../../../hooks/WinisdDifferencesModal-hooks.js';
 import {injectDiagnosticsModal} from '../../../hooks/DiagnosticsModal-hooks.js';
 import BoxTypeDiagram from '../../components/BoxTypeDiagram.vue';
-import SaveToLibraryDialog from '../../components/SaveToLibraryDialog.vue';
 import CloudSyncBadge from '../../components/CloudSyncBadge.vue';
 import CloudSyncDialog from '../../components/CloudSyncDialog.vue';
 import OriginalProjectList from './OriginalProjectList.vue';
@@ -82,7 +81,6 @@ const {
   model, startEdit, showDriverDisagreements, showDriverInfo, startWhatIf, placement, driverConsistencyReasons,
   ventPorts, END_CORRECTION_OPTIONS, VENT_COUNT_OPTIONS,
   prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
-  prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   prResonanceMassDq, prFsMass_hz,
   advTemp, advHumidity, advPressure, advSoundVelocity, advAirDensity,
   envTempStored, envHumidityStored, envPressureStored, envTempDq, envHumidityDq, envPressureDq,
@@ -508,7 +506,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
             <div class="field-row driver-id-row" style="margin-bottom:8px;">
               <div class="field tight entered" :title="TextField.PR_NAME.description"><label>{{ TextField.PR_NAME.label }}</label><input id="og-pr-name" type="text" style="width:330px" :value="project.box.passiveRadiator.radiator.model.value" @input="e => project.box.passiveRadiator.radiator.model.set(inputValue(e))"></div>
               <button class="edit-btn" title="Browse bundled + saved passive radiators — click one to load it into this project." @click="prBrowseOpen = true">{{ DesktopLabels.SELECT_PASSIVE_RADIATOR }}</button>
-              <button type="button" class="edit-btn" title="View information about this project’s passive radiator" @click="prInfoOpen = true">Info</button>
+              <button type="button" class="edit-btn" id="og-pr-info" title="View information about this project’s passive radiator" @click="prInfoOpen = true">Info</button>
               <button id="og-pr-edit" type="button" class="edit-btn" title="Full editor for this passive radiator in the current project." @click="startEditPR">&#9998; Edit</button>
             </div>
             <div class="two-col pr-controls" style="gap:10px;">
@@ -871,9 +869,6 @@ provideCellScope({ revision: projectChanged, written: () => {} });
       </div>
     </div>
 
-    <SaveToLibraryDialog v-if="prSaveOpen" title="Save passive radiator to library"
-      note="The name the copy has in your library. The project's passive radiator keeps its own name."
-      :fields="prSaveFields" :can-save="prSaveCanSave" save-label="Save" @save="confirmPRSave" @cancel="cancelPRSave" />
 
     <input ref="fileInput" type="file" :accept="OpenableFiles.ACCEPT" style="display:none" @change="onFile">
   </div>

@@ -89,6 +89,7 @@ describe('createPassiveRadiatorEditor', () => {
     editor.saveToMyPRs();
 
     expect(myPassiveRadiators.list()).toHaveLength(0);
+    expect(editor.savedNote.value).toMatch(/^Not copied: give it a name first/);
   });
 });
 

@@ -81,6 +81,8 @@ const {
   passiveRadiatorBrowseOpen,
   loadSavedPassiveRadiator,
   loadBundledPassiveRadiator,
+  startDefinePassiveRadiator,
+  passiveRadiatorEditor,
 
   projName,
   projDescription,
@@ -243,7 +245,7 @@ function handleCreate() {
           <UIFixedField input-id="np-starting-volume" label="Starting volume" :field="NumberField.BOX_VB_L" :value="volume_m3" @update:value="v => volume_m3 = v" />
           <NewProjectPassiveRadiatorStep :key="passiveRadiatorPickId" :radiator="passiveRadiatorView" :cells="passiveRadiatorCells" :browsing="passiveRadiatorBrowseOpen"
             @browse="passiveRadiatorBrowseOpen = true" @close-browse="passiveRadiatorBrowseOpen = false"
-            @rename="setPassiveRadiatorName" @load-saved="loadSavedPassiveRadiator" @load-bundled="loadBundledPassiveRadiator" />
+            @rename="setPassiveRadiatorName" @load-saved="loadSavedPassiveRadiator" @load-bundled="loadBundledPassiveRadiator" :editor="passiveRadiatorEditor" @define="startDefinePassiveRadiator" />
           <div v-if="passiveRadiatorPickError" class="readout-warning np-pr-error" role="alert" aria-live="polite">{{ passiveRadiatorPickError }}</div>
         </div>
 
