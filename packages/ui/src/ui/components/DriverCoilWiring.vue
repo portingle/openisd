@@ -43,5 +43,5 @@ const {shown, message, explain, disabled, options, mine, deviationShown, onSelec
 <style scoped>
 .coil-wiring-wrap { position: relative; display: inline-flex; width: 100%; }
 .coil-wiring-catch { position: absolute; inset: 0; cursor: default; }
-.coil-wiring-note { max-width: 320px; margin: 2px 0 4px; font-size: 12px; line-height: 16px; color: #555; overflow-wrap: anywhere; }
+.coil-wiring-note { width: 0; min-width: 100%; margin: 2px 0 4px; font-size: 12px; line-height: 16px; color: #555; overflow-wrap: anywhere; }
 </style>

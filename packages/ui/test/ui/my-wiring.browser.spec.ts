@@ -39,7 +39,7 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
     await skin.open(page);
     await selectDriver(page, MX6_22);
     await expect(page.getByText('Measured wiring')).toHaveCount(0);
-        await expect(page.locator(skin.select)).toHaveValue('series');
+    await expect(page.locator(skin.select)).toHaveValue('series');
     // John, QO942.c12 and QO943.c4: the control is "Coil wiring" on both skins; "Connection" is WinISD's own word and is no OpenISD label.
     await expect(page.locator(skinName === 'phone' ? 'label[for="mob-coil-wiring"]' : 'label[for="og-coil-wiring"]')).toHaveText('Coil wiring');
     await openTab(page, 'Signal');
@@ -48,6 +48,8 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
 
     await openTab(page, 'Driver');
     await page.locator(skin.select).selectOption('parallel');
+    // A5 (QO946.c35): no figures line ("As published: Re ... · BL ...") on the Driver tab; the figures show only in the charts.
+    await expect(page.getByText(/As published|My wiring:|Re 1\.175/)).toHaveCount(0);
     await openTab(page, 'Signal');
     await expect(volts).toHaveValue(/^1\.1[23]/);
   });
@@ -94,8 +96,12 @@ test('desktop: a driver that does not state its wiring: the control greyed, a cl
   const select = page.locator(DESKTOP.select);
   await expect(select).toHaveJSProperty('disabled', true);
   await expect(page.getByTestId('coil-wiring-message')).toHaveCount(0);
+  const beside = page.getByText('Voice coil temp rise', {exact: true});
+  const before = await beside.boundingBox();
   await clickAt(page, select);
   await expect(page.getByTestId('coil-wiring-message')).toHaveText('The datasheet does not say how the coils were wired when measured, so the wiring cannot be changed. The figures are used as published.');
+  // The message wraps in the Placement column: nothing beside it moves (field-layout rule 8).
+  expect(await beside.boundingBox()).toEqual(before);
   await expect(select).toHaveValue('parallel');
 });
 

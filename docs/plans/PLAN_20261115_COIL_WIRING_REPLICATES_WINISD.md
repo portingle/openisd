@@ -237,11 +237,11 @@ The switch, designed here and NOT built:
 
 ### What this PR changes (task T838, built, held)
 
-- **One wiring control.** "Coil wiring" on both skins; one project field (`driverEmbedding.wiring`). Default: the driver's measured wiring (this fixes WinISD's always-Parallel display).
+- **One wiring control.** "Coil wiring" on both skins; one project field (`driverEmbedding.VCCon`, renamed from `wiring` in data version 5, value kept). Default: the driver's measured wiring (this fixes WinISD's always-Parallel display).
   - A driver with more than one coil and a known measured wiring: enabled on both skins.
-  - One coil (or no coil count): the desktop shows it greyed, reading Parallel, as WinISD does; the phone shows nothing.
-  - Measured wiring not stated: nothing on either skin (John's rule); the data-quality mark in the Driver editor is the only sign.
-- **Re and BL convert by WinISD's factors; Le and Znom are untouched by this PR** (they convert as before; see the section above).
+  - One coil (or no coil count): the desktop shows it greyed, reading Parallel, as WinISD does, and a click says "Coil wiring applies only to drivers with 2 or more voice coils."; the phone omits it (QO942.c88, c89, c91).
+  - Measured wiring not stated: the desktop shows it greyed and a click says "The datasheet does not say how the coils were wired when measured, so the wiring cannot be changed. The figures are used as published."; the phone omits it (QO942.c90, c91). The select is disabled and a catcher over it takes the click.
+- **Re, Le and Znom convert by N squared and BL by N (A2)**; the yellow switch "Coil wiring: Re and BL only" gives WinISD's Re-and-BL-only conversion.
 - **Any number of coils above one converts** (OpenISD refused three coils before).
 - **The two WinISD bugs are in the in-app list** of fixed bugs: the in-place rewrite of Re and BL, and the always-Parallel display.
 - **`.wpr` export:** unchanged by this PR (a Parallel choice writes Re, BL, Le and Znom converted, as before). The Series or untouched export is unchanged. VCCon is the choice. Nothing is rescaled on load or save.

@@ -94,9 +94,9 @@ Test-site `coilWiring` into `VCCon`. Only the amplifier
 side reads it: impedance, SPL and excursion against voltage, power, and Rg loading use the figures converted from the
 measured wiring to Coil wiring, for N identical coils. Series to parallel: `Re` and `Le` and `Znom` divided by N², `BL`
 divided by N; parallel to series the inverse. WinISD converts `Re` and `BL` only; the yellow switch "Coil wiring: Re and BL only" (`winisdCoilWiringReBlOnly`, off by default, QO942.c62) does the same, and its effect shows only with "Simulate voice coil inductance" on, as `Znom` feeds no chart. `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
-Dayton MX6-22 (series, 4.7 Ω, 12.3 Tm) in parallel is 1.175 Ω, 6.15 Tm, and `Qes` stays 0.373. The choice is
-absent for a driver whose measured wiring is not stated, and for one coil on the phone (greyed on the desktop, as in
-WinISD). Any number of coils above one converts, as WinISD does. It is labelled "Coil wiring" on both skins
+Dayton MX6-22 (series, 4.7 Ω, 12.3 Tm) in parallel is 1.175 Ω, 6.15 Tm, and `Qes` stays 0.373. It can be
+changed only for a driver with 2 or more coils whose measured wiring is stated. Otherwise (one coil, or the measured wiring
+not stated) the desktop shows it greyed, as WinISD does, and a click on it says why; the phone does not show it (QO942.c88-c91). Any number of coils above one converts, as WinISD does. It is labelled "Coil wiring" on both skins
 (John, QO942.c12; "Connection" is WinISD's own word). A different driver in the project resets it.
 
 Files: the driver `.wdr` and `.owdr` carry the stored figures with the measured wiring. A `.wpr` project carries the
