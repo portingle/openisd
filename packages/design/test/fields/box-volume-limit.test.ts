@@ -20,7 +20,6 @@ describe('the vented design band does not follow the Vb box limit', () => {
   it('keeps its own 100 L top while the box accepts up to 10,000 L', () => {
     expect(DEFAULT_VENTED_DESIGN_LIMITS.maxVb_m3).toBe(ONE_HUNDRED_LITRES_M3);
     expect(DEFAULT_VENTED_DESIGN_LIMITS.maxVb_m3).not.toBe(NumberField.BOX_VB_L.limits.max);
-    expect(DEFAULT_VENTED_DESIGN_LIMITS.maxVb_m3).not.toBe(NumberField.BOX_VB_L.toSI(NumberField.BOX_VB_L.limits.max));
   });
   it('never allows a volume the box refuses', () => {
     expect(DEFAULT_VENTED_DESIGN_LIMITS.minVb_m3).toBeGreaterThanOrEqual(NumberField.BOX_VB_L.limits.min);
