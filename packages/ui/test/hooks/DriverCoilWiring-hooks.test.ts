@@ -1,7 +1,7 @@
 /**
  * The Driver tab's "Coil wiring" row; no measured-wiring row (QO941) (QO907, issue 512). Dayton MX6-22: measured
  * in series, Re 4.7 Ω, BL 12.3 T·m, 2 coils (datasheet); in parallel Re 1.175 Ω, BL 6.15 T·m
- * (Re ÷ 4, BL ÷ 2). Bliesma W137A-854-4 states no wiring.
+ * (Re ÷ 4, BL ÷ 2). Dayton SD215A-88 (2 coils) states no wiring.
  */
 import {readFileSync} from 'node:fs';
 import {describe, expect, it} from 'vitest';
@@ -39,9 +39,9 @@ describe('useDriverCoilWiring', () => {
     expect(project.driver.specs.Re_ohm.value).toBeCloseTo(4.7, 9);
   });
 
-  it('Bliesma W137A-854-4: wiring not stated: omitted on the phone, greyed on the desktop with its own message (QO942.c90, c91)', () => {
-    expect(hookFor('bliesma/w137a-854-4', true).wiring.shown.value).toBe(false);
-    const desktop = hookFor('bliesma/w137a-854-4', false).wiring;
+  it('Dayton SD215A-88 (2 coils): wiring not stated: omitted on the phone, greyed on the desktop with its own message (QO942.c90, c91)', () => {
+    expect(hookFor('dayton-audio/sd215a-88', true).wiring.shown.value).toBe(false);
+    const desktop = hookFor('dayton-audio/sd215a-88', false).wiring;
     expect(desktop.shown.value).toBe(true);
     expect(desktop.disabled.value).toBe(true);
     expect(desktop.message.value).toBeNull();

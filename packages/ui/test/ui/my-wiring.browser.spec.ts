@@ -8,11 +8,11 @@ import {forceMobileSkin} from '../fixtures/mobileSkin.js';
  * "Coil wiring" (QO907, issue 512), both skins. Dayton MX6-22 states "all specifications measured
  * with voice coils wired in series": Re 4.7 Ω, BL 12.3 T·m (published). Wired in parallel that is
  * Re 4.7 / 4 = 1.175 Ω and BL 12.3 / 2 = 6.15 T·m, and the 1 W drive voltage V = √(1 W · (Re + Rs))
- * with Rs 0.1 Ω falls from √4.8 = 2.19 V to √1.275 = 1.13 V. The Bliesma W137A-854-4 (3 coils)
+ * with Rs 0.1 Ω falls from √4.8 = 2.19 V to √1.275 = 1.13 V. The Dayton SD215A-88 (2 coils)
  * states no wiring, so the choice is disabled with the reason.
  */
 const MX6_22 = readFileSync('packages/ui/public/drivers/dayton-audio/mx6-22.json');
-const W137A = readFileSync('packages/ui/public/drivers/bliesma/w137a-854-4.json');
+const UNSTATED = readFileSync('packages/ui/public/drivers/dayton-audio/sd215a-88.json');
 const RSS265HO = readFileSync('packages/ui/public/drivers/dayton-audio/rss265ho-44.json');
 const RSS315HO = readFileSync('packages/ui/public/drivers/dayton-audio/rss315ho-44.json');
 const CE28M = readFileSync('packages/ui/public/drivers/dayton-audio/ce28m-4.json');
@@ -85,14 +85,14 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
 // John, QO942.c91: the phone may omit the field when it cannot be used; only the desktop matches WinISD's screen.
 test('phone: a driver that does not state its wiring: no wiring block', async ({page}) => {
   await PHONE.open(page);
-  await selectDriver(page, W137A);
+  await selectDriver(page, UNSTATED);
   await expect(page.getByText('Measured wiring')).toHaveCount(0);
   await expect(page.locator(PHONE.select)).toHaveCount(0);
 });
 
 test('desktop: a driver that does not state its wiring: the control greyed, a click says why, no change', async ({page}) => {
   await DESKTOP.open(page);
-  await selectDriver(page, W137A);
+  await selectDriver(page, UNSTATED);
   const select = page.locator(DESKTOP.select);
   await expect(select).toHaveJSProperty('disabled', true);
   await expect(page.getByTestId('coil-wiring-message')).toHaveCount(0);

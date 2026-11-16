@@ -117,6 +117,7 @@ files:
   - packages/ui/test/ui/new-project-wizard-walk.browser.spec.ts
   - packages/ui/test/ui/original-advanced-tab.browser.spec.ts
   - packages/ui/test/ui/phone-driver-tab-stable-columns.browser.spec.ts
+  - packages/ui/test/ui/wiring-dq-mark.browser.spec.ts
   - packages/ui/test/ui/phone-field-inventory.browser.spec.ts
   - packages/ui/test/visual/pictureSet.ts
   - packages/ui/test/visual/screens.ts
