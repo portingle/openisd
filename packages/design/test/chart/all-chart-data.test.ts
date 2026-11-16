@@ -3,6 +3,7 @@ import {createEngine} from '@openisd/design/engine';
 import type {SweepDriver} from '@openisd/design/engine';
 import {ProjectBuilder} from '../../domain/openisdTransforms.js';
 import type {OpenISDProject} from '../../domain/project/openISDProject.js';
+import type {FrequencyGrid} from '../../domain/box/frequencyGrid.js';
 import {OpenISDPassiveRadiatorStandalone} from '../../domain/passiveRadiator/openISDPassiveRadiatorStandalone.js';
 import {AllChartData, DEFAULT_REFERENCE_LINE_COLORS, TAB_META, type Design, type PlotParams} from '@openisd/design/chart';
 import {exportedNotice} from '../../fields/exportedNotice.js';
@@ -34,7 +35,7 @@ function passive() {
 
 function exportOf(p: OpenISDProject, name: string, text: string): AllChartData {
   const P: PlotParams = {fmin: 10, fmax: 2000};
-  const sp = {fmin: P.fmin, fmax: P.fmax, N: 100};
+  const sp: FrequencyGrid = {fmin: P.fmin, fmax: P.fmax, N: 100};
   const swept = p.sweep(sp);
   if (!swept.values) throw new Error(JSON.stringify(swept.issues));
   const curves = swept.values;
