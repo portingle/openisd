@@ -2,7 +2,7 @@ id: T851
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Scripts carry no hard-coded /home/john paths
 why: Two machines now work the project (lap as john, woody as johnl); a script naming /home/john/ breaks on the other one
 done_test: bash scripts/quiet-test.sh npm run typecheck
