@@ -24,6 +24,8 @@ files:
   - packages/ui/test/hooks/GraphPanel-hooks.test.ts
   - packages/ui/test/hooks/MobileChartView-hooks.test.ts
   - packages/ui/test/ui/chart-data-all.browser.spec.ts
+  - packages/ui/test/fixtures/branchMap/shared.ts
+  - packages/ui/test/fixtures/branchMap/phone.ts
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-abc.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-bandpass4.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-box-bandpass6.png
