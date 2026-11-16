@@ -5,7 +5,7 @@
  * Skin-neutral: shared by every shell's PR page (one implementation, two presentations).
  */
 import {computed, ref} from 'vue';
-import {formatFixedOrDash} from '@openisd/design/fields';
+import {NumberField} from '@openisd/design/fields';
 import type {ComputedRef} from 'vue';
 import type {OpenISDProject} from '@openisd/design';
 import type {SaveNameField} from './saveNameField.js';
@@ -78,8 +78,9 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
   const prInfo = computed<PassiveRadiatorInfo>(() => {
     const r = project.value.box.passiveRadiator.radiator;
     const sp = r.spec;
-    const fig = (label: string, v: number | null, scale: number, dp: number, unit: string): PassiveRadiatorInfoFigure =>
-      ({ label, value: formatFixedOrDash(v === null ? null : v * scale, dp), unit });
+    // Each figure formatted and labelled by its field, as the driver's Info (driverDisplay `fmtField`).
+    const fig = (field: NumberField, v: number | null): PassiveRadiatorInfoFigure =>
+      ({ label: field.label, value: v === null ? '—' : field.format(v), unit: field.unitLabel() });
     return {
       title: [r.brand.value, r.model.value].filter(t => t !== '').join(' ') || 'Unnamed passive radiator',
       type: 'Passive Radiator',
@@ -88,10 +89,10 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
         { label: 'Manufacturer page ↗', url: r.dataSource('manufacturer_product_page') ?? '' },
       ].filter(l => l.url !== ''),
       figures: [
-        fig('Vas', sp.Vas_m3.value, 1000, 2, 'L'), fig('Qms', sp.Qms.value, 1, 2, ''),
-        fig('Fpr', sp.Fs_hz.value, 1, 2, 'Hz'), fig('Sd', sp.Sd_m2.value, 10000, 2, 'cm²'),
-        fig('Mms', sp.Mms_kg.value, 1000, 2, 'g'), fig('Cms', sp.Cms_m_per_N.value, 1000, 4, 'mm/N'),
-        fig('Rms', sp.Rms_kg_per_s.value, 1, 2, 'Ns/m'), fig('Xmax', sp.Xmax_m.value, 1000, 2, 'mm'),
+        fig(NumberField.PR_VAS_L, sp.Vas_m3.value), fig(NumberField.PR_QMS, sp.Qms.value),
+        fig(NumberField.PR_FS_HZ, sp.Fs_hz.value), fig(NumberField.PR_SD_CM2, sp.Sd_m2.value),
+        fig(NumberField.MMS_KG, sp.Mms_kg.value), fig(NumberField.CMS_M_PER_N, sp.Cms_m_per_N.value),
+        fig(NumberField.RMS_KG_PER_S, sp.Rms_kg_per_s.value), fig(NumberField.PR_XMAX_MM, sp.Xmax_m.value),
       ],
       lines: [
         { label: 'Brand', value: r.brand.value }, { label: 'Model', value: r.model.value },

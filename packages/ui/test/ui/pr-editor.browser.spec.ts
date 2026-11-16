@@ -65,6 +65,21 @@ function suite(skin: 'desktop' | 'phone') {
       await editor.getByRole('button', {name, exact: true}).click();
     }
   };
+  /** Export, Import, Copy to My PRs and Reset: the desktop footer's buttons, the phone's More menu (as the driver editor). */
+  const expectFileActions = async (editor: Locator) => {
+    const names = ['Export', 'Import', 'Copy to My PRs', 'Reset'];
+    if (skin === 'desktop') {
+      for (const b of names) await expect(editor.getByRole('button', {name: b, exact: true})).toBeVisible();
+      return;
+    }
+    await editor.getByRole('button', {name: /More/}).click();
+    for (const m of names) await expect(editor.getByRole('menuitem', {name: m})).toBeVisible();
+    await editor.getByRole('button', {name: /More/}).click();
+  };
+  /** The desktop page shows the radiator's Vas; the phone shows it only in the editor. */
+  const expectPageVas = async (page: Page, value: RegExp) => {
+    if (skin === 'desktop') await expect(page.locator('#og-pr-vas')).toHaveValue(value);
+  };
   const tab = (editor: Locator, name: 'General' | 'Parameters') => editor.getByRole('tab', {name}).click();
   /** The project's radiator name, as its page shows it. */
   const expectProjectName = async (page: Page, text: RegExp | string) => {
@@ -101,13 +116,7 @@ function suite(skin: 'desktop' | 'phone') {
     await expect(editor.getByRole('checkbox', {name: 'Auto calculate unknowns'})).toBeChecked();
     await expect(editor.getByRole('checkbox', {name: 'Inspect Provenance'})).not.toBeChecked();
     for (const b of ['OK', 'Cancel']) await expect(editor.getByRole('button', {name: b, exact: true})).toBeVisible();
-    if (skin === 'phone') {
-      await editor.getByRole('button', {name: /More/}).click();
-      for (const m of ['Export', 'Import', 'Copy to My PRs', 'Reset']) await expect(editor.getByRole('menuitem', {name: m})).toBeVisible();
-      await editor.getByRole('button', {name: /More/}).click();
-    } else {
-      for (const b of ['Export', 'Import', 'Copy to My PRs', 'Reset']) await expect(editor.getByRole('button', {name: b, exact: true})).toBeVisible();
-    }
+    await expectFileActions(editor);
     await tab(editor, 'General');
     await expect(editor.locator('#pr-editor-name')).toHaveValue(new RegExp(LOADED));
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
@@ -124,7 +133,7 @@ function suite(skin: 'desktop' | 'phone') {
     await editor.getByRole('button', {name: 'OK', exact: true}).click();
     await expect(editor).toHaveCount(0);
     await expectProjectName(page, 'Edited radiator');
-    if (skin === 'desktop') await expect(page.locator('#og-pr-vas')).toHaveValue(/^61/);
+    await expectPageVas(page, /^61/);
     editor = await openEditor(page);
     await expect(editor.locator('#pr-editor-xmax')).toHaveValue(/^17/);
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();

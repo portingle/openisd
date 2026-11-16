@@ -2,7 +2,7 @@
 import {describe, expect, it, vi} from 'vitest';
 import {createMemoryStorage} from '@openisd/persistence';
 import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
-import {createPassiveRadiatorEditor} from '../../src/hooks/passiveRadiatorEditor.js';
+import {type ApplyRadiator, createPassiveRadiatorEditor} from '../../src/hooks/passiveRadiatorEditor.js';
 import {myPassiveRadiatorRepoOn} from '../fixtures/repoOn.js';
 
 function setUp() {
@@ -35,7 +35,7 @@ describe('createPassiveRadiatorEditor', () => {
 
   it('OK hands the edited radiator to apply and closes', () => {
     const {editor, source} = setUp();
-    const apply = vi.fn();
+    const apply = vi.fn<ApplyRadiator>();
     editor.open(source, 'Edit passive radiator', apply);
     editor.cells.value?.Xmax_m.set(0.02);
     editor.setName('Changed');
@@ -43,9 +43,9 @@ describe('createPassiveRadiatorEditor', () => {
     editor.ok();
 
     expect(apply).toHaveBeenCalledTimes(1);
-    const applied = apply.mock.calls[0]?.[0] as OpenISDPassiveRadiatorStandalone;
-    expect(applied.model.value).toBe('Changed');
-    expect(applied.spec.Xmax_m.value).toBe(0.02);
+    const applied = apply.mock.calls[0]?.[0];
+    expect(applied?.model.value).toBe('Changed');
+    expect(applied?.spec.Xmax_m.value).toBe(0.02);
     expect(editor.cells.value).toBeNull();
   });
 

@@ -61,6 +61,12 @@ const prEdit: OpenStep = {root: '.prd-panel', open: async page => {
   await page.locator('.prd-panel').waitFor({state: 'visible'});
 }};
 
+const prInfo: OpenStep = {root: '.pri-panel', open: async page => {
+  await boxPage(page, 'box-passive-radiator');
+  await page.locator('#mob-pr-info').click();
+  await page.locator('.pri-panel').waitFor({state: 'visible'});
+}};
+
 const chartData: OpenStep = {root: '.cdata-modal', open: async page => {
   await phoneTab(page, 'Graph');
   await page.locator('.mob-chart-data').first().click();
@@ -95,6 +101,7 @@ export const PHONE_MENU_STEPS: readonly (readonly [WalkSkin, string, OpenStep])[
   [P, 'vented-alignment', alignment('vented')],
   [P, 'pr-picker', prPicker],
   [P, 'pr-edit', prEdit],
+  [P, 'pr-info', prInfo],
   [P, 'chart-data', chartData],
   [P, 'sheet-port', sheetPort],
   [P, 'exports', exports],

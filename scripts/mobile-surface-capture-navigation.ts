@@ -3,7 +3,7 @@ import {TABS,CHART_LABELS} from '@openisd/design/chart';
 import {MobileRoute,type MobileSurface} from '../packages/ui/test/fixtures/mobileSurfaceManifest.js';
 import {openMobileSurface} from '../packages/ui/test/fixtures/mobileSurfaceNavigation.js';
 import {tapMobileMenuItem,openMobileMenu} from '../packages/ui/test/fixtures/mobileSkin.js';
-const extra=new Set(['menu','project-import','driver-import','exports','bin','project-actions','sealed-alignment','vented-alignment','sheet-port','driver-more','driver-export','driver-save','driver-identity','driver-search-filters','driver-summary-manage','driver-summary-pick','wizard-placement','wizard-ebp','wizard-help','section-help','chart-picker','chart-data','confirmation','refresh','empty','pr-picker','pr-edit','equations','options-limits-help','cloud']);
+const extra=new Set(['menu','project-import','driver-import','exports','bin','project-actions','sealed-alignment','vented-alignment','sheet-port','driver-more','driver-export','driver-save','driver-identity','driver-search-filters','driver-summary-manage','driver-summary-pick','wizard-placement','wizard-ebp','wizard-help','section-help','chart-picker','chart-data','confirmation','refresh','empty','pr-picker','pr-edit','pr-info','equations','options-limits-help','cloud']);
 export function hasCaptureNavigation(surface:MobileSurface):boolean{return surface.route!==MobileRoute.Manual||extra.has(surface.id)||/^wizard-.+-[1-5]$/.test(surface.id)||!!surface.parameter&&surface.id.startsWith('chart-');}
 async function tab(page:Page,name:string):Promise<void>{await page.locator('.mob-tab').filter({hasText:new RegExp('^'+name+'$')}).click();}
 async function editor(page:Page):Promise<void>{await tab(page,'Driver');await page.getByRole('button',{name:'Edit',exact:true}).click();}
@@ -31,6 +31,7 @@ export async function openCaptureSurface(page:Page,surface:MobileSurface):Promis
  }
  switch(surface.id){
   case 'empty':await openMobileMenu(page);await page.locator('.mob-open-project-close').first().click();return '.mobile-root';
+  case 'pr-info':await tab(page,'Box');await page.locator('#mob-box-type').selectOption('box-passive-radiator');await page.locator('#mob-pr-info').click();return '.pri-panel';
   case 'pr-picker':case 'pr-edit':await tab(page,'Box');await page.locator('#mob-box-type').selectOption('box-passive-radiator');if(surface.id==='pr-picker')await page.getByRole('button',{name:'Select PR',exact:true}).click();else await page.locator('#mob-pr-edit').click();return surface.id==='pr-picker'?'.pr-phone':'.prd-panel';
   case 'equations':await editor(page);await page.locator('.de-provenance-chk').filter({hasText:'Inspect Provenance'}).locator('input').click();return '.eq-inspector-card';
   case 'options-limits-help':await tapMobileMenuItem(page,'Options');await page.getByTestId('limits-more').click();return '[data-testid=limits-more-popup]';

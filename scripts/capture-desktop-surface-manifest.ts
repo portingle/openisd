@@ -28,6 +28,7 @@ async function open(page:Page,surface:DesktopSurface):Promise<void>{
   case DesktopRoute.Losses:await box(page,surface.box??'sealed');await page.locator('.tab-section.active .link-btn').filter({hasText:'Advanced->'}).nth(surface.chamber==='Front'?1:0).click();return;
   case DesktopRoute.Tab:await tab(page,surface.parameter??'Box');return;
   case DesktopRoute.PRPicker:await box(page,'box-passive-radiator');await tab(page,'Passive Radiator');await page.getByRole('button',{name:'Select passive radiator',exact:true}).click();return;
+  case DesktopRoute.PRInfo:await box(page,'box-passive-radiator');await tab(page,'Passive Radiator');await page.locator('#og-pr-info').click();return;
   case DesktopRoute.PREdit:await box(page,'box-passive-radiator');await tab(page,'Passive Radiator');await page.locator('#og-pr-edit').click();return;
   case DesktopRoute.DataQuality:await box(page,'box-passive-radiator');await tab(page,'Passive Radiator');await page.locator('#og-pr-vas').fill('');await page.locator('#og-pr-vas').blur();await page.locator('.pr-controls .ui-field-dq-btn').first().click();return;
   case DesktopRoute.DriverInfo:{await tab(page,'Driver');const button=page.locator('.driver-id-row').getByRole('button',{name:'Info',exact:true});if(await button.count()===0)throw new Error((side==='production'?'VIEW UNAVAILABLE: ':'')+'Current-driver Info is absent');await button.click();return;}

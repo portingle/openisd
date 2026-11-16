@@ -8,7 +8,7 @@
  * bugs/BUG_20261115_define-passive-radiator-button-does-nothing.md
  */
 import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
-import type {Page} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
 
 const LOADED = 'ASP190';
@@ -20,6 +20,12 @@ async function loadRadiator(page: Page, opener: () => Promise<void>) {
 }
 
 function suite(skin: 'desktop' | 'phone') {
+  /** Copy to My PRs: the desktop footer's button, the phone's More menu (as the driver editor). */
+  const copyToMyPRs = async (editor: Locator) => {
+    if (skin === 'desktop') { await editor.getByRole('button', {name: 'Copy to My PRs'}).click(); return; }
+    await editor.getByRole('button', {name: /More/}).click();
+    await editor.getByRole('menuitem', {name: 'Copy to My PRs'}).click();
+  };
   /** The project's radiator name: a box on the desktop page, the editor row on the phone. */
   const expectName = async (page: Page, text: RegExp | string) => {
     if (skin === 'desktop') await expect(page.locator('#og-pr-name')).toHaveValue(text);
@@ -94,12 +100,7 @@ function suite(skin: 'desktop' | 'phone') {
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
     await editor.locator('#pr-editor-name').fill(`Filed PR ${skin}`);
-    if (skin === 'phone') {
-      await editor.getByRole('button', {name: /More/}).click();
-      await editor.getByRole('menuitem', {name: 'Copy to My PRs'}).click();
-    } else {
-      await editor.getByRole('button', {name: 'Copy to My PRs'}).click();
-    }
+    await copyToMyPRs(editor);
     await expect(editor.getByRole('status')).toContainText(`Filed PR ${skin}`);
     await editor.getByRole('button', {name: 'Cancel'}).click();
     await expect(page.locator('.pr-lib-item', {hasText: `Filed PR ${skin}`})).toBeVisible();
