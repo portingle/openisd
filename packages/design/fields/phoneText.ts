@@ -217,7 +217,8 @@ export class PhoneHelp {
   static readonly CHART = new PhoneHelpSection('Chart', 'Settings for the charts. They do not change the design.', [
     PhoneHelpRows.VELOCITY_LIMIT,
   ]);
-  static readonly DRIVER = new PhoneHelpSection('Driver', 'The driver used in this design and how the drivers are wired.', [
+  /** Headed "User options", as the passive radiator's (John, 16 Nov 2026 12:47: "make both User options"). */
+  static readonly DRIVER = new PhoneHelpSection('User options', 'The driver used in this design and how the drivers are wired.', [
     {label: 'Select driver', text: 'picks a driver from the library.'},
     {label: 'Edit', text: 'opens the driver\'s parameters.'},
     PhoneHelpRows.DRIVERS,

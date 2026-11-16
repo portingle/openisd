@@ -7,6 +7,7 @@
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {useFeatureUse} from './telemetryContext.js';
 import {useApp} from '../logic/app.js';
+import {appPassiveRadiatorFiles} from './passiveRadiatorEditor.js';
 import {createSealedReadouts, createSelectedBox} from './boxFields.js';
 import {createVentReadouts, FB_TARGET_TIP, VENT_GEOMETRY_TIP} from './ventReadouts.js';
 import {createPassiveRadiatorActions} from './passiveRadiatorActions.js';
@@ -28,7 +29,8 @@ export function useMobileEnclosureTab() {
     createSealedReadouts({ project, selectedBox, projectChanged });
   const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave } =
-    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks(), engine });
+    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks(), engine,
+      files: appPassiveRadiatorFiles(useApp()) });
 
   /** The box types whose unreachable-tuning sentence also shows as a note under the vent; ABC and the 6th order bandpass show it once, in the warning mark's popup. */
   const tuningNoteShown = computed(() => selectedBox.value === 'vented' || selectedBox.value === 'bandpass4');

@@ -1,9 +1,10 @@
 /**
- * The passive-radiator editor (John, 16 Nov 2026 11:05 UTC, QO946.c115): "I want an editor for the pr, it must have the fields
- * the current editor has, it must have a save to my prs option as well as ok and cancel, the numbers must disappear from the
- * mobile box page but remain on the desktop as per now as that is more WinISD like, I still want the select pr popup and in the
- * select popup to have a button to the new pr popup".
- * One editor, both skins: the radiator's own figures (name, Vas, Qms, Fs, Sd, Mms, Cms, Rms, Xmax), OK / Cancel / Save to My PRs.
+ * The passive radiator's Select / Info / Edit, as the driver's (John, 16 Nov 2026: 11:05 UTC QO946.c115 "I want an editor for
+ * the pr ... save to my prs ... ok and cancel, the numbers must disappear from the mobile box page but remain on the desktop";
+ * 11:42 "we need the same select info edit setup and workflow as the driver"; 12:46 "looks ok" on the mock; 12:47 "on the Info
+ * page show the Type: Passive Radiator").
+ * The editor, both skins: tabs General (name) and Parameters (Vas, Qms, Fs, Sd, Mms, Cms, Rms, Xmax), Auto calculate unknowns,
+ * Inspect Provenance, OK, Cancel, Reset, Export, Import, Copy to My PRs (desktop footer; phone More menu, as the driver editor).
  * The build choices (count, added mass, tuning) stay on the project's page (QO946.c38) and are not in the editor.
  * Define new passive radiator (in the Select popup): pr-define.browser.spec.ts.
  */
@@ -11,9 +12,36 @@ import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
 import type {Locator, Page} from '@playwright/test';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
 
+declare global {
+  interface Window {
+    __savedFiles?: Record<string, string>;
+  }
+}
+
 const LOADED = 'ASP190';
-const EDITOR = 'Edit passive radiator';
+const EDITOR = "Edit Project's Passive Radiator";
 const FIGURES = ['vas', 'qms', 'fs', 'sd', 'mms', 'cms', 'rms', 'xmax'] as const;
+
+/** The system save dialog cannot be driven from a test: `showSaveFilePicker` keeps the bytes in the page (as my-drivers.browser.spec.ts). */
+async function captureSavedFiles(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const files: Record<string, string> = {};
+    window.__savedFiles = files;
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: async (opts?: { suggestedName?: string }) => {
+        const name = opts?.suggestedName ?? 'unnamed';
+        return {
+          name,
+          createWritable: async () => ({
+            write: async (t: string) => { files[name] = t; },
+            close: async () => { /* the text is already held */ },
+          }),
+        };
+      },
+    });
+  });
+}
 
 function suite(skin: 'desktop' | 'phone') {
   const select = (page: Page) => skin === 'desktop'
@@ -25,11 +53,20 @@ function suite(skin: 'desktop' | 'phone') {
     await expect(editor).toBeVisible();
     return editor;
   };
+  /** A footer action: in the desktop footer, behind More on the phone (as the driver editor). */
+  const action = async (editor: Locator, name: string) => {
+    if (skin === 'phone') {
+      await editor.getByRole('button', {name: /More/}).click();
+      await editor.getByRole('menuitem', {name}).click();
+    } else {
+      await editor.getByRole('button', {name, exact: true}).click();
+    }
+  };
+  const tab = (editor: Locator, name: 'General' | 'Parameters') => editor.getByRole('tab', {name}).click();
   /** The project's radiator name, as its page shows it. */
-  const projectName = (page: Page) => skin === 'desktop' ? page.locator('#og-pr-name') : page.locator('#mob-pr-edit');
   const expectProjectName = async (page: Page, text: RegExp | string) => {
-    if (skin === 'desktop') await expect(projectName(page)).toHaveValue(text);
-    else await expect(projectName(page)).toContainText(text);
+    if (skin === 'desktop') await expect(page.locator('#og-pr-name')).toHaveValue(text);
+    else await expect(page.locator('#mob-pr-name-btn')).toContainText(text);
   };
 
   test.beforeEach(async ({appPage: page}) => {
@@ -52,82 +89,165 @@ function suite(skin: 'desktop' | 'phone') {
     await expectProjectName(page, new RegExp(LOADED));
   });
 
-  test('the editor holds every radiator figure and the name, with OK, Cancel and Save to My PRs, and no build choice', async ({appPage: page}) => {
+  test('the editor holds every radiator figure and the name, the driver editor\'s buttons, and no build choice', async ({appPage: page}) => {
     const editor = await openEditor(page);
-    await expect(editor.locator('#pr-editor-name')).toHaveValue(new RegExp(LOADED));
+    await expect(editor.getByRole('tab', {name: 'Parameters'})).toHaveAttribute('aria-selected', 'true');
     for (const f of FIGURES) await expect(editor.locator(`#pr-editor-${f}`)).toBeVisible();
     await expect(editor.locator('#pr-editor-fs')).not.toHaveValue('');
-    await expect(editor.getByRole('button', {name: 'OK'})).toBeEnabled();
-    await expect(editor.getByRole('button', {name: 'Cancel'})).toBeVisible();
-    await expect(editor.getByRole('button', {name: 'Save to My PRs'})).toBeEnabled();
-    await expect(editor.getByText(/Number of|Added mass|Fp/)).toHaveCount(0);
+    await expect(editor.getByText(/Number of|Added mass|Fp\b/)).toHaveCount(0);
+    await expect(editor.getByRole('checkbox', {name: 'Auto calculate unknowns'})).toBeChecked();
+    await expect(editor.getByRole('checkbox', {name: 'Inspect Provenance'})).not.toBeChecked();
+    for (const b of ['OK', 'Cancel']) await expect(editor.getByRole('button', {name: b, exact: true})).toBeVisible();
+    if (skin === 'phone') {
+      await editor.getByRole('button', {name: /More/}).click();
+      for (const m of ['Export', 'Import', 'Copy to My PRs', 'Reset']) await expect(editor.getByRole('menuitem', {name: m})).toBeVisible();
+      await editor.getByRole('button', {name: /More/}).click();
+    } else {
+      for (const b of ['Export', 'Import', 'Copy to My PRs', 'Reset']) await expect(editor.getByRole('button', {name: b, exact: true})).toBeVisible();
+    }
+    await tab(editor, 'General');
+    await expect(editor.locator('#pr-editor-name')).toHaveValue(new RegExp(LOADED));
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
   });
 
   test('OK applies the edits to the project\'s radiator', async ({appPage: page}) => {
     let editor = await openEditor(page);
-    await editor.locator('#pr-editor-name').fill('Edited radiator');
     await editor.locator('#pr-editor-xmax').fill('17');
     await editor.locator('#pr-editor-xmax').press('Tab');
-    await editor.getByRole('button', {name: 'OK'}).click();
+    await tab(editor, 'General');
+    await editor.locator('#pr-editor-name').fill('Edited radiator');
+    await editor.getByRole('button', {name: 'OK', exact: true}).click();
     await expect(editor).toHaveCount(0);
     await expectProjectName(page, 'Edited radiator');
     if (skin === 'desktop') await expect(page.locator('#og-pr-xmax')).toHaveValue(/^17/);
     editor = await openEditor(page);
     await expect(editor.locator('#pr-editor-xmax')).toHaveValue(/^17/);
-    await expect(editor.locator('#pr-editor-name')).toHaveValue('Edited radiator');
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
   });
 
-  test('Cancel discards the edits', async ({appPage: page}) => {
+  test('Cancel discards the edits, and Reset puts back what the editor opened with', async ({appPage: page}) => {
     let editor = await openEditor(page);
     const before = await editor.locator('#pr-editor-xmax').inputValue();
-    await editor.locator('#pr-editor-name').fill('Thrown away');
     await editor.locator('#pr-editor-xmax').fill('42');
     await editor.locator('#pr-editor-xmax').press('Tab');
-    await editor.getByRole('button', {name: 'Cancel'}).click();
+    await expect(editor.locator('#pr-editor-xmax')).toHaveValue(/^42/);
+    await action(editor, 'Reset');
+    await expect(editor.locator('#pr-editor-xmax')).toHaveValue(before);
+    await editor.locator('#pr-editor-xmax').fill('43');
+    await editor.locator('#pr-editor-xmax').press('Tab');
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
     await expect(editor).toHaveCount(0);
-    await expectProjectName(page, new RegExp(LOADED));
     editor = await openEditor(page);
     await expect(editor.locator('#pr-editor-xmax')).toHaveValue(before);
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
   });
 
-  test('Save to My PRs files the radiator in My passive radiators and says so; the project changes only on OK', async ({appPage: page}) => {
+  test('Copy to My PRs files the radiator in My passive radiators and says so; the project changes only on OK', async ({appPage: page}) => {
     const editor = await openEditor(page);
+    await tab(editor, 'General');
     await editor.locator('#pr-editor-name').fill('Kept in my PRs');
-    await editor.getByRole('button', {name: 'Save to My PRs'}).click();
+    await action(editor, 'Copy to My PRs');
     await expect(editor.getByRole('status')).toContainText('Kept in my PRs');
-    await editor.getByRole('button', {name: 'Cancel'}).click();
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
     await expectProjectName(page, new RegExp(LOADED));
     await select(page).click();
     await expect(page.locator('.pr-lib-item', {hasText: 'Kept in my PRs'})).toBeVisible();
+    await page.getByRole('button', {name: 'Done'}).click();
+  });
+
+  test('Export writes the radiator to a file, and Import reads it back into the editor', async ({appPage: page}) => {
+    await captureSavedFiles(page);
+    const editor = await openEditor(page);
+    await action(editor, 'Export');
+    await expect(page.locator('.flash')).toContainText(/Passive radiator exported as .*ASP190.*\.owdr/);
+    const written = await page.evaluate(() => window.__savedFiles ?? {});
+    const fileName = Object.keys(written)[0] ?? '';
+    expect(fileName).toMatch(/ASP190.*\.owdr$/);
+    await editor.locator('#pr-editor-xmax').fill('31');
+    await editor.locator('#pr-editor-xmax').press('Tab');
+    const xmax = JSON.parse(written[fileName] ?? '{}')?.['passive-radiator']?.Xmax_m;
+    expect(xmax, 'the file holds the radiator record').toBeDefined();
+    await editor.locator('#pr-editor-import').setInputFiles({name: fileName, mimeType: 'application/x-openisd-driver', buffer: Buffer.from(written[fileName] ?? '')});
+    await expect(page.locator('.flash')).toContainText(`Passive radiator imported from ${fileName}`);
+    await expect(editor.locator('#pr-editor-xmax')).not.toHaveValue(/^31/);
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
+  });
+
+  test('Auto calculate unknowns: ticked, a typed figure recalculates the others; unticked, it does not', async ({appPage: page}) => {
+    const editor = await openEditor(page);
+    const mms = editor.locator('#pr-editor-mms');
+    const cmsBefore = await editor.locator('#pr-editor-cms').inputValue();
+    await editor.getByRole('checkbox', {name: 'Auto calculate unknowns'}).uncheck();
+    await editor.locator('#pr-editor-vas').fill('54');
+    await editor.locator('#pr-editor-vas').press('Tab');
+    await expect(editor.locator('#pr-editor-cms')).toHaveValue(cmsBefore);
+    await editor.getByRole('checkbox', {name: 'Auto calculate unknowns'}).check();
+    await expect(editor.locator('#pr-editor-cms')).not.toHaveValue(cmsBefore);
+    await expect(mms).not.toHaveValue('');
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
+  });
+
+  test('Inspect Provenance says how a figure is worked out', async ({appPage: page}) => {
+    const editor = await openEditor(page);
+    await editor.getByRole('checkbox', {name: 'Inspect Provenance'}).check();
+    await editor.locator('#pr-editor-cms').click();
+    const card = editor.getByRole('region', {name: 'Provenance'});
+    await expect(card).toContainText('Cms');
+    await expect(card).toContainText(/Calculated|Entered/);
+    await expect(card).toContainText('Vas');
+    await editor.getByRole('checkbox', {name: 'Inspect Provenance'}).uncheck();
+    await expect(card).toHaveCount(0);
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
+  });
+
+  test('Info shows the radiator, affirmed as a passive radiator, read only', async ({appPage: page}) => {
+    await page.locator(skin === 'desktop' ? '#og-pr-info' : '#mob-pr-info').click();
+    const info = page.getByRole('dialog', {name: new RegExp(LOADED)});
+    await expect(info).toBeVisible();
+    await expect(info.locator('.pri-type')).toHaveText(/Type\s*Passive Radiator/);
+    await expect(info).toContainText('Vas');
+    await expect(info).toContainText('Xmax');
+    await expect(info.locator('input')).toHaveCount(0);
+    await info.getByRole('button', {name: 'Close', exact: true}).click();
+    await expect(info).toHaveCount(0);
   });
 }
 
 test.describe('desktop', () => {
   suite('desktop');
 
-  test('the Passive Radiator page keeps its figures, WinISD-like, with an Edit button beside Select', async ({appPage: page}) => {
+  test('the Passive Radiator page keeps its figures, WinISD-like, with Select, Info and Edit as the Driver page', async ({appPage: page}) => {
     await page.goto('/');
     await openAProject(page);
     await page.locator('select#og-box-type').selectOption('box-passive-radiator');
     await page.locator('.project-nav li', {hasText: 'Passive Radiator'}).click();
-    for (const id of ['#og-pr-vas', '#og-pr-qms', '#og-pr-fs', '#og-pr-mms', '#og-pr-cms', '#og-pr-rms', '#og-pr-count', '#og-pr-madd']) {
+    for (const id of ['#og-pr-vas', '#og-pr-qms', '#og-pr-fs', '#og-pr-mms', '#og-pr-cms', '#og-pr-rms', '#og-pr-count', '#og-pr-madd', '#og-pr-info', '#og-pr-edit']) {
       await expect(page.locator(id)).toBeVisible();
     }
-    await expect(page.locator('#og-pr-edit')).toBeVisible();
   });
 });
 
 test.describe('phone', () => {
   suite('phone');
 
-  test('the Box tab shows the radiator by name, without its figures; the build choices stay', async ({appPage: page}) => {
+  test('the Box tab shows the radiator by name with Select PR, Info and Edit, without its figures; the build choices stay', async ({appPage: page}) => {
     const box = page.locator('.mob-csection', {has: page.locator('#mob-pr-edit')});
-    await expect(page.locator('#mob-pr-edit')).toContainText(LOADED);
+    await expect(page.locator('#mob-pr-name-btn')).toContainText(LOADED);
     for (const label of [/^Vas/, /^Qms/, /^Sd/, /^Mms/, /^Cms/, /^Rms/, /^Xmax/]) {
       await expect(box.locator('label', {hasText: label})).toHaveCount(0);
     }
-    await expect(page.locator('#mob-pr-name')).toHaveCount(0);
+    await expect(page.locator('#mob-pr-info')).toBeVisible();
     await expect(page.locator('#mob-pr-count')).toBeVisible();
-    await expect(page.getByRole('button', {name: 'Select PR'})).toBeVisible();
+    await page.locator('#mob-pr-name-btn').click();
+    await expect(page.locator('.pr-filter')).toBeVisible();
+    await page.getByRole('button', {name: 'Done'}).click();
+  });
+
+  // John, 16 Nov 2026 12:47: "the labels on sections aren't consistent "driver" in the driver page and "user options" on the pr page, make both User options".
+  test('the Driver tab\'s choices are headed User options, as the passive radiator\'s', async ({appPage: page}) => {
+    await page.locator('.mob-tab', {hasText: 'Driver'}).click();
+    const bands = page.locator('.mob-band-title');
+    await expect(bands.filter({hasText: /^User options$/i})).toHaveCount(1);
+    await expect(bands.filter({hasText: /^Driver$/i})).toHaveCount(0);
   });
 });

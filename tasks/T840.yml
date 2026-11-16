@@ -7,6 +7,13 @@ goal: One passive-radiator editor, both skins (name, Vas, Qms, Fs, Sd, Mms, Cms,
 why: 'John, 16 Nov 2026 (QO946.c37, issue 522): the Define passive radiator button must work, like the driver editor. John, 16 Nov 2026 11:05 UTC (QO946.c115): "I want an editor for the pr, it must have the fields the current editor has, it must have a save to my prs option as well as ok and cancel, the numbers must disappear from the mobile box page but remain on the desktop as per now as that is more WinISD like, I still want the select pr popup and in the select popup to have a button to the new pr popup"'
 done_test: bash scripts/test.sh packages/ui/test/hooks/passiveRadiatorActions.test.ts
 files:
+  - packages/ui/src/ui/shells/mobile/MobileDriverTab.vue
+  - packages/ui/src/logic/fileImportExport.ts
+  - packages/design/domain/passiveRadiator/openISDPassiveRadiatorStandalone.ts
+  - packages/design/test/fields/phoneText.test.ts
+  - docs/plans/img/PLAN_20261116_PASSIVE_RADIATOR_EDITOR/**
+  - docs/plans/PLAN_20261116_PASSIVE_RADIATOR_EDITOR.md
+  - DOCUMENTATION.md
   - tasks/T840.yml
   - bugs/BUG_20261115_define-passive-radiator-button-does-nothing.md
   - packages/ui/src/hooks/MobileEnclosureTab-hooks.ts

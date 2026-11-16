@@ -12,7 +12,7 @@ import type {SaveNameField} from './saveNameField.js';
 import type {BundledPassiveRadiatorRepo, MyPassiveRadiatorRepo} from '@openisd/persistence';
 import type {RadiatorPicks} from '../logic/telemetry/radiatorPick.js';
 import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
-import {createPassiveRadiatorEditor, type RadiatorEngineAreas, resolveInAppAir} from './passiveRadiatorEditor.js';
+import {createPassiveRadiatorEditor, type PassiveRadiatorFiles, type RadiatorEngineAreas, resolveInAppAir} from './passiveRadiatorEditor.js';
 
 /** One figure in the radiator's Info view. */
 export interface PassiveRadiatorInfoFigure { readonly label: string; readonly value: string; readonly unit: string; }
@@ -33,9 +33,11 @@ export interface PassiveRadiatorActionsDeps {
   radiatorPicks: RadiatorPicks;
   /** Where the editor's calculated figures come from. */
   engine: RadiatorEngineAreas;
+  /** The editor's Export and Import. */
+  files?: PassiveRadiatorFiles;
 }
 
-export function createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks, engine }: PassiveRadiatorActionsDeps) {
+export function createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks, engine, files }: PassiveRadiatorActionsDeps) {
   const prBrowseOpen = ref(false);
   function loadPREntry(uuid: string) {
     const entry = myPassiveRadiators.list().find(e => e.uuid === uuid);
@@ -53,7 +55,7 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
   // ---- The passive-radiator editor (John, 16 Nov 2026, QO946.c115) -----------------------------------------------
   // Edits a copy of the radiator; OK puts it in the project's box as edited (nothing stated is dropped), Cancel keeps
   // nothing. The project's count, added mass and tuning are not the radiator's and are not touched (QO946.c38).
-  const prEditor = createPassiveRadiatorEditor({ myPassiveRadiators, resolve: resolveInAppAir(engine) });
+  const prEditor = createPassiveRadiatorEditor({ myPassiveRadiators, resolve: resolveInAppAir(engine), files });
   const useRadiator = (pr: OpenISDPassiveRadiatorStandalone): void => { project.value.box.passiveRadiator.holdEditedPR(pr); };
   function startEditPR(): void {
     prEditor.open(project.value.box.passiveRadiator.radiator.detach(), "Edit Project's Passive Radiator", useRadiator);

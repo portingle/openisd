@@ -91,3 +91,85 @@ describe('createPassiveRadiatorEditor', () => {
     expect(myPassiveRadiators.list()).toHaveLength(0);
   });
 });
+
+describe('createPassiveRadiatorEditor — the driver editor\'s tools (John, 16 Nov 2026 11:42, 12:46)', () => {
+  it('Reset puts back what the editor opened with', () => {
+    const {editor, source} = setUp();
+    editor.open(source, 'Edit', vi.fn());
+    editor.cells.value?.Xmax_m.set(0.05);
+    editor.setName('Changed');
+
+    editor.reset();
+
+    expect(editor.cells.value?.Xmax_m.value).toBe(0.01);
+    expect(editor.name.value).toBe('Source PR');
+  });
+
+  it('Auto calculate unknowns off: a typed figure recalculates nothing; turning it on recalculates', () => {
+    const {editor, source, resolve} = setUp();
+    editor.open(source, 'Edit', vi.fn());
+    resolve.mockClear();
+    editor.setAutoCalculate(false);
+    editor.cells.value?.Xmax_m.set(0.02);
+    expect(resolve).not.toHaveBeenCalled();
+    expect(editor.autoCalculate.value).toBe(false);
+
+    editor.setAutoCalculate(true);
+
+    expect(resolve).toHaveBeenCalledTimes(1);
+    expect(editor.autoCalculate.value).toBe(true);
+  });
+
+  it('Inspect Provenance names a figure\'s state and the formulas that give it from the radiator\'s own figures', () => {
+    const {editor, source} = setUp();
+    editor.open(source, 'Edit', vi.fn());
+    expect(editor.provenance.value).toBeNull();
+    editor.setInspect(true);
+    editor.inspectField('Cms_m_per_N');
+
+    const p = editor.provenance.value;
+    expect(p?.label).toBe('Cms');
+    expect(p?.state).toBe('Not available');
+    expect(p?.formulas.length).toBeGreaterThan(0);
+    expect(p?.formulas.join(' ')).toContain('Vas');
+    expect(p?.formulas.join(' ')).not.toContain('Qes');   // a driver-only route is not the radiator's
+
+    editor.inspectField('Xmax_m');
+    expect(editor.provenance.value?.state).toBe('Entered');
+    editor.setInspect(false);
+    expect(editor.provenance.value).toBeNull();
+  });
+
+  it('Export writes the radiator under its name and says so; Import reads a file back into the editor and says so', async () => {
+    const myPassiveRadiators = myPassiveRadiatorRepoOn(createMemoryStorage());
+    const saved: {name: string; text: string}[] = [];
+    const flash = vi.fn();
+    const editor = createPassiveRadiatorEditor({
+      myPassiveRadiators, resolve: vi.fn(),
+      files: {
+        save: async (pr, fileName) => { saved.push({name: fileName, text: pr.toOwdrText()}); return fileName; },
+        read: text => OpenISDPassiveRadiatorStandalone.fromOwdrText(text),
+        flash,
+      },
+    });
+    const source = OpenISDPassiveRadiatorStandalone.empty();
+    source.brand.set('Accuton');
+    source.model.set('ASP190');
+    source.spec.Xmax_m.set(0.012);
+    editor.open(source, 'Edit', vi.fn());
+
+    await editor.exportFile();
+
+    expect(saved.map(f => f.name)).toEqual(['Accuton ASP190.owdr']);
+    expect(flash).toHaveBeenLastCalledWith('Passive radiator exported as Accuton ASP190.owdr');
+
+    editor.cells.value?.Xmax_m.set(0.03);
+    editor.importText('Accuton ASP190.owdr', saved[0]?.text ?? '');
+    expect(editor.cells.value?.Xmax_m.value).toBe(0.012);
+    expect(flash).toHaveBeenLastCalledWith('Passive radiator imported from Accuton ASP190.owdr');
+
+    editor.importText('junk.owdr', 'not json');
+    expect(flash.mock.calls.at(-1)?.[0]).toMatch(/^Could not import junk\.owdr: /);
+    expect(editor.cells.value?.Xmax_m.value).toBe(0.012);
+  });
+});
