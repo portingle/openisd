@@ -19,3 +19,4 @@ files:
 visual:
   - mobile-tab-filters
   - mobile-dialog-phone-filter-card-body
+visual_note: "On the phone Filters tab the add-filter chips are one row that scrolls sideways with an arrow beside it, in a slightly smaller font, instead of wrapping onto three rows."
