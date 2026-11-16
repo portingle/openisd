@@ -1,10 +1,10 @@
 id: T840
-release_note: The Define new passive radiator button on the passive radiator library opens an editor, like the driver editor: OK files the new radiator in your library and the project keeps its own.
+release_note: 'A passive-radiator editor on both skins: name and the radiator''s own figures, with OK, Cancel and Save to My PRs. The Select popup''s Define new passive radiator button opens it on a blank radiator. The phone Box tab shows the radiator by name (tap to edit) instead of its figures; the desktop Passive Radiator page keeps its figures and gains an Edit button.'
 repo: openisd
 owner: prdefine-agent
-status: done
-goal: The Define new passive radiator button opens an editor on a new blank radiator (name focused); the project's radiator stays until OK, Cancel changes nothing; both skins and the wizard step
-why: John, 16 Nov 2026 (QO946.c37, issue 522): the Define passive radiator button must work, like the driver editor
+status: in_progress
+goal: One passive-radiator editor, both skins (name, Vas, Qms, Fs, Sd, Mms, Cms, Rms, Xmax; OK, Cancel, Save to My PRs). The Select popup's Define button opens it on a blank radiator; the phone Box tab shows the radiator by name (a row that opens the editor) instead of its figures; the desktop Passive Radiator page keeps its figures and gains an Edit button
+why: 'John, 16 Nov 2026 (QO946.c37, issue 522): the Define passive radiator button must work, like the driver editor. John, 16 Nov 2026 11:05 UTC (QO946.c115): "I want an editor for the pr, it must have the fields the current editor has, it must have a save to my prs option as well as ok and cancel, the numbers must disappear from the mobile box page but remain on the desktop as per now as that is more WinISD like, I still want the select pr popup and in the select popup to have a button to the new pr popup"'
 done_test: bash scripts/test.sh packages/ui/test/hooks/passiveRadiatorActions.test.ts
 files:
   - tasks/T840.yml
@@ -25,5 +25,11 @@ files:
   - packages/ui/test/ui/new-project-wizard-radiator-pick.browser.spec.ts
   - packages/ui/test/ui/new-project-wizard.browser.spec.ts
   - packages/ui/test/ui/pr-define.browser.spec.ts
+  - packages/ui/test/ui/pr-editor.browser.spec.ts
+  - packages/ui/src/hooks/passiveRadiatorEditor.ts
+  - packages/ui/test/hooks/passiveRadiatorEditor.test.ts
+  - packages/ui/src/ui/components/PREditorDialog.vue
+  - packages/ui/src/hooks/OriginalNewProject-hooks.ts
+  - packages/design/fields/desktopHelp.ts
   - scripts/ui-gallery/screens.mjs
   - packages/ui/test/fixtures/branchMap/shared.ts

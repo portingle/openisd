@@ -1,8 +1,10 @@
 /**
  * Issue 522 (John, 16 Nov 2026): "the define passive radiator button on the pr popup doesn't work at all".
  * It used to close the popup and swap a blank radiator into the project with no editor and no question.
- * Now it opens an editor on a NEW blank radiator, its name box focused; the project's radiator stays until
- * OK; OK files it in My passive radiators like a new driver (picking it is what uses it); Cancel changes nothing. Both skins and the New Project wizard's radiator step.
+ * Now it opens the passive-radiator editor on a NEW blank radiator, its name box focused; the project's radiator stays until
+ * OK; Cancel changes nothing. Both skins and the New Project wizard's radiator step.
+ * John, 16 Nov 2026 11:05 UTC (QO946.c115): the editor has OK, Cancel and Save to My PRs. OK applies the radiator to the
+ * project (it used to file it in the library only, PR 140); Save to My PRs files it in My passive radiators.
  * bugs/BUG_20261115_define-passive-radiator-button-does-nothing.md
  */
 import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
@@ -18,7 +20,11 @@ async function loadRadiator(page: Page, opener: () => Promise<void>) {
 }
 
 function suite(skin: 'desktop' | 'phone') {
-  const name = skin === 'desktop' ? '#og-pr-name' : '#mob-pr-name';
+  /** The project's radiator name: a box on the desktop page, the editor row on the phone. */
+  const expectName = async (page: Page, text: RegExp | string) => {
+    if (skin === 'desktop') await expect(page.locator('#og-pr-name')).toHaveValue(text);
+    else await expect(page.locator('#mob-pr-edit')).toContainText(text);
+  };
   const select = (page: Page) => skin === 'desktop'
     ? page.locator('.edit-btn[title^="Browse bundled"]')
     : page.getByRole('button', {name: 'Select PR'});
@@ -39,7 +45,7 @@ function suite(skin: 'desktop' | 'phone') {
       await page.locator('.project-nav li', {hasText: 'Passive Radiator'}).click();
     }
     await loadRadiator(page, () => open(page));
-    await expect(page.locator(name)).toHaveValue(new RegExp(LOADED));
+    await expectName(page, new RegExp(LOADED));
   });
 
   test('Define opens an editor on a blank radiator with its name focused; the project keeps its radiator', async ({appPage: page}) => {
@@ -47,11 +53,11 @@ function suite(skin: 'desktop' | 'phone') {
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
     await expect(editor).toBeVisible();
-    await expect(editor.locator('#pr-define-name')).toBeFocused();
-    await expect(editor.locator('#pr-define-name')).toHaveValue('');
-    await expect(editor.locator('#pr-define-fs')).toHaveValue('');
-    await expect(editor.getByRole('button', {name: 'OK'})).toBeDisabled();
-    await expect(page.locator(name)).toHaveValue(new RegExp(LOADED));
+    await expect(editor.locator('#pr-editor-name')).toBeFocused();
+    await expect(editor.locator('#pr-editor-name')).toHaveValue('');
+    await expect(editor.locator('#pr-editor-fs')).toHaveValue('');
+    await expect(editor.getByRole('button', {name: 'Save to My PRs'})).toBeDisabled();   // a radiator is filed under its name
+    await expectName(page, new RegExp(LOADED));
     await editor.getByRole('button', {name: 'Cancel'}).click();
   });
 
@@ -59,31 +65,40 @@ function suite(skin: 'desktop' | 'phone') {
     await open(page);
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
-    await editor.locator('#pr-define-name').fill('Half typed');
+    await editor.locator('#pr-editor-name').fill('Half typed');
     await editor.getByRole('button', {name: 'Cancel'}).click();
     await expect(editor).toHaveCount(0);
     await expect(page.locator('.pr-filter')).toBeVisible();
     await page.getByRole('button', {name: 'Done'}).click();
-    await expect(page.locator(name)).toHaveValue(new RegExp(LOADED));
+    await expectName(page, new RegExp(LOADED));
   });
 
-  test('OK files the new radiator in the library and leaves the project\'s radiator alone, as a new driver does', async ({appPage: page}) => {
+  test('OK makes the new radiator the project\'s, and closes the popup', async ({appPage: page}) => {
     await open(page);
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
-    await editor.locator('#pr-define-name').fill('My new PR');
-    await editor.locator('#pr-define-fs').fill('21');
-    await editor.locator('#pr-define-vas').fill('60');
-    await editor.locator('#pr-define-fs').press('Tab');
-    await expect(editor.locator('#pr-define-vas')).toHaveValue('60.00');   // a typed figure stays in its box
+    await editor.locator('#pr-editor-name').fill('My new PR');
+    await editor.locator('#pr-editor-fs').fill('21');
+    await editor.locator('#pr-editor-vas').fill('60');
+    await editor.locator('#pr-editor-fs').press('Tab');
+    await expect(editor.locator('#pr-editor-vas')).toHaveValue('60.00');   // a typed figure stays in its box
     await editor.getByRole('button', {name: 'OK'}).click();
     await expect(editor).toHaveCount(0);
-    await expect(page.locator('.pr-lib-item', {hasText: 'My new PR'})).toBeVisible();
-    await page.getByRole('button', {name: 'Done'}).click();
-    await expect(page.locator(name)).toHaveValue(new RegExp(LOADED));
+    await expect(page.locator('.pr-filter')).toHaveCount(0);
+    await expectName(page, 'My new PR');
+  });
+
+  test('Save to My PRs files the new radiator in the library; the project keeps its own until OK', async ({appPage: page}) => {
     await open(page);
-    await page.locator('.pr-lib-item .pr-lib-name', {hasText: 'My new PR'}).click();
-    await expect(page.locator(name)).toHaveValue('My new PR');
+    await page.getByRole('button', {name: /Define new passive radiator/}).click();
+    const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
+    await editor.locator('#pr-editor-name').fill('Filed PR');
+    await editor.getByRole('button', {name: 'Save to My PRs'}).click();
+    await expect(editor.getByRole('status')).toContainText('Filed PR');
+    await editor.getByRole('button', {name: 'Cancel'}).click();
+    await expect(page.locator('.pr-lib-item', {hasText: 'Filed PR'})).toBeVisible();
+    await page.getByRole('button', {name: 'Done'}).click();
+    await expectName(page, new RegExp(LOADED));
   });
 }
 
@@ -102,7 +117,7 @@ test.describe('wizard step', () => {
     await modal.locator('button', {hasText: 'Next'}).click();
   });
 
-  test('Define opens the editor; Cancel keeps the radiator chosen, OK files the new one in the library only', async ({appPage: page}) => {
+  test('Define opens the editor; Cancel keeps the radiator chosen, OK makes the new one the wizard\'s radiator', async ({appPage: page}) => {
     await page.locator('#np-pr-select').click();
     await page.locator('.pr-lib-item .pr-lib-name', {hasText: LOADED}).first().click();
     await page.locator('.overlay.open .modal-footer').getByRole('button', {name: /Back/}).click();
@@ -111,17 +126,18 @@ test.describe('wizard step', () => {
     await page.locator('#np-pr-select').click();
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
-    await expect(editor.locator('#pr-define-name')).toBeFocused();
+    await expect(editor.locator('#pr-editor-name')).toBeFocused();
     await editor.getByRole('button', {name: 'Cancel'}).click();
     await page.getByRole('button', {name: 'Done'}).click();
     await expect(page.locator('#np-pr-name')).toHaveValue(new RegExp(LOADED));
 
     await page.locator('#np-pr-select').click();
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
-    await editor.locator('#pr-define-name').fill('Wizard PR');
+    await editor.locator('#pr-editor-name').fill('Wizard PR');
+    await editor.locator('#pr-editor-xmax').fill('9');
     await editor.getByRole('button', {name: 'OK'}).click();
-    await expect(page.locator('.pr-lib-item', {hasText: 'Wizard PR'})).toBeVisible();
-    await expect(page.locator('#np-pr-name')).toHaveValue(new RegExp(LOADED));
-    await page.getByRole('button', {name: 'Done'}).click();
+    await expect(editor).toHaveCount(0);
+    await expect(page.locator('.pr-filter')).toHaveCount(0);
+    await expect(page.locator('#np-pr-name')).toHaveValue('Wizard PR');
   });
 });
