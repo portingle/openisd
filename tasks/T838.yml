@@ -65,6 +65,7 @@ files:
   - packages/design/test/engine/sweep-golden-master.test.ts
   - packages/design/test/engine/wiring-conversion.test.ts
   - packages/design/test/fields/coil-wiring-help.test.ts
+  - packages/design/test/fields/sim-vc-inductance-help.test.ts
   - packages/design/test/fields/connection-label.test.ts
   - packages/design/test/fields/desktopHelp.test.ts
   - packages/design/test/fields/field-registry.test.ts

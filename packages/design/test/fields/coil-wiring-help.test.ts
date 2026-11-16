@@ -30,7 +30,9 @@ describe('the two Coil wiring helps', () => {
     expect(project).toMatch(/the calculations use the figures for your wiring/);
     expect(project).toMatch(/Series gives Re, Le and nominal impedance ×4 and BL ×2 compared with Parallel; Fs, Q, Vas and Mms do not change/);
     expect(project).toMatch(/figures are never changed/);
-    expect(project).toMatch(/2 or more coils whose measured wiring is stated/);
+    expect(project).toMatch(/can be changed only for a driver with 2 or more coils whose measured wiring is stated/);
+    // The desktop shows it greyed for other drivers (rulings, QO942.c88-c90): the help never says it is shown only then.
+    expect(project).not.toMatch(/Shown only/);
     expect(project).not.toMatch(/when the maker measured/);
   });
 
@@ -38,6 +40,7 @@ describe('the two Coil wiring helps', () => {
     const body = (text: string) => text.slice(text.indexOf('\n') + 1);
     expect(PhoneHelpRows.COIL_WIRING.label).toBe('Coil wiring');
     expect(PhoneHelpRows.COIL_WIRING.text).toContain('how you wire this driver\'s voice coils in this project');
+    expect(PhoneHelpRows.COIL_WIRING.text).toBe(body(project).charAt(0).toLowerCase() + body(project).slice(1));
     expect(PhoneHelp.DRIVER.rows).toContain(PhoneHelpRows.COIL_WIRING);
     expect(DesktopHelp.PLACEMENT.rows.map(r => r.label)).toContain('Coil wiring');
     expect(PhoneHelp.EDITOR_MISCELLANEOUS.rows.map(r => r.text).join(' ')).toContain('how the voice coils were wired when the maker measured this driver');

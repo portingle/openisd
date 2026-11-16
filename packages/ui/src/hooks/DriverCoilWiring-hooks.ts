@@ -1,11 +1,12 @@
 /**
  * `DriverCoilWiring.vue`'s hook: the project's one wiring control, "Coil wiring" on both skins (John, QO942.c12).
- * (QO941). It reads and writes the focused project's `coilWiring`; the words and the
+ * (QO941). It reads and writes the focused project's `VCCon`; the words and the
  * conversion come from `@openisd/design`. Its default is the driver's measured wiring, which is not shown.
  *
  * - A driver with more than one coil whose measured wiring is known: enabled, on both skins.
  * - A driver that cannot be wired (one coil, or measured wiring not stated): the desktop shows it greyed, as WinISD does, and a click
- *   says why (John, QO942.c88-c91); the phone omits it ("only desktop needs to match WinISD UI").
+ *   says why (John, QO942.c88-c91): the select is disabled and a catcher over it takes the click; the phone omits it
+ *   ("only desktop needs to match WinISD UI").
  */
 import {computed, ref, watch} from 'vue';
 import type {Wiring} from '@openisd/design/engine';

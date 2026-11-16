@@ -2,8 +2,8 @@
  * "Coil wiring" (QO907, issue 512): how the user will wire a multi-coil driver's own voice coils, beside the wiring the maker
  * measured Re and BL in. It is the project's `VCCon`, named as the driver's (the setting that was always called Connection,
  * WinISD's project VCCon; John, QO942.c54 and c56): `series` or `parallel`, absent until chosen, when it follows the driver's
- * `VCCon`. The project's old `wiring` meant the wiring of several drivers; the version 5 upgrade dropped it
- * (`coilWiringAsVCCon.ts`).
+ * `VCCon`. Data version 5 renamed the project's saved `wiring` key to `VCCon`, value kept as saved (QO946.c18, c23;
+ * `coilWiringAsVCCon.ts`).
  */
 import type {Engine, Wiring} from '../../engine/index.js';
 import type {SimpleField} from '../cell.js';
