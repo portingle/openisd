@@ -57,24 +57,23 @@ describe('several drivers', () => {
     expect(back.sweep(at(20000)).values!.zmag[0] / one).toBeCloseTo(1, 6);
   });
 
-  const saved = (wiring: 'series' | 'parallel', bug?: boolean, n = 4): OpenISDProject => {
-    const text = (() => { const p = w5(); p.nDrivers.set(n); return p.toOwprText(); })()
-      .replaceAll('"driverEmbedding": {', `"driverEmbedding": {\n    "wiring": "${wiring}",`)
-      .replaceAll('"advanced": {', `"advanced": {\n    "winisdDriverCountModel": ${bug === true},`);
+  const saved = (wiring: 'series' | 'parallel'): OpenISDProject => {
+    const text = four().toOwprText().replaceAll('"driverEmbedding": {', `"driverEmbedding": {\n    "wiring": "${wiring}",`);
     const back = OpenISDProject.fromOwprText(text, engine);
     if (Array.isArray(back)) throw new Error('fromOwprText returned problems: ' + back.join(', '));
     return back;
   };
 
-  it('a project saved with several drivers wired in series or parallel is told once that its impedance chart changed', () => {
-    expect(saved('series').retiredArrayWiringNotice()).toMatch(/4 drivers were wired in series \(4 times one driver's impedance\)/);
-    expect(saved('parallel').retiredArrayWiringNotice()).toMatch(/in parallel \(one driver's impedance divided by 4\)/);
-    expect(saved('series').retiredArrayWiringNotice()).toMatch(/now shows one driver's impedance/);
+  it('the project\'s saved wiring is kept exactly as saved, and changes nothing (QO946.c23: "the project VcCon is preserved as is")', () => {
+    for (const wiring of ['series', 'parallel'] as const) {
+      const back = saved(wiring);
+      expect(back.toOwprText()).toContain(`"wiring": "${wiring}"`);
+      const one = w5().sweep(at(20000)).values!.zmag[0];
+      expect(back.sweep(at(20000)).values!.zmag[0] / one).toBeCloseTo(1, 6);
+    }
   });
 
-  it('no notice for one driver, for a project that had ticked Per-driver impedance, or for a new project', () => {
-    expect(saved('series', false, 1).retiredArrayWiringNotice()).toBeNull();
-    expect(saved('series', true).retiredArrayWiringNotice()).toBeNull();
-    expect(four().retiredArrayWiringNotice()).toBeNull();
+  it('a new project writes no wiring of its own (absent until the user sets one)', () => {
+    expect(four().toOwprText()).not.toContain('"wiring"');
   });
 });

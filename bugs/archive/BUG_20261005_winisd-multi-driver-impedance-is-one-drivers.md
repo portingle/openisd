@@ -31,5 +31,5 @@ agent's classification that John did not intend, added to the calculation-bug li
 never scales Re by the driver count (winisd_research FINDING_20261115_voice-coil-connection-and-driver-count-in-the-code).
 Now: with several drivers the impedance chart is one driver's, as WinISD's. The yellow switch "Per-driver impedance",
 its ≠W cue by Num. of drivers, the array wiring and its list entries are gone. The array's impedance is ticket
-Johnlon/openisd#519. A project saved with the old array wiring is told once that its chart changed
-(`OpenISDProject.retiredArrayWiringNotice`). Test: `packages/design/test/domain/severalDriversImpedance.test.ts`.
+Johnlon/openisd#519. A project saved with the old array wiring keeps the saved value; nothing is
+shown on loading (QO946.c23). Test: `packages/design/test/domain/severalDriversImpedance.test.ts`.

@@ -181,20 +181,6 @@ export class OpenISDProject {
         return new ProjectCoilWiring(this.#slot('driverEmbedding'), this.driver, this.#engine);
     }
 
-    /** What a project saved before QO941 is told, once, when it holds several drivers whose impedance chart
-     *  changes: the wiring of several drivers is no longer applied and the chart is one driver's, as WinISD's.
-     *  null for a project without several drivers, one saved without the old array wiring, or one that had
-     *  ticked "Per-driver impedance" (it already showed one driver's). The retired keys stay in the file,
-     *  read and ignored. */
-    retiredArrayWiringNotice(): string | null {
-        const embedding = this.#slot('driverEmbedding').value;
-        const n = this.nDrivers.value;
-        if (n < 2 || embedding.wiring === undefined) return null;
-        if (this.#slot('advanced').value.winisdDriverCountModel === true) return null;
-        const was = embedding.wiring === 'series' ? `in series (${n} times one driver's impedance)` : `in parallel (one driver's impedance divided by ${n})`;
-        return `This project's ${n} drivers were wired ${was} on the impedance chart. OpenISD no longer wires drivers together, as WinISD does not: the chart now shows one driver's impedance. Everything else is unchanged.`;
-    }
-
     /** Thermal power compression: coil temperature rise under drive, Kelvin. */
     get vcTempRise_K(): SimpleField<number> {
         return focus(this.#slot('driverEmbedding'), 'vcTempRise_K');
