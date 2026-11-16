@@ -39,3 +39,9 @@ John, 2026-11-16 (QO946.c37): "make it work like the driver editor". Define open
 
 ## Verification
 pr-define.browser.spec.ts (desktop, phone, wizard step) fails 7 of 7 on portingle/main (no editor appears), passes now.
+
+## Follow-up (16 Nov 2026, QO946.c115-c120)
+John asked for one passive-radiator editor with the driver's Select / Info / Edit workflow. Define now opens that editor
+(PREditorDialog, replacing PRDefineDialog); its OK makes the new radiator the project's (or the wizard's) and Copy to My PRs
+files it in the library. Plan: docs/plans/PLAN_20261116_PASSIVE_RADIATOR_EDITOR.md. Specs: pr-define.browser.spec.ts,
+pr-editor.browser.spec.ts.

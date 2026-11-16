@@ -37,8 +37,8 @@ useEscToClose(() => true, () => emit('close'));
 .pri-cell { display: grid; grid-template-columns: 70px 50px 40px; align-items: center; padding: 3px 0; border-bottom: 1px solid #e3e3e3; margin-right: 10px; }
 .pri-v { text-align: right; padding-right: 6px; font-size: 11px; }
 .pri-u { color: #666; }
-.pri-type { grid-template-columns: 70px auto; }
-.pri-t { font-size: 11px; }
+.pri-type { grid-column: span 2; grid-template-columns: 70px auto; }
+.pri-t { font-size: 11px; white-space: nowrap; }
 .pri-links { display: flex; gap: 10px; margin-bottom: 14px; }
 .pri-links a { color: #1565c0; }
 .pri-line { display: grid; grid-template-columns: 94px 1fr; padding: 3px 0; }
