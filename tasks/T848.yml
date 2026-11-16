@@ -12,3 +12,4 @@ files:
   - packages/ui/src/ui/readout.ts
   - packages/ui/src/ui/canvas.ts
   - packages/ui/test/logic/readout.test.ts
+  - packages/ui/test/fixtures/branchMap/shared.ts
