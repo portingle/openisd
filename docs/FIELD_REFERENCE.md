@@ -100,8 +100,8 @@ figures converted to My wiring, with My wiring as its `VCCon`. WinISD's own wiri
 stored `Re` and `BL` that leaves the result marked entered (`winisd_research` FINDING-009); OpenISD never rewrites a
 stored figure. WinISD has no wiring of several drivers (its "Voice coil connection" is the coil wiring of one driver), so
 OpenISD applies none either: with more than one driver the impedance chart is one driver's, and the array's impedance is
-ticket Johnlon/openisd#519. A project saved before 15 Nov 2026 carries the retired `wiring` and `winisdDriverCountModel`
-keys; they are read and ignored, and the project is told once. See `docs/plans/PLAN_20261115_SEVERAL_DRIVERS_REPLICATE_WINISD.md`, `docs/research/WINISD_PARITY.md` §11b and
+ticket Johnlon/openisd#519. The project's `wiring` field (its Connection setting) stays in place and is no longer applied across drivers; a
+project saved before 15 Nov 2026 that has it with several drivers is told once. The retired `winisdDriverCountModel` key is read and ignored. See `docs/plans/PLAN_20261115_SEVERAL_DRIVERS_REPLICATE_WINISD.md`, `docs/research/WINISD_PARITY.md` §11b and
 `docs/plans/PLAN_20261114_DVC_WIRING_AND_DQ.md`.
 
 ## Driver — sensitivity

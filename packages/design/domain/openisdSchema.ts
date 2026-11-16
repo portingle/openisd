@@ -921,7 +921,8 @@ const openISDDriverEmbeddingJsonSchema = z.strictObject({
     // WinISD Driver tab: "Num. of drivers".
     nDrivers: z.number(),
     // WinISD Driver tab: "Voice coil connection".
-    // Retired (QO941): the wiring of several drivers is no longer applied, as WinISD has none. Old files carry it; it is read and ignored.
+    // The project's Connection setting (WinISD's project VCCon). It stays in place (John, QO942.c54: "the project already had a connection
+    // setting"); the engine no longer applies it across several drivers (QO941). Its new meaning, the coil wiring, comes with the next change.
     wiring: z.enum(['series', 'parallel']).optional(),
     // "My wiring" (QO907): how the user wires a multi-coil driver's own voice coils. Absent means
     // the wiring the maker measured in. Deliberately NOT a schemaVersion bump (coordinator ruling,
