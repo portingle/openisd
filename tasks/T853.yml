@@ -1,0 +1,10 @@
+id: T853
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: ui-gallery passive radiator screens follow T840's Select / Info / Edit page
+why: Since T840 the screens desktop-tab-passive-radiator, desktop-pr-browser, -define, -editor and -info fail: a strict 'Save' locator and timeouts
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T853.yml
