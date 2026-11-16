@@ -86,8 +86,8 @@ amplifier (section 5.3).
 - Changing the number of drivers never changes the stored wiring (4 → 1 → 4 brings back the user's Series).
 - New component `packages/ui/src/ui/components/DriverWiring.vue` with hooks `DriverWiring-hooks.ts`, built like
   `DriverCoilWiring.vue` / `DriverCoilWiring-hooks.ts`, used by both skins.
-- Not in the New Project wizards: a new project with 2+ drivers starts Parallel and is changed on the Driver tab
-  (open question Q2).
+- Not in the New Project wizards (decided, QO946.c142-c143): a new project with 2+ drivers starts Parallel and is
+  changed on the Driver tab.
 
 ### 3.2 The "Impedance of one driver" switch
 
@@ -112,7 +112,7 @@ this feature).
   `P = N·V²/(Re+Rg)`; in Series `P = N·(V/N)²/(Re+Rg_each)`.
 - The "Impedance of one driver" switch does not touch the Signal tab.
 - Desktop label of the voltage field: WinISD's "Driver input voltage (each)" is wrong in Series. Proposed: "Amplifier
-  voltage" with 2+ drivers, WinISD's label at 1 driver (Q1). Power label "System input power" unchanged.
+  voltage" when Driver wiring is in use (2+ drivers), "Voltage at each driver" otherwise (Q1). Power label "System input power" unchanged.
 - Phone label "Volts" unchanged. Its help today says "the amplifier output voltage"
   (`packages/design/fields/phoneText.ts:154`); that becomes true with 2+ drivers in either wiring (Q1 covers the
   wording).
@@ -197,17 +197,16 @@ Approved by John on the ticket; copied exactly:
 > excursion for a given amplifier voltage, and how Rg acts. Not the same as Coil wiring, which connects the voice coils
 > inside one driver.
 
-`ToggleField.ADV_WINISDONEDRIVERIMPEDANCE`, label "Impedance of one driver". **Proposed, for John's approval (Q3):**
+`ToggleField.ADV_WINISDONEDRIVERIMPEDANCE`, label "Impedance of one driver". Approved by John (QO946.c142-c143);
+copied exactly:
 
-> Impedance of one driver: changes the Impedance chart only.
-> Ticked (as WinISD): the chart shows the impedance of one driver, whatever the number of drivers.
-> Unticked (default): the chart shows the load your amplifier really sees: the drivers' total impedance as they are
-> wired (Driver wiring), for example 4 × 8 Ω in parallel is 2 Ω.
-> The amplifier always sees the total load; this switch only changes what the chart shows. SPL, excursion and every
-> other chart follow Driver wiring either way.
+> Impedance of one driver: WinISD works out the sound as if the drivers were wired in parallel (each gets the full
+> voltage), but its impedance chart shows only ONE driver, not the load the amplifier really sees with them in parallel
+> (4 × 8 Ω is 2 Ω). So the two do not match. OpenISD shows the load for the wiring you chose under Driver wiring. Tick
+> this to see one driver's impedance as WinISD does; the sound and every other chart stay the same.
 
 The help-text test compares both strings character for character with the registry once approved. A phone short line,
-if needed, goes to John with Q3.
+if needed, goes to John for approval.
 
 ### 4.5 `.owpr`, `.wpr`
 
@@ -378,17 +377,17 @@ The absolute SPL values hang on the air model; goldens assert them to 0.05 dB an
   N positions as the box models them.
 - A low-load warning (for example 0.25 Ω in section 6), an "amplifier voltage needed" readout, an amplifier power or
   current limit.
-- Asking Driver wiring in the New Project wizards (unless John says otherwise, Q2).
+- Asking Driver wiring in the New Project wizards (QO946.c142-c143).
 - Any change to how one driver is simulated, or to Coil wiring.
 
 ## 10. Open questions for John
 
-- **Q1. Signal-tab wording.** Proposed: desktop voltage label "Amplifier voltage" with 2+ drivers (WinISD's "Driver
-  input voltage (each)" is wrong in Series), WinISD's label at 1 driver. Phone "Volts" help stays "the amplifier output
-  voltage. Power and Volts set each other." Yes, or other words?
-- **Q2. New Project wizard.** Leave Driver wiring out of the wizards (new projects start Parallel; change it on the
-  Driver tab)? Recommended: yes, leave it out.
-- **Q3. Help text of "Impedance of one driver"** (section 4.4). Approve, or other words?
+- **Q1. Signal-tab wording (open).** Proposed: desktop voltage label "Amplifier voltage" when Driver wiring is in use
+  (2+ drivers), "Voltage at each driver" otherwise. Phone "Volts" help stays "the amplifier output voltage. Power and
+  Volts set each other." Yes, or other words?
+
+Decided (QO946.c142-c143): Driver wiring stays out of the New Project wizards (was Q2); the help text of "Impedance of
+one driver" is John's, section 4.4 (was Q3).
 
 ## 11. Order of work (small PRs, each tested first; after PR 138 and PR 137 are merged)
 
@@ -401,7 +400,7 @@ The absolute SPL values hang on the air model; goldens assert them to 0.05 dB an
    it. This repo's `CLAUDE.md` says a new project has "every option ticked"; the same PR adds an allowance line there
    for this switch (QO946.c131), without removing the rule.
 3. **Feature on.** Pass both fields into `sweepParamsOf` and the signal solve; remove the engine's absent-field path;
-   Driver tab control and Advanced switch on both skins; signal label (after Q1); help texts (after Q3). Regenerated
+   Driver tab control and Advanced switch on both skins; signal label (after Q1); help texts of section 4.4. Regenerated
    goldens differ only in multi-driver `zmag` (proof in the PR). Browser specs and pictures. Held for John's pictures.
 4. **Docs.** `FEATURES.md`, the WinISD differences list (`OPENISD_WINISD_GAPS_AND_BUGS.md`,
    `packages/design/fields/winisdDeviation.ts`), `docs/FIELD_REFERENCE.md`, `docs/research/WINISD_PARITY.md`; close
