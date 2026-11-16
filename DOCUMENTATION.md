@@ -78,7 +78,7 @@ Plans are in [docs/plans/](docs/plans/). Finished or superseded plans are delete
 | [PLAN_20261010_HIGH_FIDELITY_EXTRACTION.md](docs/plans/PLAN_20261010_HIGH_FIDELITY_EXTRACTION.md) | High-fidelity driver extraction and a strict transfer file |
 | [PLAN_MULTI_BOX.md](docs/plans/PLAN_MULTI_BOX.md) | A project holds a collection of boxes |
 | [PLAN_20261115_DRIVER_SEARCH.md](docs/plans/PLAN_20261115_DRIVER_SEARCH.md) | Driver library search: size, sort, brand, impedance, enclosure (#516) |
-| [PLAN_20261116_DRIVER_WIRING.md](docs/plans/PLAN_20261116_DRIVER_WIRING.md) | Driver wiring: several drivers wired to the amplifier in parallel or series (#519) |
+| [PLAN_20261116_DRIVER_WIRING.md](docs/plans/PLAN_20261116_DRIVER_WIRING.md) | Driver wiring: several drivers wired to the amplifier in parallel or series (#519); decided, build after the current release |
 | [PLAN_20261009_APP_WORK.md](docs/plans/PLAN_20261009_APP_WORK.md) | Outstanding app work |
 | [PLAN_20261009_CONSOLIDATED.md](docs/plans/PLAN_20261009_CONSOLIDATED.md) | Consolidated plan for all agents |
 

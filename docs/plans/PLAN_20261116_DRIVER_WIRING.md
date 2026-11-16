@@ -4,6 +4,9 @@ Written 16 Nov 2026 for John, who asked (16 Nov, 12:53 UTC): "ok what is a good 
 functioning and data design for it". Revised the same day to John's decisions of 13:04-13:05 UTC (QO946.c129-c131).
 This is a design only. No product code is in this branch.
 
+**Status: DECIDED** (all three questions answered by John, QO946.c142-c143 and c153, 16 Nov 2026). Building starts
+after the current release.
+
 Decisions this plan is bound by are cited by their `questions.yml` id (thread QO946) or the ticket comment
 (Johnlon/openisd#519). Code is cited as `file:line` on **PR 137's head (`portingle/t838`, stacked on PR 138)**, because
 the feature is built on top of both: PR 138 makes several drivers behave exactly as WinISD, PR 137 renames the
@@ -111,8 +114,8 @@ this feature).
 - The power is the power the amplifier delivers into the drivers (and Rg). In Parallel this is WinISD's
   `P = N·V²/(Re+Rg)`; in Series `P = N·(V/N)²/(Re+Rg_each)`.
 - The "Impedance of one driver" switch does not touch the Signal tab.
-- Desktop label of the voltage field: WinISD's "Driver input voltage (each)" is wrong in Series. Proposed: "Amplifier
-  voltage" when Driver wiring is in use (2+ drivers), "Voltage at each driver" otherwise (Q1). Power label "System input power" unchanged.
+- Voltage field label: today's label is kept (John, QO946.c153). Its help text says plainly that it is "the voltage
+  at your amplifier's output", which is true for Parallel and Series (and for one driver). Power label "System input power" unchanged.
 - Phone label "Volts" unchanged. Its help today says "the amplifier output voltage"
   (`packages/design/fields/phoneText.ts:154`); that becomes true with 2+ drivers in either wiring (Q1 covers the
   wording).
@@ -363,7 +366,7 @@ The absolute SPL values hang on the air model; goldens assert them to 0.05 dB an
   −20·log10(N); saved and reloaded.
 - Switch ticked: the impedance chart shows one driver's values, the SPL chart does not move, Driver wiring stays
   editable; switch greyed at 1 driver.
-- Signal tab voltage label follows the driver count (desktop, after Q1).
+- Signal tab voltage help text says "the voltage at your amplifier's output" on both skins.
 - Layout gate and stable-columns specs pass with the new row shown and hidden.
 - Pictures: desktop and phone Driver tab at 4 drivers (Parallel, Series), Advanced tab with the new switch, impedance
   chart unticked and ticked. Looked at by the lead before review, then shown to John.
@@ -380,16 +383,14 @@ The absolute SPL values hang on the air model; goldens assert them to 0.05 dB an
 - Asking Driver wiring in the New Project wizards (QO946.c142-c143).
 - Any change to how one driver is simulated, or to Coil wiring.
 
-## 10. Open questions for John
+## 10. Questions for John: all decided
 
-- **Q1. Signal-tab wording (open).** Proposed: desktop voltage label "Amplifier voltage" when Driver wiring is in use
-  (2+ drivers), "Voltage at each driver" otherwise. Phone "Volts" help stays "the amplifier output voltage. Power and
-  Volts set each other." Yes, or other words?
+- **Q1. Signal-tab wording** (QO946.c153): keep today's voltage label; its help text says plainly that it is "the
+  voltage at your amplifier's output" (true for Parallel and Series).
+- **Q2. New Project wizard** (QO946.c142-c143): Driver wiring stays out of the wizards.
+- **Q3. Help text of "Impedance of one driver"** (QO946.c142-c143): John's text, section 4.4.
 
-Decided (QO946.c142-c143): Driver wiring stays out of the New Project wizards (was Q2); the help text of "Impedance of
-one driver" is John's, section 4.4 (was Q3).
-
-## 11. Order of work (small PRs, each tested first; after PR 138 and PR 137 are merged)
+## 11. Order of work (after the current release; small PRs, each tested first; PR 138 and PR 137 merged first)
 
 1. **Engine, inert.** `engine/array/driverWiring.ts`, `SweepParams` fields, sweep / maxCurves / signal use
    `driverDrive`; absent `driverWiring` = today's path, so every existing golden is unchanged. Unit tests, engine
@@ -400,7 +401,7 @@ one driver" is John's, section 4.4 (was Q3).
    it. This repo's `CLAUDE.md` says a new project has "every option ticked"; the same PR adds an allowance line there
    for this switch (QO946.c131), without removing the rule.
 3. **Feature on.** Pass both fields into `sweepParamsOf` and the signal solve; remove the engine's absent-field path;
-   Driver tab control and Advanced switch on both skins; signal label (after Q1); help texts of section 4.4. Regenerated
+   Driver tab control and Advanced switch on both skins; voltage help text (Q1); help texts of section 4.4. Regenerated
    goldens differ only in multi-driver `zmag` (proof in the PR). Browser specs and pictures. Held for John's pictures.
 4. **Docs.** `FEATURES.md`, the WinISD differences list (`OPENISD_WINISD_GAPS_AND_BUGS.md`,
    `packages/design/fields/winisdDeviation.ts`), `docs/FIELD_REFERENCE.md`, `docs/research/WINISD_PARITY.md`; close
