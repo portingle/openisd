@@ -49,3 +49,5 @@ files:
   - packages/design/fields/desktopHelp.ts
   - packages/ui/test/hooks/OriginalNewProject-hooks.test.ts
   - scripts/*.ts
+  - scripts/ui-gallery/screens.mjs
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/*.png
