@@ -1,5 +1,5 @@
 id: T840
-release_note: 'The passive radiator now has Select, Info and Edit, as the driver: Info shows its figures and says it is a passive radiator; Edit opens one editor on both skins (name and figures, Auto calculate unknowns, Inspect Provenance, OK, Cancel, Reset, Export, Import, Copy to My PRs), and Define new passive radiator opens the same editor. The phone Box tab shows the radiator by name with its Key figures (Fpr, Mms, Sd, Xmax, Vd) and a 2× rule line; the desktop page keeps its figures. The phone Driver tab section is headed User options. Plan: docs/plans/PLAN_20261116_PASSIVE_RADIATOR_EDITOR.md.'
+release_note: 'The passive radiator now has Select, Info and Edit, as the driver: Info shows its figures and says it is a passive radiator; Edit opens one editor on both skins (name and figures, Auto calculate unknowns, Inspect Provenance, OK, Cancel, Reset, Export, Import, Copy to My PRs), and Define new passive radiator opens the same editor. The phone Box tab shows the radiator by name with its Key figures (Fpr, Mms, Sd, Xmax, Vd) and a 2× rule line; the desktop page keeps its figures. The phone Driver tab section is headed User options.'
 repo: openisd
 owner: prdefine-agent
 status: done
@@ -54,6 +54,7 @@ files:
   - scripts/*.ts
   - scripts/ui-gallery/screens.mjs
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/*.png
+visual_note: 'The passive radiator gets Select, Info and Edit like the driver, with one editor on both skins; the old Save to library dialog is gone (Copy to My PRs in the editor replaces it).'
 visual:
   - desktop-dialog-enclosure-passive-radiator-data-quality
   - desktop-dialog-enclosure-passive-radiator-edit
@@ -62,4 +63,5 @@ visual:
   - mobile-dialog-pr-edit
   - mobile-dialog-pr-info
   - mobile-dialog-pr-picker
+  - mobile-dialog-pr-save
   - mobile-tab-driver
