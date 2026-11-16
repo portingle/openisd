@@ -25,3 +25,5 @@ files:
   - packages/ui/test/ui/new-project-wizard-radiator-pick.browser.spec.ts
   - packages/ui/test/ui/new-project-wizard.browser.spec.ts
   - packages/ui/test/ui/pr-define.browser.spec.ts
+  - scripts/ui-gallery/screens.mjs
+  - packages/ui/test/fixtures/branchMap/shared.ts
