@@ -166,15 +166,15 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-storage-restore-picker.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-your-data.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-storage-restore-picker.png
+  - packages/ui/src/hooks/phoneLabelColumn.ts
+  - packages/ui/src/ui/shells/mobile/PhoneClassicPage.vue
+  - packages/ui/test/ui/phone-driver-tab-stable-columns.browser.spec.ts
+  - packages/ui/test/visual/screens.ts
 visual_note: The desktop and phone Driver tabs no longer have a box that wires several drivers, and the Advanced tab no longer has Per-driver impedance; the phone Driver tab's boxes are a little wider. Every desktop screen shows the project size a tenth of a kilobyte smaller.
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-your-data.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-storage-restore-picker.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-your-data.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-storage-restore-picker.png
-  - packages/ui/src/hooks/phoneLabelColumn.ts
-  - packages/ui/src/ui/shells/mobile/PhoneClassicPage.vue
-  - packages/ui/test/ui/phone-driver-tab-stable-columns.browser.spec.ts
-  - packages/ui/test/visual/screens.ts
 visual:
   - desktop-box-abc
   - desktop-box-bandpass4
