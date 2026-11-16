@@ -14,6 +14,8 @@ export class DesktopLabels {
   static readonly VENT_COUNT = 'Number of ports';
   static readonly VENT_END_CORRECTION = 'End Correction';
   static readonly SELECT_PASSIVE_RADIATOR = 'Select passive radiator';
+  /** The Passive Radiator page's Edit, drawn as the Driver page's (✎ Edit). */
+  static readonly EDIT_PASSIVE_RADIATOR = '✎ Edit';
 
   /** The word on the port shape button for a shape. */
   static ventShapeWord(shape: VentShape): string {
@@ -102,7 +104,7 @@ export class DesktopHelp {
   static readonly PASSIVE_RADIATOR = new PhoneHelpSection(PhoneHelp.PASSIVE_RADIATOR.title, PhoneHelp.PASSIVE_RADIATOR.intro, [
     captioned(PhoneHelpRows.SELECT_PR, DesktopLabels.SELECT_PASSIVE_RADIATOR),
     PhoneHelpRows.PR_INFO,
-    PhoneHelpRows.PR_EDIT,
+    captioned(PhoneHelpRows.PR_EDIT, DesktopLabels.EDIT_PASSIVE_RADIATOR),
     captioned(PhoneHelpRows.PR_FS, NumberField.PR_FS_HZ.label),
     captioned(PhoneHelpRows.PR_QMS, NumberField.PR_QMS.label),
     captioned(PhoneHelpRows.PR_VAS, NumberField.PR_VAS_L.label),

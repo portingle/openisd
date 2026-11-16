@@ -507,7 +507,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
               <div class="field tight entered" :title="TextField.PR_NAME.description"><label>{{ TextField.PR_NAME.label }}</label><input id="og-pr-name" type="text" style="width:330px" :value="project.box.passiveRadiator.radiator.model.value" @input="e => project.box.passiveRadiator.radiator.model.set(inputValue(e))"></div>
               <button class="edit-btn" title="Browse bundled + saved passive radiators — click one to load it into this project." @click="prBrowseOpen = true">{{ DesktopLabels.SELECT_PASSIVE_RADIATOR }}</button>
               <button type="button" class="edit-btn" id="og-pr-info" title="View information about this project’s passive radiator" @click="openPRInfo">Info</button>
-              <button id="og-pr-edit" type="button" class="edit-btn" title="Full editor for this passive radiator in the current project." @click="startEditPR">&#9998; Edit</button>
+              <button id="og-pr-edit" type="button" class="edit-btn" title="Full editor for this passive radiator in the current project." @click="startEditPR">{{ DesktopLabels.EDIT_PASSIVE_RADIATOR }}</button>
             </div>
             <div class="two-col pr-controls" style="gap:10px;">
               <div>
