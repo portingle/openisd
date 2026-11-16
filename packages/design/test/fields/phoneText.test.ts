@@ -104,17 +104,11 @@ describe('phone text', () => {
     expect(PhoneEditorText.valueBadge('no_such_key', 1)).toBe('no_such_key');
   });
 
-<<<<<<< HEAD
   // John, 16 Nov 2026 12:47: "the labels on sections aren't consistent "driver" in the driver page and "user options" on the pr page, make both User options".
-  it('the Driver tab has one User options band over the driver count and wiring, as the passive radiator\'s; its help names all four rows, and Key figures says tap to edit', () => {
+  it('the Driver tab has one User options band over the driver count, as the passive radiator\'s; its help names all three rows (no Connection row: several drivers are not wired, QO941), and Key figures says tap to edit', () => {
     expect(PhoneHelp.DRIVER.title).toBe('User options');
     expect(PhoneHelp.DRIVER.title).toBe(PhoneHelp.USER_OPTIONS.title);
-    expect(PhoneHelp.DRIVER.rows.map(r => r.label)).toEqual(['Select driver', 'Edit', 'Drivers', 'Connection']);
-=======
-  it('the Driver tab has one Driver band over the driver count, its help names all three rows (no Connection row: several drivers are not wired, QO941), and Key figures says tap to edit', () => {
-    expect(PhoneHelp.DRIVER.title).toBe('Driver');
     expect(PhoneHelp.DRIVER.rows.map(r => r.label)).toEqual(['Select driver', 'Edit', 'Drivers']);
->>>>>>> portingle/main
     expect(PhoneHelp.KEY_FIGURES.intro).toContain('Tap one to edit the driver.');
   });
 
