@@ -4,7 +4,7 @@ repo: openisd
 owner: leader
 status: done
 goal: Discontinued drivers and passive radiators are in the bundled catalogue again, each with its discontinued flag kept on its index row
-why: John, 2026-11-16: we can't take away drivers for no good reasons (T717 removed 101 discontinued drivers without a recorded ruling)
+why: "John, 16 Nov 2026: we can't take away drivers for no good reasons (T717 removed 101 discontinued drivers without a recorded ruling)"
 done_test: bash scripts/test.sh packages/ui/test/scripts/discontinued-flag.test.ts
 files:
   - tasks/T843.yml
