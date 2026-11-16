@@ -55,6 +55,9 @@ interface UiState {
   /** The splash has been shown and dismissed once — it opens itself only for a visitor whose
    *  stored view carries nothing (`SplashModal-hooks.ts`). */
   splashSeen?: boolean;
+  /** Ids of the projects already told that their impedance chart changed when the wiring of several drivers
+   *  went (QO941, `retiredArrayWiringNotice`): each is told once. */
+  arrayWiringNoticed?: string[];
   /** Manual, persisted skin choice from the Info menu. Absent means "follow the viewport" —
    *  `App.vue`'s `activeSkin` falls back to `narrowViewport` below. */
   skinOverride?: SkinChoice;

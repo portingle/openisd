@@ -1,8 +1,9 @@
 /**
- * "Coil wiring" (QO907, issue 512): how the user will wire a multi-coil driver's own voice coils,
- * beside the wiring the maker measured Re and BL in. A project setting, `series` or `parallel`,
- * absent until chosen, when it follows the measured wiring. It is not the project's `wiring`,
- * which joins several drivers.
+ * "Coil wiring" (QO907, issue 512): how the user will wire a multi-coil driver's own voice coils, beside the wiring the maker
+ * measured Re and BL in. It is the project's `wiring` field, the setting that was always called Connection (WinISD's project
+ * VCCon; John, QO942.c54: "the project already had a connection setting"): `series` or `parallel`, absent until chosen, when
+ * it follows the measured wiring. Before data version 5 `wiring` meant the wiring of several drivers; the version 5 upgrade
+ * dropped that value (`coilWiringAsWiring.ts`).
  */
 import type {Engine, Wiring} from '../../engine/index.js';
 import type {SimpleField} from '../cell.js';
@@ -71,7 +72,7 @@ export class ProjectCoilWiring {
     /** The wiring in force: the user's choice, else the measured one; null when it cannot be chosen. */
     get mine(): Wiring | null {
         if (!this.canChoose) return null;
-        return this.#embedding.value.coilWiring ?? this.measured;
+        return this.#embedding.value.wiring ?? this.measured;
     }
 
     get options(): readonly CoilWiringOption[] {
@@ -138,13 +139,13 @@ export class ProjectCoilWiring {
 
     /** Back to following the measured wiring. */
     clear(): void {
-        if (this.#embedding.value.coilWiring === undefined) return;
+        if (this.#embedding.value.wiring === undefined) return;
         this.#write(undefined);
     }
 
     #write(wiring: Wiring | undefined): void {
-        const {coilWiring: _was, ...rest} = this.#embedding.value;
-        this.#embedding.set(wiring === undefined ? rest : {...rest, coilWiring: wiring});
+        const {wiring: _was, ...rest} = this.#embedding.value;
+        this.#embedding.set(wiring === undefined ? rest : {...rest, wiring});
     }
 }
 

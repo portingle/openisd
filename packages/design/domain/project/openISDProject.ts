@@ -109,7 +109,7 @@ export class OpenISDProject {
             () => this.#airOver(root),
             () => this.#issues.driver,
             () => this.#appContext.newId(),
-            () => root.value.driverEmbedding.coilWiring,
+            () => root.value.driverEmbedding.wiring,
         );
     }
 
@@ -181,8 +181,16 @@ export class OpenISDProject {
         return new ProjectCoilWiring(this.#slot('driverEmbedding'), this.driver, this.#engine);
     }
 
-    get wiring(): SimpleField<'series' | 'parallel'> {
-        return focus(this.#slot('driverEmbedding'), 'wiring');
+    /** What a project saved before data version 5 is told, once, when it holds several drivers whose impedance chart changes: the
+     *  wiring of several drivers is no longer applied and the chart is one driver's, as WinISD's (QO941). The old value is the
+     *  upgrade's `retiredArrayWiring`, kept only for a project with more than one driver that had not ticked "Per-driver
+     *  impedance"; null for every other project. */
+    retiredArrayWiringNotice(): string | null {
+        const was = this.#slot('driverEmbedding').value.retiredArrayWiring;
+        const n = this.nDrivers.value;
+        if (was === undefined || n < 2) return null;
+        const wired = was === 'series' ? `in series (${n} times one driver's impedance)` : `in parallel (one driver's impedance divided by ${n})`;
+        return `This project's ${n} drivers were wired ${wired} on the impedance chart. OpenISD no longer wires drivers together, as WinISD does not: the chart now shows one driver's impedance. Everything else is unchanged.`;
     }
 
     /** Thermal power compression: coil temperature rise under drive, Kelvin. */
@@ -326,11 +334,6 @@ export class OpenISDProject {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdWrapPhase;
     }
 
-    /** WinISD Compatibility "Per-driver impedance" — see `ProjectAdvanced.winisdDriverCountModel`. */
-    get winisdDriverCountModel(): SimpleField<boolean> {
-        return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdDriverCountModel;
-    }
-
     /** WinISD Compatibility "Sealed picker volume" — see `ProjectAdvanced.winisdSealedPicker`. */
     get winisdSealedPicker(): SimpleField<boolean> {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdSealedPicker;
@@ -375,7 +378,6 @@ export class OpenISDProject {
             winisdVaModel: this.winisdVaModel.value,
             winisdPrNprResonance: this.winisdPrNprResonance.value,
             winisdBesselHighpass: this.winisdBesselHighpass.value,
-            winisdDriverCountModel: this.winisdDriverCountModel.value,
             nDrivers: this.nDrivers.value,
             nPassiveRadiators: this.box.passiveRadiator.count.value,
             hasBesselHighpass: this.filters.value.some(f => f.type === 'highpass' && f.family === 'bessel' && f.enabled),
@@ -813,13 +815,11 @@ export class OpenISDProject {
             driver: this.driver,
             box: this.box,
             nDrivers: this.nDrivers,
-            wiring: this.wiring,
             Rs_ohm: this.Rs_ohm,
             circuitModel: this.circuitModel,
             winisdDriverModel: this.winisdDriverModel,
             winisdVaModel: this.winisdVaModel,
             winisdWrapPhase: this.winisdWrapPhase,
-            winisdDriverCountModel: this.winisdDriverCountModel,
             winisdFlatModel: this.winisdFlatModel,
             winisdAbcIntraPortVelocity: this.winisdAbcIntraPortVelocity,
             winisdPrNprResonance: this.winisdPrNprResonance,

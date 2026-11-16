@@ -10,8 +10,8 @@
  * one door. Nothing is copied or stored ("it's not a copy it's just a calc").
  *
  * This gate: in non-test sources, `convertWiring` is named only where it is defined, listed on the driver area, called by
- * `terminalMotor()` and called by the "can it be rewired" probe in `projectCoilWiring.ts`; (the several-drivers PR, T837, adds: the simulation engine and
- * the circuit hold no wiring arithmetic at all; until it merges they still hold the array wiring).
+ * `terminalMotor()` and called by the "can it be rewired" probe in `projectCoilWiring.ts`; and the simulation engine
+ * and the circuit hold no wiring arithmetic at all.
  */
 import {describe, it} from 'vitest';
 import assert from 'node:assert/strict';
@@ -58,5 +58,11 @@ describe('coil-wiring arithmetic', () => {
     const COIL_FACTOR = /numVC\s*\*\s*numVC|numVC\s*\*\*\s*2|Math\.pow\(\s*numVC|[\w)\]]\s*\/\s*numVC\b|[\w)\]]\s*\*\s*numVC\b/;
     const stray = SOURCES.filter(s => s.file !== 'design/engine/solvers/driverQuantities.ts' && !PER_COIL_TO_PUBLISHED.has(s.file) && COIL_FACTOR.test(s.text)).map(s => s.file);
     assert.deepEqual(stray, [], `coil-wiring arithmetic outside convertWiring: ${stray.join(', ')}`);
+  });
+
+  it('the simulation engine and the circuit hold no wiring arithmetic: no series or parallel branch, no conversion, no terminal motor', () => {
+    const WIRING_ARITHMETIC = /['"](?:series|parallel)['"]|convertWiring|terminalMotor|\bwiring\s*===|\bseries\b\s*\?/;
+    const stray = SOURCES.filter(s => /^design\/engine\/(simulation\/|circuit\.ts)/.test(s.file) && WIRING_ARITHMETIC.test(s.text)).map(s => s.file);
+    assert.deepEqual(stray, [], `wiring arithmetic in the engine's simulation: ${stray.join(', ')}`);
   });
 });

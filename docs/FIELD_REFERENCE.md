@@ -86,8 +86,11 @@ stored as the maker published them, for the wiring the maker measured in. `VCCon
 the Driver editor shows it as calculated, and the Driver tab does not show the measured wiring at all, QO941), or not stated. The Thiele/Small relations and the consistency checks run on the stored figures and
 never read `VCCon`.
 
-The project carries **Coil wiring** (`driverEmbedding.coilWiring`, `series` or `parallel`): how the user will wire the
-coils. Absent means the measured wiring, so a project saved before it existed behaves as measured. Only the amplifier
+The project carries **Coil wiring**, its `driverEmbedding.wiring` field (the setting that was always called Connection,
+WinISD's project VCCon; `series` or `parallel`): how the user will wire the coils. Absent means the measured wiring, so a
+project that never chose behaves as measured. Before data version 5 `wiring` held the wiring of several drivers; the
+version 5 upgrade drops that value, so a series-measured driver is never silently rewired to parallel, and takes the
+Test-site `coilWiring` into `wiring`. Only the amplifier
 side reads it: impedance, SPL and excursion against voltage, power, and Rg loading use the figures converted from the
 measured wiring to Coil wiring, for N identical coils. Series to parallel: `Re` and `Le` and `Znom` divided by N², `BL`
 divided by N; parallel to series the inverse. (WinISD converts `Re` and `BL` only; a yellow switch for that is awaiting John, QO942.c22.) `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
@@ -99,9 +102,11 @@ WinISD). Any number of coils above one converts, as WinISD does. It is labelled 
 Files: the driver `.wdr` and `.owdr` carry the stored figures with the measured wiring. A `.wpr` project carries the
 figures converted to Coil wiring, with Coil wiring as its `VCCon`. WinISD's own wiring combo is a one-shot rewrite of the
 stored `Re` and `BL` that leaves the result marked entered (`winisd_research` FINDING-009); OpenISD never rewrites a
-stored figure. The project's "Voice coil connection" control is a different thing: how several drivers (Num. of
-drivers) are joined to the amplifier, as in WinISD. See `docs/research/WINISD_PARITY.md` §11b and
-`docs/plans/PLAN_20261114_DVC_WIRING_AND_DQ.md`. That sentence is wrong about WinISD (it has no wiring of several drivers); the correction and the migration are in `docs/plans/PLAN_20261115_COIL_WIRING_REPLICATES_WINISD.md`.
+stored figure. WinISD has no wiring of several drivers (its "Voice coil connection" is the coil wiring of one driver), so
+OpenISD applies none either: with more than one driver the impedance chart is one driver's, and the array's impedance is
+ticket Johnlon/openisd#519. A project upgraded from before data version 5 that had several drivers (and had not ticked Per-driver impedance) keeps the
+dropped wiring of its drivers as `retiredArrayWiring`, never applied, and is told once. The retired `winisdDriverCountModel` key is read and ignored. See `docs/plans/PLAN_20261115_SEVERAL_DRIVERS_REPLICATE_WINISD.md`, `docs/research/WINISD_PARITY.md` §11b and
+`docs/plans/PLAN_20261114_DVC_WIRING_AND_DQ.md`.
 
 ## Driver — sensitivity
 

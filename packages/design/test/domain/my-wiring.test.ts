@@ -65,7 +65,7 @@ describe('Coil wiring: the default is the measured wiring', () => {
 
   it('saves no coil-wiring key until the user chooses one (a project saved before this loads as measured)', () => {
     const project = projectOf(MX6_22);
-    expect(project.toOwprText()).not.toContain('coilWiring');
+    expect(project.toOwprText()).not.toContain('"wiring"');
   });
 });
 

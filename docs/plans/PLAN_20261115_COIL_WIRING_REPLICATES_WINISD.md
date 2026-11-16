@@ -48,7 +48,7 @@ WinISD research files live in `winisd_research` (written `R/` below).
 
 1. **The driver keeps the maker's wiring as data.** `VCCon` is series, parallel or unknown. Re, BL, Le and Znom are stored as published.
    `docs/FIELD_REFERENCE.md` l.83-100, `packages/design/domain/driver/openIsdDriverSpec.ts` (`terminalMotor`, `solverParams`).
-2. **"Coil wiring" converts.** Project field `driverEmbedding.coilWiring` (`packages/design/domain/openisdSchema.ts`, optional, absent means the measured wiring). `packages/design/domain/project/projectCoilWiring.ts` holds the choice and the words. The conversion is `convertWiring` (series to parallel: Re, Le, Znom divided by N squared, BL divided by N).
+2. **"Coil wiring" converts.** Project field `driverEmbedding.wiring` (`packages/design/domain/openisdSchema.ts`, optional, absent means the measured wiring). `packages/design/domain/project/projectCoilWiring.ts` holds the choice and the words. The conversion is `convertWiring` (series to parallel: Re, Le, Znom divided by N squared, BL divided by N).
    Only the amplifier side reads it. The stored figures are never changed.
 3. **The project's "Voice coil connection" is something else: it wires SEVERAL drivers.**
    Field `driver_ArrayWiring` (`packages/design/fields/field.ts`, "How several drivers (Num. of drivers) are joined to the amplifier"), stored as `driverEmbedding.wiring` (`openisdSchema.ts` l.925), default parallel (`packages/design/domain/openisdTransforms.ts` l.165).
@@ -68,6 +68,20 @@ The driver's entered values and its measured wiring go to the solver together wi
 - It is reached through ONE door, `terminalMotor()` (`packages/design/domain/driver/openIsdDriverSpec.ts`): the solver's Re and BL, the sweep's Le, the Driver tab's one line, the `.wpr` export. `projectCoilWiring.ts` also asks it "can this be rewired" with a probe.
 - The gate `packages/design/test/architecture-coil-wiring-arithmetic-has-one-site.test.ts` fails if a second caller or a factor of the coil count appears outside them. It names two other places that multiply by the coil count, both turning a figure printed PER COIL into the published figure for the measured wiring, not the amplifier-side conversion: the record bridge (`driverRecordConverter.ts`) and the one-time schema 3 to 4 upgrade (`multiCoilAsPublished.ts`).
 
+## Data version 5: the project's `wiring` becomes the coil wiring (John, QO942.c54)
+
+John: "the project already had a connection setting". The project's existing field `driverEmbedding.wiring` (the setting that was always called Connection, WinISD's project VCCon) IS the coil wiring now. `coilWiring` (added 15 Nov 2026, never released) is gone from the schema and the code. The data version goes from 4 to 5 (and the browser-store layout from 5 to 6, which re-saves every stored project once) because data version 4 had two meanings of `wiring`: the test-site builds before this change wrote the wiring of several drivers (usually the default "parallel"), builds after it write the wiring of the driver's coils. One version could not tell them apart, and the wrong guess would silently rewire a series-measured MX6-22 to parallel.
+
+What an old project shows after loading (`packages/design/test/domain/schema-version-5-wiring.test.ts`, written first, real-shaped fixtures: the three production projects copied from a browser store, `packages/persistence/test/fixtures/stored-v3-projects.json`):
+
+| Project as saved | `wiring` after loading | Driver tab shows (MX6-22, series-measured, 2 coils) |
+|---|---|---|
+| Production, data version 3 (`wiring` was the array value, usually "parallel") | dropped; kept as `retiredArrayWiring` only with more than one driver and no Per-driver impedance ticked | Coil wiring "Series", "2 coils · Re 4.70 Ω · BL 12.30 Tm": not rewired |
+| Test site, data version 4, without `coilWiring` (array wiring, usually "parallel") | dropped, same rule | the same: not rewired |
+| Test site, data version 4, with `coilWiring` (the user chose a coil wiring) | `coilWiring` becomes `wiring`; the array value is dropped, same rule | the user's choice, for example "Parallel", "2 coils · Re 1.175 Ω · BL 6.15 Tm" |
+
+A project with several drivers that held a series or parallel array wiring and had not ticked Per-driver impedance is told once (PR #138's notice, now read from `retiredArrayWiring`). The `.wpr`: export writes `[Driver] VCCon` from the project's `wiring` (or the driver's measured wiring when none), with Re and BL converted; import reads the file's VCCon as the driver's wiring and leaves the project's `wiring` absent, so nothing converts (WinISD files carry one VCCon).
+
 ## (d) The end state John ruled
 
 - The driver's wiring is the measured setup. It is data of the driver and is edited only in the driver editor ("Coil wiring").
@@ -79,7 +93,7 @@ The driver's entered values and its measured wiring go to the solver together wi
 
 The one control:
 
-- Reads and writes `driverEmbedding.coilWiring` (the field "Coil wiring" uses today). No new field.
+- Reads and writes `driverEmbedding.wiring` (the field "Coil wiring" uses today). No new field.
 - Default: the driver's measured wiring (the field is absent until the user picks).
 - Label: "Coil wiring" on both skins (John, QO942.c12: the driver tab and the project use the same name for the same concept). "Connection" and "Voice coil connection" are WinISD's own words and are no OpenISD label.
   One control, one field, two labels by skin.
@@ -222,7 +236,7 @@ The switch, designed here and NOT built:
 
 ### What this PR changes (task T838, built, held)
 
-- **One wiring control.** "Coil wiring" on both skins; one project field (`driverEmbedding.coilWiring`). Default: the driver's measured wiring (this fixes WinISD's always-Parallel display).
+- **One wiring control.** "Coil wiring" on both skins; one project field (`driverEmbedding.wiring`). Default: the driver's measured wiring (this fixes WinISD's always-Parallel display).
   - A driver with more than one coil and a known measured wiring: enabled on both skins.
   - One coil (or no coil count): the desktop shows it greyed, reading Parallel, as WinISD does; the phone shows nothing.
   - Measured wiring not stated: nothing on either skin (John's rule); the data-quality mark in the Driver editor is the only sign.
