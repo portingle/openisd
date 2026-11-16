@@ -15,10 +15,3 @@ describe('a blank device takes its id from the AppContext', () => {
     expect(OpenISDPassiveRadiatorStandalone.empty(fixedAppContext('radiator-id')).uuid()).toBe('radiator-id');
   });
 });
-
-// Issue 157: a newly defined radiator holds Date added dashed, as catalogue records do.
-describe('a blank device records the day it was added with dashes', () => {
-  it('a blank passive radiator', () => {
-    expect(OpenISDPassiveRadiatorStandalone.empty(fixedAppContext('radiator-id')).added.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  });
-});

@@ -1,5 +1,4 @@
 import { dateStamp } from '../appContext.js';
-import { isoDay } from '../../fields/format.js';
 import type { AppContext } from '../appContext.js';
 import { OpenISDDeviceJson } from '../openIsdDeviceJsonIo.js';
 import type { DriverSpecsJson, RadiatorSpecsJson } from '../openisdSchema.js';
@@ -35,7 +34,7 @@ export function blankDeviceRecord<S extends DriverSpecsJson | RadiatorSpecsJson>
         data_sources: {value: {}},
         driver_type: {value: [section]},
         specs,
-        added: {value: isoDay(dateStamp(appContext.now()))},
+        added: {value: dateStamp(appContext.now())},
         // Omitted, not `''`, when nobody is known — `#buildMeta` reads a missing key as absent.
         ...(platformUser !== null ? {provided_by: {value: platformUser}} : {}),
     };

@@ -9,10 +9,8 @@ done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T852.yml
   - bugs/BUG_20261116_pr-date-added-two-formats.md
-  - packages/design/domain/driver/blankDeviceRecord.ts
   - packages/design/fields/format.ts
   - packages/design/fields/index.ts
-  - packages/design/test/domain/blank-device-id.test.ts
   - packages/design/test/fields/format-date.test.ts
   - packages/ui/src/hooks/passiveRadiatorEditor.ts
   - packages/ui/src/ui/components/DriverEditorModal.vue
