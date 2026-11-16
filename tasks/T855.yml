@@ -1,0 +1,10 @@
+id: T855
+release_note: internal
+repo: openisd
+owner: cover
+status: open
+goal: Release ledger row lands through the merge queue
+why: Fixer, 16 Nov 2026: release.sh's ledger step called land.sh, which pushes main directly; main moves only by pull request since 10 Nov (QO481), so it would fail after a release is out
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T855.yml
