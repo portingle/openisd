@@ -1,5 +1,5 @@
 import {readFileSync} from 'node:fs';
-import type {Page} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {expect, openAMobileProject, openAProject, openTab, test} from '../fixtures.js';
 import {numInputByLabel} from '../fixtures/numField.js';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
@@ -22,6 +22,13 @@ async function selectDriver(page: Page, file: Buffer): Promise<void> {
   await expect(page.locator('.driver-library .preview')).toBeVisible();
   await page.locator('.driver-library .use-btn').click();
   await expect(page.locator('.wb-modal')).toHaveCount(0);
+}
+
+/** A real mouse click at the control's centre (Playwright's own click refuses an aria-disabled element). */
+async function clickAt(page: Page, target: Locator): Promise<void> {
+  const box = await target.boundingBox();
+  if (box === null) throw new Error('the control has no box');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 }
 
 const DESKTOP = {open: async (page: Page) => { await page.goto('/'); await openAProject(page); await page.locator('.project-nav li', {hasText: 'Driver'}).click(); await page.getByRole('button', {name: 'Select Driver'}).click(); }, select: '#og-coil-wiring', volts: 'input voltage'};
@@ -87,7 +94,7 @@ test('desktop: a driver that does not state its wiring: the control greyed, a cl
   const select = page.locator(DESKTOP.select);
   await expect(select).toHaveAttribute('aria-disabled', 'true');
   await expect(page.getByTestId('coil-wiring-message')).toHaveCount(0);
-  await select.click({force: true});
+  await clickAt(page, select);
   await expect(page.getByTestId('coil-wiring-message')).toHaveText('The datasheet does not say how the coils were wired when measured, so the wiring cannot be changed. The figures are used as published.');
   await expect(select).toHaveValue('parallel');
 });
@@ -99,7 +106,7 @@ test('desktop: a driver with no coil count: the control is there, greyed, readin
   await selectDriver(page, CE28M);
   await expect(page.locator(DESKTOP.select)).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator(DESKTOP.select)).toHaveValue('parallel');
-  await page.locator(DESKTOP.select).click({force: true});
+  await clickAt(page, page.locator(DESKTOP.select));
   await expect(page.getByTestId('coil-wiring-message')).toHaveText('Coil wiring applies only to drivers with 2 or more voice coils.');
   await expect(page.locator(DESKTOP.select)).toHaveValue('parallel');
 });
