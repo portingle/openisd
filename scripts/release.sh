@@ -278,6 +278,7 @@ rm -rf "$ANNOUNCE_ROOT"; git worktree prune
 # ship.sh as a pull request, never in the folder this script started in: main moves only by pull request
 # (QO481, John, 10 Nov 2026), so land.sh, which pushes main, is refused there.
 DATE="$(date -u -d "${STAMP:0:8} ${STAMP:9:2}:${STAMP:11:2}" '+%-d %b %Y, %H:%M')"
+DAY="$(date -u -d "${STAMP:0:8}" '+%-d %b %Y')"   # the release's own day, for the ledger task's why
 if [ -n "$NOTES_FILE" ]; then NOTE_TEXT="$(cat "$NOTES_FILE")"; else NOTE_TEXT="$(gh release view "$REL" --json body --jq .body)"; fi
 SUBJECT="$(printf '%s\n' "$NOTE_TEXT" | node scripts/hosting/releaseNotes.mjs headline | tr '|' '/')"
 ROW="| $PUBLIC | $STAMP | $DATE | \`${SHA:0:9}\` | [v/$STAMP](https://snapshots.openisd.app/v/$STAMP/) | [GitHub](https://github.com/Johnlon/openisd/releases/tag/$REL) | $SUBJECT |"
@@ -292,8 +293,8 @@ TASK_ID="${NEW_TASK_OUT%% *}"; TASK_DIR="${NEW_TASK_OUT#* }"
   fi
   awk -v row="$ROW" '{print} /^\|---/ && !done {print row; done=1}' RELEASES.md > RELEASES.md.new && mv RELEASES.md.new RELEASES.md
   # why: the pull request's task check asks every new task file who decided and when (T767)
-  printf 'id: %s\nrelease_note: internal\nrepo: openisd\nowner: release\nstatus: open\ngoal: %s\nwhy: "Fixer, 16 Nov 2026: record OpenISD %s in the release ledger"\ndone_test: grep -Fq "| %s | %s |" RELEASES.md\nfiles:\n  - RELEASES.md\n  - tasks/%s.yml\n' \
-    "$TASK_ID" "$GOAL" "$PUBLIC" "$PUBLIC" "$STAMP" "$TASK_ID" > "tasks/$TASK_ID.yml"
+  printf 'id: %s\nrelease_note: internal\nrepo: openisd\nowner: release\nstatus: open\ngoal: %s\nwhy: "John, %s: release OpenISD %s"\ndone_test: grep -Fq "| %s | %s |" RELEASES.md\nfiles:\n  - RELEASES.md\n  - tasks/%s.yml\n' \
+    "$TASK_ID" "$GOAL" "$DAY" "$PUBLIC" "$PUBLIC" "$STAMP" "$TASK_ID" > "tasks/$TASK_ID.yml"
   git add RELEASES.md "tasks/$TASK_ID.yml"
   git commit --quiet -m "(auto) $TASK_ID: $GOAL"
   ${RELEASE_LAND:-bash scripts/ship.sh} "$TASK_ID"

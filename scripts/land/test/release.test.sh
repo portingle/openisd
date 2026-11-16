@@ -443,7 +443,7 @@ grep -q "^$ship_wt $ship_id (auto) $ship_id: Record OpenISD 7.0.2004 in the rele
 [ ! -s "$GH_STATE/land-sh.log" ] && ok "by default land.sh (a direct push to main) is never run" || fail "land.sh ran: $(cat "$GH_STATE/land-sh.log")"
 grep -q '^| 7.0.2004 ' "$LEDGER_STORE/RELEASES.md" && ok "the shipped ledger carries the 7.0.2004 row" || fail "ledger after ship: $(cat "$LEDGER_STORE/RELEASES.md")"
 # the task contract ship.sh checks before it pushes (scripts/land/check-task-contract.sh --pr) accepts the generated task
-grep -Fq 'why: "Fixer, 16 Nov 2026: record OpenISD 7.0.2004 in the release ledger"' "$ship_wt/tasks/$ship_id.yml" \
+grep -Fq 'why: "John, 11 Jan 2026: release OpenISD 7.0.2004"' "$ship_wt/tasks/$ship_id.yml" \
   && ok "the generated task file says why" || fail "task file why: $(cat "$ship_wt/tasks/$ship_id.yml")"
 contract="$(cd "$ship_wt" && GATE_FILES='scripts/land/*' QUESTIONS_FILE=/nonexistent bash "$REPO/scripts/land/check-task-contract.sh" "$ship_id" HEAD~2 HEAD --pr 2>&1)" \
   && ok "the task contract ship.sh runs accepts the generated ledger task" || fail "task contract: $contract"
