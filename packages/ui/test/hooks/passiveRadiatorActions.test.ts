@@ -35,10 +35,10 @@ function setUp(bundled: OpenISDPassiveRadiatorStandalone = OpenISDPassiveRadiato
 
 describe('createPassiveRadiatorActions', () => {
   it('Define new PR hands the editor\'s confirmed radiator to the app state and closes the browser', () => {
-    const { project, actions, definePassiveRadiator } = setUp();
+    const { actions, definePassiveRadiator } = setUp();
     actions.prBrowseOpen.value = true;
 
-    const confirmed = project.box.passiveRadiator.radiator;
+    const confirmed = OpenISDPassiveRadiatorStandalone.empty();
     actions.defineNewPREntry(confirmed);
 
     expect(definePassiveRadiator).toHaveBeenCalledWith(confirmed);

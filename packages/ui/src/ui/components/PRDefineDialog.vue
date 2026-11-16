@@ -31,14 +31,14 @@ function ok(): void { if (name.value.trim() !== '') emit('ok'); }
         <input ref="nameEl" id="pr-define-name" type="text" :value="name" placeholder="e.g. Dayton SD270A-88" @input="rename" @keydown.enter="ok">
       </label>
       <div class="prd-fields">
-        <UIField input-id="pr-define-vas" :field="NumberField.PR_VAS_L" :cell="radiator.spec.Vas_m3" />
-        <UIField input-id="pr-define-qms" :field="NumberField.PR_QMS" :cell="radiator.spec.Qms" />
-        <UIField input-id="pr-define-fs" :field="NumberField.PR_FS_HZ" :cell="radiator.spec.Fs_hz" />
-        <UIField input-id="pr-define-sd" :field="NumberField.PR_SD_CM2" :cell="radiator.spec.Sd_m2" />
-        <UIField input-id="pr-define-mms" :field="NumberField.MMS_KG" :cell="radiator.spec.Mms_kg" />
-        <UIField input-id="pr-define-cms" :field="NumberField.CMS_M_PER_N" :cell="radiator.spec.Cms_m_per_N" />
-        <UIField input-id="pr-define-rms" :field="NumberField.RMS_KG_PER_S" :cell="radiator.spec.Rms_kg_per_s" />
-        <UIField input-id="pr-define-xmax" :field="NumberField.PR_XMAX_MM" :cell="radiator.spec.Xmax_m" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-vas" :field="NumberField.PR_VAS_L" :cell="radiator.spec.Vas_m3" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-qms" :field="NumberField.PR_QMS" :cell="radiator.spec.Qms" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-fs" :field="NumberField.PR_FS_HZ" :cell="radiator.spec.Fs_hz" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-sd" :field="NumberField.PR_SD_CM2" :cell="radiator.spec.Sd_m2" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-mms" :field="NumberField.MMS_KG" :cell="radiator.spec.Mms_kg" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-cms" :field="NumberField.CMS_M_PER_N" :cell="radiator.spec.Cms_m_per_N" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-rms" :field="NumberField.RMS_KG_PER_S" :cell="radiator.spec.Rms_kg_per_s" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-xmax" :field="NumberField.PR_XMAX_MM" :cell="radiator.spec.Xmax_m" />
       </div>
       <div class="prd-foot">
         <button type="button" class="pri prd-ok" :class="phone ? 'mob-btn mob-btn-primary' : undefined" :disabled="name.trim() === ''" @click="ok">OK</button>

@@ -81,6 +81,7 @@ function suite(skin: 'desktop' | 'phone') {
 }
 
 test.describe('desktop', () => { suite('desktop'); });
+
 test.describe('phone', () => { suite('phone'); });
 
 test.describe('wizard step', () => {
