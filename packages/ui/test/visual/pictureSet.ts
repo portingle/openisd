@@ -12,7 +12,6 @@ export const BASE_SCREEN = 'complete-project';
 
 /** The same view reached under two names in the view index: pictured once, under the kept name. */
 export const SAME_VIEW: ReadonlyMap<string, {readonly kept: string; readonly why: string}> = new Map([
-  ['desktop-box-vented', {kept: 'desktop-tab-box', why: 'Both are the Box tab of the sample project in a vented box. They differed only by the stored size of the project (6.1 KB against 6.0 KB) until the retired wiring keys stopped being written (QO941).'}],
   ['mobile-dialog-driver-import', {kept: 'mobile-dialog-driver-more', why: 'Import is a row of the More menu; the picture of the import itself is the browser\'s file chooser (see CANNOT_BE_SHOWN).'}],
   ['desktop-dialog-shared-winisd-difference-entry', {kept: 'desktop-dialog-difference-cue', why: 'The desktop differences dialog shows every entry unfolded; there is no entry to unfold (the phone has one, and is pictured).'}],
   ['desktop-dialog-driver-search-filters', {kept: 'desktop-dialog-driver-library-overview', why: 'The search filters are the top row of the Manage Drivers dialog; one dialog, one picture.'}],
