@@ -2,7 +2,7 @@ id: T852
 release_note: internal
 repo: openisd
 owner: cover
-status: open
+status: done
 goal: Passive radiator Date added shows in one format everywhere (issue 157)
 why: Issue 157: Define new writes 20261116, Edit shows 2026-09-12
 done_test: bash scripts/quiet-test.sh npm run typecheck
