@@ -2,7 +2,7 @@ id: T846
 release_note: internal
 repo: openisd
 owner: claude
-status: claimed
+status: done
 goal: Main is green again - the layout audits know the phone Filters chip carousel scrolls sideways by design, and the phone Driver value box width is the 178 px T837 froze
 why: "Main has been red since T788 (carousel) and T837 (178 px Driver boxes) landed with audits and one assertion still on the old screen. John, 16 Nov: \"leave the buttons in a carousels please\" (QO946.c132), \"we cannot do a release without the carousel\" (c133). Only sideways overflow inside [data-carousel] is exempt; every other check still applies. The 178 px width is QO943.c7, a lead decision under QO923."
 ruling: QO946.c132, QO943.c7
