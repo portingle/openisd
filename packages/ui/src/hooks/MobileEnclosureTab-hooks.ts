@@ -16,6 +16,16 @@ import {computed} from 'vue';
 import {END_CORRECTION_OPTIONS, PhoneHelp, VENT_SHAPE_OPTIONS} from '@openisd/design/fields';
 
 
+/** The radiator's Key figures on the phone Box tab. */
+export interface PassiveRadiatorKeyFigures {
+  readonly Fs_hz: number | null;
+  readonly Mms_kg: number | null;
+  readonly Sd_m2: number | null;
+  readonly Xmax_m: number | null;
+  /** Displacement, Sd × Xmax, from the engine. */
+  readonly Vd_m3: number | null;
+}
+
 export function useMobileEnclosureTab() {
   const {boxTypeIsSimulatable, focusedProject, projectChanged} = useApp().appState;
   const project = useFocusedProject();
@@ -32,6 +42,17 @@ export function useMobileEnclosureTab() {
     createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks(), engine,
       files: appPassiveRadiatorFiles(useApp()) });
 
+  /** The radiator's Key figures (John, 16 Nov 2026 12:57, 12:58): its own Fs, Mms, Sd, Xmax and its displacement Vd, which
+   *  the engine works out. Read only; tapping one opens the editor. */
+  const prKeyFigures = computed<PassiveRadiatorKeyFigures>(() => {
+    void projectChanged.value;
+    const spec = project.value.box.passiveRadiator.radiator.spec;
+    return {
+      Fs_hz: spec.Fs_hz.value, Mms_kg: spec.Mms_kg.value, Sd_m2: spec.Sd_m2.value, Xmax_m: spec.Xmax_m.value,
+      Vd_m3: engine.pr.displacement(spec.Sd_m2.value, spec.Xmax_m.value),
+    };
+  });
+
   /** The box types whose unreachable-tuning sentence also shows as a note under the vent; ABC and the 6th order bandpass show it once, in the warning mark's popup. */
   const tuningNoteShown = computed(() => selectedBox.value === 'vented' || selectedBox.value === 'bandpass4');
   /** One section per vent the box draws, each with its own help sheet and the tuning row that heads it. */
@@ -42,7 +63,7 @@ export function useMobileEnclosureTab() {
     project, selectedBox,
     activeVent, activeTuning, ventPorts, portPipeResonance_hz, fbUnreachable, fbUnreachableMsg, tuningField,
     prResonanceMassDq, prFsMass_hz, prNaturalFh,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
     VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
     FB_TARGET_TIP, VENT_GEOMETRY_TIP,

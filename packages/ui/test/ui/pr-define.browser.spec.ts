@@ -55,6 +55,7 @@ function suite(skin: 'desktop' | 'phone') {
     await expect(editor).toBeVisible();
     await expect(editor.locator('#pr-editor-name')).toBeFocused();
     await expect(editor.locator('#pr-editor-name')).toHaveValue('');
+    await editor.getByRole('tab', {name: 'Parameters'}).click();
     await expect(editor.locator('#pr-editor-fs')).toHaveValue('');
     await expectName(page, new RegExp(LOADED));
     await editor.getByRole('button', {name: 'Cancel'}).click();

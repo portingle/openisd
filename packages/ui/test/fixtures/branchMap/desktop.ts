@@ -184,7 +184,7 @@ export const DESKTOP_BRANCH_MAP:BranchMap={
   'surface-root-b2beb989ebcfcd0b':{kind:'partOf',view:'desktop/settings/cloud/account-and-activity'},
   'surface-root-5176f59f27e33f86':{kind:'partOf',view:'desktop/settings/cloud/account-and-activity'},
   'surface-root-35ead24071f23c57':{kind:'partOf',view:'desktop/settings/cloud/account-and-activity'},
-  'conditional-branch-d80b01eaec2b289b':{kind:'view',view:'desktop/enclosure/passive-radiator/save'},
+  'conditional-branch-d80b01eaec2b289b':{kind:'view',view:'desktop/enclosure/passive-radiator/edit'},
   'native-ui-016587c6a64b74e1':{kind:'view',view:'desktop/projects/import/file'},
   'native-ui-c9decb492b068a30':{kind:'partOf',view:'desktop/results/what-if/closed-box'},
   'conditional-branch-0b6bfacbfdf82fa0':{kind:'partOf',view:'desktop/results/what-if/closed-box'},

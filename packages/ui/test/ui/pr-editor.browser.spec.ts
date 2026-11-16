@@ -34,7 +34,7 @@ async function captureSavedFiles(page: Page): Promise<void> {
         return {
           name,
           createWritable: async () => ({
-            write: async (t: string) => { files[name] = t; },
+            write: async (t: string | Uint8Array | Blob) => { files[name] = typeof t === 'string' ? t : t instanceof Blob ? await t.text() : new TextDecoder().decode(t); },
             close: async () => { /* the text is already held */ },
           }),
         };
@@ -42,6 +42,9 @@ async function captureSavedFiles(page: Page): Promise<void> {
     });
   });
 }
+
+/** The app's message: the desktop flash, the phone's status strip. */
+const flash = (page: Page) => page.locator('.flash, [data-testid=flash-strip]');
 
 function suite(skin: 'desktop' | 'phone') {
   const select = (page: Page) => skin === 'desktop'
@@ -114,12 +117,14 @@ function suite(skin: 'desktop' | 'phone') {
     let editor = await openEditor(page);
     await editor.locator('#pr-editor-xmax').fill('17');
     await editor.locator('#pr-editor-xmax').press('Tab');
+    await editor.locator('#pr-editor-vas').fill('61');
+    await editor.locator('#pr-editor-vas').press('Tab');
     await tab(editor, 'General');
     await editor.locator('#pr-editor-name').fill('Edited radiator');
     await editor.getByRole('button', {name: 'OK', exact: true}).click();
     await expect(editor).toHaveCount(0);
     await expectProjectName(page, 'Edited radiator');
-    if (skin === 'desktop') await expect(page.locator('#og-pr-xmax')).toHaveValue(/^17/);
+    if (skin === 'desktop') await expect(page.locator('#og-pr-vas')).toHaveValue(/^61/);
     editor = await openEditor(page);
     await expect(editor.locator('#pr-editor-xmax')).toHaveValue(/^17/);
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
@@ -159,7 +164,7 @@ function suite(skin: 'desktop' | 'phone') {
     await captureSavedFiles(page);
     const editor = await openEditor(page);
     await action(editor, 'Export');
-    await expect(page.locator('.flash')).toContainText(/Passive radiator exported as .*ASP190.*\.owdr/);
+    await expect(flash(page)).toContainText(/Passive radiator exported as .*ASP190.*\.owdr/);
     const written = await page.evaluate(() => window.__savedFiles ?? {});
     const fileName = Object.keys(written)[0] ?? '';
     expect(fileName).toMatch(/ASP190.*\.owdr$/);
@@ -168,7 +173,7 @@ function suite(skin: 'desktop' | 'phone') {
     const xmax = JSON.parse(written[fileName] ?? '{}')?.['passive-radiator']?.Xmax_m;
     expect(xmax, 'the file holds the radiator record').toBeDefined();
     await editor.locator('#pr-editor-import').setInputFiles({name: fileName, mimeType: 'application/x-openisd-driver', buffer: Buffer.from(written[fileName] ?? '')});
-    await expect(page.locator('.flash')).toContainText(`Passive radiator imported from ${fileName}`);
+    await expect(flash(page)).toContainText(`Passive radiator imported from ${fileName}`);
     await expect(editor.locator('#pr-editor-xmax')).not.toHaveValue(/^31/);
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
   });
@@ -208,7 +213,7 @@ function suite(skin: 'desktop' | 'phone') {
     await expect(info).toContainText('Vas');
     await expect(info).toContainText('Xmax');
     await expect(info.locator('input')).toHaveCount(0);
-    await info.getByRole('button', {name: 'Close', exact: true}).click();
+    await info.locator('.pri-close').click();
     await expect(info).toHaveCount(0);
   });
 }
@@ -241,6 +246,17 @@ test.describe('phone', () => {
     await page.locator('#mob-pr-name-btn').click();
     await expect(page.locator('.pr-filter')).toBeVisible();
     await page.getByRole('button', {name: 'Done'}).click();
+  });
+
+  // John, 16 Nov 2026 12:57 / 12:58: Key figures beside User options, as the Driver tab: Fpr, Mms, Sd, Xmax and the displacement Vd.
+  test('the Box tab shows Key figures: Fpr, Mms, Sd, Xmax and Vd; tapping one opens the editor', async ({appPage: page}) => {
+    for (const id of ['fs', 'mms', 'sd', 'xmax', 'vd']) await expect(page.locator(`#mob-pr-key-${id}`)).not.toHaveValue('');
+    await expect(page.locator('#mob-pr-key-xmax')).toHaveValue('12.00');
+    await expect(page.locator('#mob-pr-key-sd')).toHaveValue('202.00');
+    await expect(page.locator('#mob-pr-key-vd')).toHaveValue(/^242/);   // 202 cm² × 12 mm = 242.4 cm³
+    await page.locator('#mob-pr-key-mms').click();
+    await expect(page.getByRole('dialog', {name: EDITOR})).toBeVisible();
+    await page.getByRole('dialog', {name: EDITOR}).getByRole('button', {name: 'Cancel', exact: true}).click();
   });
 
   // John, 16 Nov 2026 12:47: "the labels on sections aren't consistent "driver" in the driver page and "user options" on the pr page, make both User options".

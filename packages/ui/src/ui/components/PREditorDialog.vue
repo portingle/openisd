@@ -144,7 +144,8 @@ const ROWS: readonly FigureRow[] = [
 .prd-prov p { margin: 4px 0 0; color: #555; }
 .prd-inspected { outline: 2px solid #38bdf8; outline-offset: 1px; border-radius: 4px; }
 .prd-feeds { background: rgba(59, 130, 246, .18); border-radius: 4px; }
-.prd-more-scrim { position: fixed; inset: 0; }
+.prd-more-scrim { position: fixed; inset: 0; z-index: 1; }
+.prd-phone .prd-foot .mob-btn { position: relative; z-index: 2; }
 .prd-foot { display: flex; align-items: center; gap: 8px; padding: 10px 14px 12px; border-top: 1px solid #ddd; }
 .prd-foot button { padding: 5px 12px; border: 1px solid #bbb; border-radius: 3px; background: #fff; font: inherit; cursor: pointer; }
 .prd-gap { flex: 1 1 auto; }
@@ -173,6 +174,6 @@ const ROWS: readonly FigureRow[] = [
 .prd-phone .prd-foot .mob-btn { flex: 1 1 0; height: 44px; }
 .prd-phone .prd-foot .prd-ok { flex: 1.4 1 0; }
 .prd-phone .prd-foot .prd-more { flex: 0.7 1 0; }
-.prd-more-menu { position: absolute; right: 10px; bottom: 60px; display: flex; flex-direction: column; min-width: 190px; background: #fff; border: 1px solid #bbb; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.prd-more-menu { position: absolute; z-index: 3; right: 10px; bottom: 60px; display: flex; flex-direction: column; min-width: 190px; background: #fff; border: 1px solid #bbb; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 .prd-more-menu button { padding: 12px 14px; border: 0; border-bottom: 1px solid #eee; background: none; text-align: left; font-size: 15px; }
 </style>

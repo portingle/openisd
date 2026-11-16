@@ -43,7 +43,7 @@ function desktopKind(route:DesktopRoute):ViewKind {
     case DesktopRoute.DataQuality: return ViewKind.FieldNote;
     case DesktopRoute.Library: case DesktopRoute.Picker: case DesktopRoute.PRPicker: case DesktopRoute.DriverInfo: return ViewKind.Browser;
     case DesktopRoute.Cloud: case DesktopRoute.ChartData: case DesktopRoute.Losses: case DesktopRoute.Editor: case DesktopRoute.Options: case DesktopRoute.Info:
-    case DesktopRoute.ProjectImport: case DesktopRoute.DriverImport: case DesktopRoute.DriverSave: case DesktopRoute.PRSave: return ViewKind.Dialog;
+    case DesktopRoute.ProjectImport: case DesktopRoute.DriverImport: case DesktopRoute.DriverSave: case DesktopRoute.PREdit: return ViewKind.Dialog;
   }
 }
 function fromMobile(surface:MobileSurface):ViewEntry {

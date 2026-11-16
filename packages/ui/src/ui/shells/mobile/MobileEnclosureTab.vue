@@ -17,7 +17,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
 } = useMobileEnclosureTab();
@@ -70,6 +70,16 @@ const {
     <PRInfoDialog v-if="prInfoOpen" phone :info="prInfo" @close="prInfoOpen = false" />
     <PREditorDialog v-if="!prBrowseOpen && prEditor.cells.value" phone :editor="prEditor" :cells="prEditor.cells.value" />
     <UIField class="mob-ui-field" :title="PhoneBoxText.FP_TIP" :field="NumberField.PR_FP_HZ" :label="PhoneLabels.PR_FP" :cell="project.box.passiveRadiator.tuning_goal_hz" :deviation="WinisdDeviation.PR_BOX_TUNING" stepper />
+    </section>
+
+    <section class="mob-csection">
+    <PhoneBand :section="PhoneHelp.PR_KEY_FIGURES" />
+    <!-- Tapping a key figure opens the editor, as on the Driver tab. -->
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-fs" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_FS_HZ" :value="prKeyFigures.Fs_hz" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-mms" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.MMS_KG" :value="prKeyFigures.Mms_kg" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-sd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_SD_CM2" :value="prKeyFigures.Sd_m2" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-xmax" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_XMAX_MM" :value="prKeyFigures.Xmax_m" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-vd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.VD_M3" :value="prKeyFigures.Vd_m3" readonly plain />
     </section>
 
     <section class="mob-csection">

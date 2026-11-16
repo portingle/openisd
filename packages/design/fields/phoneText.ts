@@ -141,7 +141,11 @@ export class PhoneHelpRows {
   static readonly FB_VENT: PhoneHelpRow = {label: 'Fb (frequency, box)', text: 'the frequency at which the vent reinforces the bass most: the box and vent resonate together, so the vent gives the most output and the cone moves the least. Lower tuning reaches lower bass.'};
   static readonly FB_FRONT_VENT: PhoneHelpRow = {label: 'Fb (frequency, box)', text: 'the frequency at which the vent reinforces the bass most. Lower tuning reaches lower bass.'};
   static readonly SELECT_PR: PhoneHelpRow = {label: 'Select PR', text: 'picks a passive radiator from the library.'};
-  static readonly SAVE_PR: PhoneHelpRow = {label: 'Save to library', text: 'saves this passive radiator to the library.'};
+  static readonly PR_INFO: PhoneHelpRow = {label: 'Info', text: 'shows the passive radiator\'s figures and where they come from.'};
+  static readonly PR_EDIT: PhoneHelpRow = {label: 'Edit', text: 'opens the passive radiator\'s editor: its name and figures, Export, Import and Copy to My PRs.'};
+  static readonly PR_MMS: PhoneHelpRow = {label: 'Mms', text: 'the moving mass of the cone. Added mass is often judged against it.'};
+  static readonly PR_SD: PhoneHelpRow = {label: 'Sd', text: 'the cone\'s area.'};
+  static readonly PR_VD: PhoneHelpRow = {label: 'Vd', text: 'the volume of air the cone moves at Xmax (Sd × Xmax), to set beside the driver\'s.'};
   static readonly PR_FS: PhoneHelpRow = {label: 'Fs', text: 'the frequency at which the passive radiator vibrates most freely, out of a box.'};
   static readonly PR_QMS: PhoneHelpRow = {label: 'Qms', text: 'how sharply the passive radiator resonates, from its suspension.'};
   static readonly PR_VAS: PhoneHelpRow = {label: 'Vas', text: 'the volume of air that is as easy to compress as the passive radiator\'s suspension is to stretch.'};
@@ -202,11 +206,16 @@ export class PhoneHelp {
   static readonly INTRA_VENT = new PhoneHelpSection('Intra vent', 'The vent between the two chambers. It does not open to the outside.', VENT_ROWS);
   static readonly PASSIVE_RADIATOR = new PhoneHelpSection('Passive radiator', 'A cone with no magnet or coil, moved by the air in the box. It tunes the box in place of a vent.', [
     PhoneHelpRows.SELECT_PR,
-    PhoneHelpRows.SAVE_PR,
+    PhoneHelpRows.PR_INFO,
+    PhoneHelpRows.PR_EDIT,
+  ]);
+  /** The radiator's Key figures on the phone Box tab, as the Driver tab's (John, 16 Nov 2026 12:57, 12:58). */
+  static readonly PR_KEY_FIGURES = new PhoneHelpSection('Key figures', 'The passive radiator\'s main figures, for reference. Tap one to edit the radiator.', [
     PhoneHelpRows.PR_FS,
-    PhoneHelpRows.PR_QMS,
-    PhoneHelpRows.PR_VAS,
+    PhoneHelpRows.PR_MMS,
+    PhoneHelpRows.PR_SD,
     PhoneHelpRows.PR_XMAX,
+    PhoneHelpRows.PR_VD,
   ]);
   static readonly USER_OPTIONS = new PhoneHelpSection('User options', 'The number of passive radiators and any mass added to them.', [
     PhoneHelpRows.PR_COUNT,
