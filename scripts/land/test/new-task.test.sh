@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # T083: new-task.sh hands out ids atomically: it skips ids taken by a branch, a directory or a task
-# file, claims the next with mkdir + git branch, adds the worktree, commits the task file, and two
+# file, claims the next with git branch + mkdir, adds the worktree, commits the task file, and two
 # calls never return the same id. Scratch workspace, real git.
 set -uo pipefail
 GITCFG="$(mktemp "${TMPDIR:-/tmp}/new-task-gitconfig.XXXXXX")"

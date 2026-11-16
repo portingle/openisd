@@ -4,8 +4,12 @@
 # Two sessions picking ids by eye collided twice on 13 Oct 2026 (T073, T079): one wrote its task
 # file into the other's worktree. Here the id is claimed, not chosen. For n above the highest id
 # seen in branches, worktree directories and tasks/*.yml:
-#   1. mkdir ../<repo>-t<n>   — atomic; a directory already there means taken, try n+1
-#   2. git branch t<n> <base> — atomic; a branch already there means taken, undo the mkdir, try n+1
+#   1. git branch t<n> <base> — the claim: git creates the ref under an exclusive lock file, so of two
+#      claims of one id exactly one succeeds; a branch already there means taken, try n+1
+#   2. mkdir ../<repo>-t<n>   — a directory already there means taken: drop the branch just made, try n+1
+# The mkdir command is not the claim: uutils coreutils mkdir (Ubuntu's default from 25.10, and the CI
+# runner's) exits 0 when another process creates the directory between its own existence check and
+# its mkdir call, so two claims could both "make" one directory (T854, PR 163).
 # Then the worktree is added into that directory (node_modules hardlinked as new-worktree.sh does),
 # tasks/T<n>.yml is written with the owner and goal and committed, and the only line on stdout is
 #   T<n> <worktree path>
@@ -64,9 +68,9 @@ claimed=""
 for _ in $(seq 1 200); do
   n=$((n + 1))
   id="$(printf 'T%03d' "$n")"; branch="$(printf 't%03d' "$n")"; dest="$ws/$repo-$branch"
-  mkdir "$dest" 2> /dev/null || continue
-  if git -C "$src" branch -q --no-track "$branch" "$base" 2> /dev/null; then claimed="$n"; break; fi
-  rmdir "$dest"
+  git -C "$src" branch -q --no-track "$branch" "$base" 2> /dev/null || continue
+  if mkdir "$dest" 2> /dev/null; then claimed="$n"; break; fi
+  git -C "$src" branch -q -D "$branch"   # our own branch, made a moment ago at $base: give the id back
 done
 [ -n "$claimed" ] || { echo "new-task: no free id in 200 tries above $(highest)" >&2; exit 1; }
 
