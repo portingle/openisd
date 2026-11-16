@@ -28,19 +28,13 @@ test('Edit opens the driver editor modal', async ({ appPage: page }) => {
   await expect(page.locator('.de-modal')).toBeVisible();
 });
 
-test('changing the number of drivers and the wiring writes the project', async ({ appPage: page }) => {
+// QO941: the wiring of several drivers is gone (WinISD has none); the one wiring control is the driver's coils (my-wiring.browser.spec.ts).
+test('changing the number of drivers writes the project', async ({ appPage: page }) => {
   await page.locator('#mob-n-drivers').selectOption('2');
   await expect(page.locator('#mob-n-drivers')).toHaveValue('2');
-
-  const wiringBefore = await page.locator('#mob-wiring').inputValue();
-  const options = await page.locator('#mob-wiring option').allTextContents();
-  await page.locator('#mob-wiring').selectOption({ index: 1 });
-  const wiringAfter = await page.locator('#mob-wiring').inputValue();
-  expect(options.length).toBeGreaterThan(1);
-  // eslint-disable-next-line playwright/prefer-web-first-assertions -- comparing two runtime-captured values, not a fixed expected one
-  expect(wiringAfter).not.toBe(wiringBefore);
 });
 
+<<<<<<< HEAD
 test('the Connection dropdown uses the same value width as the other Driver dropdown', async ({ appPage: page }) => {
   const widths = await page.evaluate(() => ({
     drivers: document.querySelector<HTMLElement>('#mob-n-drivers')?.getBoundingClientRect().width ?? 0,
@@ -51,13 +45,21 @@ test('the Connection dropdown uses the same value width as the other Driver drop
 
 // John, 16 Nov 2026 12:46 (QO946.c118): the band over the count and wiring is headed User options, as the passive radiator's.
 test('page order matches the mock: name, buttons, User options band, count, wiring, Key figures band, five figures, then the consistency checks', async ({ appPage: page }) => {
+=======
+test('page order matches the mock: name, buttons, Driver band, count, Key figures band, five figures, then the consistency checks', async ({ appPage: page }) => {
+>>>>>>> portingle/main
   await page.setViewportSize({ width: 374, height: 705 });
   const kids = await page.locator('.mob-classic').evaluate(root => [...root.children].map(e => ({
     cls: e.className,
     text: (e instanceof HTMLElement ? e.innerText : '').replace(/\s+/g, ' ').trim(),
   })));
+<<<<<<< HEAD
   expect(kids.map(k => k.text.split(' ')[0])).toEqual(['Tang', 'Select', 'USER', 'Drivers', 'Connection', 'KEY', 'Fs', 'Qts', 'Vas', 'Re', 'Xmax', '⚠']);
   expect(kids.filter(k => k.cls.includes('mob-band')).map(k => k.text)).toEqual(['USER OPTIONS ?', 'KEY FIGURES ?']);
+=======
+  expect(kids.map(k => k.text.split(' ')[0])).toEqual(['Tang', 'Select', 'DRIVER', 'Drivers', 'KEY', 'Fs', 'Qts', 'Vas', 'Re', 'Xmax', '⚠']);
+  expect(kids.filter(k => k.cls.includes('mob-band')).map(k => k.text)).toEqual(['DRIVER ?', 'KEY FIGURES ?']);
+>>>>>>> portingle/main
 });
 
 test('tapping a key figure opens the driver editor', async ({ appPage: page }) => {
