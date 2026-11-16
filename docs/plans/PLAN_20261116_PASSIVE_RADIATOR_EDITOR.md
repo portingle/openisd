@@ -19,6 +19,7 @@ The phone Box tab shows the radiator by name, without its figures; the desktop P
 | 12:46      | QO946.c118  | "looks ok, btw the labels on sections aren't consistent "driver" in the driver page and "user options" on the pr page, make both User options - I think this is mobile only, so check"                                                                                    |
 | 12:47      | QO946.c119  | "and on the Info page show the Type: Passive Radiator / to be affirmative"                                                                                                                                                                                                  |
 | 12:51      | QO946.c120  | "ok build this and write a plan for it including these mock screens first"                                                                                                                                                                                                  |
+| 12:57      | (board)     | "I think the pr screen should show Key Figures too on the page next to the user options like the driver - the mms is important as users stick to the 1.5 added mass guide, also fs I guess, anything else humans might want to see? xmax and displacement so they can check the 2x rule?" |
 
 Earlier rulings kept: QO946.c37 (the Define button works, like the driver editor); QO946.c38 (the radiator's own figures
 belong to the radiator; the build choices, number of radiators, added mass and tuning, stay project settings and are not in
@@ -75,6 +76,35 @@ Both skins:
 PR 140 behaviour changed: its editor's OK filed a defined radiator in the library only. John's spec (QO946.c115) makes OK
 apply to the project, and Copy to My PRs file it.
 
+## Phone Box tab: Key figures for the radiator (John, 12:57 UTC)
+
+The phone Box tab's radiator part gains a read-only **Key figures** section, as the phone Driver tab's KEY FIGURES (drvref-1),
+next to User options. Rows, each the common field in its read-only plain form, tapping one opens the editor (as the
+driver's):
+
+| Row                        | What it shows                                                                                   | Kind                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------- |
+| Fpr                        | the radiator's own resonance (Fs)                                                               | the radiator's figure   |
+| Mms                        | moving mass, for the "added mass" guide                                                         | the radiator's figure   |
+| Sd                         | cone area                                                                                       | the radiator's figure   |
+| Xmax                       | excursion limit                                                                                 | the radiator's figure   |
+| Vd                         | displacement, Sd × Xmax                                                                         | calculated (blue)       |
+| PR / driver displacement   | (number of radiators × radiator Vd) ÷ (number of drivers × driver Vd), shown as "N.NN ×", for the "2×" rule of thumb | calculated (blue) |
+
+Calculations live in the engine, never in the UI: the radiator Vd and the ratio are engine functions read through the
+project's passive-radiator box as calculated fields. A missing input (no Xmax, no driver Vd) leaves the row empty, as any
+calculated box with nothing to work from (QO424).
+
+Proposed, not built (John to decide): an "Added mass / Mms" row (added mass ÷ Mms, as "N.NN ×") would let a user check the
+"1.5× added mass" guide he named. It is a plain ratio of two figures the page already shows; the plan does not invent a
+limit or a warning for it.
+
+Desktop: the Passive Radiator page already shows Fpr, Mms, Sd and Xmax (the numbers stay, WinISD-like); it does not show
+Vd or the PR / driver displacement ratio. Not changed without John's word.
+
+Spec: pr-editor (phone) "the Box tab shows Key figures: Fpr, Mms, Sd, Xmax, Vd and the PR / driver displacement"; engine
+unit test for the radiator Vd and the ratio.
+
 ## Behaviours and the specs that prove them
 
 Browser specs (both skins unless named): `packages/ui/test/ui/pr-editor.browser.spec.ts`,
@@ -117,4 +147,5 @@ the driver editor and the phone Driver tab; typecheck, lint, the unit tests the 
 3. Editor tools in the hook (Reset, Auto calculate, Inspect Provenance, Export/Import, Copy to My PRs) with unit tests.
 4. The editor component, the Info view (with Type), both pages, the phone Driver tab band.
 5. The wizard's radiator step.
+5a. Phone Key figures (engine functions first, with unit tests; then the section and its spec).
 6. Checks; the final pictures `preditor-*.png` with captions; task file and pull request text.
