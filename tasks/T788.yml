@@ -13,7 +13,6 @@ files:
   - packages/ui/test/fixtures/fieldLayoutAudit.ts
   - .claude/rules/field-layout.md
   - bugs/BUG_20261105_phone-filters-strip-scrolls-sideways.md
-  - packages/ui/test/visual/SOURCES.sha256
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-filters.png
 visual:
   - mobile-tab-filters
