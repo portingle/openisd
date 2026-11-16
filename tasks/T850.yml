@@ -14,3 +14,5 @@ files:
   - packages/design/engine/appSettings.ts
   - packages/design/test/fields/box-volume-limit.test.ts
   - packages/ui/test/ui/layout-long-values.browser.spec.ts
+  - packages/design/test/fields/app-defaults-agree.test.ts
+# app-defaults-agree.test.ts:44 units bug: limits are SI; dropping the double toSI() reviewed by the lead under John, 16 Nov 2026: "replacing a test with a better test ... is expected but still needs review" (QO946.c186).
