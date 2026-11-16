@@ -1,15 +1,21 @@
 import type {InjectionKey, Ref} from 'vue';
-import {computed, ref} from 'vue';
+import {computed, ref, shallowRef} from 'vue';
+import type {PassiveRadiatorStepCells} from './OriginalNewProject-hooks.js';
 import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
 import {useApp} from '../logic/app.js';
 import {flashIfNoRoom} from '../logic/backupRefusal.js';
 import {bundledPassiveRadiatorRows, type PassiveRadiatorRow, passiveRadiatorRows} from '../logic/driverDisplay.js';
 
 export interface PRBrowserAPI {
-  /** A blank radiator for the "Define new passive radiator" editor. */
-  newBlank(): OpenISDPassiveRadiatorStandalone;
-  /** The editor's OK: files the radiator in My passive radiators; the project is not touched. */
-  saveDefined(pr: OpenISDPassiveRadiatorStandalone): void;
+  /** The "Define new passive radiator" editor's boxes: null while it is closed. */
+  readonly defineCells: Readonly<Ref<PassiveRadiatorStepCells | null>>;
+  /** Open the editor on a new blank radiator. */
+  startDefine(): void;
+  setDefineName(name: string): void;
+  /** The editor's OK: files the radiator in My passive radiators (the project is not touched) and closes the editor. */
+  confirmDefine(): void;
+  /** The editor's Cancel: keeps nothing. */
+  cancelDefine(): void;
   readonly filter: Ref<string>;
   readonly fSaved: Readonly<Ref<readonly ReturnType<typeof passiveRadiatorRows>[number][]>>;
   readonly fBundled: Readonly<Ref<readonly ReturnType<typeof passiveRadiatorRows>[number][]>>;
@@ -69,13 +75,25 @@ export function usePRBrowser(emit: (event: 'close') => void): PRBrowserAPI {
     emit('close');
   }
 
-  /** "Define new passive radiator": a blank radiator for the editor, stamped from the app's own context. */
-  function newBlank(): OpenISDPassiveRadiatorStandalone {
-    return OpenISDPassiveRadiatorStandalone.empty(appState.appContext);
-  }
-
-  /** The editor's OK: file `pr` in My passive radiators (the project's radiator is not touched), as a new driver goes to My Drivers. */
-  function saveDefined(pr: OpenISDPassiveRadiatorStandalone): void {
+  // "Define new passive radiator": an editor on a blank radiator, as "Add new Driver" opens one. Only OK
+  // files it, in My passive radiators; the project's radiator is never touched.
+  const draft = shallowRef<OpenISDPassiveRadiatorStandalone | null>(null);
+  const defineCells = computed<PassiveRadiatorStepCells | null>(() => {
+    const d = draft.value;
+    if (d === null) return null;
+    const {spec} = d;
+    return {
+      Vas_m3: spec.Vas_m3, Qms: spec.Qms, Fs_hz: spec.Fs_hz, Sd_m2: spec.Sd_m2,
+      Mms_kg: spec.Mms_kg, Cms_m_per_N: spec.Cms_m_per_N, Rms_kg_per_s: spec.Rms_kg_per_s, Xmax_m: spec.Xmax_m,
+    };
+  });
+  function startDefine(): void { draft.value = OpenISDPassiveRadiatorStandalone.empty(appState.appContext); }
+  function setDefineName(name: string): void { draft.value?.model.set(name); }
+  function cancelDefine(): void { draft.value = null; }
+  function confirmDefine(): void {
+    const pr = draft.value;
+    draft.value = null;
+    if (pr === null) return;
     const saved = myPassiveRadiators.upsert(pr);
     if (saved === null) logging.flash('The passive radiator was not saved: your saved passive radiators cannot be written.');
     savedRows.value = passiveRadiatorRows(
@@ -83,8 +101,7 @@ export function usePRBrowser(emit: (event: 'close') => void): PRBrowserAPI {
   }
 
   return {
-    newBlank,
-    saveDefined,
+    defineCells, startDefine, setDefineName, confirmDefine, cancelDefine,
     filter,
     fSaved,
     fBundled,

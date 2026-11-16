@@ -2,24 +2,24 @@
 // The editor "+ Define new passive radiator" opens: a NEW, blank radiator, its name box focused,
 // its eight figures. Only the radiator's own figures are here; the project's choices (count, added mass, tuning) are not. OK files it
 // in My passive radiators (as a new driver goes to My Drivers) and never touches the project; Cancel, Esc
-// and a click outside leave everything as it was. The caller holds the draft and applies it.
+// and a click outside leave everything as it was. The hook holds the draft and files it.
 // (Issue 522: the button used to swap a blank radiator into the project with no editor at all.)
 import {onMounted, ref} from 'vue';
-import type {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
+import type {PassiveRadiatorStepCells} from '../../hooks/OriginalNewProject-hooks.js';
 import {NumberField, TextField} from '@openisd/design/fields';
 import UIField from './UIField.vue';
 import {inputValue} from '../../logic/domEvents.js';
 import {useEscToClose} from '../../logic/useEscToClose.js';
 
-const props = defineProps<{ radiator: OpenISDPassiveRadiatorStandalone; phone?: boolean }>();
-const emit = defineEmits<{ ok: []; cancel: [] }>();
+defineProps<{ cells: PassiveRadiatorStepCells; phone?: boolean }>();
+const emit = defineEmits<{ ok: []; cancel: []; rename: [string] }>();
 
 const nameEl = ref<HTMLInputElement | null>(null);
 onMounted(() => { nameEl.value?.focus(); });
 useEscToClose(() => true, () => emit('cancel'));
 // OK needs a name: the radiator is filed and shown under it.
 const name = ref('');
-function rename(e: Event): void { name.value = inputValue(e); props.radiator.model.set(name.value); }
+function rename(e: Event): void { name.value = inputValue(e); emit('rename', name.value); }
 function ok(): void { if (name.value.trim() !== '') emit('ok'); }
 </script>
 
@@ -32,14 +32,14 @@ function ok(): void { if (name.value.trim() !== '') emit('ok'); }
         <input ref="nameEl" id="pr-define-name" type="text" :value="name" placeholder="e.g. Dayton SD270A-88" @input="rename" @keydown.enter="ok">
       </label>
       <div class="prd-fields">
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-vas" :field="NumberField.PR_VAS_L" :cell="radiator.spec.Vas_m3" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-qms" :field="NumberField.PR_QMS" :cell="radiator.spec.Qms" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-fs" :field="NumberField.PR_FS_HZ" :cell="radiator.spec.Fs_hz" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-sd" :field="NumberField.PR_SD_CM2" :cell="radiator.spec.Sd_m2" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-mms" :field="NumberField.MMS_KG" :cell="radiator.spec.Mms_kg" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-cms" :field="NumberField.CMS_M_PER_N" :cell="radiator.spec.Cms_m_per_N" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-rms" :field="NumberField.RMS_KG_PER_S" :cell="radiator.spec.Rms_kg_per_s" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-xmax" :field="NumberField.PR_XMAX_MM" :cell="radiator.spec.Xmax_m" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-vas" :field="NumberField.PR_VAS_L" :cell="cells.Vas_m3" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-qms" :field="NumberField.PR_QMS" :cell="cells.Qms" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-fs" :field="NumberField.PR_FS_HZ" :cell="cells.Fs_hz" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-sd" :field="NumberField.PR_SD_CM2" :cell="cells.Sd_m2" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-mms" :field="NumberField.MMS_KG" :cell="cells.Mms_kg" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-cms" :field="NumberField.CMS_M_PER_N" :cell="cells.Cms_m_per_N" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-rms" :field="NumberField.RMS_KG_PER_S" :cell="cells.Rms_kg_per_s" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-define-xmax" :field="NumberField.PR_XMAX_MM" :cell="cells.Xmax_m" />
       </div>
       <div class="prd-foot">
         <button type="button" class="pri prd-ok" :class="phone ? 'mob-btn mob-btn-primary' : undefined" :disabled="name.trim() === ''" @click="ok">OK</button>

@@ -108,12 +108,25 @@ describe('PRBrowser-hooks — favourites', () => {
   // Issue 522: Define new passive radiator files the editor's radiator in the library, as a new driver goes to My Drivers.
   it('saveDefined adds the radiator to the Saved list', async () => {
     const {api} = await renderWith(createPrefsRepo(createMemoryStorage(), () => undefined));
-    const blank = api.newBlank();
-    blank.model.set('Defined PR');
+    api.startDefine();
+    expect(api.defineCells.value).not.toBeNull();
+    api.setDefineName('Defined PR');
 
-    api.saveDefined(blank);
+    api.confirmDefine();
 
+    expect(api.defineCells.value).toBeNull();
     expect(api.fSaved.value.map(r => r.name)).toContain('Defined PR');
+  });
+
+  it('cancelDefine keeps nothing', async () => {
+    const {api} = await renderWith(createPrefsRepo(createMemoryStorage(), () => undefined));
+    api.startDefine();
+    api.setDefineName('Never kept');
+
+    api.cancelDefine();
+
+    expect(api.defineCells.value).toBeNull();
+    expect(api.fSaved.value.map(r => r.name)).not.toContain('Never kept');
   });
 
   it('Favorites shows only the starred radiators', async () => {

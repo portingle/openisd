@@ -2,8 +2,6 @@
 import {useEscToClose} from '../../logic/useEscToClose.js';
 import {usePRBrowser} from '../../hooks/PRBrowser-hooks.js';
 import {PhonePrBrowserText} from '@openisd/design/fields';
-import type {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
-import {shallowRef} from 'vue';
 import PRDefineDialog from './PRDefineDialog.vue';
 
 // PR browser — a popup mirroring the driver browser (DriverBrowserMd.vue): two
@@ -21,13 +19,7 @@ const emit = defineEmits<{
   loadBundled: [string];
 }>();
 
-const {newBlank, saveDefined, filter, fSaved, fBundled, bundledStatus, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly, remove, close} = usePRBrowser(emit);
-// "+ Define new passive radiator" opens an editor on a blank draft, as "Add new Driver" does. OK files it
-// in My passive radiators and leaves the project's radiator alone; picking it from the list is what
-// puts it in the project. Cancel keeps nothing.
-const draft = shallowRef<OpenISDPassiveRadiatorStandalone | null>(null);
-function openDefine() { draft.value = newBlank(); }
-function confirmDefine() { const pr = draft.value; draft.value = null; if (pr) saveDefined(pr); }
+const {defineCells, startDefine, setDefineName, confirmDefine, cancelDefine, filter, fSaved, fBundled, bundledStatus, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly, remove, close} = usePRBrowser(emit);
 function onBackdrop(e: MouseEvent) { if (e.target === e.currentTarget) close(); }
 useEscToClose(() => true, close);
 </script>
@@ -78,11 +70,11 @@ useEscToClose(() => true, close);
         </div>
       </div>
       <div class="btns pr-footer">
-        <button class="pr-define-btn" @click="openDefine" title="Define a brand-new passive radiator from scratch">+ Define new passive radiator</button>
+        <button class="pr-define-btn" @click="startDefine" title="Define a brand-new passive radiator from scratch">+ Define new passive radiator</button>
         <button class="pri" @click="close" title="Close">Done</button>
       </div>
     </div>
-    <PRDefineDialog v-if="draft" :radiator="draft" :phone="props.phone" @ok="confirmDefine" @cancel="draft = null" />
+    <PRDefineDialog v-if="defineCells" :cells="defineCells" :phone="props.phone" @rename="setDefineName" @ok="confirmDefine" @cancel="cancelDefine" />
   </div>
 </template>
 

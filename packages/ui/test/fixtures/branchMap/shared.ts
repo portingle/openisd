@@ -339,6 +339,9 @@ export const SHARED_BRANCH_MAP:BranchMap={
   'conditional-branch-c3c5d44d0f4e5a0d':{kind:'partOf',view:'pr-picker'}, // components/PRBrowser.vue:68
   'native-ui-c7504a7c8eeef940':{kind:'notAView',reason:'button in the passive radiator browser'}, // components/PRBrowser.vue:73
   'native-ui-a57fbb9d7cd7c429':{kind:'notAView',reason:'button in the passive radiator browser'}, // components/PRBrowser.vue:74
+  'conditional-branch-c143e8c12578c7ed':{kind:'partOf',view:'pr-picker'}, // components/PRBrowser.vue:77 (the Define editor opens over the picker)
+  'surface-root-155f7ab5c0ea0b7f':{kind:'partOf',view:'pr-picker'}, // components/PRDefineDialog.vue:27
+  'surface-root-5f6ab1f8f26b9ef8':{kind:'partOf',view:'pr-picker'}, // components/PRDefineDialog.vue:28
   'surface-root-51c92ded0e6cd4f2':{kind:'view',view:'driver-save'}, // components/SaveToLibraryDialog.vue:28
   'surface-root-7186c42dd3d5161b':{kind:'partOf',view:'driver-save'}, // components/SaveToLibraryDialog.vue:29
   'conditional-branch-e4ac024f188e8234':{kind:'partOf',view:'menu-splashmodal'}, // components/SplashContent.vue:32
