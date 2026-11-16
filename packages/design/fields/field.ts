@@ -52,7 +52,7 @@ import {
 import type {SelectorOption} from './options.js';
 import type {SpinRule} from './spinnerStep.js';
 import {
-  ARRAY_WIRING_OPTIONS, BOX_TYPE_OPTIONS, END_CORRECTION_OPTIONS, FILTER_TYPE_OPTIONS,
+  BOX_TYPE_OPTIONS, END_CORRECTION_OPTIONS, FILTER_TYPE_OPTIONS,
   SEALED_ALIGNMENT_OPTIONS, VC_CONNECTION_OPTIONS, VENT_SHAPE_OPTIONS,
 } from './options.js';
 
@@ -1427,13 +1427,14 @@ export class EnumField extends Field {
     value: "VCCon",
     label: "Coil wiring",
     options: VC_CONNECTION_OPTIONS,
-    description: "Measured Wiring\nHow the voice coils of a multi-coil driver were wired when the maker measured Re and BL: series, parallel, or not stated. Re, BL, Le and Znom are kept as published for this wiring. Your own wiring is set in the project (Driver tab, My wiring).",
+    description: "Coil wiring: as the maker measured it\nHow the voice coils were wired when the maker measured this driver (Series or Parallel). It says what the published Re and BL mean; it changes no figure. Leave it Not stated if the datasheet does not say. The wiring you use in a project is that project's own Coil wiring, on its Driver tab.",
   });
-  static readonly DRIVER_ARRAYWIRING = new EnumField({
-    value: "driver_ArrayWiring",
-    label: "Voice coil connection",
-    options: ARRAY_WIRING_OPTIONS,
-    description: "Driver Array Wiring\nHow several drivers (Num. of drivers) are joined to the amplifier: parallel or series. With one driver there is nothing to join and it changes nothing. The wiring of one driver's own voice coils is My wiring.",
+  /** The project's coil wiring (QO941), named as the driver's `VCCon` (John, QO942.c56) and labelled the same; its help says which is which (QO942.c58). */
+  static readonly PROJECT_VCCON = new EnumField({
+    value: "project_VCCon",
+    label: "Coil wiring",
+    options: VC_CONNECTION_OPTIONS,
+    description: "Coil wiring: how you wire it in this project\nHow you wire this driver's voice coils in this project. If it differs from how the driver was measured, the calculations use the figures for your wiring (for 2 coils, Series gives Re, Le and nominal impedance ×4 and BL ×2 compared with Parallel; Fs, Q, Vas and Mms do not change). The driver's own figures are never changed. It can be changed only for a driver with 2 or more coils whose measured wiring is stated.",
   });
 
   // ── Filters ───────────────────────────────────────────────────────────────────────────────
@@ -1527,7 +1528,7 @@ export class ToggleField extends Field {
   static readonly ADV_SIMVCINDUCTANCE = new ToggleField({
     value: "adv_SimVcInductance",
     label: "Simulate voice coil inductance",
-    description: "Simulate Voice Coil Inductance\nApplies Le to the acoustic output too, not just the impedance plot.",
+    description: "Simulate voice coil inductance\nTicked: the voice coil inductance Le is in the impedance and in the SPL and transfer function, so both fall away at high frequency.\nUnticked (default): Le is left out of the impedance and of the SPL, as WinISD does.",
   });
   static readonly ADV_FORCEFLATRESPONSE = new ToggleField({
     value: "adv_ForceFlatResponse",
@@ -1586,11 +1587,11 @@ export class ToggleField extends Field {
     description: "TL port without end correction: with \"Use transmission line model\" on, WinISD builds the port pipe from the Fb port length less the port's end correction (the extra air that moves at the mouths), but the Fb you set on the Box tab already counts that end correction. So the pipe comes out too light and the box tunes higher than the Fb the Box tab shows (W5-1138SMF, Fb 38 Hz: impedance minimum 40.3 Hz in WinISD against 38.7 Hz in OpenISD). OpenISD keeps the end correction, so the box tunes where the Box tab says. Tick this to get WinISD's tuning. Only vented, bandpass and ABC boxes with the transmission line model on change; the Impedance, SPL and Transfer function charts follow.",
   }, "the Impedance, SPL and Transfer function charts of vented, bandpass and ABC boxes with the transmission line model on. W5-1138SMF, Fb 38 Hz: impedance minimum 40.3 Hz in WinISD against 38.7 Hz with the end correction.");
 
-  static readonly ADV_WINISDDRIVERCOUNTMODEL = new ToggleField({
-    value: "adv_WinisdDriverCountModel",
-    label: "Per-driver impedance",
-    description: "Per-driver impedance: with more than one driver, WinISD's impedance chart shows one driver's impedance.\nTicked: the impedance chart shows one driver's impedance, as WinISD does.\nUnticked (default): the impedance chart shows all the drivers the amplifier drives, wired as the project says: one driver's impedance divided by N in parallel, times N in series.",
-  }, "the Impedance chart, for designs with more than one driver. W5-1138SMF sealed, 4 drivers in parallel: WinISD peaks at 18.6 Ω, all 4 drivers at 4.65 Ω. SPL, Cone excursion, Amplifier apparent load power (VA) and Maximum Power match WinISD either way.");
+  static readonly ADV_WINISDCOILWIRINGREBLONLY = new ToggleField({
+    value: "adv_WinisdCoilWiringReBlOnly",
+    label: "Coil wiring: Re and BL only",
+    description: "Coil wiring: Re and BL only: when you change how a multi-coil driver's voice coils are wired, WinISD converts Re and BL but leaves the inductance Le and the nominal impedance Znom as they were. But rewiring changes all three together: with N coils, Re, Le and Znom change by N² and BL by N (for 2 coils, Series gives Re, Le and Znom ×4 and BL ×2 compared with Parallel). So WinISD's high frequencies are wrong after a rewire (Dayton MX6-22, Le 1.5 mH measured in series, set to Parallel: Le should be 0.375 mH and WinISD keeps 1.5 mH). OpenISD converts all of them. Tick this to convert only Re and BL as WinISD does. It shows only with \"Simulate voice coil inductance\" on, in the Impedance, SPL and Transfer function charts at high frequency; Znom feeds no chart. It applies only to a driver with 2 or more coils whose measured wiring is stated.",
+  }, "the Impedance, SPL and Transfer function charts at high frequency, with voice coil inductance on, for a multi-coil driver whose project Coil wiring differs from the driver's. Dayton MX6-22 (Le 1.5 mH measured in series) set to Parallel: Le is 0.375 mH here and 1.5 mH with the switch ticked.");
 
   // ── WinISD Compatibility: options (under "Enable WinISD-style", named by the calculation; ticked is WinISD's way) ──────
   static readonly ADV_WINISDWRAPPHASE = new ToggleField({

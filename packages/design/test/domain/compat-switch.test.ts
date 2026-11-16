@@ -20,9 +20,9 @@ describe('CompatSwitch', () => {
       'PR Npr resonance',
       'Bessel high-pass',
       'ABC group delay',
-      'Per-driver impedance',
       'Sealed picker volume',
       'TL port without end correction',
+      'Coil wiring: Re and BL only',
     ]);
     expect(CompatSwitch.OPTIONS.map(s => s.field.label)).toEqual([
       'Phase wrapping',

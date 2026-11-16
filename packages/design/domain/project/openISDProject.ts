@@ -109,7 +109,8 @@ export class OpenISDProject {
             () => this.#airOver(root),
             () => this.#issues.driver,
             () => this.#appContext.newId(),
-            () => root.value.driverEmbedding.coilWiring,
+            () => root.value.driverEmbedding.VCCon,
+            () => root.value.advanced.winisdCoilWiringReBlOnly === true,
         );
     }
 
@@ -175,14 +176,10 @@ export class OpenISDProject {
         return defaultedField(focus(this.#slot('driverEmbedding'), 'nDrivers'), 1);
     }
 
-    /** "My wiring": how the user wires a multi-coil driver's own coils, beside the wiring it was
+    /** "Coil wiring": how the user wires a multi-coil driver's own coils, beside the wiring it was
      *  measured in. The amplifier-side figures use it; the stored ones stay as published. */
     get coilWiring(): ProjectCoilWiring {
         return new ProjectCoilWiring(this.#slot('driverEmbedding'), this.driver, this.#engine);
-    }
-
-    get wiring(): SimpleField<'series' | 'parallel'> {
-        return focus(this.#slot('driverEmbedding'), 'wiring');
     }
 
     /** Thermal power compression: coil temperature rise under drive, Kelvin. */
@@ -326,11 +323,6 @@ export class OpenISDProject {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdWrapPhase;
     }
 
-    /** WinISD Compatibility "Per-driver impedance" — see `ProjectAdvanced.winisdDriverCountModel`. */
-    get winisdDriverCountModel(): SimpleField<boolean> {
-        return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdDriverCountModel;
-    }
-
     /** WinISD Compatibility "Sealed picker volume" — see `ProjectAdvanced.winisdSealedPicker`. */
     get winisdSealedPicker(): SimpleField<boolean> {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdSealedPicker;
@@ -366,6 +358,11 @@ export class OpenISDProject {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdTlPortNoEndCorrection;
     }
 
+    /** WinISD Compatibility "Coil wiring: Re and BL only" — see `ProjectAdvanced.winisdCoilWiringReBlOnly`. */
+    get winisdCoilWiringReBlOnly(): SimpleField<boolean> {
+        return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdCoilWiringReBlOnly;
+    }
+
     /** The controls that reproduce a known WinISD error: which carry the warning look, whether each
      *  applies to the open box, and whether it is reproducing the error now. */
     get errorSwitches(): ErrorSwitchStates {
@@ -375,13 +372,14 @@ export class OpenISDProject {
             winisdVaModel: this.winisdVaModel.value,
             winisdPrNprResonance: this.winisdPrNprResonance.value,
             winisdBesselHighpass: this.winisdBesselHighpass.value,
-            winisdDriverCountModel: this.winisdDriverCountModel.value,
             nDrivers: this.nDrivers.value,
             nPassiveRadiators: this.box.passiveRadiator.count.value,
             hasBesselHighpass: this.filters.value.some(f => f.type === 'highpass' && f.family === 'bessel' && f.enabled),
             winisdAbcGroupDelay: this.winisdAbcGroupDelay.value,
             winisdSealedPicker: this.winisdSealedPicker.value,
             winisdTlPortNoEndCorrection: this.winisdTlPortNoEndCorrection.value,
+            winisdCoilWiringReBlOnly: this.winisdCoilWiringReBlOnly.value,
+            coilWiringApplies: this.coilWiring.canChoose,
             tlPortModel: this.useTransmissionLinePortModel.value,
         });
     }
@@ -813,13 +811,11 @@ export class OpenISDProject {
             driver: this.driver,
             box: this.box,
             nDrivers: this.nDrivers,
-            wiring: this.wiring,
             Rs_ohm: this.Rs_ohm,
             circuitModel: this.circuitModel,
             winisdDriverModel: this.winisdDriverModel,
             winisdVaModel: this.winisdVaModel,
             winisdWrapPhase: this.winisdWrapPhase,
-            winisdDriverCountModel: this.winisdDriverCountModel,
             winisdFlatModel: this.winisdFlatModel,
             winisdAbcIntraPortVelocity: this.winisdAbcIntraPortVelocity,
             winisdPrNprResonance: this.winisdPrNprResonance,
