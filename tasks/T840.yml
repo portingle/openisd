@@ -7,6 +7,9 @@ goal: The passive radiator's Select / Info / Edit as the driver's on both skins 
 why: 'John, 16 Nov 2026 (QO946.c37, issue 522): the Define passive radiator button must work, like the driver editor. John, 16 Nov 2026 11:05 UTC (QO946.c115): "I want an editor for the pr, it must have the fields the current editor has, it must have a save to my prs option as well as ok and cancel, the numbers must disappear from the mobile box page but remain on the desktop as per now as that is more WinISD like, I still want the select pr popup and in the select popup to have a button to the new pr popup"; 11:42 (QO946.c117) "we need the same select info edit setup and workflow as the driver"; 12:46 (c118) mock approved, phone band User options; 12:47 (c119) Info Type: Passive Radiator; 12:51 (c120) plan first; 12:57-13:01 Key figures, Vd, the 2x rule as a count; 14:03 General tab keeps the fields the record carries'
 done_test: bash scripts/test.sh packages/ui/test/hooks/passiveRadiatorActions.test.ts
 files:
+  - packages/ui/test/fixtures.ts
+  - packages/ui/test/fixtures/approvedJoinedGeometry.json
+  - packages/ui/test/scripts/mobile-surface-manifest.test.ts
   - packages/ui/src/ui/shells/mobile/MobileDriverTab.vue
   - packages/ui/src/logic/fileImportExport.ts
   - packages/design/domain/passiveRadiator/openISDPassiveRadiatorStandalone.ts
