@@ -8,3 +8,15 @@ why: "John, 16 Nov 2026 (align-rules, answered Yes): one way of working on both 
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T851.yml
+  - scripts/budget.sh
+  - scripts/feedback/feedback_page_group_test.mjs
+  - scripts/feedback/feedback_page_live_test.mjs
+  - scripts/feedback/feedback_page_ruled_test.mjs
+  - scripts/feedback/feedback_page_stamp_test.mjs
+  - scripts/feedback/feedback_page_test.py
+  - scripts/heavy.sh
+  - scripts/land/watchdog-boot.sh
+  - scripts/land/watchdog.sh
+  - scripts/lib/metrics.py
+  - scripts/systemd/openisd-preview.service
+  - scripts/visual/lib.sh
