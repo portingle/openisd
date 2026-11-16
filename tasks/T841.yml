@@ -1,0 +1,10 @@
+id: T841
+release_note: internal
+repo: openisd
+owner: fable
+status: open
+goal: Sealed picker help states the inconsistency with a 'but'
+why: John, 2026-11-16: sealed picker help states the inconsistency with a 'but' (QO946.c79-c80)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T841.yml
