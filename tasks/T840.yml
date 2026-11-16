@@ -2,7 +2,7 @@ id: T840
 release_note: internal
 repo: openisd
 owner: prdefine-agent
-status: open
+status: done
 goal: The Define new passive radiator button opens an editor on a new blank radiator (name focused); the project's radiator stays until OK, Cancel changes nothing; both skins and the wizard step
 why: John, 2026-11-16: the Define passive radiator button must work (issue 522)
 done_test: bash scripts/test.sh packages/ui/test/hooks/passiveRadiatorActions.test.ts
