@@ -8,3 +8,6 @@ why: "John, 16 Nov 2026: 'get my release finished and all the other matter'. Rel
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T853.yml
+  - scripts/ui-gallery/README.md
+  - scripts/ui-gallery/capture.mjs
+  - scripts/ui-gallery/screens.mjs
