@@ -8,3 +8,20 @@ why: John, 16 Nov 2026 (QO946.c37, issue 522): the Define passive radiator butto
 done_test: bash scripts/test.sh packages/ui/test/hooks/passiveRadiatorActions.test.ts
 files:
   - tasks/T840.yml
+  - bugs/BUG_20261115_define-passive-radiator-button-does-nothing.md
+  - packages/ui/src/hooks/MobileEnclosureTab-hooks.ts
+  - packages/ui/src/hooks/OriginalShell-hooks.ts
+  - packages/ui/src/hooks/PRBrowser-hooks.ts
+  - packages/ui/src/hooks/passiveRadiatorActions.ts
+  - packages/ui/src/ui/components/NewProjectPassiveRadiatorStep.vue
+  - packages/ui/src/ui/components/PRBrowser.vue
+  - packages/ui/src/ui/components/PRDefineDialog.vue
+  - packages/ui/src/ui/shells/mobile/MobileEnclosureTab.vue
+  - packages/ui/src/ui/shells/mobile/MobileNewProject.vue
+  - packages/ui/src/ui/shells/original/OriginalNewProject.vue
+  - packages/ui/src/ui/shells/original/OriginalShell.vue
+  - packages/ui/test/hooks/PRBrowser-hooks.test.ts
+  - packages/ui/test/hooks/passiveRadiatorActions.test.ts
+  - packages/ui/test/ui/new-project-wizard-radiator-pick.browser.spec.ts
+  - packages/ui/test/ui/new-project-wizard.browser.spec.ts
+  - packages/ui/test/ui/pr-define.browser.spec.ts
