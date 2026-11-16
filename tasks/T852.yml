@@ -15,3 +15,7 @@ files:
   - packages/ui/src/hooks/passiveRadiatorEditor.ts
   - packages/ui/src/ui/components/DriverEditorModal.vue
   - packages/ui/test/hooks/passiveRadiatorEditor.test.ts
+  - packages/ui/src/logic/driverDisplay.ts
+  - packages/ui/src/hooks/passiveRadiatorActions.ts
+  - packages/ui/test/logic/driverDisplay.test.ts
+  - packages/ui/test/hooks/passiveRadiatorActions.test.ts

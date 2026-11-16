@@ -6,5 +6,5 @@
 
 There are two forms of Date added, the dash-less stamp (20261116) and the dashed day (2026-09-12). A newly defined radiator was written as the stamp, existing catalogue records hold the dashed day, and the editor showed each as stored.
 
-Fix: `isoDay` in `packages/design/fields/format.ts` is the one form shown (dashed). A blank radiator or driver record now stores the dashed day; the passive radiator editor and the driver editor show Date added through `isoDay`, so files saved earlier with the stamp read back dashed.
-Tests: `packages/design/test/fields/format-date.test.ts`, `packages/design/test/domain/blank-device-id.test.ts`, `packages/ui/test/hooks/passiveRadiatorEditor.test.ts`.
+Fix (display only): `isoDay` in `packages/design/fields/format.ts` turns a stored stamp into the dashed day. Every place Date added is shown goes through it: the passive radiator editor, the driver editor, the passive radiator Info page and the driver preview panel. Stored stamps are unchanged: catalogue records store the dashed day, user-defined records store the dash-less stamp. A single stored form is an open question for John.
+Tests: `packages/design/test/fields/format-date.test.ts`, `packages/ui/test/hooks/passiveRadiatorEditor.test.ts`, `packages/ui/test/hooks/passiveRadiatorActions.test.ts`, `packages/ui/test/logic/driverDisplay.test.ts`.
