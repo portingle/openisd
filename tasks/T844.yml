@@ -10,5 +10,6 @@ files:
   - tasks/T844.yml
   - packages/ui/public/**
   - packages/design/test/fixtures/driver-snapshot/**
+  - packages/design/test/domain/multi-coil-goldens.test.ts
   - scripts/driver-snapshot.pin
   - scripts/driver-snapshot.dq-baseline.json
