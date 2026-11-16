@@ -2,7 +2,7 @@ id: T845
 release_note: internal
 repo: openisd
 owner: claude-helptext
-status: open
+status: done
 goal: WinISD switch help texts are in John's approved pattern on the Advanced tab desktop and phone
 why: John 16 Nov: WinISD switch help texts in the pattern WinISD ... but ... so ... OpenISD ... (QO946.c142-c144)
 done_test: bash scripts/quiet-test.sh npm run typecheck
