@@ -1,10 +1,10 @@
 id: T840
-release_note: internal
+release_note: The Define new passive radiator button on the passive radiator library opens an editor, like the driver editor: OK files the new radiator in your library and the project keeps its own.
 repo: openisd
 owner: prdefine-agent
 status: done
 goal: The Define new passive radiator button opens an editor on a new blank radiator (name focused); the project's radiator stays until OK, Cancel changes nothing; both skins and the wizard step
-why: John, 2026-11-16: the Define passive radiator button must work (issue 522)
+why: John, 16 Nov 2026 (QO946.c37, issue 522): the Define passive radiator button must work, like the driver editor
 done_test: bash scripts/test.sh packages/ui/test/hooks/passiveRadiatorActions.test.ts
 files:
   - tasks/T840.yml
