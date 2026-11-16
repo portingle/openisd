@@ -9,6 +9,7 @@ import UIField from '../../components/UIField.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import PRBrowser from '../../components/PRBrowser.vue';
 import PREditorDialog from '../../components/PREditorDialog.vue';
+import PRInfoDialog from '../../components/PRInfoDialog.vue';
 import SaveToLibraryDialog from '../../components/SaveToLibraryDialog.vue';
 import PhoneBand from './PhoneBand.vue';
 import {useMobileEnclosureTab} from '../../../hooks/MobileEnclosureTab-hooks.js';
@@ -17,7 +18,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
   prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
@@ -58,20 +59,22 @@ const {
   <template v-if="selectedBox === 'box-passive-radiator'">
     <section class="mob-csection">
     <PhoneBand :section="PhoneHelp.PASSIVE_RADIATOR" />
-    <UIField class="mob-ui-field" :title="PhoneBoxText.FP_TIP" :field="NumberField.PR_FP_HZ" :label="PhoneLabels.PR_FP" :cell="project.box.passiveRadiator.tuning_goal_hz" :deviation="WinisdDeviation.PR_BOX_TUNING" stepper />
     <div class="mob-crow">
-      <button id="mob-pr-edit" type="button" class="mob-cname mob-cname-button" :title="PhoneBoxText.PR_EDIT_TIP" @click="startEditPR">{{ project.box.passiveRadiator.radiator.model.value || PhoneBoxText.PR_UNNAMED }}</button>
+      <button id="mob-pr-name-btn" type="button" class="mob-cname mob-cname-button" title="Choose a passive radiator" @click="prBrowseOpen = true">{{ project.box.passiveRadiator.radiator.model.value || PhoneBoxText.PR_UNNAMED }}</button>
     </div>
     <div class="mob-cbtns">
       <button type="button" class="mob-btn mob-btn-primary" @click="prBrowseOpen = true">Select PR</button>
-      <button type="button" class="mob-btn mob-btn-secondary" title="Save a copy of this passive radiator to your library, under a name you choose" @click="openPRSave">Save to library</button>
+      <button type="button" class="mob-btn mob-btn-secondary mob-pr-info" title="View information about this project’s passive radiator" @click="prInfoOpen = true">Info</button>
+      <button id="mob-pr-edit" type="button" class="mob-btn mob-btn-secondary" :title="PhoneBoxText.PR_EDIT_TIP" @click="startEditPR">Edit</button>
     </div>
     <SaveToLibraryDialog v-if="prSaveOpen" title="Save passive radiator to library"
       note="The name the copy has in your library. The project's passive radiator keeps its own name."
       :fields="prSaveFields" :can-save="prSaveCanSave" save-label="Save" phone @save="confirmPRSave" @cancel="cancelPRSave" />
     <PRBrowser v-if="prBrowseOpen" phone :editor="prEditor" @close="prBrowseOpen = false"
       @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
+    <PRInfoDialog v-if="prInfoOpen" phone :info="prInfo" @close="prInfoOpen = false" />
     <PREditorDialog v-if="!prBrowseOpen && prEditor.cells.value" phone :editor="prEditor" :cells="prEditor.cells.value" />
+    <UIField class="mob-ui-field" :title="PhoneBoxText.FP_TIP" :field="NumberField.PR_FP_HZ" :label="PhoneLabels.PR_FP" :cell="project.box.passiveRadiator.tuning_goal_hz" :deviation="WinisdDeviation.PR_BOX_TUNING" stepper />
     </section>
 
     <section class="mob-csection">
@@ -87,3 +90,7 @@ const {
     <UIFixedField class="mob-ui-field" input-id="mob-vent-velocity-limit" label="Velocity limit" :field="NumberField.VENT_PORTVELOCITYLIMIT_M_PER_S" :defaulted="false" :value="project.portVelocityLimit_m_per_s.value" @update:value="v => project.portVelocityLimit_m_per_s.set(v)" />
   </section>
 </template>
+
+<style scoped>
+.mob-pr-info { flex: 0 0 var(--mob-button-h); padding: 0; }
+</style>

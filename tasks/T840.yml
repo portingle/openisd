@@ -29,6 +29,7 @@ files:
   - packages/ui/src/hooks/passiveRadiatorEditor.ts
   - packages/ui/test/hooks/passiveRadiatorEditor.test.ts
   - packages/ui/src/ui/components/PREditorDialog.vue
+  - packages/ui/src/ui/components/PRInfoDialog.vue
   - packages/ui/src/hooks/OriginalNewProject-hooks.ts
   - packages/design/fields/phoneText.ts
   - scripts/ui-gallery/screens.mjs

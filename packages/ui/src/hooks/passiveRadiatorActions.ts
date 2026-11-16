@@ -5,6 +5,7 @@
  * Skin-neutral: shared by every shell's PR page (one implementation, two presentations).
  */
 import {computed, ref} from 'vue';
+import {formatFixedOrDash} from '@openisd/design/fields';
 import type {ComputedRef} from 'vue';
 import type {OpenISDProject} from '@openisd/design';
 import type {SaveNameField} from './saveNameField.js';
@@ -12,6 +13,17 @@ import type {BundledPassiveRadiatorRepo, MyPassiveRadiatorRepo} from '@openisd/p
 import type {RadiatorPicks} from '../logic/telemetry/radiatorPick.js';
 import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
 import {createPassiveRadiatorEditor, type RadiatorEngineAreas, resolveInAppAir} from './passiveRadiatorEditor.js';
+
+/** One figure in the radiator's Info view. */
+export interface PassiveRadiatorInfoFigure { readonly label: string; readonly value: string; readonly unit: string; }
+/** One identity line in the radiator's Info view. */
+export interface PassiveRadiatorInfoLine { readonly label: string; readonly value: string; }
+/** The radiator's Info view, as the driver's Info shows a driver. */
+export interface PassiveRadiatorInfo {
+  readonly title: string;
+  readonly figures: readonly PassiveRadiatorInfoFigure[];
+  readonly lines: readonly PassiveRadiatorInfoLine[];
+}
 
 export interface PassiveRadiatorActionsDeps {
   project: ComputedRef<OpenISDProject>;
@@ -44,7 +56,7 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
   const prEditor = createPassiveRadiatorEditor({ myPassiveRadiators, resolve: resolveInAppAir(engine) });
   const useRadiator = (pr: OpenISDPassiveRadiatorStandalone): void => { project.value.box.passiveRadiator.holdEditedPR(pr); };
   function startEditPR(): void {
-    prEditor.open(project.value.box.passiveRadiator.radiator.detach(), 'Edit passive radiator', useRadiator);
+    prEditor.open(project.value.box.passiveRadiator.radiator.detach(), "Edit Project's Passive Radiator", useRadiator);
   }
   /** The Select popup's "+ Define new passive radiator": the editor on a blank radiator; OK makes it the project's and
    *  closes the popup. */
@@ -54,6 +66,29 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
       prBrowseOpen.value = false;
     });
   }
+  // ---- Info: the radiator's figures and identity, read only, as the driver's Info ------------------------------
+  const prInfoOpen = ref(false);
+  const prInfo = computed<PassiveRadiatorInfo>(() => {
+    const r = project.value.box.passiveRadiator.radiator;
+    const sp = r.spec;
+    const fig = (label: string, v: number | null, scale: number, dp: number, unit: string): PassiveRadiatorInfoFigure =>
+      ({ label, value: formatFixedOrDash(v === null ? null : v * scale, dp), unit });
+    return {
+      title: [r.brand.value, r.model.value].filter(t => t !== '').join(' ') || 'Unnamed passive radiator',
+      figures: [
+        fig('Vas', sp.Vas_m3.value, 1000, 2, 'L'), fig('Qms', sp.Qms.value, 1, 2, ''),
+        fig('Fpr', sp.Fs_hz.value, 1, 2, 'Hz'), fig('Sd', sp.Sd_m2.value, 10000, 2, 'cm²'),
+        fig('Mms', sp.Mms_kg.value, 1000, 2, 'g'), fig('Cms', sp.Cms_m_per_N.value, 1000, 4, 'mm/N'),
+        fig('Rms', sp.Rms_kg_per_s.value, 1, 2, 'Ns/m'), fig('Xmax', sp.Xmax_m.value, 1000, 2, 'mm'),
+      ],
+      lines: [
+        { label: 'Brand', value: r.brand.value }, { label: 'Model', value: r.model.value },
+        { label: 'Manufacturer', value: r.manufacturer.value }, { label: 'Measured by', value: r.providedBy.value ?? '' },
+        { label: 'Date added', value: r.added.value ?? '' }, { label: 'Description', value: r.comment.value ?? '' },
+      ].filter(l => l.value !== ''),
+    };
+  });
+
   // ---- Save to library: a dialog confirms the name, then a detached copy is saved -------------
   // John, 2026-10-05: the dialog's name names only the library entry. The project's radiator is
   // never touched; the saved entry is a deep copy, so later edits to either leave the other alone.
@@ -81,7 +116,7 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
   }
   return {
     prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
-    prEditor, startEditPR, defineNewPREntry,
+    prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
     prSaveOpen, prSaveName, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   };
 }
