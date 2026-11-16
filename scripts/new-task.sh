@@ -21,8 +21,9 @@ set -uo pipefail
 OWNER="${1:?usage: new-task.sh <owner> [goal] [why]}"
 GOAL="${2:-TODO: one sentence saying what is true when this task is done.}"
 
-common="$(git rev-parse --git-common-dir)" || exit 2
-src="$(cd "$(dirname "$common")" && pwd)"            # the main checkout, whichever worktree we run in
+# shellcheck source=lib/main-checkout.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/main-checkout.sh"
+src="$(main_checkout .)" || exit 2                     # the main checkout, whichever worktree we run in, in either layout
 ws="${WORKSPACE:-$(dirname "$src")}"
 repo="$(basename "$src")"
 # The why: who asked for this and when, or the QO/BUG/F id (John, 10 Nov 2026; a pull request needs it, T767).

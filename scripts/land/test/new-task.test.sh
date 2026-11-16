@@ -18,7 +18,7 @@ git init -q --bare -b main origin.git
 git init -q --bare -b main portingle.git
 git clone -q origin.git openisd 2> /dev/null
 cd openisd || exit 2
-mkdir -p scripts tasks; cp "$REPO/scripts/new-task.sh" scripts/
+mkdir -p scripts/lib tasks; cp "$REPO/scripts/new-task.sh" scripts/; cp "$REPO/scripts/lib/main-checkout.sh" scripts/lib/
 printf 'id: T005\nowner: t\nstatus: done\n' > tasks/T005.yml
 printf 'SHIP_REMOTE=portingle\nSHIP_REPO=portingle/openisd\n' > ship.conf
 git remote add portingle "$SCRATCH/portingle.git"
