@@ -117,8 +117,8 @@ this feature).
 - Voltage field label: today's label is kept (John, QO946.c153). Its help text says plainly that it is "the voltage
   at your amplifier's output", which is true for Parallel and Series (and for one driver). Power label "System input power" unchanged.
 - Phone label "Volts" unchanged. Its help today says "the amplifier output voltage"
-  (`packages/design/fields/phoneText.ts:154`); that becomes true with 2+ drivers in either wiring (Q1 covers the
-  wording).
+  (`packages/design/fields/phoneText.ts:154`); with this feature that is true in either wiring, so it stays
+  (QO946.c153).
 - Entered voltage + Parallel → Series: the amplifier voltage stays, each driver gets V/N, SPL −20·log10(N).
 - Entered power + Parallel → Series: the power stays, the voltage readout becomes N times higher; SPL unchanged at Rg 0.
 - No new readout line ("Amplifier load", "each driver gets"): John ruled the coil-wiring figures line out because the
