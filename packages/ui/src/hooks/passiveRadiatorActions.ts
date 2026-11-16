@@ -1,13 +1,13 @@
 /**
  * Passive-radiator actions on the PR page (Enclosure tab, PR box type) — loading a saved PR or a
- * bundled catalogue entry, defining a new one, and saving a copy of the page's PR to My passive
+ * bundled catalogue entry, and saving a copy of the page's PR to My passive
  * radiators under a name confirmed in a dialog.
  * Skin-neutral: shared by every shell's PR page (one implementation, two presentations).
  * Every PR field, the name included, is edited on the page itself; there is no separate editor.
  */
 import {computed, ref} from 'vue';
 import type {ComputedRef} from 'vue';
-import type {OpenISDPassiveRadiatorStandalone, OpenISDProject} from '@openisd/design';
+import type {OpenISDProject} from '@openisd/design';
 import type {SaveNameField} from './saveNameField.js';
 import type {BundledPassiveRadiatorRepo, MyPassiveRadiatorRepo} from '@openisd/persistence';
 import type {RadiatorPicks} from '../logic/telemetry/radiatorPick.js';
@@ -16,13 +16,11 @@ export interface PassiveRadiatorActionsDeps {
   project: ComputedRef<OpenISDProject>;
   myPassiveRadiators: MyPassiveRadiatorRepo;
   bundledPassiveRadiators: BundledPassiveRadiatorRepo;
-  /** "Define new PR": put a blank radiator in the focused project's box. */
-  definePassiveRadiator(radiator?: OpenISDPassiveRadiatorStandalone): void;
   /** Told which radiator the user loaded, for usage statistics. */
   radiatorPicks: RadiatorPicks;
 }
 
-export function createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, definePassiveRadiator, radiatorPicks }: PassiveRadiatorActionsDeps) {
+export function createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks }: PassiveRadiatorActionsDeps) {
   const prBrowseOpen = ref(false);
   function loadPREntry(uuid: string) {
     const entry = myPassiveRadiators.list().find(e => e.uuid === uuid);
@@ -35,11 +33,6 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
     const pr = await bundledPassiveRadiators.load(uuid);
     project.value.box.passiveRadiator.configurePR(pr);
     radiatorPicks.bundled(uuid);
-    prBrowseOpen.value = false;
-  }
-  /** The popup's editor confirmed `radiator` (a blank one the user filled in): it replaces the project's. */
-  function defineNewPREntry(radiator?: OpenISDPassiveRadiatorStandalone) {
-    definePassiveRadiator(radiator);
     prBrowseOpen.value = false;
   }
   // ---- Save to library: a dialog confirms the name, then a detached copy is saved -------------
@@ -68,7 +61,7 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
     prSaveOpen.value = false;
   }
   return {
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, defineNewPREntry,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
     prSaveOpen, prSaveName, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   };
 }

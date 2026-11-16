@@ -148,7 +148,7 @@ const TAB_ACTIONS: Record<TabId, ActionName> = {
 export function useOriginalShell(options?: { sealedReadouts?: typeof createSealedReadouts }) {
   const recentActions = useRecentActions();
   const { appState, logging, presentation: presentationState } = useApp();
-  const { definePassiveRadiator, isTraceVisible, setTraceVisible, allIssues, IMPLEMENTED_BOX_TYPES, boxTypeIsSimulatable, copyProjectName, curvesData, driverName, duplicateFocusedProject, focusedProject, focusProject, isModified, markProjectSaved, maxData, openProjects, projectChanged, projectDisplayName, projectHasUnsavedChanges, removeProject, resetProjectToGround, syncedP } = appState;
+  const { isTraceVisible, setTraceVisible, allIssues, IMPLEMENTED_BOX_TYPES, boxTypeIsSimulatable, copyProjectName, curvesData, driverName, duplicateFocusedProject, focusedProject, focusProject, isModified, markProjectSaved, maxData, openProjects, projectChanged, projectDisplayName, projectHasUnsavedChanges, removeProject, resetProjectToGround, syncedP } = appState;
   const { setSkinOverride } = presentationState;
   const sealedReadouts = options?.sealedReadouts ?? createSealedReadouts;
 
@@ -727,9 +727,9 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
 
   // ---- PR selection header (Enclosure tab, PR box type) --------------------------
   // Delegated to the unit-tested `createPassiveRadiatorActions` above.
-  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, defineNewPREntry,
+  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave } =
-    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, definePassiveRadiator, radiatorPicks: useRadiatorPicks() });
+    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks() });
   function startEdit() {
     featureUse.feature('driver_editor');
     editProjectDriver();
@@ -838,7 +838,7 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
     frontVolumeCell, rearTuningCell, rearResonance,
     model, startEdit, showDriverDisagreements, showDriverInfo: driverBrowsing.showProjectDriverInfo, startWhatIf, placement, driverConsistencyReasons,
     activeVent, activeTuning, ventPorts, END_CORRECTION_OPTIONS, VENT_COUNT_OPTIONS, portPipeResonance_hz,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, defineNewPREntry,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
     prAddedMassDq, prTuningDq, prResonanceMassDq, prFsMass_hz, prNaturalFh,
     fmt,

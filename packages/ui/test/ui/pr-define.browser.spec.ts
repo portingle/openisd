@@ -2,7 +2,7 @@
  * Issue 522 (John, 16 Nov 2026): "the define passive radiator button on the pr popup doesn't work at all".
  * It used to close the popup and swap a blank radiator into the project with no editor and no question.
  * Now it opens an editor on a NEW blank radiator, its name box focused; the project's radiator stays until
- * OK, and Cancel leaves everything as it was. Both skins and the New Project wizard's radiator step.
+ * OK; OK files it in My passive radiators like a new driver (picking it is what uses it); Cancel changes nothing. Both skins and the New Project wizard's radiator step.
  * bugs/BUG_20261115_define-passive-radiator-button-does-nothing.md
  */
 import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
@@ -67,7 +67,7 @@ function suite(skin: 'desktop' | 'phone') {
     await expect(page.locator(name)).toHaveValue(new RegExp(LOADED));
   });
 
-  test('OK replaces the project\'s radiator with the new one', async ({appPage: page}) => {
+  test('OK files the new radiator in the library and leaves the project\'s radiator alone, as a new driver does', async ({appPage: page}) => {
     await open(page);
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
@@ -75,7 +75,11 @@ function suite(skin: 'desktop' | 'phone') {
     await editor.locator('#pr-define-fs').fill('21');
     await editor.getByRole('button', {name: 'OK'}).click();
     await expect(editor).toHaveCount(0);
-    await expect(page.locator('.pr-filter')).toHaveCount(0);
+    await expect(page.locator('.pr-lib-item', {hasText: 'My new PR'})).toBeVisible();
+    await page.getByRole('button', {name: 'Done'}).click();
+    await expect(page.locator(name)).toHaveValue(new RegExp(LOADED));
+    await open(page);
+    await page.locator('.pr-lib-item .pr-lib-name', {hasText: 'My new PR'}).click();
     await expect(page.locator(name)).toHaveValue('My new PR');
   });
 }
@@ -95,7 +99,7 @@ test.describe('wizard step', () => {
     await modal.locator('button', {hasText: 'Next'}).click();
   });
 
-  test('Define opens the editor; Cancel keeps the radiator chosen, OK defines the new one', async ({appPage: page}) => {
+  test('Define opens the editor; Cancel keeps the radiator chosen, OK files the new one in the library only', async ({appPage: page}) => {
     await page.locator('#np-pr-select').click();
     await page.locator('.pr-lib-item .pr-lib-name', {hasText: LOADED}).first().click();
     await page.locator('.overlay.open .modal-footer').getByRole('button', {name: /Back/}).click();
@@ -113,7 +117,8 @@ test.describe('wizard step', () => {
     await page.getByRole('button', {name: /Define new passive radiator/}).click();
     await editor.locator('#pr-define-name').fill('Wizard PR');
     await editor.getByRole('button', {name: 'OK'}).click();
-    await expect(page.locator('#np-pr-name')).toHaveValue('Wizard PR');
-    await expect(page.locator('#np-pr-vas')).toHaveValue('');
+    await expect(page.locator('.pr-lib-item', {hasText: 'Wizard PR'})).toBeVisible();
+    await expect(page.locator('#np-pr-name')).toHaveValue(new RegExp(LOADED));
+    await page.getByRole('button', {name: 'Done'}).click();
   });
 });

@@ -2,7 +2,7 @@
 import {useEscToClose} from '../../logic/useEscToClose.js';
 import {usePRBrowser} from '../../hooks/PRBrowser-hooks.js';
 import {PhonePrBrowserText} from '@openisd/design/fields';
-import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
+import type {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
 import {shallowRef} from 'vue';
 import PRDefineDialog from './PRDefineDialog.vue';
 
@@ -19,14 +19,15 @@ const emit = defineEmits<{
   close: [];
   load: [string];
   loadBundled: [string];
-  define: [OpenISDPassiveRadiatorStandalone];
 }>();
 
-const {filter, fSaved, fBundled, bundledStatus, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly, remove, close} = usePRBrowser(emit);
-// "+ Define new passive radiator" opens an editor on a blank draft; only its OK hands the draft up.
+const {newBlank, saveDefined, filter, fSaved, fBundled, bundledStatus, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly, remove, close} = usePRBrowser(emit);
+// "+ Define new passive radiator" opens an editor on a blank draft, as "Add new Driver" does. OK files it
+// in My passive radiators and leaves the project's radiator alone; picking it from the list is what
+// puts it in the project. Cancel keeps nothing.
 const draft = shallowRef<OpenISDPassiveRadiatorStandalone | null>(null);
-function openDefine() { draft.value = OpenISDPassiveRadiatorStandalone.empty(); }
-function confirmDefine() { const pr = draft.value; draft.value = null; if (pr) emit('define', pr); }
+function openDefine() { draft.value = newBlank(); }
+function confirmDefine() { const pr = draft.value; draft.value = null; if (pr) saveDefined(pr); }
 function onBackdrop(e: MouseEvent) { if (e.target === e.currentTarget) close(); }
 useEscToClose(() => true, close);
 </script>

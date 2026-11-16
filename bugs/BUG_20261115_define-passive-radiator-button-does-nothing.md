@@ -35,7 +35,7 @@ No browser spec presses Define on the main-screen PR popup. Existing: test/hooks
 packages/ui/test/ui/pr-define.browser.spec.ts (desktop, phone, wizard step). Run on portingle/main, 7 of 7 fail: the setup (load ASP190, open the popup, press Define) passes, then `getByRole('dialog', {name: 'Define new passive radiator'})` never appears (no editor exists).
 
 ## Fix
-Define opens PRDefineDialog (a new, blank radiator, its name box focused, the eight figures). The project's (or wizard's) radiator is untouched until OK; OK needs a name; Cancel, Esc and a click outside change nothing and return to the library popup. The expected behaviour is the lead's proposal, not yet specified by John.
+John, 2026-11-16 (QO946.c37): "make it work like the driver editor". Define opens PRDefineDialog: a new, blank radiator, its name box focused, the eight intrinsic figures. OK (needs a name) files it in My passive radiators and leaves the project's radiator alone, as "Add new driver" does for My Drivers; picking it from the popup's Saved list is what uses it. Cancel, Esc and a click outside keep nothing. Intrinsic/user split (QO946.c38): the editor holds only the radiator's own figures; count, tuning and added mass stay on the project's box and are never written to the radiator record (checked: they live on the box, not on OpenISDPassiveRadiator). The old project/wizard "define" wiring is gone (appState.definePassiveRadiator and the wizard's defineNewPassiveRadiator remain, used only by unit tests; remove with #524).
 
 ## Verification
-pr-define.browser.spec.ts passes on both skins and the wizard; the existing wizard specs now confirm the editor.
+pr-define.browser.spec.ts (desktop, phone, wizard step) fails 7 of 7 on portingle/main (no editor appears), passes now.

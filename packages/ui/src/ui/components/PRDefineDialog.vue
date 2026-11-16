@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // The editor "+ Define new passive radiator" opens: a NEW, blank radiator, its name box focused,
-// its eight figures beside it. Nothing reaches the project (or the wizard) until OK; Cancel, Esc
+// its eight figures. Only the radiator's own figures are here; the project's choices (count, added mass, tuning) are not. OK files it
+// in My passive radiators (as a new driver goes to My Drivers) and never touches the project; Cancel, Esc
 // and a click outside leave everything as it was. The caller holds the draft and applies it.
 // (Issue 522: the button used to swap a blank radiator into the project with no editor at all.)
 import {onMounted, ref} from 'vue';
@@ -26,7 +27,7 @@ function ok(): void { if (name.value.trim() !== '') emit('ok'); }
   <div class="prd-scrim" @click.self="emit('cancel')">
     <div class="prd-panel" :class="{'prd-phone': phone}" role="dialog" aria-label="Define new passive radiator">
       <h3>Define new passive radiator</h3>
-      <p class="prd-note">A new, blank passive radiator. The project's own radiator stays as it is until you press OK.</p>
+      <p class="prd-note">A new, blank passive radiator: only what the maker publishes. OK files it in your passive radiators; the project keeps its own until you pick it from the list.</p>
       <label class="prd-name">{{ TextField.PR_NAME.label }}
         <input ref="nameEl" id="pr-define-name" type="text" :value="name" placeholder="e.g. Dayton SD270A-88" @input="rename" @keydown.enter="ok">
       </label>

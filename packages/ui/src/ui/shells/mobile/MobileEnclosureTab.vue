@@ -16,7 +16,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, defineNewPREntry,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
   prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
@@ -69,7 +69,7 @@ const {
       note="The name the copy has in your library. The project's passive radiator keeps its own name."
       :fields="prSaveFields" :can-save="prSaveCanSave" save-label="Save" phone @save="confirmPRSave" @cancel="cancelPRSave" />
     <PRBrowser v-if="prBrowseOpen" phone @close="prBrowseOpen = false"
-      @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
+      @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" />
 
     <UIField class="mob-ui-field" :field="NumberField.PR_VAS_L" :cell="project.box.passiveRadiator.radiator.spec.Vas_m3" stepper />
     <UIField class="mob-ui-field" :field="NumberField.PR_QMS" :cell="project.box.passiveRadiator.radiator.spec.Qms" stepper />

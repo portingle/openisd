@@ -170,7 +170,7 @@ export interface OriginalNewProjectAPI {
   /** Why the last bundled-radiator pick failed (the radiator and the reason); null when it did not. */
   readonly passiveRadiatorPickError: Ref<string | null>;
   /** Start a radiator that states nothing, for the user to type in. */
-  defineNewPassiveRadiator(radiator?: OpenISDPassiveRadiatorStandalone): void;
+  defineNewPassiveRadiator(): void;
 
   // Step 5: Metadata
   readonly projName: Ref<string>;
@@ -473,10 +473,10 @@ export function useOgNewProject(deps?: OriginalNewProjectDeps): OriginalNewProje
     }
   }
 
-  function defineNewPassiveRadiator(radiator: OpenISDPassiveRadiatorStandalone = OpenISDPassiveRadiatorStandalone.empty()): void {
+  function defineNewPassiveRadiator(): void {
     latestPick++;
     passiveRadiatorBrowseOpen.value = false;
-    passiveRadiator.value = radiator;
+    passiveRadiator.value = OpenISDPassiveRadiatorStandalone.empty();
     passiveRadiatorPickId.value++;
   }
 

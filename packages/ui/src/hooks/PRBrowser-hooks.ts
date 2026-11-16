@@ -1,10 +1,15 @@
 import type {InjectionKey, Ref} from 'vue';
 import {computed, ref} from 'vue';
+import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
 import {useApp} from '../logic/app.js';
 import {flashIfNoRoom} from '../logic/backupRefusal.js';
 import {bundledPassiveRadiatorRows, type PassiveRadiatorRow, passiveRadiatorRows} from '../logic/driverDisplay.js';
 
 export interface PRBrowserAPI {
+  /** A blank radiator for the "Define new passive radiator" editor. */
+  newBlank(): OpenISDPassiveRadiatorStandalone;
+  /** The editor's OK: files the radiator in My passive radiators; the project is not touched. */
+  saveDefined(pr: OpenISDPassiveRadiatorStandalone): void;
   readonly filter: Ref<string>;
   readonly fSaved: Readonly<Ref<readonly ReturnType<typeof passiveRadiatorRows>[number][]>>;
   readonly fBundled: Readonly<Ref<readonly ReturnType<typeof passiveRadiatorRows>[number][]>>;
@@ -23,7 +28,7 @@ export interface PRBrowserAPI {
 export const PRBrowserKey: InjectionKey<PRBrowserAPI> = Symbol('PRBrowserAPI');
 
 export function usePRBrowser(emit: (event: 'close') => void): PRBrowserAPI {
-  const { myPassiveRadiators, bundledPassiveRadiators, prefs, logging } = useApp();
+  const { appState, myPassiveRadiators, bundledPassiveRadiators, prefs, logging } = useApp();
   const filter = ref('');
 
   const savedRows = ref(passiveRadiatorRows(
@@ -64,7 +69,22 @@ export function usePRBrowser(emit: (event: 'close') => void): PRBrowserAPI {
     emit('close');
   }
 
+  /** "Define new passive radiator": a blank radiator for the editor, stamped from the app's own context. */
+  function newBlank(): OpenISDPassiveRadiatorStandalone {
+    return OpenISDPassiveRadiatorStandalone.empty(appState.appContext);
+  }
+
+  /** The editor's OK: file `pr` in My passive radiators (the project's radiator is not touched), as a new driver goes to My Drivers. */
+  function saveDefined(pr: OpenISDPassiveRadiatorStandalone): void {
+    const saved = myPassiveRadiators.upsert(pr);
+    if (saved === null) logging.flash('The passive radiator was not saved: your saved passive radiators cannot be written.');
+    savedRows.value = passiveRadiatorRows(
+      myPassiveRadiators.list().map(e => ({ id: e.uuid, radiator: e.passiveRadiator })));
+  }
+
   return {
+    newBlank,
+    saveDefined,
     filter,
     fSaved,
     fBundled,

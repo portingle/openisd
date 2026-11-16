@@ -79,7 +79,7 @@ const {
   frontVolumeCell, rearTuningCell, rearResonance,
   model, startEdit, showDriverDisagreements, showDriverInfo, startWhatIf, placement, driverConsistencyReasons,
   ventPorts, END_CORRECTION_OPTIONS, VENT_COUNT_OPTIONS,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, defineNewPREntry,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
   prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   prResonanceMassDq, prFsMass_hz,
   advTemp, advHumidity, advPressure, advSoundVelocity, advAirDensity,
@@ -840,7 +840,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
     </div>
 
     <PRBrowser v-if="prBrowseOpen" @close="prBrowseOpen = false"
-      @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
+      @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" />
 
     <OptionsModal v-if="optionsOpen" @close="optionsOpen = false" />
 
