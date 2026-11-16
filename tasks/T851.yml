@@ -4,7 +4,7 @@ repo: openisd
 owner: cover
 status: done
 goal: Scripts carry no hard-coded /home/john paths
-why: Two machines now work the project (lap as john, woody as johnl); a script naming /home/john/ breaks on the other one
+why: "John, 16 Nov 2026 (align-rules, answered Yes): one way of working on both machines. Scripts naming /home/john/ break on the other machine (woody runs as johnl)."
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T851.yml
