@@ -1,14 +1,13 @@
 /**
  * Passive-radiator actions on the PR page (Enclosure tab, PR box type) — loading a saved PR or a
- * bundled catalogue entry, the passive-radiator editor (Edit, and the Select popup's Define new), and saving a copy of
- * the page's PR to My passive radiators under a name confirmed in a dialog.
+ * bundled catalogue entry, the radiator's Info, and the passive-radiator editor (Edit, and the Select popup's Define new;
+ * its Copy to My PRs is what Save to library was).
  * Skin-neutral: shared by every shell's PR page (one implementation, two presentations).
  */
-import {computed, ref} from 'vue';
+import {ref} from 'vue';
 import {NumberField} from '@openisd/design/fields';
 import type {ComputedRef} from 'vue';
 import type {OpenISDProject} from '@openisd/design';
-import type {SaveNameField} from './saveNameField.js';
 import type {BundledPassiveRadiatorRepo, MyPassiveRadiatorRepo} from '@openisd/persistence';
 import type {RadiatorPicks} from '../logic/telemetry/radiatorPick.js';
 import {OpenISDPassiveRadiatorStandalone} from '@openisd/design';
@@ -75,7 +74,8 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
   }
   // ---- Info: the radiator's figures and identity, read only, as the driver's Info ------------------------------
   const prInfoOpen = ref(false);
-  const prInfo = computed<PassiveRadiatorInfo>(() => {
+  /** Read when Info opens: the radiator as it stands then (the project's fields are not reactive). */
+  function infoNow(): PassiveRadiatorInfo {
     const r = project.value.box.passiveRadiator.radiator;
     const sp = r.spec;
     // Each figure formatted and labelled by its field, as the driver's Info (driverDisplay `fmtField`).
@@ -100,36 +100,12 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
         { label: 'Date added', value: r.added.value ?? '' }, { label: 'Description', value: r.comment.value ?? '' },
       ].filter(l => l.value !== ''),
     };
-  });
+  }
+  const prInfo = ref<PassiveRadiatorInfo>(infoNow());
+  function openPRInfo(): void { prInfo.value = infoNow(); prInfoOpen.value = true; }
 
-  // ---- Save to library: a dialog confirms the name, then a detached copy is saved -------------
-  // John, 2026-10-05: the dialog's name names only the library entry. The project's radiator is
-  // never touched; the saved entry is a deep copy, so later edits to either leave the other alone.
-  // Entries are keyed by identity, not name (as My Drivers, QO81): a name already in the library
-  // saves a second entry beside it and overwrites nothing.
-  const prSaveOpen = ref(false);
-  const prSaveName = ref('');
-  const prSaveCanSave = computed(() => prSaveName.value.trim() !== '');
-  const prSaveFields: readonly SaveNameField[] = [
-    { label: 'Name', placeholder: 'Passive radiator name', text: prSaveName, inputClass: 'pr-save-name' },
-  ];
-  function openPRSave(): void {
-    prSaveName.value = project.value.box.passiveRadiator.radiator.model.value;
-    prSaveOpen.value = true;
-  }
-  function cancelPRSave(): void {
-    prSaveOpen.value = false;
-  }
-  function confirmPRSave(): void {
-    if (!prSaveCanSave.value) return;
-    const copy = project.value.box.passiveRadiator.radiator.detach();
-    copy.model.set(prSaveName.value.trim());
-    myPassiveRadiators.upsert(copy);
-    prSaveOpen.value = false;
-  }
   return {
     prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
-    prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
-    prSaveOpen, prSaveName, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
+    prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo,
   };
 }

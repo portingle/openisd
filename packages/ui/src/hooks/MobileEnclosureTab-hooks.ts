@@ -37,8 +37,7 @@ export function useMobileEnclosureTab() {
   } = createVentReadouts({ project, projectChanged, selectedBox, vent: engine.vent });
   const { prResonanceMassDq, prFsMass_hz, prNaturalFh } =
     createSealedReadouts({ project, selectedBox, projectChanged });
-  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo,
-    prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave } =
+  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo } =
     createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks(), engine,
       files: appPassiveRadiatorFiles(useApp()) });
 
@@ -75,8 +74,7 @@ export function useMobileEnclosureTab() {
     project, selectedBox,
     activeVent, activeTuning, ventPorts, portPipeResonance_hz, fbUnreachable, fbUnreachableMsg, tuningField,
     prResonanceMassDq, prFsMass_hz, prNaturalFh,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures, prTwoTimesRule,
-    prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prTwoTimesRule,
     VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
     FB_TARGET_TIP, VENT_GEOMETRY_TIP,
   };

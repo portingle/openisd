@@ -17,7 +17,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, prKeyFigures, prTwoTimesRule,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prTwoTimesRule,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
 } = useMobileEnclosureTab();
@@ -62,7 +62,7 @@ const {
     </div>
     <div class="mob-cbtns">
       <button type="button" class="mob-btn mob-btn-primary" @click="prBrowseOpen = true">Select PR</button>
-      <button type="button" class="mob-btn mob-btn-secondary mob-pr-info" id="mob-pr-info" title="View information about this project’s passive radiator" @click="prInfoOpen = true">Info</button>
+      <button type="button" class="mob-btn mob-btn-secondary mob-pr-info" id="mob-pr-info" title="View information about this project’s passive radiator" @click="openPRInfo">Info</button>
       <button id="mob-pr-edit" type="button" class="mob-btn mob-btn-secondary" :title="PhoneBoxText.PR_EDIT_TIP" @click="startEditPR">Edit</button>
     </div>
     <PRBrowser v-if="prBrowseOpen" phone :editor="prEditor" @close="prBrowseOpen = false"
