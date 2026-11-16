@@ -11,5 +11,6 @@ files:
   - tasks/T850.yml
   - bugs/BUG_20261110_layout-scan-first-run.md
   - packages/design/fields/field.ts
+  - packages/design/engine/appSettings.ts
   - packages/design/test/fields/box-volume-limit.test.ts
   - packages/ui/test/ui/layout-long-values.browser.spec.ts
