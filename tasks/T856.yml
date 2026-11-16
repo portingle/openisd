@@ -2,7 +2,7 @@ id: T856
 release_note: user
 repo: openisd
 owner: cover
-status: done
+status: blocked
 goal: Next to every chart's Data button a (all) button exports every chart of the project, not only the ones on screen, as one ZIP of CSV files plus the project file
 why: "John, 16 Nov 2026: 'can you quickly add a feature to export all data from the charts, just export literally everything not just selected charts'; 'put the buttons next to the existing data button as (all)'."
 done_test: bash scripts/test.sh packages/design/test/chart/all-chart-data.test.ts packages/ui/test/logic/applicationIO.test.ts packages/ui/test/hooks/GraphPanel-hooks.test.ts packages/ui/test/hooks/MobileChartView-hooks.test.ts
@@ -230,3 +230,4 @@ visual:
   - mobile-dialog-what-if-sealed
   - mobile-dialog-what-if-vented
   - mobile-tab-graph
+blocked_reason: merge of portingle/main conflicts in: packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-passive-radiator-info.png 
