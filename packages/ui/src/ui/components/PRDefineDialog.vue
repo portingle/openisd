@@ -9,10 +9,17 @@ import type {PassiveRadiatorStepCells} from '../../hooks/OriginalNewProject-hook
 import {NumberField, TextField} from '@openisd/design/fields';
 import UIField from './UIField.vue';
 import {inputValue} from '../../logic/domEvents.js';
+import {provideCellScope} from './cellScope.js';
+import {PHONE_DRIVER_EDITOR_SKIN} from './driverEditorSkin.js';
 import {useEscToClose} from '../../logic/useEscToClose.js';
 
-defineProps<{ cells: PassiveRadiatorStepCells; phone?: boolean }>();
+const props = defineProps<{ cells: PassiveRadiatorStepCells; phone?: boolean }>();
 const emit = defineEmits<{ ok: []; cancel: []; rename: [string] }>();
+
+// The draft's cells do not announce their writes (as the driver editor's draft), so this dialog is its own scope:
+// without it a typed figure is committed but its box redraws blank.
+const revision = ref(0);
+provideCellScope({ revision, written: () => { revision.value++; } });
 
 const nameEl = ref<HTMLInputElement | null>(null);
 onMounted(() => { nameEl.value?.focus(); });
@@ -25,7 +32,7 @@ function ok(): void { if (name.value.trim() !== '') emit('ok'); }
 
 <template>
   <div class="prd-scrim" @click.self="emit('cancel')">
-    <div class="prd-panel" :class="{'prd-phone': phone}" role="dialog" aria-label="Define new passive radiator">
+    <div class="prd-panel" :class="{'prd-phone': phone, 'mob-classic': phone}" role="dialog" aria-label="Define new passive radiator" :style="props.phone ? PHONE_DRIVER_EDITOR_SKIN.rowVars : undefined">
       <h3>Define new passive radiator</h3>
       <p class="prd-note">A new, blank passive radiator: only what the maker publishes. OK files it in your passive radiators; the project keeps its own until you pick it from the list.</p>
       <label class="prd-name">{{ TextField.PR_NAME.label }}
@@ -61,12 +68,19 @@ function ok(): void { if (name.value.trim() !== '') emit('ok'); }
 .prd-name { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--mut); }
 .prd-name input { flex: 1 1 auto; min-width: 0; box-sizing: border-box; padding: 6px 10px; font-size: 13px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--fg); }
 .prd-fields { display: flex; flex-direction: column; gap: 4px; }
+/* One unit-chip width on the desktop, so the eight rows' boxes, chips and arrows line up (the app widens the chip of mm/N and Ns/m only). */
+.prd-panel:not(.prd-phone) .prd-fields :deep(.ui-field) { --joined-chip: 60px !important; }
 .prd-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 .prd-foot .pri { background: var(--acc); color: #fff; border-color: var(--acc); }
 .prd-foot button:disabled { opacity: .5; cursor: default; }
-.prd-phone { width: min(340px, 100%); padding: 16px; border-radius: 8px; gap: 10px; }
+.prd-scrim:has(.prd-phone) { align-items: flex-end; }
+/* Phone: the sheet is the screen's full width, as the driver editor is, so the classic phone row gets its value column. */
+.prd-phone { width: 100%; max-width: 100%; max-height: 100%; padding: 14px 0 0; border-radius: 8px 8px 0 0; gap: 10px; }
+.prd-phone h3, .prd-phone .prd-note, .prd-phone .prd-name, .prd-phone .prd-foot { margin-left: 14px; margin-right: 14px; }
+.prd-phone h3 { font-size: 16px; }
+.prd-phone .prd-fields :deep(.ui-field) { --mob-chip: var(--mob-col-chip-wide) !important; }
 .prd-phone .prd-name { flex-direction: column; align-items: stretch; gap: 4px; }
-.prd-phone .prd-foot { gap: 8px; }
+.prd-phone .prd-foot { gap: 8px; padding-bottom: 14px; }
 .prd-phone .prd-foot button { flex: 1 1 0; }
 .prd-phone .prd-cancel { order: -1; }
 </style>

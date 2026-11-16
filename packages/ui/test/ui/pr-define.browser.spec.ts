@@ -73,6 +73,9 @@ function suite(skin: 'desktop' | 'phone') {
     const editor = page.getByRole('dialog', {name: 'Define new passive radiator'});
     await editor.locator('#pr-define-name').fill('My new PR');
     await editor.locator('#pr-define-fs').fill('21');
+    await editor.locator('#pr-define-vas').fill('60');
+    await editor.locator('#pr-define-fs').press('Tab');
+    await expect(editor.locator('#pr-define-vas')).toHaveValue('60.00');   // a typed figure stays in its box
     await editor.getByRole('button', {name: 'OK'}).click();
     await expect(editor).toHaveCount(0);
     await expect(page.locator('.pr-lib-item', {hasText: 'My new PR'})).toBeVisible();
