@@ -51,3 +51,12 @@ files:
   - scripts/*.ts
   - scripts/ui-gallery/screens.mjs
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/*.png
+visual:
+  - desktop-dialog-enclosure-passive-radiator-data-quality
+  - desktop-dialog-enclosure-passive-radiator-edit
+  - desktop-dialog-enclosure-passive-radiator-info
+  - mobile-dialog-losses-box-passive-radiator-rear
+  - mobile-dialog-pr-edit
+  - mobile-dialog-pr-info
+  - mobile-dialog-pr-picker
+  - mobile-tab-driver
