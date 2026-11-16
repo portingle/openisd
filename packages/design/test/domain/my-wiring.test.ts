@@ -13,6 +13,7 @@
  * The conversion is proved against a SINGLE-coil driver stating the converted figures: the two
  * must give the same curves.
  */
+import {z} from 'zod';
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '../../engine/Engine.js';
 import {ProjectBuilder} from '../../domain/openisdTransforms.js';
@@ -65,7 +66,8 @@ describe('Coil wiring: the default is the measured wiring', () => {
 
   it('saves no coil-wiring key until the user chooses one (a project saved before this loads as measured)', () => {
     const project = projectOf(MX6_22);
-    expect(project.toOwprText()).not.toContain('"wiring"');
+    const text = z.object({saved: z.object({driverEmbedding: z.object({}).passthrough()})}).parse(JSON.parse(project.toOwprText()));
+    expect(text.saved.driverEmbedding).not.toHaveProperty('VCCon');
   });
 });
 
@@ -195,19 +197,23 @@ describe('Coil wiring is not offered when it cannot be applied', () => {
   });
 });
 
-describe('Coil wiring: the words the Driver tab shows', () => {
-  it('stated series, nothing chosen: both figure lines', () => {
+describe('Coil wiring: the figures behind the control', () => {
+  it('stated series, nothing chosen: published and amplifier-side figures agree', () => {
     const w = projectOf(MX6_22).coilWiring;
     expect(w.measuredBasis).toBe('stated');
-    expect(w.publishedFigures).toBe('Re 4.70 Ω · BL 12.30 Tm');
-    expect(w.mineFigures).toBe('Re 4.70 Ω · BL 12.30 Tm');
+    expect(w.published.Re_ohm).toBeCloseTo(4.7, 9);
+    expect(w.atMine.Re_ohm).toBeCloseTo(4.7, 9);
+    expect(w.atMine.BL_Tm).toBeCloseTo(12.3, 9);
   });
 
-  it('parallel chosen: the second line is the converted figures', () => {
+  it('parallel chosen: the amplifier-side figures are converted, the stored ones are not', () => {
     const p = projectOf(MX6_22);
     p.coilWiring.choose('parallel');
-    expect(p.coilWiring.publishedFigures).toBe('Re 4.70 Ω · BL 12.30 Tm');
-    expect(p.coilWiring.mineFigures).toBe('Re 1.175 Ω · BL 6.15 Tm');
+    // the stored driver is never overwritten; only the amplifier-side figures are converted (QO946.c35)
+    expect(p.coilWiring.published.Re_ohm).toBeCloseTo(4.7, 9);
+    expect(p.driver.specs.Re_ohm.value).toBeCloseTo(4.7, 9);
+    expect(p.coilWiring.atMine.Re_ohm).toBeCloseTo(1.175, 9);
+    expect(p.coilWiring.atMine.BL_Tm).toBeCloseTo(6.15, 9);
   });
 
   it('not stated and one coil', () => {

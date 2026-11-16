@@ -144,8 +144,8 @@ function libraryResaved(value: string | undefined, resave: (record: unknown) => 
 /** Every stored project, driver and passive radiator read through the upgrade and written again the
  *  way every later write does it. Layout 3 -> 4: each carries `schemaVersion` (QO395). Layout 4 -> 5:
  *  each is in the slim model, so a record the layout-4 build wrote with readings, quality and the
- *  rest sheds them once. Layout 5 -> 6: each project is at data version 5, where its `wiring` is the wiring of its
- *  driver's coils (QO941), so a project's old array wiring is dropped (and kept as `retiredArrayWiring`) once. Exported `.owpr` and `.owdr` files are not touched: a file with no
+ *  rest sheds them once. Layout 5 -> 6: each project is at data version 5, where the project's `wiring` key is
+ *  named `VCCon`, value kept (QO941, QO946.c18). Exported `.owpr` and `.owdr` files are not touched: a file with no
  *  version reads as version 2. */
 function stepResavingEverything(from: number, engine: Engine): LayoutStep {
   return {

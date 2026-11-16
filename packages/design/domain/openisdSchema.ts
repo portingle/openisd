@@ -881,6 +881,9 @@ const openISDAdvancedJsonSchema = z.preprocess(renameLegacyWinisdDriverModel, z.
     // Bug switch "TL port without end correction": with the transmission-line port model on, the port pipe
     // as WinISD builds it, without the end correction, so the tuning rises. Absent parses to OFF.
     winisdTlPortNoEndCorrection: z.boolean().optional(),
+    // Bug switch "Coil wiring: Re and BL only" (QO942.c62): a coil wiring other than the driver's converts Re and BL only, as WinISD's
+    // routine does; Le and Znom stay as published. Absent parses to OFF (they convert too).
+    winisdCoilWiringReBlOnly: z.boolean().optional(),
     // "Phase wrapping": wraps phase curves to [-180°, +180°]. Optional: absent parses to ON.
     winisdWrapPhase: z.boolean().optional(),
     // Retired (QO941) switch "Per-driver impedance": the impedance chart is always one driver's, as WinISD's. Old files carry it; it is read and ignored.
@@ -921,13 +924,10 @@ const openISDDriverEmbeddingJsonSchema = z.strictObject({
     // WinISD Driver tab: "Num. of drivers".
     nDrivers: z.number(),
     // WinISD Driver tab: "Voice coil connection".
-    // The project's coil wiring (QO941; John, QO942.c54: "the project already had a connection setting"): how this project wires the
-    // driver's own voice coils; WinISD's project VCCon. Absent means the wiring the maker measured in. Before data version 5 it meant the
-    // wiring of several drivers (see `retiredArrayWiring`); the version 5 upgrade drops that old value.
-    wiring: z.enum(['series', 'parallel']).optional(),
-    // The wiring of several drivers a project saved before version 5 held, kept only for a project with more than one driver, so the
-    // project can be told once that its impedance chart changed. Never applied.
-    retiredArrayWiring: z.enum(['series', 'parallel']).optional(),
+    // The project's coil wiring (QO941; John, QO942.c54 "the project already had a connection setting", c56 "project name to be same as
+    // driver"): how this project wires the driver's own voice coils, named as the driver's `VCCon`; WinISD's project VCCon. Absent means
+    // the driver's own VCCon (the wiring the maker measured in). Data version 5 renamed the old `wiring` key to `VCCon`, value kept (QO946.c18).
+    VCCon: z.enum(['series', 'parallel']).optional(),
     // WinISD Driver tab: "Voice coil temp rise".
     vcTempRise_K: z.number(),
     Rs_ohm: z.number(),

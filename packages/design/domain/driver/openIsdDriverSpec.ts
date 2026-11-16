@@ -224,6 +224,7 @@ export class OpenIsdDriverSpec {
     #issues: readonly DriverIssue[] = [];
     /** The wiring the user builds with (the project's "Coil wiring"); undefined follows the measured one. */
     readonly #myWiring: () => Wiring | undefined;
+    readonly #coilWiringReBlOnly: () => boolean;
 
     constructor(
         record: SimpleField<DriverDeviceJson>,
@@ -241,8 +242,10 @@ export class OpenIsdDriverSpec {
         durableIssues?: () => readonly DriverIssue[],
         /** The project's "Coil wiring" choice; omitted by a standalone driver, which is not wired. */
         myWiring: () => Wiring | undefined = () => undefined,
+        coilWiringReBlOnly: () => boolean = () => false,
     ) {
         this.#myWiring = myWiring;
+        this.#coilWiringReBlOnly = coilWiringReBlOnly;
         this.#driver = driver;
         this.#issueEngine = issues;
         this.#title = () => record.value.model.value;
@@ -505,7 +508,7 @@ export class OpenIsdDriverSpec {
         const Re = published.Re_ohm;
         if (mine === undefined || measured === null || Re === null) return published;
         // An absent BL has nothing to convert: it goes through as 1 and comes back absent.
-        const result = this.#driver.convertWiring({...published, Re_ohm: Re, BL_Tm: published.BL_Tm ?? 1}, this.numVC.value, measured, mine);
+        const result = this.#driver.convertWiring({...published, Re_ohm: Re, BL_Tm: published.BL_Tm ?? 1}, this.numVC.value, measured, mine, this.#coilWiringReBlOnly());
         return result.converted ? {...result.motor, BL_Tm: published.BL_Tm === null ? null : result.motor.BL_Tm} : published;
     }
 

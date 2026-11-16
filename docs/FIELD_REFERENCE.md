@@ -86,14 +86,14 @@ stored as the maker published them, for the wiring the maker measured in. `VCCon
 the Driver editor shows it as calculated, and the Driver tab does not show the measured wiring at all, QO941), or not stated. The Thiele/Small relations and the consistency checks run on the stored figures and
 never read `VCCon`.
 
-The project carries **Coil wiring**, its `driverEmbedding.wiring` field (the setting that was always called Connection,
-WinISD's project VCCon; `series` or `parallel`): how the user will wire the coils. Absent means the measured wiring, so a
-project that never chose behaves as measured. Before data version 5 `wiring` held the wiring of several drivers; the
+The project carries **Coil wiring**, its `driverEmbedding.VCCon` field, named as the driver's (the setting that was always called Connection,
+WinISD's project VCCon; `series` or `parallel`; John, QO942.c56): how the user will wire the coils. Absent means the measured wiring, so a
+project that never chose behaves as measured. Before data version 5 the project's `wiring` held the wiring of several drivers; the
 version 5 upgrade drops that value, so a series-measured driver is never silently rewired to parallel, and takes the
-Test-site `coilWiring` into `wiring`. Only the amplifier
+Test-site `coilWiring` into `VCCon`. Only the amplifier
 side reads it: impedance, SPL and excursion against voltage, power, and Rg loading use the figures converted from the
 measured wiring to Coil wiring, for N identical coils. Series to parallel: `Re` and `Le` and `Znom` divided by N², `BL`
-divided by N; parallel to series the inverse. (WinISD converts `Re` and `BL` only; a yellow switch for that is awaiting John, QO942.c22.) `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
+divided by N; parallel to series the inverse. WinISD converts `Re` and `BL` only; the yellow switch "Coil wiring: Re and BL only" (`winisdCoilWiringReBlOnly`, off by default, QO942.c62) does the same, and its effect shows only with "Simulate voice coil inductance" on, as `Znom` feeds no chart. `Fs`, `Qes`, `Qms`, `Qts`, `Mms`, `Cms` and `Vas` do not change. The
 Dayton MX6-22 (series, 4.7 Ω, 12.3 Tm) in parallel is 1.175 Ω, 6.15 Tm, and `Qes` stays 0.373. The choice is
 absent for a driver whose measured wiring is not stated, and for one coil on the phone (greyed on the desktop, as in
 WinISD). Any number of coils above one converts, as WinISD does. It is labelled "Coil wiring" on both skins
@@ -104,8 +104,7 @@ figures converted to Coil wiring, with Coil wiring as its `VCCon`. WinISD's own 
 stored `Re` and `BL` that leaves the result marked entered (`winisd_research` FINDING-009); OpenISD never rewrites a
 stored figure. WinISD has no wiring of several drivers (its "Voice coil connection" is the coil wiring of one driver), so
 OpenISD applies none either: with more than one driver the impedance chart is one driver's, and the array's impedance is
-ticket Johnlon/openisd#519. A project upgraded from before data version 5 that had several drivers (and had not ticked Per-driver impedance) keeps the
-dropped wiring of its drivers as `retiredArrayWiring`, never applied, and is told once. The retired `winisdDriverCountModel` key is read and ignored. See `docs/plans/PLAN_20261115_SEVERAL_DRIVERS_REPLICATE_WINISD.md`, `docs/research/WINISD_PARITY.md` §11b and
+ticket Johnlon/openisd#519. The project's saved `wiring` key is named `VCCon` from data version 5 on, its value kept as saved (John, QO946.c18, c23); there is no notice. The retired `winisdDriverCountModel` key is read and ignored. See `docs/plans/PLAN_20261115_SEVERAL_DRIVERS_REPLICATE_WINISD.md`, `docs/research/WINISD_PARITY.md` §11b and
 `docs/plans/PLAN_20261114_DVC_WIRING_AND_DQ.md`.
 
 ## Driver — sensitivity

@@ -56,23 +56,4 @@ describe('several drivers', () => {
     const one = w5().sweep(at(20000)).values!.zmag[0];
     expect(back.sweep(at(20000)).values!.zmag[0] / one).toBeCloseTo(1, 6);
   });
-
-  const saved = (wiring: 'series' | 'parallel', n = 4): OpenISDProject => {
-    const text = (() => { const p = w5(); p.nDrivers.set(n); return p.toOwprText(); })()
-      .replaceAll('"driverEmbedding": {', `"driverEmbedding": {\n    "retiredArrayWiring": "${wiring}",`);
-    const back = OpenISDProject.fromOwprText(text, engine);
-    if (Array.isArray(back)) throw new Error('fromOwprText returned problems: ' + back.join(', '));
-    return back;
-  };
-
-  it('a project saved with several drivers wired in series or parallel is told once that its impedance chart changed', () => {
-    expect(saved('series').retiredArrayWiringNotice()).toMatch(/4 drivers were wired in series \(4 times one driver's impedance\)/);
-    expect(saved('parallel').retiredArrayWiringNotice()).toMatch(/in parallel \(one driver's impedance divided by 4\)/);
-    expect(saved('series').retiredArrayWiringNotice()).toMatch(/now shows one driver's impedance/);
-  });
-
-  it('no notice for one driver or for a new project (a project that had ticked Per-driver impedance never gets the key: schema-version-5-wiring.test.ts)', () => {
-    expect(saved('series', 1).retiredArrayWiringNotice()).toBeNull();
-    expect(four().retiredArrayWiringNotice()).toBeNull();
-  });
 });

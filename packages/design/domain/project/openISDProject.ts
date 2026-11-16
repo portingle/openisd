@@ -109,7 +109,8 @@ export class OpenISDProject {
             () => this.#airOver(root),
             () => this.#issues.driver,
             () => this.#appContext.newId(),
-            () => root.value.driverEmbedding.wiring,
+            () => root.value.driverEmbedding.VCCon,
+            () => root.value.advanced.winisdCoilWiringReBlOnly === true,
         );
     }
 
@@ -179,18 +180,6 @@ export class OpenISDProject {
      *  measured in. The amplifier-side figures use it; the stored ones stay as published. */
     get coilWiring(): ProjectCoilWiring {
         return new ProjectCoilWiring(this.#slot('driverEmbedding'), this.driver, this.#engine);
-    }
-
-    /** What a project saved before data version 5 is told, once, when it holds several drivers whose impedance chart changes: the
-     *  wiring of several drivers is no longer applied and the chart is one driver's, as WinISD's (QO941). The old value is the
-     *  upgrade's `retiredArrayWiring`, kept only for a project with more than one driver that had not ticked "Per-driver
-     *  impedance"; null for every other project. */
-    retiredArrayWiringNotice(): string | null {
-        const was = this.#slot('driverEmbedding').value.retiredArrayWiring;
-        const n = this.nDrivers.value;
-        if (was === undefined || n < 2) return null;
-        const wired = was === 'series' ? `in series (${n} times one driver's impedance)` : `in parallel (one driver's impedance divided by ${n})`;
-        return `This project's ${n} drivers were wired ${wired} on the impedance chart. OpenISD no longer wires drivers together, as WinISD does not: the chart now shows one driver's impedance. Everything else is unchanged.`;
     }
 
     /** Thermal power compression: coil temperature rise under drive, Kelvin. */
@@ -369,6 +358,11 @@ export class OpenISDProject {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdTlPortNoEndCorrection;
     }
 
+    /** WinISD Compatibility "Coil wiring: Re and BL only" — see `ProjectAdvanced.winisdCoilWiringReBlOnly`. */
+    get winisdCoilWiringReBlOnly(): SimpleField<boolean> {
+        return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdCoilWiringReBlOnly;
+    }
+
     /** The controls that reproduce a known WinISD error: which carry the warning look, whether each
      *  applies to the open box, and whether it is reproducing the error now. */
     get errorSwitches(): ErrorSwitchStates {
@@ -384,6 +378,8 @@ export class OpenISDProject {
             winisdAbcGroupDelay: this.winisdAbcGroupDelay.value,
             winisdSealedPicker: this.winisdSealedPicker.value,
             winisdTlPortNoEndCorrection: this.winisdTlPortNoEndCorrection.value,
+            winisdCoilWiringReBlOnly: this.winisdCoilWiringReBlOnly.value,
+            coilWiringApplies: this.coilWiring.canChoose,
             tlPortModel: this.useTransmissionLinePortModel.value,
         });
     }

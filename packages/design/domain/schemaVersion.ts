@@ -1,7 +1,7 @@
 /**
  * Schema version numbers for saved data (QO395, John 4 Nov 2026). A saved project (.owpr), a saved
  * driver (.owdr, stored record) and openisd.json carry `schemaVersion`. The slim format is 3, and
- * 4 stores a multi-coil driver's Re and BL as published, 5 holds the coil wiring in a project's `wiring`; a file with none is 2. Load upgrades it
+ * 4 stores a multi-coil driver's Re and BL as published, 5 holds the coil wiring in a project's `VCCon`; a file with none is 2. Load upgrades it
  * one step at a time, on the parsed JSON, BEFORE the strict
  * schema reads it (the schema refuses undeclared keys, so removed fields must be gone first).
  * A file newer than this app knows is refused with a message saying so: never a blank, never a
@@ -10,7 +10,7 @@
 import {withoutRetiredSpecKeys} from './retiredSpecKeys.js';
 import {withSlimModel} from './slimModel.js';
 import {withMultiCoilAsPublished} from './multiCoilAsPublished.js';
-import {withCoilWiringAsWiring} from './coilWiringAsWiring.js';
+import {withCoilWiringAsVCCon} from './coilWiringAsVCCon.js';
 
 export const CURRENT_SCHEMA_VERSION = 5;
 /** What a file with no `schemaVersion` is: everything saved before versions existed. */
@@ -39,12 +39,12 @@ function recordOr(upgraded: unknown, fallback: PlainRecord): PlainRecord {
  *  rest are dropped.
  *  3 to 4: a multi-coil driver's per-coil Re and BL become the published figures, and a defaulted
  *  wiring becomes unknown (`multiCoilAsPublished.ts`, QO908).
- *  4 to 5: a project's `wiring` holds the wiring of its driver's own coils, not of several drivers; the old value is dropped
- *  and `coilWiring` becomes `wiring` (`coilWiringAsWiring.ts`, QO941). */
+ *  4 to 5: a project's coil wiring is its `VCCon`; the old `wiring` (of several drivers) is dropped and `coilWiring`
+ *  becomes `VCCon` (`coilWiringAsVCCon.ts`, QO941). */
 const UPGRADE_STEPS: readonly UpgradeStep[] = Object.freeze([
     Object.freeze({from: 2, upgrade: (value: PlainRecord) => recordOr(withSlimModel(withoutRetiredSpecKeys(value)), value)}),
     Object.freeze({from: 3, upgrade: (value: PlainRecord) => recordOr(withMultiCoilAsPublished(value), value)}),
-    Object.freeze({from: 4, upgrade: (value: PlainRecord) => recordOr(withCoilWiringAsWiring(value), value)}),
+    Object.freeze({from: 4, upgrade: (value: PlainRecord) => recordOr(withCoilWiringAsVCCon(value), value)}),
 ]);
 
 /**

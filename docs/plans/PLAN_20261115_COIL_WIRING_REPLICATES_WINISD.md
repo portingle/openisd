@@ -68,19 +68,20 @@ The driver's entered values and its measured wiring go to the solver together wi
 - It is reached through ONE door, `terminalMotor()` (`packages/design/domain/driver/openIsdDriverSpec.ts`): the solver's Re and BL, the sweep's Le, the Driver tab's one line, the `.wpr` export. `projectCoilWiring.ts` also asks it "can this be rewired" with a probe.
 - The gate `packages/design/test/architecture-coil-wiring-arithmetic-has-one-site.test.ts` fails if a second caller or a factor of the coil count appears outside them. It names two other places that multiply by the coil count, both turning a figure printed PER COIL into the published figure for the measured wiring, not the amplifier-side conversion: the record bridge (`driverRecordConverter.ts`) and the one-time schema 3 to 4 upgrade (`multiCoilAsPublished.ts`).
 
-## Data version 5: the project's `wiring` becomes the coil wiring (John, QO942.c54)
+## Data version 5: the project's `wiring` is renamed `VCCon` (John, QO942.c54, QO946.c18, c23)
 
-John: "the project already had a connection setting". The project's existing field `driverEmbedding.wiring` (the setting that was always called Connection, WinISD's project VCCon) IS the coil wiring now. `coilWiring` (added 15 Nov 2026, never released) is gone from the schema and the code. The data version goes from 4 to 5 (and the browser-store layout from 5 to 6, which re-saves every stored project once) because data version 4 had two meanings of `wiring`: the test-site builds before this change wrote the wiring of several drivers (usually the default "parallel"), builds after it write the wiring of the driver's coils. One version could not tell them apart, and the wrong guess would silently rewire a series-measured MX6-22 to parallel.
+John: "migration is just to rename the field and use "parallel"/"serial" not 1 or 2"; "only the key name changes". The project's saved `driverEmbedding.wiring` is named `VCCon` from data version 5 on (as the driver's), its value ("series" or "parallel") kept exactly as saved; the driver's own `VCCon` is untouched. `coilWiring` (added 15 Nov 2026 on the test site, never released) also becomes `VCCon` and wins where a project has both. No `retiredArrayWiring`, no notice. Data version 4 to 5, browser-store layout 5 to 6.
 
-What an old project shows after loading (`packages/design/test/domain/schema-version-5-wiring.test.ts`, written first, real-shaped fixtures: the three production projects copied from a browser store, `packages/persistence/test/fixtures/stored-v3-projects.json`):
+What an old project shows after loading (`packages/design/test/domain/schema-version-5-wiring.test.ts`, real-shaped fixtures from a production browser store):
 
-| Project as saved | `wiring` after loading | Driver tab shows (MX6-22, series-measured, 2 coils) |
+| Project as saved | `VCCon` after loading | Coil wiring in force (MX6-22, series-measured, 2 coils) |
 |---|---|---|
-| Production, data version 3 (`wiring` was the array value, usually "parallel") | dropped; kept as `retiredArrayWiring` only with more than one driver and no Per-driver impedance ticked | Coil wiring "Series", "2 coils · Re 4.70 Ω · BL 12.30 Tm": not rewired |
-| Test site, data version 4, without `coilWiring` (array wiring, usually "parallel") | dropped, same rule | the same: not rewired |
-| Test site, data version 4, with `coilWiring` (the user chose a coil wiring) | `coilWiring` becomes `wiring`; the array value is dropped, same rule | the user's choice, for example "Parallel", "2 coils · Re 1.175 Ω · BL 6.15 Tm" |
+| Production v3, `wiring: "parallel"` (the old default, written explicitly) | `parallel` | Parallel: the amplifier side uses Re 1.175 Ω, BL 6.15 Tm. The stored driver figures stay 4.70 Ω, 12.30 Tm. |
+| Test site v4, `wiring` set, no `coilWiring` | the same value | the same value |
+| Test site v4 with `coilWiring` | `coilWiring`'s value | the user's choice |
+| No `wiring` saved | absent | follows the driver's own VCCon (series) |
 
-A project with several drivers that held a series or parallel array wiring and had not ticked Per-driver impedance is told once (PR #138's notice, now read from `retiredArrayWiring`). The `.wpr`: export writes `[Driver] VCCon` from the project's `wiring` (or the driver's measured wiring when none), with Re and BL converted; import reads the file's VCCon as the driver's wiring and leaves the project's `wiring` absent, so nothing converts (WinISD files carry one VCCon).
+The `.wpr`: export writes `[Driver] VCCon` from the project's `VCCon` (or the driver's measured wiring when none), with Re and BL converted; import reads the file's VCCon as the project's `VCCon`.
 
 ## (d) The end state John ruled
 

@@ -22,27 +22,31 @@ function hookFor(path: string, phone = true) {
 }
 
 describe('useDriverCoilWiring', () => {
-  it('MX6-22: Coil wiring equal to the driver own wiring, one line with the coil count and the figures, enabled', () => {
+  it('MX6-22: Coil wiring equal to the driver own wiring, enabled', () => {
     const {wiring} = hookFor('dayton-audio/mx6-22');
     expect(wiring.shown.value).toBe(true);
     expect(wiring.disabled.value).toBe(false);
     expect(wiring.mine.value).toBe('series');
-    expect(wiring.inUseLine.value).toBe('2 coils · Re 4.70 Ω · BL 12.30 Tm');
     expect(wiring.options.value.map(o => o.value)).toEqual(['series', 'parallel']);
   });
 
-  it('choosing parallel writes the project and shows the converted figures', () => {
+  it('choosing parallel writes the project; the stored figures stay', () => {
     const {project, wiring} = hookFor('dayton-audio/mx6-22');
     wiring.choose('parallel');
     expect(project.coilWiring.mine).toBe('parallel');
     expect(wiring.mine.value).toBe('parallel');
-    expect(wiring.inUseLine.value).toBe('2 coils · Re 1.175 Ω · BL 6.15 Tm');
+    expect(project.coilWiring.atMine.Re_ohm).toBeCloseTo(1.175, 9);
+    expect(project.driver.specs.Re_ohm.value).toBeCloseTo(4.7, 9);
   });
 
-  it('Bliesma W137A-854-4: wiring not stated, so nothing is drawn (the data-quality mark in the editor is the only sign)', () => {
-    const {wiring} = hookFor('bliesma/w137a-854-4');
-    expect(wiring.shown.value).toBe(false);
-    expect(hookFor('bliesma/w137a-854-4', false).wiring.shown.value).toBe(false);
+  it('Bliesma W137A-854-4: wiring not stated: omitted on the phone, greyed on the desktop with its own message (QO942.c90, c91)', () => {
+    expect(hookFor('bliesma/w137a-854-4', true).wiring.shown.value).toBe(false);
+    const desktop = hookFor('bliesma/w137a-854-4', false).wiring;
+    expect(desktop.shown.value).toBe(true);
+    expect(desktop.disabled.value).toBe(true);
+    expect(desktop.message.value).toBeNull();
+    desktop.explain();
+    expect(desktop.message.value).toBe('The datasheet does not say how the coils were wired when measured, so the wiring cannot be changed. The figures are used as published.');
   });
 
   it('a one-coil or no-coil-count driver: nothing on the phone, the control greyed on the desktop as in WinISD (QO941)', () => {

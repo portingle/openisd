@@ -35,14 +35,12 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
         await expect(page.locator(skin.select)).toHaveValue('series');
     // John, QO942.c12 and QO943.c4: the control is "Coil wiring" on both skins; "Connection" is WinISD's own word and is no OpenISD label.
     await expect(page.locator(skinName === 'phone' ? 'label[for="mob-coil-wiring"]' : 'label[for="og-coil-wiring"]')).toHaveText('Coil wiring');
-    await expect(page.getByTestId('coil-wiring-figures')).toHaveText('2 coils · Re 4.70 Ω · BL 12.30 Tm');
     await openTab(page, 'Signal');
     const volts = numInputByLabel(page, skin.volts);
     await expect(volts).toHaveValue(/^2\.19/);
 
     await openTab(page, 'Driver');
     await page.locator(skin.select).selectOption('parallel');
-    await expect(page.getByTestId('coil-wiring-figures')).toHaveText('2 coils · Re 1.175 Ω · BL 6.15 Tm');
     await openTab(page, 'Signal');
     await expect(volts).toHaveValue(/^1\.1[23]/);
   });
@@ -52,7 +50,9 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
     await selectDriver(page, RSS265HO);
     await expect(page.getByText('Measured wiring')).toHaveCount(0);
     await page.locator(skin.select).selectOption('series');
-    await expect(page.getByTestId('coil-wiring-figures')).toHaveText('2 coils · Re 6.40 Ω · BL 18.78 Tm');
+    // 1 W into Re x 4 + Rs: sqrt(6.4 + 0.1) = 2.55 V (the stored 1.6 ohm is not overwritten)
+    await openTab(page, 'Signal');
+    await expect(numInputByLabel(page, skin.volts)).toHaveValue(/^2\.5/);
   });
 
   // John, QO942.c9: "don't show datasheet setting outside the driver editor". The Driver tab names no datasheet wiring word
@@ -63,33 +63,45 @@ for (const [skin, skinName] of [[DESKTOP, 'desktop'], [PHONE, 'phone']] as const
       await skin.open(page);
       await selectDriver(page, file);
       const tab = page.locator(skinName === 'phone' ? '.mob-classic' : '.tab-section.active');
-      await expect(page.getByTestId('coil-wiring-figures')).toBeVisible();
+      await expect(page.locator(skin.select)).toBeVisible();
       expect(await tab.innerText()).not.toMatch(NO_DATASHEET_WORD);
       await page.locator(skin.select).selectOption(other);
       expect(await tab.innerText()).not.toMatch(NO_DATASHEET_WORD);
-      await expect(page.getByTestId('coil-wiring-figures')).toHaveText(/^2 coils · Re /);
     }
   });
 
-  test(`${skinName}: a driver that does not state its wiring shows no wiring block at all`, async ({page}) => {
-    await skin.open(page);
-    await selectDriver(page, W137A);
-    await expect(page.getByText('Measured wiring')).toHaveCount(0);
-    await expect(page.locator(skin.select)).toHaveCount(0);
-    await expect(page.getByTestId('coil-wiring-figures')).toHaveCount(0);
-    await expect(page.getByText('Coil wiring', {exact: true})).toHaveCount(0);
-  });
 
 }
+
+// John, QO942.c91: the phone may omit the field when it cannot be used; only the desktop matches WinISD's screen.
+test('phone: a driver that does not state its wiring: no wiring block', async ({page}) => {
+  await PHONE.open(page);
+  await selectDriver(page, W137A);
+  await expect(page.getByText('Measured wiring')).toHaveCount(0);
+  await expect(page.locator(PHONE.select)).toHaveCount(0);
+});
+
+test('desktop: a driver that does not state its wiring: the control greyed, a click says why, no change', async ({page}) => {
+  await DESKTOP.open(page);
+  await selectDriver(page, W137A);
+  const select = page.locator(DESKTOP.select);
+  await expect(select).toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByTestId('coil-wiring-message')).toHaveCount(0);
+  await select.click({force: true});
+  await expect(page.getByTestId('coil-wiring-message')).toHaveText('The datasheet does not say how the coils were wired when measured, so the wiring cannot be changed. The figures are used as published.');
+  await expect(select).toHaveValue('parallel');
+});
 
 // WinISD greys its coil-wiring box with one coil (observed, winisd_research runs/nd-1; read in the code: enabled only when
 // numVC > 1). The desktop skin replicates that screen; the phone shows nothing. QO941.
 test('desktop: a driver with no coil count: the control is there, greyed, reading Parallel', async ({page}) => {
   await DESKTOP.open(page);
   await selectDriver(page, CE28M);
-  await expect(page.locator(DESKTOP.select)).toBeDisabled();
+  await expect(page.locator(DESKTOP.select)).toHaveAttribute('aria-disabled', 'true');
   await expect(page.locator(DESKTOP.select)).toHaveValue('parallel');
-  await expect(page.getByTestId('coil-wiring-figures')).toHaveCount(0);
+  await page.locator(DESKTOP.select).click({force: true});
+  await expect(page.getByTestId('coil-wiring-message')).toHaveText('Coil wiring applies only to drivers with 2 or more voice coils.');
+  await expect(page.locator(DESKTOP.select)).toHaveValue('parallel');
 });
 
 test('phone: a driver with no coil count: no control', async ({page}) => {

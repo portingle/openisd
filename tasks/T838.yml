@@ -3,13 +3,14 @@ release_note: internal
 repo: openisd
 owner: wiringrow
 status: done
-goal: The project's one coil-wiring control, labelled Coil wiring on both skins, is the project's own wiring field (data version 5); it converts Re and BL by WinISD's factors for any coil count above one, shows one line with the coil count and the figures, is greyed on the desktop and absent on the phone for one coil, and absent for an unstated wiring.
+goal: The project's one coil-wiring control, labelled Coil wiring on both skins, is the project's own wiring field (data version 5); it converts Re, Le, Znom and BL by the coil-count factors (a yellow switch gives WinISD's Re-and-BL-only way) for any coil count above one, shows one line with the coil count and the figures, is greyed on the desktop and absent on the phone for one coil, and absent for an unstated wiring.
 ruling: QO941
 why: John, 2026-11-15: the driver wiring is the measured setup and the project wiring is the usage of the driver (QO941.c14); for now replicate WinISD (QO941.c24); isolate the two issues (QO942.c2)
 done_test: bash scripts/test.sh packages/design/test/engine/wiring-conversion.test.ts
 files:
   - CLAUDE.md
   - README.md
+  - bugs/BUG_20261116_coil-wiring-refuses-three-or-more-coils.md
   - bugs/archive/BUG_20261005_winisd-multi-driver-impedance-is-one-drivers.md
   - docs/FIELD_REFERENCE.md
   - docs/plans/PLAN_20261115_COIL_WIRING_REPLICATES_WINISD.md
@@ -17,6 +18,7 @@ files:
   - docs/research/ACCURACY_IMPROVEMENTS.md
   - docs/research/WINISD_EQUIVALENCE.md
   - docs/research/WINISD_PARITY.md
+  - packages/design/domain/coilWiringAsVCCon.ts
   - packages/design/domain/coilWiringAsWiring.ts
   - packages/design/domain/driver/openISDDriver.ts
   - packages/design/domain/driver/openISDDriverEmbedded.ts
@@ -31,6 +33,7 @@ files:
   - packages/design/domain/project/projectSweep.ts
   - packages/design/domain/schemaVersion.ts
   - packages/design/engine/circuit.ts
+  - packages/design/engine/driver/DriverEngine.ts
   - packages/design/engine/simulation/SimulationEngine.ts
   - packages/design/engine/solvers/driverQuantities.ts
   - packages/design/engine/types.ts
@@ -61,6 +64,7 @@ files:
   - packages/design/test/engine/rg-placement.test.ts
   - packages/design/test/engine/sweep-golden-master.test.ts
   - packages/design/test/engine/wiring-conversion.test.ts
+  - packages/design/test/fields/coil-wiring-help.test.ts
   - packages/design/test/fields/connection-label.test.ts
   - packages/design/test/fields/desktopHelp.test.ts
   - packages/design/test/fields/field-registry.test.ts
@@ -208,7 +212,7 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-wizard-sealed-step2.png
   - tasks/T837.yml
   - tasks/T838.yml
-visual_note: The Driver tab has one Coil wiring box (greyed on the desktop for a one-coil driver, absent on the phone) and, for two or more coils, one line such as 2 coils, Re 4.70, BL 12.30.
+visual_note: The Driver tab has one Coil wiring box (greyed on the desktop when the driver has one coil or its measured wiring is not stated, with a message on click; absent on the phone in those cases) and no figures line.
 visual:
   - desktop-box-abc
   - desktop-box-bandpass4

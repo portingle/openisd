@@ -1,13 +1,13 @@
 /**
- * Data version 5 (QO941; John, QO942.c54: "the project already had a connection setting"): the project's `wiring` field,
- * which meant the wiring of several drivers (usually the default "parallel"), now means the wiring of the driver's own
- * coils. The upgrade must not rewire anyone's project silently: a series-measured MX6-22 saved with the old default
- * "parallel" array wiring must load showing its published figures, not converted to parallel.
+ * Data version 5 (QO941; John, QO942.c54/c56, QO946.c18/c23): "migration is just to rename the field": the project's saved
+ * `wiring` key is named `VCCon` (as the driver's), its value kept exactly as saved; no notice, nothing retired. Consequence
+ * (reported to John): a dual-coil series-measured driver saved with `wiring: "parallel"` (the old default, written explicitly
+ * in production) opens with its coils wired in parallel: Re 1.175 ohm, BL 6.15 Tm instead of the published 4.70 and 12.30.
  *
  * Fixtures are real-shaped: the three projects copied from a production browser store (schemaVersion 3, data version 3,
  * `packages/persistence/test/fixtures/stored-v3-projects.json`: RS225-8 single coil, MX6-22 dual coil, GF 250 dual
  * coil), taken through the real upgrade steps; the test-site shapes are made from them by the same steps and the
- * fields the test-site builds wrote (`coilWiring`, an array `wiring` set to series).
+ * fields the test-site builds wrote (`coilWiring`).
  */
 import {readFileSync} from 'node:fs';
 import {describe, expect, it} from 'vitest';
@@ -65,73 +65,58 @@ describe('data version 5', () => {
     expect(CURRENT_SCHEMA_VERSION).toBe(5);
   });
 
-  it('production v3, MX6-22 (series-measured) with the old array wiring "parallel": loads with no coil rewiring', () => {
+  it('production v3, MX6-22 (series-measured) saved with wiring "parallel": the key is renamed, the value kept, the coils open wired in parallel', () => {
     const v3 = entryNamed('MX6-22');
     expect(embeddingOf(v3).wiring).toBe('parallel');
     const up = upgraded(v3);
     expect(embeddingOf(up)).not.toHaveProperty('wiring');
-    expect(embeddingOf(up)).not.toHaveProperty('retiredArrayWiring');
+    expect(embeddingOf(up).VCCon).toBe('parallel');
     const project = loaded(up);
-    expect(project.coilWiring.mine).toBe('series');
-    expect(project.coilWiring.inUseLine).toBe('2 coils · Re 4.70 Ω · BL 12.30 Tm');
-    expect(project.retiredArrayWiringNotice()).toBeNull();
+    expect(project.coilWiring.mine).toBe('parallel');
+    expect(project.coilWiring.atMine.Re_ohm).toBeCloseTo(1.175, 9);
+    expect(project.coilWiring.atMine.BL_Tm).toBeCloseTo(6.15, 9);
+    expect(project.driver.specs.Re_ohm.value).toBeCloseTo(4.7, 9);
   });
 
-  it('production v3, one driver or several: the old array wiring never becomes the coil wiring', () => {
+  it.each([['series'], ['parallel']] as const)('production v3, every project: wiring "%s" becomes VCCon "%s", nothing else kept', (value) => {
     for (const model of ['RS225-8', 'MX6-22', 'GF 250']) {
-      const up = upgraded(withEmbedding(entryNamed(model), e => ({...e, wiring: 'series'})));
+      const up = upgraded(withEmbedding(entryNamed(model), e => ({...e, wiring: value, nDrivers: 2})));
       expect(embeddingOf(up), model).not.toHaveProperty('wiring');
+      expect(embeddingOf(up), model).not.toHaveProperty('retiredArrayWiring');
+      expect(embeddingOf(up).VCCon, model).toBe(value);
     }
   });
 
-  it('production v3 with several drivers wired in series: the dropped value is kept to tell the project once', () => {
-    const v3 = withEmbedding(entryNamed('MX6-22'), e => ({...e, nDrivers: 2, wiring: 'series'}));
+  it('a project that saved no wiring has none after: it follows the driver\'s own VCCon', () => {
+    const v3 = withEmbedding(entryNamed('MX6-22'), e => Object.fromEntries(Object.entries(e).filter(([k]) => k !== 'wiring')));
     const up = upgraded(v3);
-    expect(embeddingOf(up)).not.toHaveProperty('wiring');
-    expect(embeddingOf(up).retiredArrayWiring).toBe('series');
-    const project = loaded(up);
-    expect(project.coilWiring.mine).toBe('series');
-    expect(project.retiredArrayWiringNotice()).toMatch(/2 drivers were wired in series \(2 times one driver's impedance\)/);
-  });
-
-  it('production v3 with several drivers that had ticked Per-driver impedance: nothing to tell', () => {
-    const v3 = withEmbedding(entryNamed('MX6-22'), e => ({...e, nDrivers: 2, wiring: 'series'}));
-    const flagged: Plain = {...v3};
-    for (const state of ['saved', 'edited']) {
-      const s = flagged[state];
-      if (typeof s === 'object' && s !== null) flagged[state] = {...rec(s), advanced: {...(rec(s).advanced === undefined ? {} : rec(rec(s).advanced)), winisdDriverCountModel: true}};
-    }
-    expect(embeddingOf(upgraded(flagged))).not.toHaveProperty('retiredArrayWiring');
-  });
-
-  it('test-site v4 without coilWiring (array wiring series, two drivers): the array value is dropped and kept to tell the project', () => {
-    const v4 = withEmbedding(upgraded4(entryNamed('MX6-22')), e => ({...e, nDrivers: 2, wiring: 'series'}));
-    const up = upgraded(v4);
-    expect(embeddingOf(up)).not.toHaveProperty('wiring');
-    expect(embeddingOf(up).retiredArrayWiring).toBe('series');
+    expect(embeddingOf(up)).not.toHaveProperty('VCCon');
     expect(loaded(up).coilWiring.mine).toBe('series');
   });
 
-  it('test-site v4 with coilWiring parallel: it becomes wiring, and the coils are rewired as the user chose', () => {
-    const v4 = withEmbedding(upgraded4(entryNamed('MX6-22')), e => ({...e, wiring: 'parallel', coilWiring: 'parallel'}));
+  it('test-site v4 without coilWiring: its wiring is renamed too', () => {
+    const v4 = withEmbedding(upgraded4(entryNamed('MX6-22')), e => ({...e, wiring: 'series'}));
     const up = upgraded(v4);
-    expect(embeddingOf(up).wiring).toBe('parallel');
+    expect(embeddingOf(up)).not.toHaveProperty('wiring');
+    expect(embeddingOf(up).VCCon).toBe('series');
+  });
+
+  it('test-site v4 with coilWiring parallel: it is the VCCon, and the coils are wired as the user chose', () => {
+    const v4 = withEmbedding(upgraded4(entryNamed('MX6-22')), e => ({...e, wiring: 'series', coilWiring: 'parallel'}));
+    const up = upgraded(v4);
+    expect(embeddingOf(up).VCCon).toBe('parallel');
+    expect(embeddingOf(up)).not.toHaveProperty('wiring');
     expect(embeddingOf(up)).not.toHaveProperty('coilWiring');
     const project = loaded(up);
     expect(project.coilWiring.mine).toBe('parallel');
-    expect(project.coilWiring.inUseLine).toBe('2 coils · Re 1.175 Ω · BL 6.15 Tm');
+    expect(project.coilWiring.atMine.Re_ohm).toBeCloseTo(1.175, 9);
+    expect(project.coilWiring.atMine.BL_Tm).toBeCloseTo(6.15, 9);
+    expect(project.driver.specs.Re_ohm.value).toBeCloseTo(4.7, 9);
   });
 
-  it('test-site v4 with coilWiring and an array wiring over two drivers: both are kept apart', () => {
-    const v4 = withEmbedding(upgraded4(entryNamed('MX6-22')), e => ({...e, nDrivers: 2, wiring: 'series', coilWiring: 'parallel'}));
-    const up = upgraded(v4);
-    expect(embeddingOf(up).wiring).toBe('parallel');
-    expect(embeddingOf(up).retiredArrayWiring).toBe('series');
-  });
-
-  it('a version 5 project is not upgraded again: its wiring stays', () => {
-    const v5 = withEmbedding(rec(upgraded(entryNamed('MX6-22'))), e => ({...e, wiring: 'parallel'}));
-    expect(embeddingOf(upgraded(v5)).wiring).toBe('parallel');
+  it('a version 5 project is not upgraded again: its VCCon stays', () => {
+    const v5 = withEmbedding(rec(upgraded(entryNamed('MX6-22'))), e => ({...e, VCCon: 'parallel'}));
+    expect(embeddingOf(upgraded(v5)).VCCon).toBe('parallel');
   });
 });
 
