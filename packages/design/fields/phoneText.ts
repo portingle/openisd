@@ -336,7 +336,7 @@ export class PhoneHelp {
     bugLine(ToggleField.ADV_WINISDPRNPRRESONANCE, 'WinISD takes passive radiator losses at the wrong frequency, with more than one radiator.', WinisdDeviation.PR_NPR_RESONANCE),
     bugLine(ToggleField.ADV_WINISDBESSELHIGHPASS, 'WinISD\'s Bessel high-pass is not the mirror of its low-pass.', WinisdFilterDeviation.BESSEL_HIGHPASS),
     bugLine(ToggleField.ADV_WINISDABCGROUPDELAY, 'WinISD\'s ABC group delay leaves the driver out.', WinisdDeviation.ABC_GROUP_DELAY),
-    bugLine(ToggleField.ADV_WINISDSEALEDPICKER, 'WinISD\'s sealed picker gives a volume whose Qtc is not the one you picked.', WinisdDeviation.SEALED_PICKER),
+    bugLine(ToggleField.ADV_WINISDSEALEDPICKER, 'WinISD\'s sealed picker suggests a volume for your Qtc, but the Box tab then shows a different Qtc.', WinisdDeviation.SEALED_PICKER),
     bugLine(ToggleField.ADV_WINISDTLPORTNOENDCORRECTION, 'with the transmission line model on, WinISD leaves out the port end correction and tunes the box higher.', WinisdDeviation.TL_PORT_END_CORRECTION),
   ]);
   static readonly ADVANCED_SECTIONS: readonly PhoneHelpSection[] = [
