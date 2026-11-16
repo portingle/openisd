@@ -727,9 +727,9 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
 
   // ---- PR selection header (Enclosure tab, PR box type) --------------------------
   // Delegated to the unit-tested `createPassiveRadiatorActions` above.
-  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
+  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave } =
-    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks() });
+    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks(), engine });
   function startEdit() {
     featureUse.feature('driver_editor');
     editProjectDriver();
@@ -838,7 +838,7 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
     frontVolumeCell, rearTuningCell, rearResonance,
     model, startEdit, showDriverDisagreements, showDriverInfo: driverBrowsing.showProjectDriverInfo, startWhatIf, placement, driverConsistencyReasons,
     activeVent, activeTuning, ventPorts, END_CORRECTION_OPTIONS, VENT_COUNT_OPTIONS, portPipeResonance_hz,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
     prAddedMassDq, prTuningDq, prResonanceMassDq, prFsMass_hz, prNaturalFh,
     fmt,

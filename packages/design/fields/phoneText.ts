@@ -88,6 +88,9 @@ export class PhoneBoxText {
   static readonly BOX_LOSSES_LINK = 'Box losses (Qa, Ql, Qp)…';
   static readonly FP_TIP = 'Fp: the box tuning you enter for the passive radiator box. The Fh row shows the natural tuning of the box and radiator with no added mass.';
   static readonly INTRA_VENT_NOTE = 'Connects chambers; not open to outside';
+  /** The passive radiator's name row (QO946.c115): its figures are in the editor it opens. */
+  static readonly PR_EDIT_TIP = 'Edit this passive radiator: its name and figures, OK, Cancel or Save to My PRs.';
+  static readonly PR_UNNAMED = 'Unnamed passive radiator';
 }
 
 /** One quick-add chip of the phone Filters tab, in WinISD's Filter Editor order, then the two OpenISD-only shelves. */

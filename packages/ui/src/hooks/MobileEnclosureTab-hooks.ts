@@ -26,9 +26,9 @@ export function useMobileEnclosureTab() {
   } = createVentReadouts({ project, projectChanged, selectedBox, vent: engine.vent });
   const { prResonanceMassDq, prFsMass_hz, prNaturalFh } =
     createSealedReadouts({ project, selectedBox, projectChanged });
-  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
+  const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave } =
-    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks() });
+    createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks(), engine });
 
   /** The box types whose unreachable-tuning sentence also shows as a note under the vent; ABC and the 6th order bandpass show it once, in the warning mark's popup. */
   const tuningNoteShown = computed(() => selectedBox.value === 'vented' || selectedBox.value === 'bandpass4');
@@ -40,7 +40,7 @@ export function useMobileEnclosureTab() {
     project, selectedBox,
     activeVent, activeTuning, ventPorts, portPipeResonance_hz, fbUnreachable, fbUnreachableMsg, tuningField,
     prResonanceMassDq, prFsMass_hz, prNaturalFh,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry,
     prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
     VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
     FB_TARGET_TIP, VENT_GEOMETRY_TIP,

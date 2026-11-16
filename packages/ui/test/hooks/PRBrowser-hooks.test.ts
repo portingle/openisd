@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest';
-import {defineComponent, h, provide} from 'vue';
+import {defineComponent, h, nextTick, provide, ref} from 'vue';
 import {renderToString} from 'vue/server-renderer';
 import {APP_LOGIC} from '../../src/logic/app.js';
 import {usePRBrowser, type PRBrowserAPI} from '../../src/hooks/PRBrowser-hooks.js';
@@ -105,28 +105,28 @@ describe('PRBrowser-hooks — favourites', () => {
     expect(api.isFavorite(savedId)).toBe(false);
   });
 
-  // Issue 522: Define new passive radiator files the editor's radiator in the library, as a new driver goes to My Drivers.
-  it('saveDefined adds the radiator to the Saved list', async () => {
-    const {api} = await renderWith(createPrefsRepo(createMemoryStorage(), () => undefined));
-    api.startDefine();
-    expect(api.defineCells.value).not.toBeNull();
-    api.setDefineName('Defined PR');
+  // QO946.c115: the editor's Save to My PRs (passiveRadiatorEditor.test.ts) files the radiator; the open popup's Saved list shows it at once.
+  it('the Saved list re-reads the library when the editor saves', async () => {
+    const myPassiveRadiators = myPassiveRadiatorRepoOn(createMemoryStorage());
+    const savedRevision = ref(0);
+    let api!: PRBrowserAPI;
+    const Child = defineComponent({ setup() { api = usePRBrowser(vi.fn(), savedRevision); return () => null; } });
+    const Root = defineComponent({
+      setup() {
+        provide(APP_LOGIC, testAppLogic({myPassiveRadiators, bundledPassiveRadiators: {index: () => Promise.resolve([]), load: () => Promise.reject(new Error('unused'))}}));
+        return () => h(Child);
+      },
+    });
+    await renderToString(h(Root));
+    expect(api.fSaved.value.map(r => r.name)).not.toContain('Filed by the editor');
+    const pr = OpenISDPassiveRadiatorStandalone.empty();
+    pr.model.set('Filed by the editor');
+    myPassiveRadiators.upsert(pr);
 
-    api.confirmDefine();
+    savedRevision.value++;
+    await nextTick();
 
-    expect(api.defineCells.value).toBeNull();
-    expect(api.fSaved.value.map(r => r.name)).toContain('Defined PR');
-  });
-
-  it('cancelDefine keeps nothing', async () => {
-    const {api} = await renderWith(createPrefsRepo(createMemoryStorage(), () => undefined));
-    api.startDefine();
-    api.setDefineName('Never kept');
-
-    api.cancelDefine();
-
-    expect(api.defineCells.value).toBeNull();
-    expect(api.fSaved.value.map(r => r.name)).not.toContain('Never kept');
+    expect(api.fSaved.value.map(r => r.name)).toContain('Filed by the editor');
   });
 
   it('Favorites shows only the starred radiators', async () => {

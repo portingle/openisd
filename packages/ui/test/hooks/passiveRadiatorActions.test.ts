@@ -20,7 +20,8 @@ function fakeMyPassiveRadiators(): MyPassiveRadiatorRepo {
 }
 
 function setUp(bundled: OpenISDPassiveRadiatorStandalone = OpenISDPassiveRadiatorStandalone.empty()) {
-  const project = ProjectBuilder.empty(createEngine());
+  const engine = createEngine();
+  const project = ProjectBuilder.empty(engine);
   project.box.boxType.set('box-passive-radiator');
   const myPassiveRadiators = fakeMyPassiveRadiators();
   const bundledPassiveRadiators: BundledPassiveRadiatorRepo = {
@@ -28,11 +29,54 @@ function setUp(bundled: OpenISDPassiveRadiatorStandalone = OpenISDPassiveRadiato
     load: vi.fn(async () => bundled),
   };
   const radiatorPicks: RadiatorPicks = { bundled: vi.fn(), saved: vi.fn() };
-  const actions = createPassiveRadiatorActions({ project: computed(() => project), myPassiveRadiators, bundledPassiveRadiators, radiatorPicks });
+  const actions = createPassiveRadiatorActions({ project: computed(() => project), myPassiveRadiators, bundledPassiveRadiators, radiatorPicks, engine });
   return { project, myPassiveRadiators, actions, radiatorPicks };
 }
 
 describe('createPassiveRadiatorActions', () => {
+  // John, 16 Nov 2026 (QO946.c115): one passive-radiator editor; OK applies the edits to the project's radiator.
+  it('Edit opens the editor on the project\'s radiator; OK puts the edits in the project, the build choices untouched', () => {
+    const { project, actions } = setUp();
+    project.box.passiveRadiator.radiator.model.set('Bench PR');
+    project.box.passiveRadiator.count.set(2);
+
+    actions.startEditPR();
+    expect(actions.prEditor.name.value).toBe('Bench PR');
+    actions.prEditor.setName('Edited PR');
+    actions.prEditor.cells.value?.Xmax_m.set(0.015);
+    expect(project.box.passiveRadiator.radiator.model.value).toBe('Bench PR');
+    actions.prEditor.ok();
+
+    expect(project.box.passiveRadiator.radiator.model.value).toBe('Edited PR');
+    expect(project.box.passiveRadiator.radiator.spec.Xmax_m.value).toBe(0.015);
+    expect(project.box.passiveRadiator.count.value).toBe(2);
+  });
+
+  it('Edit then Cancel leaves the project\'s radiator as it was', () => {
+    const { project, actions } = setUp();
+    project.box.passiveRadiator.radiator.model.set('Bench PR');
+    actions.startEditPR();
+    actions.prEditor.setName('Thrown away');
+    actions.prEditor.cancel();
+    expect(project.box.passiveRadiator.radiator.model.value).toBe('Bench PR');
+  });
+
+  it('Define new opens the editor on a blank radiator; OK makes it the project\'s and closes the Select popup', () => {
+    const { project, actions } = setUp();
+    project.box.passiveRadiator.radiator.model.set('Bench PR');
+    actions.prBrowseOpen.value = true;
+
+    actions.defineNewPREntry();
+    expect(actions.prEditor.name.value).toBe('');
+    expect(actions.prBrowseOpen.value).toBe(true);
+    expect(project.box.passiveRadiator.radiator.model.value).toBe('Bench PR');
+    actions.prEditor.setName('New PR');
+    actions.prEditor.ok();
+
+    expect(project.box.passiveRadiator.radiator.model.value).toBe('New PR');
+    expect(actions.prBrowseOpen.value).toBe(false);
+  });
+
   // John, 2026-10-05: "Save PR to library needs to ask for a name confirmation dialog."
   it('opening Save to library prefills the name with the page\'s passive radiator name and saves nothing yet', () => {
     const { project, myPassiveRadiators, actions } = setUp();

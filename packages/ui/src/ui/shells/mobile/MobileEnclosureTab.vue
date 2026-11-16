@@ -1,13 +1,14 @@
 <script setup lang="ts">
 // The vent and passive-radiator sections of the Box page (after the chambers): one vent section per
-// vent the box draws, the passive radiator, and the Chart section holding the velocity limit.
+// vent the box draws, the passive radiator (by name: its figures are in the passive-radiator editor, QO946.c115), and the Chart section holding the velocity limit.
 // Thin: all state and domain reads/writes live in useMobileEnclosureTab()
 // (src/hooks/MobileEnclosureTab-hooks.ts). PRBrowser is the app's existing overlay, reused unchanged.
 import {NumberField, PhoneBoxText, PhoneHelp, PhoneLabels, TextField, WinisdDeviation} from '@openisd/design/fields';
-import {inputValue, selectedOption} from '../../../logic/domEvents.js';
+import {selectedOption} from '../../../logic/domEvents.js';
 import UIField from '../../components/UIField.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import PRBrowser from '../../components/PRBrowser.vue';
+import PREditorDialog from '../../components/PREditorDialog.vue';
 import SaveToLibraryDialog from '../../components/SaveToLibraryDialog.vue';
 import PhoneBand from './PhoneBand.vue';
 import {useMobileEnclosureTab} from '../../../hooks/MobileEnclosureTab-hooks.js';
@@ -16,7 +17,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry,
   prSaveOpen, prSaveFields, prSaveCanSave, openPRSave, cancelPRSave, confirmPRSave,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
@@ -59,7 +60,7 @@ const {
     <PhoneBand :section="PhoneHelp.PASSIVE_RADIATOR" />
     <UIField class="mob-ui-field" :title="PhoneBoxText.FP_TIP" :field="NumberField.PR_FP_HZ" :label="PhoneLabels.PR_FP" :cell="project.box.passiveRadiator.tuning_goal_hz" :deviation="WinisdDeviation.PR_BOX_TUNING" stepper />
     <div class="mob-crow">
-      <input id="mob-pr-name" class="mob-cname" type="text" :aria-label="TextField.PR_NAME.label" :title="TextField.PR_NAME.description" :value="project.box.passiveRadiator.radiator.model.value" @input="e => project.box.passiveRadiator.radiator.model.set(inputValue(e))">
+      <button id="mob-pr-edit" type="button" class="mob-cname mob-cname-button" :title="PhoneBoxText.PR_EDIT_TIP" @click="startEditPR">{{ project.box.passiveRadiator.radiator.model.value || PhoneBoxText.PR_UNNAMED }}</button>
     </div>
     <div class="mob-cbtns">
       <button type="button" class="mob-btn mob-btn-primary" @click="prBrowseOpen = true">Select PR</button>
@@ -68,18 +69,9 @@ const {
     <SaveToLibraryDialog v-if="prSaveOpen" title="Save passive radiator to library"
       note="The name the copy has in your library. The project's passive radiator keeps its own name."
       :fields="prSaveFields" :can-save="prSaveCanSave" save-label="Save" phone @save="confirmPRSave" @cancel="cancelPRSave" />
-    <PRBrowser v-if="prBrowseOpen" phone @close="prBrowseOpen = false"
-      @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" />
-
-    <UIField class="mob-ui-field" :field="NumberField.PR_VAS_L" :cell="project.box.passiveRadiator.radiator.spec.Vas_m3" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.PR_QMS" :cell="project.box.passiveRadiator.radiator.spec.Qms" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.PR_FS_HZ" :cell="project.box.passiveRadiator.radiator.spec.Fs_hz" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.PR_SD_CM2" :cell="project.box.passiveRadiator.radiator.spec.Sd_m2" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.MMS_KG" :cell="project.box.passiveRadiator.radiator.spec.Mms_kg" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.CMS_M_PER_N" :cell="project.box.passiveRadiator.radiator.spec.Cms_m_per_N" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.RMS_KG_PER_S" :cell="project.box.passiveRadiator.radiator.spec.Rms_kg_per_s" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.PR_XMAX_MM" :cell="project.box.passiveRadiator.radiator.spec.Xmax_m" stepper />
-
+    <PRBrowser v-if="prBrowseOpen" phone :editor="prEditor" @close="prBrowseOpen = false"
+      @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
+    <PREditorDialog v-if="!prBrowseOpen && prEditor.cells.value" phone :editor="prEditor" :cells="prEditor.cells.value" />
     </section>
 
     <section class="mob-csection">

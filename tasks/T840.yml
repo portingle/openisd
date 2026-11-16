@@ -30,6 +30,6 @@ files:
   - packages/ui/test/hooks/passiveRadiatorEditor.test.ts
   - packages/ui/src/ui/components/PREditorDialog.vue
   - packages/ui/src/hooks/OriginalNewProject-hooks.ts
-  - packages/design/fields/desktopHelp.ts
+  - packages/design/fields/phoneText.ts
   - scripts/ui-gallery/screens.mjs
   - packages/ui/test/fixtures/branchMap/shared.ts

@@ -2,7 +2,8 @@
 import {useEscToClose} from '../../logic/useEscToClose.js';
 import {usePRBrowser} from '../../hooks/PRBrowser-hooks.js';
 import {PhonePrBrowserText} from '@openisd/design/fields';
-import PRDefineDialog from './PRDefineDialog.vue';
+import PREditorDialog from './PREditorDialog.vue';
+import type {PassiveRadiatorEditorView} from '../../hooks/passiveRadiatorEditor.js';
 
 // PR browser — a popup mirroring the driver browser (DriverBrowserMd.vue): two
 // sections, "Saved" (your localStorage PR library) and "Bundled" (passive radiators
@@ -12,14 +13,17 @@ import PRDefineDialog from './PRDefineDialog.vue';
 // list position for a bundled one. The shell resolves it back to a radiator (A9 — a component
 // carries no domain value).
 // `phone`: the classic phone browser (screen 35): 48 px title bar, 44 px rows with a specs line under the name.
-const props = defineProps<{ phone?: boolean }>();
+// `editor`: the passive-radiator editor; "+ Define new passive radiator" asks the owner to open it on a blank radiator
+// (`define`), and it shows over this popup.
+const props = defineProps<{ phone?: boolean; editor: PassiveRadiatorEditorView }>();
 const emit = defineEmits<{
   close: [];
   load: [string];
   loadBundled: [string];
+  define: [];
 }>();
 
-const {defineCells, startDefine, setDefineName, confirmDefine, cancelDefine, filter, fSaved, fBundled, bundledStatus, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly, remove, close} = usePRBrowser(emit);
+const {filter, fSaved, fBundled, bundledStatus, favoritesOnly, isFavorite, toggleFavorite, toggleFavoritesOnly, remove, close} = usePRBrowser(() => emit('close'), props.editor.savedRevision);
 function onBackdrop(e: MouseEvent) { if (e.target === e.currentTarget) close(); }
 useEscToClose(() => true, close);
 </script>
@@ -70,11 +74,11 @@ useEscToClose(() => true, close);
         </div>
       </div>
       <div class="btns pr-footer">
-        <button class="pr-define-btn" @click="startDefine" title="Define a brand-new passive radiator from scratch">+ Define new passive radiator</button>
+        <button class="pr-define-btn" @click="emit('define')" title="Define a brand-new passive radiator from scratch">+ Define new passive radiator</button>
         <button class="pri" @click="close" title="Close">Done</button>
       </div>
     </div>
-    <PRDefineDialog v-if="defineCells" :cells="defineCells" :phone="props.phone" @rename="setDefineName" @ok="confirmDefine" @cancel="cancelDefine" />
+    <PREditorDialog v-if="editor.cells.value" :editor="editor" :cells="editor.cells.value" :phone="props.phone" />
   </div>
 </template>
 
