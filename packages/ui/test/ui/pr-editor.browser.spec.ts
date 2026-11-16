@@ -171,7 +171,9 @@ function suite(skin: 'desktop' | 'phone') {
     await editor.locator('#pr-editor-xmax').fill('31');
     await editor.locator('#pr-editor-xmax').press('Tab');
     expect(written[fileName], 'the file holds the radiator record').toContain('Xmax_m');
-    await editor.locator('#pr-editor-import').setInputFiles({name: fileName, mimeType: 'application/x-openisd-driver', buffer: Buffer.from(written[fileName] ?? '')});
+    const chooser = page.waitForEvent('filechooser');
+    await action(editor, 'Import');
+    await (await chooser).setFiles({name: fileName, mimeType: 'application/x-openisd-driver', buffer: Buffer.from(written[fileName] ?? '')});
     await expect(flash(page)).toContainText(`Passive radiator imported from ${fileName}`);
     await expect(editor.locator('#pr-editor-xmax')).not.toHaveValue(/^31/);
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
