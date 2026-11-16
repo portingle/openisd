@@ -842,7 +842,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
 
     <PRBrowser v-if="prBrowseOpen" :editor="prEditor" @close="prBrowseOpen = false"
       @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
-    <PRInfoDialog v-if="prInfoOpen" :info="prInfo" @close="prInfoOpen = false" />
+    <PRInfoDialog v-if="prInfoOpen && prInfo" :info="prInfo" @close="prInfoOpen = false" />
     <PREditorDialog v-if="!prBrowseOpen && prEditor.cells.value" :editor="prEditor" :cells="prEditor.cells.value" />
 
     <OptionsModal v-if="optionsOpen" @close="optionsOpen = false" />

@@ -194,6 +194,6 @@ export const DESKTOP_BRANCH_MAP:BranchMap={
   'native-ui-afbfd737c49ddbcc':{kind:'partOf',view:'desktop/results/what-if/closed-box'},
   'native-ui-5c100c8d8391f98d':{kind:'notAView',reason:'passive radiator Info button; the surface it opens is its own view'}, // OriginalShell.vue PR Info
   'native-ui-55fcb89b0e647b54':{kind:'notAView',reason:'passive radiator Edit button; the surface it opens is its own view'}, // OriginalShell.vue PR Edit
-  'conditional-branch-177aaf7ee30d6f9e':{kind:'view',view:'desktop/enclosure/passive-radiator/info'}, // OriginalShell.vue PRInfoDialog
+  'conditional-branch-4efb887ee4e7ce6e':{kind:'view',view:'desktop/enclosure/passive-radiator/info'}, // OriginalShell.vue PRInfoDialog
   'conditional-branch-ac2ff33047f3f6eb':{kind:'view',view:'desktop/enclosure/passive-radiator/edit'}, // OriginalShell.vue PREditorDialog
 };

@@ -117,8 +117,12 @@ function suite(skin: 'desktop' | 'phone') {
     await expect(editor.getByRole('checkbox', {name: 'Inspect Provenance'})).not.toBeChecked();
     for (const b of ['OK', 'Cancel']) await expect(editor.getByRole('button', {name: b, exact: true})).toBeVisible();
     await expectFileActions(editor);
+    // General: the fields the radiator record carries, as the driver editor's General tab (John, 16 Nov 2026 14:03).
     await tab(editor, 'General');
     await expect(editor.locator('#pr-editor-name')).toHaveValue(new RegExp(LOADED));
+    await expect(editor.locator('#pr-editor-brand')).toHaveValue('Accuton');
+    await expect(editor.locator('#pr-editor-manufacturer')).toHaveValue('Accuton');
+    for (const id of ['provided-by', 'added', 'comment']) await expect(editor.locator(`#pr-editor-${id}`)).toBeVisible();
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
   });
 

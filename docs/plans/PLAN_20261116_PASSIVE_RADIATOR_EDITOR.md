@@ -19,6 +19,7 @@ The phone Box tab shows the radiator by name, without its figures; the desktop P
 | 12:46      | QO946.c118  | "looks ok, btw the labels on sections aren't consistent "driver" in the driver page and "user options" on the pr page, make both User options - I think this is mobile only, so check"                                                                                    |
 | 12:47      | QO946.c119  | "and on the Info page show the Type: Passive Radiator / to be affirmative"                                                                                                                                                                                                  |
 | 12:51      | QO946.c120  | "ok build this and write a plan for it including these mock screens first"                                                                                                                                                                                                  |
+| 14:03      | (board)     | "if there is only one field then keep it with the other fields" (on the General tab holding only the name)                                                                                                                                             |
 | 12:57      | (board)     | "I think the pr screen should show Key Figures too on the page next to the user options like the driver - the mms is important as users stick to the 1.5 added mass guide, also fs I guess, anything else humans might want to see? xmax and displacement so they can check the 2x rule?" |
 
 Earlier rulings kept: QO946.c37 (the Define button works, like the driver editor); QO946.c38 (the radiator's own figures
@@ -61,7 +62,10 @@ Both skins:
 - **Info**: read only, laid out as the driver's Info: name, star, Vas, Qms, Fpr, Sd, Mms, Cms, Rms, Xmax, a **Type: Passive
   Radiator** row where the driver shows its Type (QO946.c119), links, Brand / Model / Manufacturer / Measured by / Date added
   / Description, Close.
-- **Edit**: "Edit Project's Passive Radiator", the driver editor's frame. Tabs General (name) and Parameters (the eight
+- **Edit**: "Edit Project's Passive Radiator", the driver editor's frame. Tabs General and Parameters. General holds the
+  fields the radiator record carries, as the driver editor's General tab: Manufacturer, Brand, Model (the radiator's name),
+  Data provided by, Date added, Comment (John, 14:03 UTC: "if there is only one field then keep it with the other fields";
+  the record carries these, so the tab stays). Parameters (the eight
   figures, ≠W cues on Mms and Cms as the page). Auto calculate unknowns (on by default), Inspect Provenance (tap a figure: is
   it entered or calculated, and the formulas from the radiator's own figures that give it). OK puts the edits in the project;
   Cancel and X drop them; Reset puts back what the editor opened with; Copy to My PRs files a copy in My passive radiators

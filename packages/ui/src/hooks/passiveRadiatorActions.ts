@@ -101,7 +101,8 @@ export function createPassiveRadiatorActions({ project, myPassiveRadiators, bund
       ].filter(l => l.value !== ''),
     };
   }
-  const prInfo = ref<PassiveRadiatorInfo>(infoNow());
+  /** Null until Info first opens: the page can be drawn with no project focused. */
+  const prInfo = ref<PassiveRadiatorInfo | null>(null);
   function openPRInfo(): void { prInfo.value = infoNow(); prInfoOpen.value = true; }
 
   return {

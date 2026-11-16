@@ -67,7 +67,7 @@ const {
     </div>
     <PRBrowser v-if="prBrowseOpen" phone :editor="prEditor" @close="prBrowseOpen = false"
       @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
-    <PRInfoDialog v-if="prInfoOpen" phone :info="prInfo" @close="prInfoOpen = false" />
+    <PRInfoDialog v-if="prInfoOpen && prInfo" phone :info="prInfo" @close="prInfoOpen = false" />
     <PREditorDialog v-if="!prBrowseOpen && prEditor.cells.value" phone :editor="prEditor" :cells="prEditor.cells.value" />
     <UIField class="mob-ui-field" :title="PhoneBoxText.FP_TIP" :field="NumberField.PR_FP_HZ" :label="PhoneLabels.PR_FP" :cell="project.box.passiveRadiator.tuning_goal_hz" :deviation="WinisdDeviation.PR_BOX_TUNING" stepper />
     </section>

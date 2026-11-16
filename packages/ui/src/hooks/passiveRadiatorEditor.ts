@@ -54,6 +54,18 @@ export interface PassiveRadiatorProvenance {
   readonly inputs: readonly string[];
 }
 
+/** The radiator record's General fields, as the driver editor's General tab (John, 16 Nov 2026 14:03). */
+export interface PassiveRadiatorIdentity {
+  readonly manufacturer: string;
+  readonly brand: string;
+  /** The radiator's name in the app (the page's "Passive radiator" box). */
+  readonly model: string;
+  readonly providedBy: string;
+  readonly added: string;
+  readonly comment: string;
+}
+export type PassiveRadiatorIdentityKey = keyof PassiveRadiatorIdentity;
+
 /** What the editor dialog binds: no domain value crosses into the component (A9). */
 export interface PassiveRadiatorEditorView {
   /** The editor's figure boxes; null while the editor is closed. */
@@ -70,6 +82,8 @@ export interface PassiveRadiatorEditorView {
   readonly inspect: Readonly<Ref<boolean>>;
   /** The inspected figure's card; null while Inspect Provenance is off or nothing is picked. */
   readonly provenance: ComputedRef<PassiveRadiatorProvenance | null>;
+  readonly identity: ComputedRef<PassiveRadiatorIdentity>;
+  setIdentity(key: PassiveRadiatorIdentityKey, value: string): void;
   setName(name: string): void;
   ok(): void;
   cancel(): void;
@@ -180,6 +194,13 @@ export function createPassiveRadiatorEditor({myPassiveRadiators, resolve, files}
     };
   });
   const name = computed(() => draft.value?.model.value ?? '');
+  const identity = computed<PassiveRadiatorIdentity>(() => {
+    const pr = draft.value;
+    return {
+      manufacturer: pr?.manufacturer.value ?? '', brand: pr?.brand.value ?? '', model: pr?.model.value ?? '',
+      providedBy: pr?.providedBy.value ?? '', added: pr?.added.value ?? '', comment: pr?.comment.value ?? '',
+    };
+  });
   const canSave = computed(() => name.value.trim() !== '');
 
   const provenance = computed<PassiveRadiatorProvenance | null>(() => {
@@ -207,7 +228,13 @@ export function createPassiveRadiatorEditor({myPassiveRadiators, resolve, files}
   }
 
   return {
-    cells, title, name, savedNote, canSave, savedRevision, autoCalculate, inspect, provenance,
+    cells, title, name, savedNote, canSave, savedRevision, autoCalculate, inspect, provenance, identity,
+    setIdentity(key, value) {
+      const pr = draft.value;
+      if (pr === null) return;
+      pr[key].set(value);
+      triggerRef(draft);
+    },
     open(source, heading, onOk) {
       close();
       const copy = copyOf(source);

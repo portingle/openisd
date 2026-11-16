@@ -174,3 +174,26 @@ describe('createPassiveRadiatorEditor — the driver editor\'s tools (John, 16 N
     expect(editor.cells.value?.Xmax_m.value).toBe(0.012);
   });
 });
+
+// John, 16 Nov 2026 14:03: the General tab stays only because the radiator record carries the driver's General fields;
+// it shows them as the driver editor does (Manufacturer, Brand, Model, Data provided by, Date added, Comment).
+describe('createPassiveRadiatorEditor — the General fields the radiator record carries', () => {
+  it('shows and edits the copy\'s identity, never the source\'s; OK hands the edits on', () => {
+    const {editor, source} = setUp();
+    source.brand.set('Accuton');
+    source.manufacturer.set('Accuton GmbH');
+    const apply = vi.fn<ApplyRadiator>();
+    editor.open(source, 'Edit', apply);
+    expect(editor.identity.value.brand).toBe('Accuton');
+    expect(editor.identity.value.model).toBe('Source PR');
+    expect(editor.identity.value.manufacturer).toBe('Accuton GmbH');
+
+    editor.setIdentity('brand', 'Bench');
+    editor.setIdentity('comment', 'Measured at home');
+    expect(source.brand.value).toBe('Accuton');
+    editor.ok();
+
+    expect(apply.mock.calls[0]?.[0]?.brand.value).toBe('Bench');
+    expect(apply.mock.calls[0]?.[0]?.comment.value).toBe('Measured at home');
+  });
+});

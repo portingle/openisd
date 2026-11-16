@@ -193,7 +193,7 @@ export const PHONE_BRANCH_MAP:BranchMap={
   'conditional-branch-543827f4686073bc':{kind:'partOf',view:'section-help'}, // PhoneHelpSheet.vue:29
   'native-ui-c32234a299fbc8a5':{kind:'notAView',reason:'passive radiator name button, a trigger for the picker'}, // MobileEnclosureTab.vue name row
   'native-ui-e2016f9ecd236891':{kind:'notAView',reason:'passive radiator Info button, a trigger for the info view'}, // MobileEnclosureTab.vue Info
-  'conditional-branch-c503c38cd5b4d33a':{kind:'view',view:'pr-info'}, // MobileEnclosureTab.vue PRInfoDialog
+  'conditional-branch-86ff1a4fcc05d7e1':{kind:'view',view:'pr-info'}, // MobileEnclosureTab.vue PRInfoDialog
   'conditional-branch-2f6466aeb10b235a':{kind:'view',view:'pr-edit'}, // MobileEnclosureTab.vue PREditorDialog
   'conditional-branch-6c675ce194ec8875':{kind:'partOf',view:'box-box-passive-radiator'}, // MobileEnclosureTab.vue 2x rule line
 };

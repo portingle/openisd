@@ -8,7 +8,8 @@
 import {onMounted, ref} from 'vue';
 import type {PassiveRadiatorEditorView, PassiveRadiatorFigure} from '../../hooks/passiveRadiatorEditor.js';
 import type {PassiveRadiatorStepCells} from '../../hooks/OriginalNewProject-hooks.js';
-import {NumberField, TextField, WinisdDeviation} from '@openisd/design/fields';
+import {DateField, NumberField, TextField, WinisdDeviation} from '@openisd/design/fields';
+import type {PassiveRadiatorIdentityKey} from '../../hooks/passiveRadiatorEditor.js';
 import UIField from './UIField.vue';
 import {inputFrom, inputValue} from '../../logic/domEvents.js';
 import {provideCellScope} from './cellScope.js';
@@ -16,7 +17,7 @@ import {PHONE_DRIVER_EDITOR_SKIN} from './driverEditorSkin.js';
 import {useEscToClose} from '../../logic/useEscToClose.js';
 
 const props = defineProps<{ editor: PassiveRadiatorEditorView; cells: PassiveRadiatorStepCells; phone?: boolean }>();
-const {title, name, savedNote, autoCalculate, inspect, provenance, setName, ok, cancel, reset, saveToMyPRs,
+const {title, name, savedNote, autoCalculate, inspect, provenance, identity, setIdentity, ok, cancel, reset, saveToMyPRs,
   setAutoCalculate, setInspect, inspectField, exportFile, importText} = props.editor;
 
 // The copy's cells do not announce their writes (as the driver editor's draft), so this dialog is its own scope:
@@ -25,9 +26,9 @@ const revision = ref(0);
 provideCellScope({ revision, written: () => { revision.value++; } });
 
 // A new radiator starts on General at its name; an existing one opens on Parameters without the keyboard.
-const nameEl = ref<HTMLInputElement | null>(null);
 const tab = ref<'general' | 'parameters'>(name.value === '' ? 'general' : 'parameters');
-onMounted(() => { if (name.value === '') nameEl.value?.focus(); });
+const panelEl = ref<HTMLElement | null>(null);
+onMounted(() => { if (name.value === '') panelEl.value?.querySelector<HTMLInputElement>('#pr-editor-name')?.focus(); });
 const more = ref(false);
 function fromMore(action: () => void): void { more.value = false; action(); }
 useEscToClose(() => true, cancel);
@@ -41,6 +42,16 @@ async function onImport(e: Event): Promise<void> {
   input.value = '';
   importText(file.name, await file.text());
 }
+
+interface TextRow { readonly key: Exclude<PassiveRadiatorIdentityKey, 'comment'>; readonly id: string; readonly label: string }
+const GENERAL: readonly TextRow[] = [
+  {key: 'manufacturer', id: 'pr-editor-manufacturer', label: TextField.DRIVER_MANUFACTURER.label},
+  {key: 'brand', id: 'pr-editor-brand', label: TextField.DRIVER_BRAND.label},
+  {key: 'model', id: 'pr-editor-name', label: TextField.DRIVER_MODEL.label},
+  {key: 'providedBy', id: 'pr-editor-provided-by', label: TextField.DRIVER_PROVIDEDBY.label},
+  {key: 'added', id: 'pr-editor-added', label: DateField.DRIVER_ADDED.label},
+];
+function textValue(e: Event): string { const t = e.target; return t instanceof HTMLTextAreaElement ? t.value : ''; }
 
 interface FigureRow { readonly key: PassiveRadiatorFigure; readonly id: string; readonly field: NumberField; readonly deviation?: WinisdDeviation }
 const ROWS: readonly FigureRow[] = [
@@ -57,7 +68,7 @@ const ROWS: readonly FigureRow[] = [
 
 <template>
   <div class="prd-scrim" :class="{'prd-phone-scrim': phone}" @click.self="cancel">
-    <div class="prd-panel" :class="{'prd-phone': phone, 'mob-classic': phone}" role="dialog" :aria-label="title" :style="props.phone ? PHONE_DRIVER_EDITOR_SKIN.rowVars : undefined">
+    <div ref="panelEl" class="prd-panel" :class="{'prd-phone': phone, 'mob-classic': phone}" role="dialog" :aria-label="title" :style="props.phone ? PHONE_DRIVER_EDITOR_SKIN.rowVars : undefined">
       <div class="prd-head"><h3>{{ title }}</h3><button type="button" class="prd-x" aria-label="Close" title="Discard edits made in this session and close" @click="cancel">&#10005;</button></div>
       <div class="prd-tabs" role="tablist">
         <button type="button" role="tab" :aria-selected="tab === 'general'" :class="{on: tab === 'general'}" @click="tab = 'general'">General</button>
@@ -67,9 +78,16 @@ const ROWS: readonly FigureRow[] = [
       <div class="prd-scroll">
         <template v-if="tab === 'general'">
           <div class="prd-band">General</div>
-          <label class="prd-name">{{ TextField.PR_NAME.label }}
-            <input ref="nameEl" id="pr-editor-name" type="text" :value="name" placeholder="e.g. Dayton SD270A-88" @input="e => setName(inputValue(e))" @keydown.enter="ok">
-          </label>
+          <!-- The radiator record's General fields, as the driver editor's General tab (John, 16 Nov 2026 14:03); Model is its name. -->
+          <div class="prd-general">
+            <label v-for="t in GENERAL" :key="t.key" class="prd-text">{{ t.label }}
+              <input :id="t.id" type="text" :value="identity[t.key]" :placeholder="t.key === 'model' ? 'e.g. SD270A-88' : undefined"
+                     @input="e => setIdentity(t.key, inputValue(e))" @keydown.enter="ok">
+            </label>
+            <label class="prd-text prd-comment">{{ TextField.DRIVER_COMMENT.label }}
+              <textarea id="pr-editor-comment" :value="identity.comment" @input="e => setIdentity('comment', textValue(e))"></textarea>
+            </label>
+          </div>
         </template>
         <template v-else>
           <div class="prd-band">Passive radiator parameters</div>
@@ -132,8 +150,11 @@ const ROWS: readonly FigureRow[] = [
 .prd-legend { display: none; }
 .prd-scroll { flex: 1 1 auto; overflow: auto; padding: 10px 14px; min-height: 0; }
 .prd-band { position: relative; padding: 3px 8px; margin-bottom: 8px; background: #e6e6e6; text-align: center; font-size: 12px; color: #444; }
-.prd-name { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #444; }
-.prd-name input { width: 330px; box-sizing: border-box; padding: 5px 8px; font-size: 13px; border: 1px solid #bbb; border-radius: 3px; background: #fff; }
+.prd-general { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px 16px; }
+.prd-text { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: #444; }
+.prd-text input, .prd-text textarea { box-sizing: border-box; width: 100%; padding: 5px 8px; font: inherit; font-size: 13px; border: 1px solid #bbb; border-radius: 3px; background: #fff; color: #222; }
+.prd-comment { grid-column: 1 / -1; }
+.prd-comment textarea { min-height: 60px; resize: vertical; }
 .prd-fields { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 20px; }
 .prd-panel:not(.prd-phone) .prd-fields :deep(.ui-field) { --joined-chip: 60px !important; }
 .prd-checks { display: flex; gap: 16px; padding: 8px 14px; border-top: 1px solid #ddd; }
@@ -166,8 +187,9 @@ const ROWS: readonly FigureRow[] = [
 .prd-phone .prd-band { margin: 0; padding: 8px 16px; text-align: left; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: 12px; }
 .prd-phone .prd-fields { display: block; }
 .prd-phone .prd-fields :deep(.ui-field) { --mob-chip: var(--mob-col-chip-wide) !important; }
-.prd-phone .prd-name { flex-direction: column; align-items: stretch; gap: 4px; padding: 10px 16px; }
-.prd-phone .prd-name input { width: 100%; }
+.prd-phone .prd-general { grid-template-columns: 1fr; padding: 10px 16px; }
+.prd-phone .prd-text { font-size: 14px; }
+.prd-phone .prd-text input { height: 40px; font-size: 15px; }
 .prd-phone .prd-checks { padding: 8px 10px; gap: 8px; }
 .prd-phone .prd-checks label { flex: 1; padding: 8px 6px; white-space: nowrap; font-size: 12.5px; }
 .prd-phone .prd-foot { position: relative; padding: 10px; gap: 8px; }
