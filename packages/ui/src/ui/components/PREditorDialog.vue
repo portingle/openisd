@@ -6,7 +6,7 @@
 import {onMounted, ref} from 'vue';
 import type {PassiveRadiatorEditorView} from '../../hooks/passiveRadiatorEditor.js';
 import type {PassiveRadiatorStepCells} from '../../hooks/OriginalNewProject-hooks.js';
-import {NumberField, TextField} from '@openisd/design/fields';
+import {NumberField, TextField, WinisdDeviation} from '@openisd/design/fields';
 import UIField from './UIField.vue';
 import {inputValue} from '../../logic/domEvents.js';
 import {provideCellScope} from './cellScope.js';
@@ -40,8 +40,8 @@ useEscToClose(() => true, cancel);
         <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-qms" :field="NumberField.PR_QMS" :cell="cells.Qms" />
         <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-fs" :field="NumberField.PR_FS_HZ" :cell="cells.Fs_hz" />
         <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-sd" :field="NumberField.PR_SD_CM2" :cell="cells.Sd_m2" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-mms" :field="NumberField.MMS_KG" :cell="cells.Mms_kg" />
-        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-cms" :field="NumberField.CMS_M_PER_N" :cell="cells.Cms_m_per_N" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-mms" :field="NumberField.MMS_KG" :cell="cells.Mms_kg" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" />
+        <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-cms" :field="NumberField.CMS_M_PER_N" :cell="cells.Cms_m_per_N" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" />
         <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-rms" :field="NumberField.RMS_KG_PER_S" :cell="cells.Rms_kg_per_s" />
         <UIField :class="phone ? 'mob-ui-field' : undefined" input-id="pr-editor-xmax" :field="NumberField.PR_XMAX_MM" :cell="cells.Xmax_m" />
       </div>
@@ -86,5 +86,5 @@ useEscToClose(() => true, cancel);
 .prd-phone .prd-foot button { flex: 1 1 0; }
 .prd-phone .prd-foot { flex-wrap: wrap; }
 .prd-phone .prd-gap { display: none; }
-.prd-phone .prd-save { flex: 1 1 100%; }
+.prd-phone .prd-foot .prd-save { flex: 1 1 100%; }
 </style>
