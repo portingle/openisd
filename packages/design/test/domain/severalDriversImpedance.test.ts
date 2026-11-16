@@ -56,4 +56,24 @@ describe('several drivers', () => {
     const one = w5().sweep(at(20000)).values!.zmag[0];
     expect(back.sweep(at(20000)).values!.zmag[0] / one).toBeCloseTo(1, 6);
   });
+
+  const saved = (wiring: 'series' | 'parallel'): OpenISDProject => {
+    const text = four().toOwprText().replaceAll('"driverEmbedding": {', `"driverEmbedding": {\n    "VCCon": "${wiring}",`);
+    const back = OpenISDProject.fromOwprText(text, engine);
+    if (Array.isArray(back)) throw new Error('fromOwprText returned problems: ' + back.join(', '));
+    return back;
+  };
+
+  it('the project\'s saved wiring is kept exactly as saved, and changes nothing (QO946.c23: "the project VcCon is preserved as is")', () => {
+    for (const wiring of ['series', 'parallel'] as const) {
+      const back = saved(wiring);
+      expect(back.toOwprText()).toContain(`"VCCon": "${wiring}"`);
+      const one = w5().sweep(at(20000)).values!.zmag[0];
+      expect(back.sweep(at(20000)).values!.zmag[0] / one).toBeCloseTo(1, 6);
+    }
+  });
+
+  it('a new project writes no wiring of its own (absent until the user sets one)', () => {
+    expect(four().toOwprText()).not.toContain('"VCCon"');
+  });
 });

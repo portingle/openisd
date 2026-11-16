@@ -40,8 +40,8 @@ export function createPhoneLabelColumn(root: HTMLElement, reserved: readonly str
       canvas.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`; // the font shorthand reads back empty
       widths.push(canvas.measureText(text).width + (parseFloat(style.marginRight) || 0));
     }
+    // The canvas still holds the last label's font: a reserved label is measured in the same font as the shown ones.
     if (font !== null) {
-      canvas.font = `${font.fontStyle} ${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
       const margin = parseFloat(font.marginRight) || 0;
       for (const text of reserved) widths.push(canvas.measureText(text).width + margin);
     }

@@ -3,9 +3,9 @@ release_note: internal
 repo: openisd
 owner: wiringrow
 status: done
-goal: With several drivers the impedance chart is one driver's, as WinISD; the control that wired several drivers, the Per-driver impedance switch and its cue are gone; saved projects load as before (no notice).
+goal: With several drivers the impedance chart is one driver's, as WinISD; the control that wired several drivers, the Per-driver impedance switch and its cue are gone; a project's saved wiring is kept as saved and no notice is shown (QO946.c23).
 ruling: QO941
-why: John, 2026-11-15: for now replicate WinISD (QO941.c24); the 5 Oct 2026 per-driver impedance classification was an agent's and John did not intend it (QO941.c33, c34); isolate the two issues (QO942.c2)
+why: John, 2026-11-15: for now replicate WinISD (QO941.c24); the 5 Oct 2026 per-driver impedance classification was an agent's and John did not intend it (QO941.c33, c34); isolate the two issues (QO942.c2); the saved project wiring is kept as saved, no one-time notice (QO946.c23, rulings of 16 Nov 2026)
 done_test: bash scripts/test.sh packages/design/test/domain/severalDriversImpedance.test.ts
 files:
   - CLAUDE.md
@@ -55,9 +55,6 @@ files:
   - packages/ui/src/hooks/MobileDriverTab-hooks.ts
   - packages/ui/src/hooks/OriginalNewProject-hooks.ts
   - packages/ui/src/hooks/OriginalShell-hooks.ts
-  - packages/ui/src/logic/arrayWiringNotice.ts
-  - packages/ui/src/logic/presentationState.ts
-  - packages/ui/src/ui/App.vue
   - packages/ui/src/ui/shells/mobile/MobileAdvancedTab.vue
   - packages/ui/src/ui/shells/mobile/MobileDriverTab.vue
   - packages/ui/src/ui/shells/mobile/MobileNewProject.vue
@@ -65,7 +62,6 @@ files:
   - packages/ui/src/ui/shells/original/OriginalShell.vue
   - packages/ui/test/fixtures/fieldInventoryScenarios.ts
   - packages/ui/test/hooks/OriginalNewProject-hooks.test.ts
-  - packages/ui/test/logic/arrayWiringNotice.test.ts
   - packages/ui/test/ui/field-layout-rules.browser.spec.ts
   - packages/ui/test/ui/mobile-advanced-tab.browser.spec.ts
   - packages/ui/test/ui/mobile-driver-tab.browser.spec.ts
