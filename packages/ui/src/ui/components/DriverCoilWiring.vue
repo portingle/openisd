@@ -26,9 +26,13 @@ const {shown, message, explain, disabled, options, mine, deviationShown, onSelec
   <template v-else-if="shown">
     <div class="field-row" style="margin-bottom:4px;">
       <UIPickField class="field" common :label="EnumField.PROJECT_VCCON.label" input-id="og-coil-wiring" :title="help">
-        <select id="og-coil-wiring" :value="mine" :aria-disabled="disabled" :class="{'coil-wiring-grey': disabled}" :title="help" @mousedown="e => { if (disabled) { e.preventDefault(); explain(); } }" @keydown.enter.space="e => { if (disabled) { e.preventDefault(); explain(); } }" @change="onSelect">
-          <option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option>
-        </select>
+        <!-- A disabled select receives no click, so a catcher over it takes the click and says why (rulings, QO942.c88-c90). -->
+        <span class="coil-wiring-wrap">
+          <select id="og-coil-wiring" :value="mine" :disabled="disabled" :title="help" @change="onSelect">
+            <option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option>
+          </select>
+          <span v-if="disabled" class="coil-wiring-catch" data-testid="coil-wiring-catch" :title="help" @click="explain" />
+        </span>
         <template v-if="deviationShown" #cue><WinisdDeviationCue :deviation="WinisdDeviation.COIL_WIRING_RE_BL_ONLY" /></template>
       </UIPickField>
     </div>
@@ -37,6 +41,7 @@ const {shown, message, explain, disabled, options, mine, deviationShown, onSelec
 </template>
 
 <style scoped>
-.coil-wiring-grey { color: GrayText; background: Field; opacity: 0.6; cursor: default; }
+.coil-wiring-wrap { position: relative; display: inline-flex; width: 100%; }
+.coil-wiring-catch { position: absolute; inset: 0; cursor: default; }
 .coil-wiring-note { max-width: 320px; margin: 2px 0 4px; font-size: 12px; line-height: 16px; color: #555; overflow-wrap: anywhere; }
 </style>
