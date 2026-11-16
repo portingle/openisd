@@ -1,0 +1,26 @@
+id: T856
+release_note: user
+repo: openisd
+owner: cover
+status: wip
+goal: Next to every chart's Data button a (all) button exports every chart of the project, not only the ones on screen, as one ZIP of CSV files plus the project file
+why: "John, 16 Nov 2026: 'can you quickly add a feature to export all data from the charts, just export literally everything not just selected charts'; 'put the buttons next to the existing data button as (all)'."
+done_test: bash scripts/test.sh packages/design/test/chart/all-chart-data.test.ts packages/ui/test/logic/applicationIO.test.ts packages/ui/test/hooks/GraphPanel-hooks.test.ts packages/ui/test/hooks/MobileChartView-hooks.test.ts
+files:
+  - tasks/T856.yml
+  - packages/design/chart/allChartData.ts
+  - packages/design/chart/zipArchive.ts
+  - packages/design/chart/chartData.ts
+  - packages/design/chart/index.ts
+  - packages/design/fields/exportedNotice.ts
+  - packages/design/test/chart/all-chart-data.test.ts
+  - packages/ui/src/logic/applicationIO.ts
+  - packages/ui/src/logic/fileImportExport.ts
+  - packages/ui/src/hooks/GraphPanel-hooks.ts
+  - packages/ui/src/hooks/MobileChartView-hooks.ts
+  - packages/ui/src/ui/components/GraphPanel.vue
+  - packages/ui/src/ui/shells/mobile/MobileChartView.vue
+  - packages/ui/test/logic/applicationIO.test.ts
+  - packages/ui/test/hooks/GraphPanel-hooks.test.ts
+  - packages/ui/test/hooks/MobileChartView-hooks.test.ts
+  - packages/ui/test/ui/chart-data-all.browser.spec.ts
