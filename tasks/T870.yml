@@ -10,3 +10,7 @@ files:
   - tasks/T870.yml
   - packages/ui/src/ui/joined-fields.css
   - packages/ui/test/ui/mobile-refused-border.browser.spec.ts
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-field-dq.png
+visual_note: 'On the phone a refused number box now has a red border like on desktop (was grey); nothing else moves.'
+visual:
+  - mobile-dialog-field-dq
