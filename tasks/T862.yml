@@ -1,5 +1,5 @@
 id: T862
-release_note: internal
+release_note: Raising the tuning frequency of a vented box after lowering it far enough to give an absurd port length now recalculates the port length straight away.
 repo: openisd
 owner: fixer
 status: open
