@@ -1,12 +1,13 @@
 import type {Page} from '@playwright/test';
 import {chartPicture, expect, expectChartDrawn, test} from '../fixtures.js';
 import {PHONE_FILTER_CHIPS} from '@openisd/design/fields';
+import type {BoxReadings} from '../fixtures/dependentValues.js';
 import type {FilterType} from '@openisd/design/engine';
 import {
   backAtStart, differences, field, openScreen, openSweepProject, readAllBoxes,
   type SweepInput, type SweepScreen, type SweepViewport,
 } from '../fixtures/dependentValues.js';
-import {entrySteps, freshVisit, judge, startingBox, visit, type Surface} from '../fixtures/dependentValuesSurfaces.js';
+import {entrySteps, freshVisit, innerProblems, judge, startingBox, visit, type Surface} from '../fixtures/dependentValuesSurfaces.js';
 
 /**
  * Dependent-value sweep, slice 4: the Filters tab (docs/plans/PLAN_20261117_DEPENDENT_VALUE_SWEEP.md; John, 17 Nov 2026: "add more aggressive
@@ -59,8 +60,30 @@ function baseUrl(): string {
 
 const FILTERS_SCREEN: SweepScreen = {name: 'Filters', tab: /^Filters$/};
 const BOX_SCREEN: SweepScreen = {name: 'Box', tab: /^Box$/};
-const DESKTOP_SCREENS: readonly SweepScreen[] = [FILTERS_SCREEN, BOX_SCREEN, {name: 'Vented', tab: /^Vented$/}, {name: 'Signal', tab: /^Signal$/}, {name: 'Driver', tab: /^Driver$/}];
-const PHONE_SCREENS: readonly SweepScreen[] = [FILTERS_SCREEN, BOX_SCREEN, {name: 'Signal', tab: /^Signal$/}, {name: 'Driver', tab: /^Driver$/}];
+const DESKTOP_SCREENS: readonly SweepScreen[] = [BOX_SCREEN, {name: 'Vented', tab: /^Vented$/}, {name: 'Signal', tab: /^Signal$/}, {name: 'Driver', tab: /^Driver$/}];
+const PHONE_SCREENS: readonly SweepScreen[] = [BOX_SCREEN, {name: 'Signal', tab: /^Signal$/}, {name: 'Driver', tab: /^Driver$/}];
+
+/** Every visible `[data-field]` box under `root`, in one evaluate. The Filters tab is read while it is still open: a refused entry is shown only until the tab is left. */
+async function readUnder(page: Page, root: string): Promise<BoxReadings> {
+  return page.evaluate(rootSel => {
+    const seen = new Map<string, number>();
+    const out: Array<{key: string; value: string; calculated: boolean; refused: boolean}> = [];
+    const scope = globalThis.document.querySelector(rootSel);
+    if (scope === null) return out;
+    for (const wrap of scope.querySelectorAll<HTMLElement>('[data-field]')) {
+      if (!wrap.checkVisibility()) continue;
+      const box = wrap.querySelector<HTMLInputElement | HTMLSelectElement>('input, select');
+      if (box === null) continue;
+      const fieldName = wrap.getAttribute('data-field') ?? '';
+      const nth = seen.get(fieldName) ?? 0;
+      seen.set(fieldName, nth + 1);
+      const calculated = box.classList.contains('calculated') || box.classList.contains('value-c');
+      const refused = box.classList.contains('inp-bad') || wrap.querySelector('.ui-field-note:not(.ui-field-note-warning)') !== null;
+      out.push({key: `Filters|${fieldName}#${nth}`, value: box.value, calculated, refused});
+    }
+    return out;
+  }, root);
+}
 
 /** The Filters tab holding one filter of a type: opening it adds the filter the way a user does (the quick-add button) when the project has none. */
 function filtersSurface(type: FilterType): Surface {
@@ -81,7 +104,7 @@ function filtersSurface(type: FilterType): Surface {
       if (viewport === 'desktop' && await page.locator('.filter-edit-body').count() === 0) await page.locator('.filter-summary').first().click();
     },
     show: async () => { /* one editor, no sub-tabs */ },
-    readInner: async () => [],
+    readInner: page => readUnder(page, '.og-filters, .mob-fcard'),
     finish: async () => { /* nothing to close */ },
     keep: async () => { /* typed values are in force at once */ },
     leave: async () => { /* nothing to close */ },
@@ -130,8 +153,8 @@ for (const viewport of ['desktop', 'phone'] as const satisfies readonly SweepVie
             const typed = await freshVisit(browser, baseUrl(), viewport, 'vented', surface, input, '', screens, text);
             const verdict = judge(typed, accepted, homeKey, text, original);
             accepted = verdict.accepted;
-            void live;
-            await expect.poll(async () => differences(verdict.expectedOuter, await readAllBoxes(page, viewport, screens), 'exact', true),
+            const surfaceDiffs = innerProblems(verdict.expectedInner, live);
+            await expect.poll(async () => [...surfaceDiffs, ...differences(verdict.expectedOuter, await readAllBoxes(page, viewport, screens), 'exact', true)],
               {message: `${label} typed ${step} (${text}): every box must show what a fresh project shows`, timeout: 20_000}).toEqual([]);
             if (step === 'normal' && startChart !== null) {
               await surface.open(page, viewport);
@@ -141,9 +164,10 @@ for (const viewport of ['desktop', 'phone'] as const satisfies readonly SweepVie
           }
           if (startChart !== null) expect(chartSeen, `${label}: the chart is ${NO_SPL_EFFECT.has(`${chip.type} ${label}`) ? 'the same picture' : 'redrawn'} after a normal change`).toBe(!NO_SPL_EFFECT.has(`${chip.type} ${label}`));
 
-          await visit(page, viewport, surface, input, '', screens, original);
+          const back = await visit(page, viewport, surface, input, '', screens, original);
           const fresh = await freshVisit(browser, baseUrl(), viewport, 'vented', surface, input, '', screens, original);
-          await expect.poll(async () => backAtStart(start.outer, fresh.outer, await readAllBoxes(page, viewport, screens), startedCalculated),
+          const backSurface = backAtStart(start.inner, fresh.inner, back.inner, startedCalculated);
+          await expect.poll(async () => [...backSurface, ...backAtStart(start.outer, fresh.outer, await readAllBoxes(page, viewport, screens), startedCalculated)],
             {message: `${label} typed back to ${original}: no calculated box refused, every box back to its start`, timeout: 20_000}).toEqual([]);
           if (startChart !== null) {
             await surface.open(page, viewport);
