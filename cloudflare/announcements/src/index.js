@@ -6,11 +6,11 @@ const ANNOUNCEMENTS = [
     title: 'Coil wiring, radiator editor and export All',
     summary: 'Choose how a multi-coil driver is wired, edit passive radiators like drivers, and export every chart at once.',
     body: [
-      'New: rewire dual-coil drivers. Switch a two-coil sub between Series and Parallel on the Driver page and watch Re, BL and the curves change, with the datasheet figures kept as the maker measured them.',
+      'Improved multi-coil and multiple-driver support: switch a dual-coil driver between Series and Parallel on the Driver page, and with several drivers the impedance chart is one driver\'s, as in WinISD.',
       'New: passive radiators have Select, Info and Edit, with one editor on desktop and phone.',
       "New: an All button next to each chart's Data button exports every chart as one ZIP of CSV files.",
       "New: the WinISD switches' help explains what WinISD does and what OpenISD does instead.",
-      'More drivers and radiators, including SEAS L22ROY2 and L26ROY and CSS APR10 and APR12.',
+      'New in the catalogue: 4 drivers and 5 passive radiators, including SEAS L22ROY2 and CSS APR10 and APR12.',
       'The app carries its own font, so labels look the same on every device.',
       'Phone and narrow windows: names, buttons and menus that were cut off now fit.',
     ],
