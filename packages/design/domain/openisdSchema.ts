@@ -928,6 +928,9 @@ const openISDDriverEmbeddingJsonSchema = z.strictObject({
     // driver"): how this project wires the driver's own voice coils, named as the driver's `VCCon`; WinISD's project VCCon. Absent means
     // the driver's own VCCon (the wiring the maker measured in). Data version 5 renamed the old `wiring` key to `VCCon`, value kept (QO946.c18).
     VCCon: z.enum(['series', 'parallel']).optional(),
+    // "Driver wiring" (QO946.c129, plan 4.1): how the project's `nDrivers` drivers are wired to the amplifier, not the coils inside one
+    // driver (that is `VCCon`). Absent means parallel, so a file from before this key opens as it always meant.
+    driverWiring: z.enum(['parallel', 'series']).optional(),
     // WinISD Driver tab: "Voice coil temp rise".
     vcTempRise_K: z.number(),
     Rs_ohm: z.number(),

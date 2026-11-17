@@ -40,11 +40,14 @@ function recordOr(upgraded: unknown, fallback: PlainRecord): PlainRecord {
  *  3 to 4: a multi-coil driver's per-coil Re and BL become the published figures, and a defaulted
  *  wiring becomes unknown (`multiCoilAsPublished.ts`, QO908).
  *  4 to 5: a project's saved `wiring` key is renamed `VCCon`, its value kept as saved; `coilWiring` (test site only)
- *  becomes `VCCon` and wins where both exist (`coilWiringAsVCCon.ts`, QO946.c18, c23). */
+ *  becomes `VCCon` and wins where both exist (`coilWiringAsVCCon.ts`, QO946.c18, c23).
+ *  5 to 6: nothing changes (an absent `driverWiring` means Parallel, an absent one-driver-impedance switch means off); the step exists so that an
+ *  older app refuses a version 6 file as made by a newer OpenISD (QO946.c129-c131, plan 4.2). */
 const UPGRADE_STEPS: readonly UpgradeStep[] = Object.freeze([
     Object.freeze({from: 2, upgrade: (value: PlainRecord) => recordOr(withSlimModel(withoutRetiredSpecKeys(value)), value)}),
     Object.freeze({from: 3, upgrade: (value: PlainRecord) => recordOr(withMultiCoilAsPublished(value), value)}),
     Object.freeze({from: 4, upgrade: (value: PlainRecord) => recordOr(withCoilWiringAsVCCon(value), value)}),
+    Object.freeze({from: 5, upgrade: (value: PlainRecord) => value}),
 ]);
 
 /**

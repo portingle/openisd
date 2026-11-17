@@ -4,7 +4,13 @@ repo: openisd
 owner: wiring2
 status: open
 goal: Slice 2 of several-driver wiring: schema v6 step, driverWiring and winisdOneDriverImpedance saved and loaded, inert
-why: John decided plan PLAN_20261116_DRIVER_WIRING (ticket 519), QO946.c129-c131; slice 2 Data, inert
-done_test: bash scripts/quiet-test.sh npm run typecheck
+why: John decided the several-driver wiring plan (ticket 519): QO946.c129 (Driver wiring, Parallel/Series), c130, c131 ("Impedance of one driver" switch, off by default). Slice 2 of the plan, section 11 item 2: Data, inert.
+ruling: QO946
+done_test: bash scripts/test.sh packages/design/test/domain/driver-wiring-data.test.ts
 files:
   - tasks/T876.yml
+  - packages/design/domain/openisdSchema.ts
+  - packages/design/domain/schemaVersion.ts
+  - packages/design/domain/project/compatSwitch.ts
+  - packages/design/test/domain/driver-wiring-data.test.ts
+  - build/T876_REPORT.md
