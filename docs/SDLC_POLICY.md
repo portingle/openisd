@@ -65,7 +65,8 @@ session what it means to do and waits for an ok. The keeper's resume prompt says
 
 > "this is too obvious what it should do already so make it all sound like new features since last prod release";
 > "1 is boring"; "boring remove"; "make this popup stuff users care about"; "they don't give a shit about fonts";
-> "or buttons"; "simplify"; "they don't care about bugs like this ... edge case"; "come on get it right and then update the Claude SDLC docs for these messages so I don't have to explain again"
+> "or buttons"; "simplify"; "they don't care about bugs like this ... edge case"; "terrible" (of "With several drivers, the impedance chart
+> matches WinISD"); "come on get it right and then update the Claude SDLC docs for these messages so I don't have to explain again"
 
 The update popup (`cloudflare/announcements/src/index.js`, one entry per release) is what a user reads after an update.
 Every line answers "what can I do now, or what works better for me", in a designer's words.
@@ -75,6 +76,8 @@ Every line answers "what can I do now, or what works better for me", in a design
   Say what the user can do, not which control does it.
 - No fonts, layouts, help texts, internal checks, task ids, or how it was built.
 - No dull or obvious lines ("passive radiators have Select, Info and Edit").
+- No narrow technical lines that need the reader to know a chart or WinISD's behaviour to see why they matter
+  ("With several drivers, the impedance chart matches WinISD").
 - No edge-case bug fixes (a value stuck after an extreme entry): users never met them. They go in the release notes
   only. A fix goes in the popup only when many users saw the wrong result in normal use (false warnings on dual-coil
   drivers).

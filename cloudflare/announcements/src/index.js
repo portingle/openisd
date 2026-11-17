@@ -8,7 +8,6 @@ const ANNOUNCEMENTS = [
     body: [
       'Dual-coil drivers now match their datasheets, wired in series or in parallel.',
       'Export all your charts at once.',
-      'With several drivers, the impedance chart matches WinISD.',
       'More drivers and passive radiators, including SEAS L22ROY2 and CSS APR10.',
       'Works better on phones.',
     ],
