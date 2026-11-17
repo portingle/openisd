@@ -1,0 +1,10 @@
+id: T868
+release_note: internal
+repo: openisd
+owner: refusal-fix-agent
+status: open
+goal: A refused entry is always marked: the Driver Editor marks an out-of-range entry as the other number boxes do instead of silently putting the old value back, and a number typed in exponent form (1e9) is refused with a mark, not silently dropped
+why: Found by the dependent-value sweep John asked for (John, 17 Nov 2026, board card topic-1117-084319); John's rule 'every button shows a visible result' / nothing happens silently
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T868.yml
