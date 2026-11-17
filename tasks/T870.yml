@@ -4,7 +4,7 @@ repo: openisd
 owner: phone-refused-border-agent
 status: done
 goal: On the phone a refused number entry is drawn with a red border like on desktop, not the plain grey border of an accepted box
-why: Found by the dependent-value sweep John asked for (17 Nov 2026, card topic-1117-084319): the phone skin overrides the red border of a refused box (inp-bad), so a refusal shows only a small warning sign; John's rule: nothing happens silently
+why: "Found by the dependent-value test sweep John asked for (John, 17 Nov 2026, card topic-1117-084319): the phone skin overrode the red border of a refused box, so a refusal showed only a small warning sign; John's rule: nothing happens silently"
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T870.yml
