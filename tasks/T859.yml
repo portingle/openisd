@@ -1,0 +1,10 @@
+id: T859
+release_note: internal
+repo: openisd
+owner: fixer
+status: open
+goal: Main green again after the chart export button: the phone chart-help journey reads the chart title without the chips beside it, and the chart-export task file has a real release note
+why: John, 17 Nov 2026: main must stay green (suite red since the chart export button merged at 00:05)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T859.yml
