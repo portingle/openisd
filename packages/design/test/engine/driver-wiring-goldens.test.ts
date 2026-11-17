@@ -3,8 +3,7 @@
  * Dayton DA215-8 x4 at 2.83 V: Fs 34.9 Hz, Qes 0.45, Qms 1.95, Vas 42.7 L, Sd 211.2 cm2, Re 6.8 ohm
  * (packages/ui/public/drivers/dayton-audio/da215-8.json). Absolute SPL hangs on the air model (0.05 dB); every ratio is 1e-9 dB.
  *
- * Slice 1 is inert: a sweep with no `driverWiring` is today's path, so the first block pins that it equals Parallel
- * with "Impedance of one driver" (WinISD = Parallel plus the one-driver chart).
+ * A sweep with no `driverWiring` is Parallel with "Impedance of one driver" unticked (slice 3; the slice-1 no-wiring path is gone).
  */
 import {describe, expect, it} from 'vitest';
 import type {SweepDriver} from '../../engine/solverTypes.js';
@@ -41,14 +40,14 @@ const max = (a: readonly number[]) => a.reduce((m, v) => Math.max(m, v), -Infini
 const at = (fs: readonly number[], a: readonly number[], f: number) => a[fs.findIndex((x) => x >= f)];
 const GAIN_DB = 20 * Math.log10(N);
 
-describe('absent driverWiring is today\'s path: Parallel plus "Impedance of one driver" gives the same arrays, byte for byte', () => {
+describe('a sweep with no wiring stated is exactly the Parallel result (plan 5.2, slice 3)', () => {
   for (const [label, rs, atDriver] of [['Rg 0', 0, true], ['Rg 0.5 at each driver', 0.5, true]] as const) {
     for (const [box, P] of [['sealed', SEALED_160L], ['vented', VENTED]] as const) {
-      it(`${box}, ${label}: every output array equals the absent-field sweep`, () => {
+      it(`${box}, ${label}: every output array equals the Parallel sweep, "Impedance of one driver" unticked`, () => {
         const base: SweepParams = {...P, Rs: rs, rgAtDriverSide: atDriver};
-        const today = sweepOf(DA215, box, base);
-        const wired = sweepOf(DA215, box, on(base, 'parallel', true));
-        expect(wired).toEqual(today);
+        const unstated = sweepOf(DA215, box, base);
+        const parallel = sweepOf(DA215, box, on(base, 'parallel', false));
+        expect(unstated).toEqual(parallel);
       });
     }
   }

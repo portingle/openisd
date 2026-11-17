@@ -161,6 +161,8 @@ export class PhoneHelpRows {
   static readonly PR_RESONANCE_WITH_MASS: PhoneHelpRow = {label: 'Resonance with mass', text: 'the frequency at which the passive radiator vibrates most freely, with the added mass.'};
   static readonly VELOCITY_LIMIT: PhoneHelpRow = {label: 'Velocity limit', text: 'the air speed above which the charts mark the vent as likely to be noisy.'};
   static readonly DRIVERS: PhoneHelpRow = {label: 'Drivers', text: 'the number of drivers in the box.'};
+  /** The project's Driver wiring: John's approved help (`EnumField.PROJECT_DRIVERWIRING`), the body of the text after its title line; a test keeps them one text. */
+  static readonly DRIVER_WIRING: PhoneHelpRow = {label: 'Driver wiring', text: 'how the drivers are connected to the amplifier. Parallel: each driver gets the full amplifier voltage; the load is one driver\'s impedance divided by the number of drivers (4 × 8 Ω → 2 Ω). Series: the voltage is split between the drivers; the load is the impedance times the number (4 × 8 Ω → 32 Ω). This changes the impedance chart, the SPL and excursion for a given amplifier voltage, and how Rg acts. Not the same as Coil wiring, which connects the voice coils inside one driver.'};
   /** The project's Coil wiring: the same words as `EnumField.PROJECT_VCCON`'s help (the test coil-wiring-help.test.ts keeps them one text). */
   static readonly COIL_WIRING: PhoneHelpRow = {label: 'Coil wiring', text: 'how you wire this driver\'s voice coils in this project. If it differs from how the driver was measured, the calculations use the figures for your wiring (for 2 coils, Series gives Re, Le and nominal impedance ×4 and BL ×2 compared with Parallel; Fs, Q, Vas and Mms do not change). The driver\'s own figures are never changed. It can be changed only for a driver with 2 or more coils whose measured wiring is stated.'};
   static readonly POWER: PhoneHelpRow = {label: 'Power', text: 'the amplifier power, measured into the driver\'s rated load in ohms.'};
@@ -237,6 +239,7 @@ export class PhoneHelp {
     {label: 'Select driver', text: 'picks a driver from the library.'},
     {label: 'Edit', text: 'opens the driver\'s parameters.'},
     PhoneHelpRows.DRIVERS,
+    PhoneHelpRows.DRIVER_WIRING,
     PhoneHelpRows.COIL_WIRING,
   ]);
   static readonly KEY_FIGURES = new PhoneHelpSection('Key figures', 'The driver\'s main parameters, for reference. Tap one to edit the driver.', [
