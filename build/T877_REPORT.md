@@ -69,3 +69,20 @@ Check made: before and after Parallel SPL are equal (100.792), as the plan says.
 - The Driver wiring row in the ? help sheets (blocked by the two list tests).
 - Layout gate and stable-columns specs at 2+ drivers; a visual baseline screen for the 4-driver Driver tab.
 - `ship.sh` has not been run; the red tests block it.
+
+## 9. Round 2 (lead decision QO946.c234): results
+Commit 3555d7af (pushed to `t877`). Changed existing-test lines, old -> new:
+| File:line | Old -> new |
+|---|---|
+| design/test/engine/driver-wiring-goldens.test.ts:44-53 (4 tests) | describe "absent driverWiring is today's path: ..." -> "a sweep with no wiring stated is exactly the Parallel result"; each test compared the Parallel+switch-ticked sweep with the no-wiring sweep -> compares the no-wiring sweep with `on(base,'parallel',false)`, `toEqual` byte for byte, sealed and vented, Rg 0 and Rg 0.5 at each driver (26 of 26 pass). Header comment line 6-7 reworded. The maxCurves test (line 56) is unchanged and passes |
+| design/test/domain/severalDriversImpedance.test.ts:30-34 (`four()`, so tests at :41, :51, :67) | `p.nDrivers.set(4); return p;` -> also `p.winisdOneDriverImpedance.set(true);` (5 of 5 pass). Nothing else |
+| ui/test/ui/original-advanced-tab.browser.spec.ts:327 | label list gains `/Impedance of one driver/` after the ABC one |
+| ui/test/ui/original-advanced-tab.browser.spec.ts:487 | `toHaveCount(11)` -> `toHaveCount(12)` |
+| design/test/fields/desktopHelp.test.ts:17 | `[NUM_DRIVERS, 'Coil wiring']` -> `[NUM_DRIVERS, 'Driver wiring', 'Coil wiring']` |
+| design/test/fields/phoneText.test.ts:111 | `['Select driver','Edit','Drivers','Coil wiring']` -> `[..., 'Drivers','Driver wiring','Coil wiring']` |
+New: design/test/fields/coil-wiring-help.test.ts, a test that both ? sheets carry the approved registry text word for word (the first letter lower-cased as the phone rows do). New rows: `PhoneHelpRows.DRIVER_WIRING`, in the phone User options help and the desktop Placement help.
+New gate cases in ui/test/ui/field-layout-rules.browser.spec.ts (EXTRA): "desktop Driver tab with 4 drivers" (1280x720) and "phone Driver tab with 4 drivers" (374x705), both pass rules 2 to 7.
+Browser specs run after this round: field-layout-rules (the whole file, so the 4-driver cases included), phone-driver-tab-stable-columns, original-advanced-tab, driver-wiring, mobile-advanced-tab, original-winisd-differences: 130 passed, 0 failed. Typecheck, lint, architecture (266 of 266) pass.
+Picture re-take, run 44176317776: "no picture changed" (no commit needed).
+Still RED, waiting for John's ruling on amplifier Rg (untouched as ordered): design/test/engine/driver-count-winisd.test.ts (24 tests) and design/test/domain/project-signal.test.ts:245, 255, 276 (3 tests). `unit-changed.sh` shows no other failure.
+Sections 4 and 8 above are superseded by this list for everything except those two files and John's approval of the phone short line for the switch.
