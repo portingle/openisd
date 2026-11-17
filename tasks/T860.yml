@@ -8,3 +8,6 @@ why: John, 17 Nov 2026 02:27 UTC, board card 'The release is blocked by one miss
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T860.yml
+  - scripts/land/pr-task.sh
+  - scripts/land/test/pr-gates.test.sh
+  - tasks/T856.yml

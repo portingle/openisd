@@ -4,6 +4,7 @@
 #   bash scripts/land/pr-task.sh <base> <head>      prints the task ids, space separated, in file order; run from the repo root
 #
 # A task file whose only change is the sha256 of a locked file this change edits is not counted (T757).
+# A task file already on <base> whose only change is its release_note line is not counted (T860, John's Yes, 17 Nov 2026).
 # A pull request may carry several tasks (John, 10 Nov 2026: "go with A") when every changed file outside tasks/
 # is in at least one of those tasks' `files:` allowlists. Exit 1, saying why on stderr, when the range touches
 # no task file, or when a changed file is in none of the carried tasks' allowlists.
@@ -30,12 +31,23 @@ hash_only() {
   rm -f "$old"
 }
 
+# note_only <task-id>: true when that task file exists on <base> and the only line it changes is `release_note:`.
+# John, 17 Nov 2026 02:27 UTC, "Yes" to the board card "The release is blocked by one missing sentence. May I fix it?"
+# ("To put the sentence in, I must relax one checking script so it allows that one-line correction. Relaxing a check needs
+# your Yes."): QO946.c224. Nothing else is relaxed: any other changed line, or a task file new on <base>, still counts.
+note_only() {
+  local file="tasks/$1.yml"
+  git cat-file -e "$base:$file" 2> /dev/null || return 1
+  git diff -U0 "$base" "$head" -- "$file" | grep -E '^[+-]' | grep -vE '^(\+\+\+|---) ' | grep -vqE '^[+-]release_note:' && return 1
+  return 0
+}
+
 # Task files are the record of why each change was made (T767, QO528): none is deleted or renamed.
 gone="$(git diff --no-renames --name-only --diff-filter=D "$base" "$head" -- ':(glob)tasks/T*.yml')"
 [ -z "$gone" ] || { echo "pr-task: task files are never deleted or renamed: $(echo $gone)" >&2; exit 1; }
 mapfile -t all < <(git diff --name-only --diff-filter=ACMR "$base" "$head" -- ':(glob)tasks/*.yml' | sed -n 's#^tasks/\([^/]*\)\.yml$#\1#p')
 files=()
-for id in "${all[@]}"; do hash_only "$id" || files+=("$id"); done
+for id in "${all[@]}"; do hash_only "$id" || note_only "$id" || files+=("$id"); done
 [ "${#files[@]}" -gt 0 ] || { echo "pr-task: this change touches no tasks/<id>.yml; a pull request carries at least one task (scripts/new-task.sh)" >&2; exit 1; }
 if [ "${#files[@]}" -gt 1 ]; then
   # Several tasks: each changed file must be in some carried task's allowlist (git `:(glob)` semantics, as check-commit.sh).
