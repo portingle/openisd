@@ -733,8 +733,9 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
 
       <PhoneHelpSheet v-if="helpSection" :section="helpSection" @close="closeHelp" />
 
+      <span id="de-tab-refused-note" class="de-sr-only">holds an entry that was not applied</span>
       <div class="de-tabs">
-        <button v-for="t in TABS" :key="t" class="de-tab" :class="{ on: tab === t, 'de-tab-refused': refusals.refusedTabs.value.has(t) }" @click="tab = t">{{ t }}</button>
+        <button v-for="t in TABS" :key="t" class="de-tab" :class="{ on: tab === t, 'de-tab-refused': refusals.refusedTabs.value.has(t) }" :aria-describedby="refusals.refusedTabs.value.has(t) ? 'de-tab-refused-note' : undefined" @click="tab = t">{{ t }}<span v-if="refusals.refusedTabs.value.has(t)" class="de-tab-sign" aria-hidden="true"> &#9888;</span></button>
       </div>
 
       <MobileKeyStrip v-if="skin" />
@@ -1092,7 +1093,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
 .de-modal [data-de-tab].de-tab-off.de-tab-off { display: none !important; }
 /* A box on this tab holds an entry the editor refused: the tab says so while the person looks elsewhere. */
 .de-tab-refused { border-color: var(--bad); color: var(--bad); }
-.de-tab-refused::after { content: ' \26A0'; }
+.de-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .de-toolbar {
   display: flex;
   align-items: center;

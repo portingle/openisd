@@ -53,6 +53,8 @@ for (const viewport of ['desktop', 'phone'] as const) {
       await expect(box(page, 'Qts'), 'the other tab is really hidden, not drawn over this one').toBeHidden();
       await expect(box(page, 'Gloss')).toBeVisible();
       await expect(tabButton(page, 'Parameters'), 'the tab holding the refused entry says so while it is out of sight').toHaveClass(/de-tab-refused/);
+      await expect(page.getByRole('button', {name: 'Parameters', exact: true}), 'the warning sign does not change the tab name').toBeVisible();
+      await expect(tabButton(page, 'Parameters')).toHaveAccessibleDescription('holds an entry that was not applied');
       await tabButton(page, 'Parameters').click();
 
       await expect(box(page, 'Qts')).toHaveValue('0');
