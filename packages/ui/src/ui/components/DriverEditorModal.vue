@@ -20,6 +20,7 @@ import UIFixedField from './UIFixedField.vue';
 import UIPickField from './UIPickField.vue';
 import type {DriverEditorSkin} from './driverEditorSkin.js';
 import {provideCellScope} from './cellScope.js';
+import {createRefusalLedger, provideRefusalLedger} from '../../logic/refusalLedger.js';
 import {useEscToClose} from '../../logic/useEscToClose.js';
 import {DriverFileFormat} from '../../fileFormat.js';
 import EquationInspectorModal from './EquationInspectorModal.vue';
@@ -81,6 +82,10 @@ const draft = driverDrafts.open(subject, () => project.value.driver);
 const trigger = ref(0);
 function forceUpdate() { trigger.value++; }
 provideCellScope({ revision: trigger, written: forceUpdate });
+// Tabs stay mounted (v-show), so a refused entry keeps its text and mark when the person looks at another tab;
+// the ledger marks the tab that holds one and lets OK say what it did not apply.
+const refusals = createRefusalLedger();
+provideRefusalLedger(refusals);
 const draftDriver = computed(() => { void trigger.value; return draft.driver; });
 
 /** OK on a myDriver subject: save the draft under its uuid — in place, same identity. A save
@@ -596,6 +601,7 @@ function dismissIdentityMsg() {
 // OK — the draft becomes the design or saves to My Drivers.
 function close() {
   if (!requireIdentity()) return;
+  if (refusals.summary() !== '') logging.flash(refusals.summary());
   if (subject.kind === 'myDriver') {
     openSaveMyDialog(false);
   } else {
@@ -728,7 +734,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
       <PhoneHelpSheet v-if="helpSection" :section="helpSection" @close="closeHelp" />
 
       <div class="de-tabs">
-        <button v-for="t in TABS" :key="t" class="de-tab" :class="{ on: tab === t }" @click="tab = t">{{ t }}</button>
+        <button v-for="t in TABS" :key="t" class="de-tab" :class="{ on: tab === t, 'de-tab-refused': refusals.refusedTabs.value.has(t) }" @click="tab = t">{{ t }}</button>
       </div>
 
       <MobileKeyStrip v-if="skin" />
@@ -738,7 +744,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
         <div class="body de-body" :class="{ 'labels-left': tab !== 'General' }"
              :style="dockedCardHeight > 0 ? { paddingBottom: `${dockedCardHeight}px`, scrollPaddingBottom: `${dockedCardHeight}px` } : {}" @click="handleBodyClickOrFocus" @focusin="handleBodyClickOrFocus">
           <!-- ============================= General ============================= -->
-          <div v-if="tab === 'General'" class="de-general">
+          <div v-show="tab === 'General'" data-de-tab="General" class="de-general">
             <div v-for="(row, i) in GENERAL_TEXT_ROWS" :key="i" class="de-row2">
               <template v-for="t in row" :key="t.key">
                 <UIPickField v-if="skin" class="de-fld" :class="skin.field" :data-field-key="t.key" :title="t.def.description" :label="t.def.label" :input-id="`de-text-${t.key}`">
@@ -760,7 +766,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
           </div>
 
           <!-- ============================= Parameters ============================= -->
-          <div v-if="tab === 'Parameters'" class="de-params">
+          <div v-show="tab === 'Parameters'" data-de-tab="Parameters" class="de-params">
             <div class="de-group">
               <PhoneBand v-if="skin" :section="PhoneHelp.EDITOR_THIELE_SMALL" />
               <div v-else class="de-hdr">Thiele/Small parameters<button type="button" class="de-help-button" aria-label="Help: Thiele/Small parameters" @click="showHelp(PhoneHelp.EDITOR_THIELE_SMALL)">?</button></div>
@@ -826,7 +832,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
           </div>
 
           <!-- ============================= Advanced parameters ============================= -->
-          <div v-if="tab === 'Advanced'" class="de-params de-adv">
+          <div v-show="tab === 'Advanced'" data-de-tab="Advanced" class="de-params de-adv">
             <div class="de-group">
               <PhoneBand v-if="skin" :section="PhoneHelp.EDITOR_THERMAL" />
               <div v-else class="de-hdr">Thermal parameters<button type="button" class="de-help-button" aria-label="Help: Thermal parameters" @click="showHelp(PhoneHelp.EDITOR_THERMAL)">?</button></div>
@@ -865,7 +871,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
           </div>
 
           <!-- ============================= Dimensions ============================= -->
-          <div v-if="tab === 'Dimensions'" class="de-dims">
+          <div v-show="tab === 'Dimensions'" data-de-tab="Dimensions" class="de-dims">
             <div class="de-dimlist">
               <PhoneBand v-if="skin" :section="PhoneHelp.EDITOR_DIMENSIONS" />
               <div v-else class="de-hdr">Dimensions<button type="button" class="de-help-button" aria-label="Help: Dimensions" @click="showHelp(PhoneHelp.EDITOR_DIMENSIONS)">?</button></div>
@@ -1082,6 +1088,9 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
 .de-tabs { display: flex; gap: 2px; padding: 6px 12px 0; border-bottom: 1px solid var(--line); }
 .de-tab { padding: 5px 12px; border: 1px solid var(--line); border-bottom: none; border-radius: 3px 3px 0 0; background: var(--panel2); color: var(--fg); cursor: pointer; font: inherit; font-size: 14px; font-weight: 500; }
 .de-tab.on { background: var(--panel); font-weight: 600; }
+/* A box on this tab holds an entry the editor refused: the tab says so while the person looks elsewhere. */
+.de-tab-refused { border-color: var(--bad); color: var(--bad); }
+.de-tab-refused::after { content: ' \26A0'; }
 .de-toolbar {
   display: flex;
   align-items: center;

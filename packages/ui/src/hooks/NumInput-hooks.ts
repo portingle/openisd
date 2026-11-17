@@ -1,6 +1,6 @@
 
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
-import {CARET_HOLD_START_MS, DragSpin, DRAG_SPIN_THRESHOLD_PX, caretRepeatDelayMs, digitAtCaret, pressedDigit, formatFixed, PHONE_MAX_SIGNIFICANT, NUMBER_TEXT, pastedEdit, typedEdit, spinStep, NumberField, type FieldSpin, type NumberEdit, type SpinDirection, type SteppedPlace, type StepAt} from '@openisd/design/fields';
+import {CARET_HOLD_START_MS, DragSpin, DRAG_SPIN_THRESHOLD_PX, caretRepeatDelayMs, digitAtCaret, pressedDigit, formatFixed, PHONE_MAX_SIGNIFICANT, NUMBER_TEXT, numberFromText, pastedEdit, typedEdit, spinStep, NumberField, type FieldSpin, type NumberEdit, type SpinDirection, type SteppedPlace, type StepAt} from '@openisd/design/fields';
 import {inputFrom} from '../logic/domEvents.js';
 import {entryRefusal, type EntryBounds} from '../logic/entryRefusal.js';
 import type {StepperPin} from '../logic/stepperPin.js';
@@ -340,11 +340,6 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     return pressedDigit(el.value, clientX - left + el.scrollLeft, {contentWidth: content, align}, s => ctx.measureText(s).width);
   }
   const measureCanvas = document.createElement('canvas');
-
-  /** A number as typed: "," is a decimal mark too. */
-  function numberOf(text: string): number {
-    return parseFloat(text.replace(',', '.'));
-  }
 
   /** The box's text and selection, for the design rule. */
   function boxOf(el: HTMLInputElement) {
@@ -759,8 +754,8 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     }
     emptied.value = false;
     badEntry.value = !NUMBER_TEXT.test(t.value);
-    const v = numberOf(t.value);
-    badEntry.value = badEntry.value || !isFinite(v);   // a lone "-" or "." is not a number yet, and says so
+    const v = numberFromText(t.value);
+    badEntry.value = badEntry.value || Number.isNaN(v);   // a lone "-", "." or "1e" is not a number yet, and says so
     if (badEntry.value) return;
     const typed = fromDisp(v);
     if (valid(typed)) emit('update:modelValue', typed, typedPrecision(t.value.replace(',', '.')));
@@ -812,9 +807,9 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     // Refused only when the person emptied the box. A box that never had a value is just unset, so a value that arrives later still shows.
     if (emptied.value && props.blankRefused) return entryRefusal(bounds.value, { kind: 'not-a-number' });
     if (!typedDraft.value) return '';
-    if (display.value === '' || !isFinite(numberOf(display.value))) return '';
+    if (display.value === '' || Number.isNaN(numberFromText(display.value))) return '';
     if (display.value === fmt(props.modelValue)) return '';
-    return entryRefusal(bounds.value, { kind: 'number', si: fromDisp(numberOf(display.value)) });
+    return entryRefusal(bounds.value, { kind: 'number', si: fromDisp(numberFromText(display.value)) });
   });
   watch(refusal, text => emit('refusal', text));
 

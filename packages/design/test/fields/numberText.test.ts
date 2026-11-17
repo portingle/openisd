@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {NUMBER_TEXT, numberInPaste, pastedEdit, typedEdit, type NumberBox, type NumberEdit} from '../../fields/numberText.js';
+import {NUMBER_TEXT, numberFromText, numberInPaste, pastedEdit, typedEdit, type NumberBox, type NumberEdit} from '../../fields/numberText.js';
 
 /** A box from marked text: `|` is the caret, `[..]` a selection. */
 function box(marked: string): NumberBox {
@@ -19,12 +19,40 @@ describe('NUMBER_TEXT', () => {
   it('takes numbers and the start of one', () => {
     for (const t of ['', '-', '.', ',', '1.', '.5', '-0,5', '12.5']) expect(NUMBER_TEXT.test(t)).toBe(true);
   });
+  it('takes an exponent, and the start of one (BUG_20261117_exponent-entry-silently-dropped)', () => {
+    for (const t of ['1e', '1e+', '1e-', '1e9', '1E9', '1e+3', '.5e3', '-2.5E-3', '1.e2']) expect(NUMBER_TEXT.test(t)).toBe(true);
+  });
+  it('refuses an exponent with no number before it, or a second one', () => {
+    for (const t of ['e', 'e5', '-e5', '1e5e', '1e5.2', '1e--5', '1ee5']) expect(NUMBER_TEXT.test(t)).toBe(false);
+  });
   it('refuses anything else', () => {
-    for (const t of ['a', '12a', '1.2.3', '--1', '1-', '1e5', ' 1', '12 Hz']) expect(NUMBER_TEXT.test(t)).toBe(false);
+    for (const t of ['a', '12a', '1.2.3', '--1', '1-', ' 1', '12 Hz']) expect(NUMBER_TEXT.test(t)).toBe(false);
+  });
+});
+
+describe('numberFromText', () => {
+  it('reads a whole number as typed: point, comma, exponent', () => {
+    expect(numberFromText('12.5')).toBe(12.5);
+    expect(numberFromText('-0,5')).toBe(-0.5);
+    expect(numberFromText('1e9')).toBe(1e9);
+    expect(numberFromText('2.5E-3')).toBe(0.0025);
+    expect(numberFromText('1.')).toBe(1);
+    expect(numberFromText('.5')).toBe(0.5);
+  });
+  it('is NaN for the start of a number that is not one yet', () => {
+    for (const t of ['', '-', '.', '1e', '1e+', 'e5', '1e5e', '12a']) expect(numberFromText(t)).toBeNaN();
   });
 });
 
 describe('typedEdit', () => {
+  it('lets an e and its sign and digits in after a number (1e9 typed key by key)', () => {
+    expect(result(typedEdit(box('1|'), 'e'))).toBe('1e|');
+    expect(result(typedEdit(box('1e|'), '-'))).toBe('1e-|');
+    expect(result(typedEdit(box('1e-|'), '9'))).toBe('1e-9|');
+  });
+  it('still refuses an e with no number before it', () => {
+    expect(result(typedEdit(box('|'), 'e'))).toBeNull();
+  });
   it('lets digits, a point and a leading minus in', () => {
     expect(result(typedEdit(box('12|'), '3'))).toBe('123|');
     expect(result(typedEdit(box('12|'), '.'))).toBe('12.|');
@@ -45,6 +73,10 @@ describe('typedEdit', () => {
 });
 
 describe('numberInPaste', () => {
+  it('keeps an exponent: 1e9 pastes as 1e9, not as 1', () => {
+    expect(numberInPaste('1e9')).toBe('1e9');
+    expect(numberInPaste('2,5E-3 W')).toBe('2.5E-3');
+  });
   it('takes the number out of the text', () => {
     expect(numberInPaste('12.5 Hz')).toBe('12.5');
     expect(numberInPaste('1,5')).toBe('1.5');

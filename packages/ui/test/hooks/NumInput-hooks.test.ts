@@ -229,6 +229,41 @@ describe('useNumInput', () => {
     app.unmount();
   });
 
+  it('accepts an entry in exponent form as the number it means (BUG_20261117_exponent-entry-silently-dropped)', () => {
+    const {api, app, input, emissions} = setup({modelValue: 12, field: NumberField.BOX_VB_L, max: 1e12});
+    focusIn(api);
+    const key = inputEvent('insertText', 'e', null);
+    input.value = '1';
+    input.setSelectionRange(1, 1);
+    api.onBeforeInput(key);
+    expect(key.preventDefault, 'the key e after a digit is not dropped').not.toHaveBeenCalled();
+    input.value = '1e2';
+    api.onInput(eventTargeted('input', input));
+    expect(api.refusal.value).toBe('');
+    expect(emissions.at(-1)?.event).toBe('update:modelValue');
+    expect(emissions.at(-1)?.args[0]).toBeCloseTo(100e-3, 9);
+    app.unmount();
+  });
+
+  it('marks an exponent that is not finished, and an exponent past the limit, with a note', async () => {
+    const {api, app, input, emissions} = setup({modelValue: 12, field: NumberField.BOX_VB_L, max: 500});
+    focusIn(api);
+    input.value = '1e';
+    api.onInput(eventTargeted('input', input));
+    await nextTick();
+    expect(api.refusal.value).toContain('not a number');
+    input.value = '1e9';
+    api.onInput(eventTargeted('input', input));
+    await nextTick();
+    expect(api.refusal.value).toContain('above its maximum');
+    input.value = '1e999';
+    api.onInput(eventTargeted('input', input));
+    await nextTick();
+    expect(api.refusal.value, 'a number too big to hold is refused with a note, never dropped').not.toBe('');
+    expect(emissions.some(e => e.event === 'update:modelValue')).toBe(false);
+    app.unmount();
+  });
+
   it('has its own one-step undo: Ctrl-Z after a committed edit restores and commits the old value, again swaps back', () => {
     const {api, app, props, input, emissions} = setup({modelValue: 12});
     const undo = () => api.onBeforeInput(beforeInputEvt('beforeinput', {inputType: 'historyUndo'}));

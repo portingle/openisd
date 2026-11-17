@@ -4,10 +4,17 @@
  * a refusal.
  */
 
-/** Text that is a number, or the start of one ("", "-", "1.", ".5"). "," is a decimal mark too. */
-export const NUMBER_TEXT = /^-?\d*[.,]?\d*$/;
-/** The first number in a pasted text: "12.5 Hz", "-3", "1,5", ".5", "7.". */
-const NUMBER_IN_TEXT = /-?(?:\d+[.,]?\d*|[.,]\d+)/;
+/** Text that is a number, or the start of one ("", "-", "1.", ".5", "1e", "1e-"). "," is a decimal mark too; an exponent needs digits before its e. */
+export const NUMBER_TEXT = /^-?(?:\d*[.,]?\d*|(?:\d+[.,]?\d*|[.,]\d+)[eE][+-]?\d*)$/;
+/** A finished number: digits, an optional point part, an optional exponent ("12.5", ".5", "7.", "1e9", "2.5E-3"). */
+const NUMBER_COMPLETE = /^-?(?:\d+[.,]?\d*|[.,]\d+)(?:[eE][+-]?\d+)?$/;
+/** The first number in a pasted text: "12.5 Hz", "-3", "1,5", ".5", "7.", "1e9". */
+const NUMBER_IN_TEXT = /-?(?:\d+[.,]?\d*|[.,]\d+)(?:[eE][+-]?\d+)?/;
+
+/** The number a box's text means ("," is a point; "1e9" is a billion), or NaN while the text is not yet a whole number ("", "-", "1e"). */
+export function numberFromText(text: string): number {
+  return NUMBER_COMPLETE.test(text) ? Number(text.replace(',', '.')) : NaN;
+}
 
 /** A text edit that is allowed: the whole text after it, and where the caret then sits. */
 export type NumberEdit =
