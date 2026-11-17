@@ -1,0 +1,10 @@
+id: T875
+release_note: internal
+repo: openisd
+owner: releasefix
+status: open
+goal: Fix two release.sh defects: approve-prepared compares a non-deterministic merge commit id; the ledger task worktree lacks node_modules deps
+why: Lead brief 17 Nov 2026 after the 7.0.960 release
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T875.yml
