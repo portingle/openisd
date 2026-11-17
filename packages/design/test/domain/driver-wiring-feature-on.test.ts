@@ -89,3 +89,23 @@ describe('the Signal tab follows Driver wiring (plan 3.3, 7)', () => {
     expect(project('series', true, N).powerDrive_W.value).toBe(project('series', false, N).powerDrive_W.value);
   });
 });
+
+describe('where the Driver wiring control and the "Impedance of one driver" switch apply (plan 3.1, 3.2)', () => {
+  it.each([[1, false], [2, true], [4, true]])('%i driver(s): the control and the switch apply = %s', (n, applies) => {
+    const p = project(null, false, n);
+    expect(p.driverWiringApplies).toBe(applies);
+    expect(p.winisdOneDriverImpedanceApplies).toBe(applies);
+  });
+
+  it('changing the driver count never changes the stored wiring: 4 to 1 to 4 brings Series back', () => {
+    const p = project('series', false, 4);
+    p.nDrivers.set(1);
+    expect(p.driverWiring.value).toBe('series');
+    p.nDrivers.set(4);
+    expect(p.driverWiring.value).toBe('series');
+  });
+
+  it('a one-driver project is the same whatever its wiring or switch (nothing to wire)', () => {
+    expect(curves(project('series', true, 1))).toEqual(curves(project('parallel', false, 1)));
+  });
+});

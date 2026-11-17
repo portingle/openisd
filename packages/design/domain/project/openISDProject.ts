@@ -343,6 +343,16 @@ export class OpenISDProject {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdAbcIntraPortVelocity;
     }
 
+    /** "Driver wiring" says something only with 2 or more drivers; the control is drawn only then (plan 519, 3.1). */
+    get driverWiringApplies(): boolean {
+        return this.nDrivers.value >= 2;
+    }
+
+    /** "Impedance of one driver" changes the impedance chart only with 2 or more drivers (plan 519, 3.2). */
+    get winisdOneDriverImpedanceApplies(): boolean {
+        return this.nDrivers.value >= 2;
+    }
+
     /** "Simplified ABC intra-port velocity" acts on the open box: an ABC box only. */
     get winisdAbcIntraPortVelocityApplies(): boolean {
         return this.box.boxType.value === 'abc';
