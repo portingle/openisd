@@ -114,8 +114,9 @@ function filtersSurface(type: FilterType): Surface {
 const locateRow = (label: string) => (page: Page) =>
   page.locator('.filter-edit-body .ui-field, .mob-fcard-body .ui-field').filter({has: page.locator('label').filter({hasText: new RegExp(`^${label}$`)})}).locator('input[data-numinput]:visible').first();
 
-async function chartNow(page: Page, viewport: SweepViewport): Promise<string | null> {
-  if (viewport === 'phone') return null;
+/** The chart's picture; the phone shows no chart beside the Filters tab, so every phone reading is the same text. */
+async function chartNow(page: Page, viewport: SweepViewport): Promise<string> {
+  if (viewport === 'phone') return 'no chart beside the phone Filters tab';
   // A flash message ("Project imported") sits over the chart for a few seconds and is part of its picture.
   await expect(page.locator('.flash')).toHaveCount(0);
   await expectChartDrawn(page);
@@ -128,11 +129,14 @@ for (const viewport of ['desktop', 'phone'] as const satisfies readonly SweepVie
   const screens = viewport === 'desktop' ? DESKTOP_SCREENS : PHONE_SCREENS;
   for (const chip of PHONE_FILTER_CHIPS) {
     const surface = filtersSurface(chip.type);
+
     test.describe(`${viewport} ${chip.short} filter: every box follows its inputs`, () => {
       for (const label of ROWS[chip.type]) {
         const name = `${viewport} ${chip.type} ${label}`;
         const key = (viewport === 'phone' ? PHONE_KEY : KEY)[label] ?? '';
         const input: SweepInput = {label, field: field(key), screen: 'Filters', locate: locateRow(label)};
+        /** Whether a normal change must draw a new SPL picture: only on the desktop, and not for an input that cannot change it. */
+        const chartChanges = viewport === 'desktop' && !NO_SPL_EFFECT.has(`${chip.type} ${label}`);
         const homeKey = `Filters|${key}#${ROWS[chip.type].filter(l => (viewport === 'phone' ? PHONE_KEY : KEY)[l] === key).indexOf(label)}`;
 
         test(`${label}: normal, tiny, top, absurdly high, absurdly low, back`, async ({appPage: page, browser}) => {
@@ -147,7 +151,7 @@ for (const viewport of ['desktop', 'phone'] as const satisfies readonly SweepVie
           const startChart = await chartNow(page, viewport);
 
           let accepted = start;
-          let chartSeen = false;
+          const pictures = new Map<string, string>();
           for (const [step, text] of entrySteps(input, Number(original) === 0 ? '1' : original, [])) {
             const live = await visit(page, viewport, surface, input, '', screens, text);
             const typed = await freshVisit(browser, baseUrl(), viewport, 'vented', surface, input, '', screens, text);
@@ -156,24 +160,18 @@ for (const viewport of ['desktop', 'phone'] as const satisfies readonly SweepVie
             const surfaceDiffs = innerProblems(verdict.expectedInner, live);
             await expect.poll(async () => [...surfaceDiffs, ...differences(verdict.expectedOuter, await readAllBoxes(page, viewport, screens), 'exact', true)],
               {message: `${label} typed ${step} (${text}): every box must show what a fresh project shows`, timeout: 20_000}).toEqual([]);
-            if (step === 'normal' && startChart !== null) {
-              await surface.open(page, viewport);
-              const drawn = await chartNow(page, viewport);
-              chartSeen = drawn !== startChart;
-            }
+            await surface.open(page, viewport);
+            pictures.set(step, await chartNow(page, viewport));
           }
-          if (startChart !== null) expect(chartSeen, `${label}: the chart is ${NO_SPL_EFFECT.has(`${chip.type} ${label}`) ? 'the same picture' : 'redrawn'} after a normal change`).toBe(!NO_SPL_EFFECT.has(`${chip.type} ${label}`));
+          expect(pictures.get('normal') !== startChart, `${label}: the chart is ${chartChanges ? 'redrawn' : 'the same picture'} after a normal change`).toBe(chartChanges);
 
           const back = await visit(page, viewport, surface, input, '', screens, original);
           const fresh = await freshVisit(browser, baseUrl(), viewport, 'vented', surface, input, '', screens, original);
           const backSurface = backAtStart(start.inner, fresh.inner, back.inner, startedCalculated);
           await expect.poll(async () => [...backSurface, ...backAtStart(start.outer, fresh.outer, await readAllBoxes(page, viewport, screens), startedCalculated)],
             {message: `${label} typed back to ${original}: no calculated box refused, every box back to its start`, timeout: 20_000}).toEqual([]);
-          if (startChart !== null) {
-            await surface.open(page, viewport);
-           
-            expect(await chartNow(page, viewport), `${label}: the chart is the starting picture again`).toBe(startChart);
-          }
+          await surface.open(page, viewport);
+          expect(await chartNow(page, viewport), `${label}: the chart is the starting picture again`).toBe(startChart);
         });
       }
     });
