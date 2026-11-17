@@ -14,3 +14,15 @@ files:
   - packages/design/domain/project/compatSwitch.ts
   - packages/design/test/domain/driver-wiring-data.test.ts
   - build/T876_REPORT.md
+  - packages/design/test/architecture-driver-wiring-has-one-site.test.ts
+  - packages/design/test/domain/schema-version-4-wiring.test.ts
+  - packages/design/test/domain/schema-version-5-wiring.test.ts
+  - packages/design/test/domain/schema-version.test.ts
+  - packages/design/test/domain/slim-model.test.ts
+  - packages/persistence/test/goldens/backup-file/file-layout-6.json
+  - packages/persistence/test/goldens/custom-drivers/dump-layout-6.json
+  - packages/persistence/test/goldens/many-projects/dump-layout-6.json
+  - packages/persistence/test/goldens/one-project/dump-layout-6.json
+  - packages/persistence/test/goldens/open-sessions/dump-layout-6.json
+  - packages/persistence/test/goldens/passive-radiators/dump-layout-6.json
+  - packages/persistence/test/storedTextCompaction.test.ts

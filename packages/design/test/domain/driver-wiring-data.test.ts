@@ -1,7 +1,7 @@
 /**
  * Several-driver wiring, slice 2 "Data, inert" (plan docs/plans/PLAN_20261116_DRIVER_WIRING.md section 4,
  * ticket 519; QO946.c129): the project file saves and loads `driverWiring` (parallel or series, in
- * `driverEmbedding`). Nothing reads it yet. The one-driver-impedance key and the facade are held: see build/T876_REPORT.md.
+ * `driverEmbedding`) and `winisdOneDriverImpedance` (boolean, `advanced`). Nothing reads them yet. The facade fields and the switch come in slice 3.
  */
 import {describe, expect, it} from 'vitest';
 import {OpenISDProject} from '../../domain/project/openISDProject.js';
@@ -37,27 +37,35 @@ describe('driver wiring data (slice 2, inert): the saved file', () => {
     const p = sealedProject();
     p.save();
     return p.toOwprText()
-      .replace(/"nDrivers": 1,/, '"nDrivers": 1, "driverWiring": "series",');
+      .replace(/"nDrivers": 1,/, '"nDrivers": 1, "driverWiring": "series",')
+      .replace(/"advanced": \{/, '"advanced": { "winisdOneDriverImpedance": true,');
   }
 
-  it('a file that carries driverWiring is accepted and writes it back as they were', () => {
+  it('a file that carries driverWiring is accepted and writes both back as they were', () => {
     const text = withKeys();
     expect(text).toMatch(/"driverWiring": "series"/);
     const again = opened(text).toOwprText();
     expect(sectionOf(again, 'driverEmbedding').driverWiring).toBe('series');
+    expect(sectionOf(again, 'advanced').winisdOneDriverImpedance).toBe(true);
   });
 
-  it('browser storage text keeps the key too', () => {
+  it('browser storage text keeps both keys too', () => {
     const stored = opened(withKeys()).toStoredText();
     expect(sectionOf(stored, 'driverEmbedding').driverWiring).toBe('series');
+    expect(sectionOf(stored, 'advanced').winisdOneDriverImpedance).toBe(true);
   });
 
-  it('a file from before the keys existed (no driverWiring) is accepted', () => {
+  it('a file from before the keys existed (neither key) is accepted', () => {
     const p = sealedProject();
     p.save();
     const text = p.toOwprText();
-    expect(text).not.toMatch(/driverWiring/);
+    expect(text).not.toMatch(/driverWiring|winisdOneDriverImpedance/);
     expect(Array.isArray(OpenISDProject.fromOwprText(text, createEngine()))).toBe(false);
+  });
+
+  it('a winisdOneDriverImpedance that is not a boolean is refused by the schema', () => {
+    const text = sealedProjectText().replace(/"advanced": \{/, '"advanced": { "winisdOneDriverImpedance": "yes",');
+    expect(Array.isArray(OpenISDProject.fromOwprText(text, createEngine()))).toBe(true);
   });
 
   it('a driverWiring that is not parallel or series is refused by the schema', () => {
@@ -78,7 +86,7 @@ describe('schema version step (plan 4.2)', () => {
 
   it('the step from 5 to 6 is the identity on a version 5 file except schemaVersion', () => {
     const file = v5File();
-    const result = upgradeToCurrent(file, 6);
+    const result = upgradeToCurrent(file);
     if ('refusal' in result) throw new Error(result.refusal);
     const {schemaVersion: was, ...before} = file;
     expect(was).toBe(5);

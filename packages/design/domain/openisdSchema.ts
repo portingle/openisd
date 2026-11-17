@@ -894,6 +894,9 @@ const openISDAdvancedJsonSchema = z.preprocess(renameLegacyWinisdDriverModel, z.
     // "Uncapped flat response": force flat as WinISD does it, every point to the TF 0 dB, uncapped;
     // off, boost only to the passband reference, capped. Optional: absent parses to ON.
     winisdFlatModel: z.boolean().optional(),
+    // Option "Impedance of one driver" (QO946.c131, plan 4.1): the impedance chart shows one driver as WinISD's does, not the
+    // amplifier's load for the project's Driver wiring. Absent parses to OFF. Saved and loaded only; nothing reads it yet.
+    winisdOneDriverImpedance: z.boolean().optional(),
 }));
 export type OpenISDAdvancedJson = z.infer<typeof openISDAdvancedJsonSchema>;
 
