@@ -14,7 +14,7 @@ watch(open, async isOpen => { if (isOpen) { await nextTick(); sheet.value?.focus
   <div v-if="open" class="fb-backdrop" :class="{'fb-phone': phone}" data-testid="feedback-backdrop" @click.self="dialog.dismiss()" @keydown.esc="dialog.dismiss()">
     <section ref="sheet" class="fb-modal" role="dialog" aria-modal="true" aria-labelledby="fb-title" tabindex="-1" data-testid="feedback-dialog">
       <header class="fb-head">
-        <h2 id="fb-title"><span v-if="phase === 'comment'" class="fb-tick" aria-hidden="true">&#10003;</span><span data-testid="feedback-heading">{{ heading }}</span></h2>
+        <h2 id="fb-title"><img class="fb-logo" src="/icon.svg" alt="" aria-hidden="true"><span v-if="phase === 'comment'" class="fb-tick" aria-hidden="true">&#10003;</span><span data-testid="feedback-heading">{{ heading }}</span></h2>
         <button type="button" class="fb-close" :aria-label="texts.close" data-testid="feedback-close" @click="dialog.dismiss()">&times;</button>
       </header>
       <div class="fb-body">
@@ -56,6 +56,7 @@ watch(open, async isOpen => { if (isOpen) { await nextTick(); sheet.value?.focus
 .fb-modal{box-sizing:border-box;width:min(460px,100%);max-height:calc(100dvh - 40px);overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--fg);box-shadow:0 18px 50px color-mix(in srgb,var(--fg) 35%,transparent);outline:none;animation:fb-in .18s ease-out}
 .fb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px 4px}
 .fb-head h2{margin:0;font-size:1.35rem;display:flex;align-items:center;gap:10px}
+.fb-logo{flex:none;width:30px;height:30px}
 .fb-tick{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--good);color:var(--panel);font-size:1rem;animation:fb-pop .3s ease-out}
 .fb-close{flex:none;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:var(--mut);font-size:28px;line-height:1;cursor:pointer}
 .fb-close:hover{background:var(--panel2)}
@@ -86,6 +87,7 @@ watch(open, async isOpen => { if (isOpen) { await nextTick(); sheet.value?.focus
 .fb-secondary{border:1px solid var(--line);background:var(--panel2);color:var(--fg)}
 .fb-phone{align-items:flex-end;padding:0}
 .fb-phone .fb-modal{width:100%;max-height:calc(100dvh - 12px);border-radius:20px 20px 0 0;animation:fb-up .22s ease-out}
+.fb-phone .fb-logo{width:34px;height:34px}
 .fb-phone .fb-faces{gap:4px}
 .fb-phone .fb-face{min-width:96px;padding:14px 4px 12px}
 .fb-phone .fb-svg{width:72px;height:72px}
