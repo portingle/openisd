@@ -9,3 +9,5 @@ done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T867.yml
   - cloudflare/announcements/src/index.js
+  - docs/SDLC_POLICY.md
+  - cloudflare/announcements/README.md
