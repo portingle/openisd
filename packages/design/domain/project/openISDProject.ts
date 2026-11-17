@@ -31,6 +31,7 @@ import { ProjectCoilWiring } from './projectCoilWiring.js';
 import { ProjectMeta } from './projectMeta.js';
 import { ProjectListeners } from './projectListeners.js';
 import { resolveProject, usableRe } from './projectResolve.js';
+import { PROJECT_DEFAULT_DRIVER_WIRING } from './driverWiringDefault.js';
 import { ProjectSignal } from './projectSignal.js';
 import { TuneLimits } from './tuneLimits.js';
 import { tuneViewOf } from './tuneView.js';
@@ -181,7 +182,7 @@ export class OpenISDProject {
     get driverWiring(): SimpleField<'parallel' | 'series'> {
         const lens = focus(this.#slot('driverEmbedding'), 'driverWiring');
         return {
-            get value() { return lens.value ?? 'parallel'; },
+            get value() { return lens.value ?? PROJECT_DEFAULT_DRIVER_WIRING; },
             set: (wiring: 'parallel' | 'series') => lens.set(wiring),
         };
     }

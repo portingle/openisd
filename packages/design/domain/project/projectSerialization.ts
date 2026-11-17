@@ -7,7 +7,7 @@ import { parseRepairing, type Repaired } from '../schemaRepair.js';
 import { withoutDerivedMarks } from '../derivedMarks.js';
 import { retireLossMode } from './retiredLossMode.js';
 import { singleEnteredVentPairs } from './singleEnteredVentPairs.js';
-import { DEFAULT_DRIVER_WIRING } from '../../engine/array/driverWiring.js';
+import { PROJECT_DEFAULT_DRIVER_WIRING } from './driverWiringDefault.js';
 import { CompatSwitch } from './compatSwitch.js';
 
 /** The project with "Driver wiring" and "Impedance of one driver" written out, as every save does (plan 519, 4.1), also at one
@@ -15,7 +15,7 @@ import { CompatSwitch } from './compatSwitch.js';
 function withDrivingKeys(project: OpenISDProjectJson): OpenISDProjectJson {
     return {
         ...project,
-        driverEmbedding: {...project.driverEmbedding, driverWiring: project.driverEmbedding.driverWiring ?? DEFAULT_DRIVER_WIRING},
+        driverEmbedding: {...project.driverEmbedding, driverWiring: project.driverEmbedding.driverWiring ?? PROJECT_DEFAULT_DRIVER_WIRING},
         advanced: {...project.advanced, winisdOneDriverImpedance: project.advanced.winisdOneDriverImpedance ?? CompatSwitch.ONE_DRIVER_IMPEDANCE.winisdValue},
     };
 }
