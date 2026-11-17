@@ -6,8 +6,7 @@ const ANNOUNCEMENTS = [
     title: 'Dual-coil drivers, done right',
     summary: 'Wire any dual-coil driver in series or parallel and get the real answer.',
     body: [
-      'Impedance, inductance and BL all follow the wiring.',
-      'WinISD keeps the coil inductance when you rewire, so its high frequencies are wrong.',
+      'Impedance, inductance and BL follow the wiring, so high frequencies stay right.',
       'Export every chart in one click.',
       'Now 1,362 woofers and 86 passive radiators from 21 makers, with CSS and RS Speakers new.',
       'Works better on phones.',
