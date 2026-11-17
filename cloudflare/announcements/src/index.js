@@ -6,7 +6,7 @@ const ANNOUNCEMENTS = [
     title: 'Dual-coil drivers, done right',
     summary: 'Wire any dual-coil driver in series or parallel and get the real answer.',
     body: [
-      'Impedance, inductance and BL all follow the wiring. WinISD gets the top end wrong.',
+      'Impedance, inductance and BL all follow the wiring.',
       'Export every chart in one click.',
       'Now 1,923 drivers and 86 passive radiators from 21 makers, with CSS and RS Speakers new.',
       'Works better on phones.',

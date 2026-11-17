@@ -93,8 +93,11 @@ Every line answers "what can I do now, or what works better for me", in a design
 - Six lines at most; the title names the two or three things users care about most.
 - The release notes (`release.sh --notes-file`) can be fuller; the popup cannot.
 - The lead drafts the popup and shows John the full text before it is merged; John's words win.
+- A sentence John deletes stays deleted. Before the popup merges, the lead checks the final text against every line or
+  phrase John struck, word by word (7.0.960: John struck "WinISD gets the top end wrong." at 13:51 on 17 Nov 2026, it
+  was shipped anyway, and he had to strike it again at 16:36: "WinISD gets the top end wrong. / ffs").
 
 Worked example (7.0.960, after "be more salesman"): title "Dual-coil drivers, done right"; summary "Wire any dual-coil driver
-in series or parallel and get the real answer."; lines "Impedance, inductance and BL all follow the wiring. WinISD gets
-the top end wrong." / "Export every chart in one click." / "Now 1,923 drivers and 86 passive radiators from 21
+in series or parallel and get the real answer."; lines "Impedance, inductance and BL all follow the wiring." / "Export every
+chart in one click." / "Now 1,923 drivers and 86 passive radiators from 21
 makers, with CSS and RS Speakers new." / "Works better on phones."
