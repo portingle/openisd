@@ -12,7 +12,7 @@ import {missingDependencies} from '../consistency.js';
 import type {CalculationIssue} from '../consistency.js';
 import type {SignalSolverParams} from '../solverTypes.js';
 import type {DriverWiring} from '../array/driverWiring.js';
-import {amplifierVoltage, driverDrive} from '../array/driverWiring.js';
+import {DEFAULT_DRIVER_WIRING, amplifierVoltage, driverDrive} from '../array/driverWiring.js';
 
 export type SignalQuantityName = keyof SignalSolverParams;
 export type SignalIssue = CalculationIssue<SignalQuantityName>;
@@ -68,7 +68,7 @@ export class SignalEngineImpl implements SignalEngine {
     const n = usable(nDrivers) ? nDrivers : 1;
     if (usable(Re_ohm)) {
       // `voltage_V` is the amplifier's voltage: each driver gets `drive.eg_V` through `drive.Rg_ohm`. Absent wiring is Parallel.
-      const wiring = p.driverWiring ?? 'parallel';
+      const wiring = p.driverWiring ?? DEFAULT_DRIVER_WIRING;
       const drive = driverDrive(n, wiring, p.voltage_V.value, Rs_ohm, p.rgAtDriverSide !== false);
       if (p.voltage_V.entered) {
         p.power_W.setCalculated(n * driveFromVoltage(drive.eg_V, Re_ohm, drive.Rg_ohm));

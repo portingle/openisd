@@ -28,7 +28,7 @@ import {hotRe, isobarikPair, withAddedMass} from '../solvers/driverQuantities.js
 import {applyFilters} from '../filters.js';
 import {driveFromVoltage} from '../signal/SignalEngine.js';
 import type {DriverDrive} from '../array/driverWiring.js';
-import {driverDrive} from '../array/driverWiring.js';
+import {DEFAULT_DRIVER_WIRING, driverDrive} from '../array/driverWiring.js';
 import type {BoxType, DriverError, EnclosureParams, MaxCurvesResult, SweepParams, SweepPeaks, SweepResult, WinisdFilterErrors} from '../types.js';
 import type {DriverValues, SweepDriver} from '../solverTypes.js';
 import type {BoxParamsIssue, BoxParamsQuantityName, BoxParamsSolveResult} from '../params.js';
@@ -223,7 +223,7 @@ function oneBoxOfN(P: SweepParams, n: number): SweepParams {
 
 /** What each of the N drivers sees. An absent `driverWiring` is Parallel, what a project that never chose one is (saved default). */
 function arrayDrive(P: SweepParams, n: number): DriverDrive {
-  return driverDrive(n, P.driverWiring ?? 'parallel', P.eg, P.Rs || 0, P.rgAtDriverSide !== false);
+  return driverDrive(n, P.driverWiring ?? DEFAULT_DRIVER_WIRING, P.eg, P.Rs || 0, P.rgAtDriverSide !== false);
 }
 
 /** One driver's share of the array, driven as the wiring says: its share of the box, the voltage and the series resistance it sees. */

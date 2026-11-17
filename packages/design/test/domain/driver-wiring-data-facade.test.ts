@@ -65,10 +65,19 @@ describe('driver wiring data (slice 2, inert)', () => {
     expect(opened(p.toOwprText()).driverWiring.value).toBe('series');
   });
 
-  it('a file from before the keys existed (version 5, neither key) opens Parallel with the switch off', () => {
+  it('every save writes both keys, also at one driver and also when nothing was chosen (plan 4.1)', () => {
     const p = sealedProject();
     p.save();
-    const text = p.toOwprText();
+    for (const text of [p.toOwprText(), p.toStoredText()]) {
+      expect(sectionOf(text, 'driverEmbedding').driverWiring).toBe('parallel');
+      expect(sectionOf(text, 'advanced').winisdOneDriverImpedance).toBe(false);
+    }
+  });
+
+  it('a file from before the keys existed (neither key) opens Parallel with the switch off', () => {
+    const p = sealedProject();
+    p.save();
+    const text = p.toOwprText().replace(/,?\s*"driverWiring": "parallel"/, '').replace(/,?\s*"winisdOneDriverImpedance": false/, '');
     expect(text).not.toMatch(/driverWiring|winisdOneDriverImpedance/);
     const back = opened(text);
     expect(back.driverWiring.value).toBe('parallel');
@@ -78,7 +87,7 @@ describe('driver wiring data (slice 2, inert)', () => {
   it('a value that is not parallel or series is refused by the schema', () => {
     const p = sealedProject();
     p.save();
-    const text = p.toOwprText().replace(/"nDrivers": 1,/, '"nDrivers": 1, "driverWiring": "star",');
+    const text = p.toOwprText().replace(/"driverWiring": "parallel"/, '"driverWiring": "star"');
     expect(text).toMatch(/"driverWiring": "star"/);
     expect(Array.isArray(OpenISDProject.fromOwprText(text, createEngine()))).toBe(true);
   });
