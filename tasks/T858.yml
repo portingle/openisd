@@ -1,0 +1,17 @@
+id: T858
+release_note: 'The button beside each chart''s Data button that exports every chart reads "All".'
+repo: openisd
+owner: fixer
+status: done
+goal: The export-every-chart button next to each chart's Data button reads "All", not "(all)"
+why: "John, 17 Nov 2026 00:15: 'I didn''t mean (all) literally use All that word'"
+done_test: bash scripts/test.sh packages/ui/test/hooks/GraphPanel-hooks.test.ts packages/ui/test/hooks/MobileChartView-hooks.test.ts
+files:
+  - tasks/T858.yml
+  - packages/ui/src/ui/components/GraphPanel.vue
+  - packages/ui/src/ui/shells/mobile/MobileChartView.vue
+  - packages/ui/test/ui/chart-data-all.browser.spec.ts
+  - packages/ui/test/hooks/GraphPanel-hooks.test.ts
+  - packages/ui/test/hooks/MobileChartView-hooks.test.ts
+  - packages/ui/test/fixtures/branchMap/phone.ts
+  - packages/ui/test/fixtures/branchMap/shared.ts
