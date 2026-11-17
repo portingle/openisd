@@ -50,6 +50,8 @@ for (const viewport of ['desktop', 'phone'] as const) {
       await expect(box(page, 'Qts')).toHaveClass(/inp-bad/);
 
       await tabButton(page, 'Advanced').click();
+      await expect(box(page, 'Qts'), 'the other tab is really hidden, not drawn over this one').toBeHidden();
+      await expect(box(page, 'Gloss')).toBeVisible();
       await expect(tabButton(page, 'Parameters'), 'the tab holding the refused entry says so while it is out of sight').toHaveClass(/de-tab-refused/);
       await tabButton(page, 'Parameters').click();
 
