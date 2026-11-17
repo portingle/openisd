@@ -8,3 +8,5 @@ why: Main suite red after T870 (PR 181, the phone refused-box border fix), suite
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T872.yml
+  - packages/ui/src/ui/components/UnitToggle.vue
+label: fixes
