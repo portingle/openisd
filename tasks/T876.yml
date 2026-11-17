@@ -2,7 +2,7 @@ id: T876
 release_note: internal
 repo: openisd
 owner: wiring2
-status: open
+status: done
 goal: Slice 2 of several-driver wiring: schema v6 step, driverWiring and winisdOneDriverImpedance saved and loaded, inert
 why: John decided the several-driver wiring plan (ticket 519): QO946.c129 (Driver wiring, Parallel/Series), c130, c131 ("Impedance of one driver" switch, off by default). Slice 2 of the plan, section 11 item 2: Data, inert.
 ruling: QO946
