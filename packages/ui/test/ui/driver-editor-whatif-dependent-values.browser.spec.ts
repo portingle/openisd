@@ -78,6 +78,15 @@ const GROUPS: readonly Group[] = [
 /** Journeys that fail because of an app bug: the bug file, red until fixed (`test.fail`). Key: "<viewport> <group> <input label>". */
 const KNOWN: ReadonlyMap<string, string> = new Map([]);
 
+/** Whether a box shows the text that was typed, within the rounding of what it shows (half a unit of the last digit, or half a percent). */
+function showsText(shown: string, typed: string): boolean {
+  if (shown.trim() === '' || typed.trim() === '') return shown.trim() === typed.trim();
+  const a = Number(shown), b = Number(typed);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return shown === typed;
+  const decimals = shown.includes('.') ? shown.length - shown.indexOf('.') - 1 : 0;
+  return Math.abs(a - b) <= Math.max(0.005 * Math.max(Math.abs(a), Math.abs(b)), 0.5 * 10 ** -decimals);
+}
+
 /** Plain digits for a number written with an exponent: a box takes no letter 'e'. */
 function plain(text: string): string {
   return /e/i.test(text) ? Number(text).toLocaleString('en-US', {useGrouping: false, maximumFractionDigits: 20}) : text;
@@ -123,7 +132,8 @@ for (const viewport of ['desktop', 'phone'] as const satisfies readonly SweepVie
           await surface.show(page, row.tab);
           const options = await locate(page).evaluate(el => el instanceof HTMLSelectElement ? [...el.options].map(o => o.value) : []);
           await surface.leave(page);
-          const swept = sweepValues(input, original);
+          // A box that starts blank (the datasheet gave no value) is swept from 1, so the normal and tiny entries are real values.
+          const swept = sweepValues(input, original.trim() === '' ? '1' : original);
           // A field whose limit is the largest number there is (most driver T/S fields) would be typed as 1.79769e+308: a box takes no letter 'e', so the
           // entry reverts with no refusal mark and is not something a person can type. For these the "top" is a plain huge entry (1e9) and the
           // "absurd high" 1e30, both inside the limit. Every step is written in plain digits for the same reason.
@@ -139,10 +149,14 @@ for (const viewport of ['desktop', 'phone'] as const satisfies readonly SweepVie
             const typed = await freshVisit(browser, baseUrl(), viewport, 'vented', surface, input, row.tab, screens, text);
             const refusedInner = typed.inner.some(r => r.refused);
             const refusedOuter = typed.outer.some(r => r.refused);
-            const refused = refusedInner || refusedOuter;
-            const expectedInner = expectedAfterEntry(typed.inner, accepted.inner);
+            // A box refuses an entry in one of two ways: it stays marked bad with the typed text, or it goes back to the value it held before
+            // (the editor does this: Xmax 5000 puts 9.25 back, and the box is not marked). Either leaves the last accepted entry in force.
+            const typedHome = [...typed.inner, ...typed.outer].find(r => r.key === homeKey(group, row));
+            const reverted = !refusedInner && !refusedOuter && typedHome !== undefined && !showsText(typedHome.value, text) && typedHome.value === original;
+            const refused = refusedInner || refusedOuter || reverted;
+            const expectedInner = reverted ? accepted.inner : expectedAfterEntry(typed.inner, accepted.inner);
             // A refused entry on the surface leaves the project as the last accepted entry made it; one refused on a project screen shows there.
-            const expectedOuter: BoxReadings = refusedOuter ? expectedAfterEntry(typed.outer, accepted.outer) : refusedInner ? accepted.outer : typed.outer;
+            const expectedOuter: BoxReadings = reverted ? accepted.outer : refusedOuter ? expectedAfterEntry(typed.outer, accepted.outer) : refusedInner ? accepted.outer : typed.outer;
             if (!refused) accepted = typed;
             const innerDiffs = differences(expectedInner, live.inner, 'exact', true);
             await expect.poll(async () => [...innerDiffs, ...differences(expectedOuter, await readAllBoxes(page, viewport, screens), 'exact', true)],
