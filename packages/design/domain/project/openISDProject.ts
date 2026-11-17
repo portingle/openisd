@@ -176,6 +176,16 @@ export class OpenISDProject {
         return defaultedField(focus(this.#slot('driverEmbedding'), 'nDrivers'), 1);
     }
 
+    /** "Driver wiring": how the project's `nDrivers` drivers are wired to the amplifier (QO946.c129). Parallel where a project does
+     *  not say. Saved and loaded only; the engine does not read it yet. Not the coil wiring inside one driver (`coilWiring`). */
+    get driverWiring(): SimpleField<'parallel' | 'series'> {
+        const lens = focus(this.#slot('driverEmbedding'), 'driverWiring');
+        return {
+            get value() { return lens.value ?? 'parallel'; },
+            set: (wiring: 'parallel' | 'series') => lens.set(wiring),
+        };
+    }
+
     /** "Coil wiring": how the user wires a multi-coil driver's own coils, beside the wiring it was
      *  measured in. The amplifier-side figures use it; the stored ones stay as published. */
     get coilWiring(): ProjectCoilWiring {
@@ -382,6 +392,11 @@ export class OpenISDProject {
             coilWiringApplies: this.coilWiring.canChoose,
             tlPortModel: this.useTransmissionLinePortModel.value,
         });
+    }
+
+    /** WinISD Compatibility "Impedance of one driver" — see `ProjectAdvanced.winisdOneDriverImpedance`. Saved and loaded only. */
+    get winisdOneDriverImpedance(): SimpleField<boolean> {
+        return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdOneDriverImpedance;
     }
 
     /** WinISD Compatibility "Uncapped flat response" — see `ProjectAdvanced.winisdFlatModel`. */

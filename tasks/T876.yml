@@ -9,6 +9,11 @@ ruling: QO946
 done_test: bash scripts/test.sh packages/design/test/domain/driver-wiring-data.test.ts
 files:
   - tasks/T876.yml
+  - CLAUDE.md
+  - packages/design/fields/field.ts
+  - packages/design/domain/project/projectAdvanced.ts
+  - packages/design/domain/project/openISDProject.ts
+  - packages/design/test/domain/driver-wiring-data-facade.test.ts
   - packages/design/domain/openisdSchema.ts
   - packages/design/domain/schemaVersion.ts
   - packages/design/domain/project/compatSwitch.ts

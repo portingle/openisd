@@ -1610,6 +1610,11 @@ export class ToggleField extends Field {
     label: "Simplified ABC intra-port velocity",
     description: "Simplified ABC intra-port velocity: WinISD works out the air speed in an ABC box's inner port without a small leak term, Zf·jωMai/Ricl, but that term is part of the real current through the port mass. So its chart is slightly off: by up to 1.35 dB and 4.6° near 110 Hz, and under 0.1 dB elsewhere (W5-1138SMF). OpenISD drops the same term by default, so it matches WinISD. Untick this to use the exact port-mass current. It changes the ABC box's Intra port velocity chart only.",
   }, null, 'intra-port');
+  static readonly ADV_WINISDONEDRIVERIMPEDANCE = new ToggleField({
+    value: "adv_WinisdOneDriverImpedance",
+    label: "Impedance of one driver",
+    description: "Impedance of one driver: WinISD works out the sound as if the drivers were wired in parallel (each gets the full voltage), but its impedance chart shows only ONE driver, not the load the amplifier really sees with them in parallel (4 × 8 Ω is 2 Ω). So the two do not match. OpenISD shows the load for the wiring you chose under Driver wiring. Tick this to see one driver's impedance as WinISD does; the sound and every other chart stay the same.",
+  });
 
   static readonly ALL: readonly ToggleField[] =
     Object.freeze(Object.values(ToggleField).filter((v): v is ToggleField => v instanceof ToggleField));
