@@ -106,32 +106,3 @@ describe('CompatSwitch per-switch default (QO946.c131)', () => {
     for (const s of CompatSwitch.BUGS) expect(s.winisdValue, s.field.label).toBe(false);
   });
 });
-
-describe('CompatSwitch per-switch default (QO946.c131)', () => {
-  it('"Impedance of one driver" is an option that is OFF for a new project and a file that does not say', () => {
-    const sw = CompatSwitch.ONE_DRIVER_IMPEDANCE;
-    expect(sw.kind).toBe('option');
-    expect(sw.winisdValue).toBe(false);
-    expect(sw.of(sealedProject()).value).toBe(false);
-  });
-
-  it('it is the only option off by default: every other option stays ticked, every bug unticked', () => {
-    const off = CompatSwitch.OPTIONS.filter(s => !s.winisdValue);
-    expect(off).toEqual([CompatSwitch.ONE_DRIVER_IMPEDANCE]);
-    for (const s of CompatSwitch.BUGS) expect(s.winisdValue, s.field.label).toBe(false);
-  });
-});
-
-describe('CompatSwitch per-switch default (QO946.c131)', () => {
-  it('"Impedance of one driver" is an option that is OFF for a new project and a file that does not say', () => {
-    const sw = CompatSwitch.ONE_DRIVER_IMPEDANCE;
-    expect(sw.kind).toBe('option');
-    expect(sw.winisdValue).toBe(false);
-    expect(sw.of(sealedProject()).value).toBe(false);
-  });
-
-  it('it is the only option off by default: every other option stays ticked, every bug unticked', () => {
-    expect(CompatSwitch.OPTIONS.filter(s => !s.winisdValue)).toEqual([CompatSwitch.ONE_DRIVER_IMPEDANCE]);
-    for (const s of CompatSwitch.BUGS) expect(s.winisdValue, s.field.label).toBe(false);
-  });
-});
