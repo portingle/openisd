@@ -7,8 +7,9 @@ const ANNOUNCEMENTS = [
     summary: 'Wire any dual-coil driver in series or parallel and get the real answer.',
     body: [
       'Impedance, inductance and BL all follow the wiring.',
+      'WinISD keeps the coil inductance when you rewire, so its high frequencies are wrong.',
       'Export every chart in one click.',
-      'Now 1,923 drivers and 86 passive radiators from 21 makers, with CSS and RS Speakers new.',
+      'Now 1,362 woofers and 86 passive radiators from 21 makers, with CSS and RS Speakers new.',
       'Works better on phones.',
     ],
     href: 'https://openisd.app/',
