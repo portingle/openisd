@@ -133,10 +133,10 @@ describe('schema versions', () => {
     });
 
     it('a project with a newer version is refused by both parsers with the update message', () => {
-        const strict = parseOwprSession(projectWith(6), () => 'p1');
+        const strict = parseOwprSession(projectWith(7), () => 'p1');
         if (!('errors' in strict)) throw new Error('expected a refusal');
         assert.match(strict.errors.join(' '), /update the app/i);
-        const repairing = parseOwprSessionRepairing(projectWith(6), () => 'p1');
+        const repairing = parseOwprSessionRepairing(projectWith(7), () => 'p1');
         if (!Array.isArray(repairing)) throw new Error('expected a refusal, not a repair');
         assert.match(repairing.join(' '), /update the app/i);
     });
