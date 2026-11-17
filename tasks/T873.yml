@@ -4,7 +4,8 @@ repo: openisd
 owner: release
 status: open
 goal: Record OpenISD 7.0.960 in the release ledger
-why: TODO: why this change is made: who decided and when (John, 10 Nov 2026) or the QO, BUG or F id.
-done_test: bash scripts/quiet-test.sh npm run typecheck
+why: "John, 17 Nov 2026: release OpenISD 7.0.960"
+done_test: grep -Fq "| 7.0.960 | 20261117T1738Z |" RELEASES.md
 files:
+  - RELEASES.md
   - tasks/T873.yml
