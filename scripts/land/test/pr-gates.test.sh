@@ -79,6 +79,14 @@ files:
 ' > tasks/T882.yml; git add -A; git commit -qm "(auto) T1: new T882"
 [ "$(bash scripts/land/pr-task.sh main HEAD 2>&1)" = "T1 T882" ] && ok "a new task file with a release_note is still counted" || bad "a new task file is counted ($(bash scripts/land/pr-task.sh main HEAD 2>&1))"
 
+# T860: a release_note change buried in thousands of other changed lines is a carried task (a `| grep -vq` consumer leaving early
+# let git diff die of SIGPIPE under pipefail, so the old check could call a long diff release_note-only)
+git switch -q main; git switch -q -c relnote-big; mkdir -p tasks; task T1; echo b7 > src/a.ts
+sed -i 's/^release_note: .*/release_note: A real sentence for users./' tasks/T881.yml; for i in $(seq 1 6000); do echo "note_$i: padding line $i of a long task file" >> tasks/T881.yml; done
+git add -A; git commit -qm "(auto) T1: long T881"
+big_ok=0; for i in $(seq 1 30); do [ "$(bash scripts/land/pr-task.sh main HEAD 2>&1)" = "T1 T881" ] && big_ok=$((big_ok + 1)); done
+[ "$big_ok" = 30 ] && ok "a release_note change among 6000 other changed lines is a carried task, 30 runs of 30" || bad "long diff carried ($big_ok of 30 runs)"
+
 # T7786: a file another task locks warns whether or not it is that task's done_test; the landing task's own locks still refuse (T9 test above)
 git switch -q main; git switch -q -c xlock; mkdir -p tasks src
 printf 'id: T77\nowner: t\nstatus: done\ngoal: g\ndone_test: bash src/pass.sh\nlocked:\n  - path: src/pass.sh\n    sha256: 0000\n  - path: src/proc.sh\n    sha256: 0000\nfiles:\n  - src/**\n' > tasks/T77.yml

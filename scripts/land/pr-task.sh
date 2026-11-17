@@ -22,7 +22,7 @@ hash_only() {
   git cat-file -e "$base:$file" 2> /dev/null || return 1
   # the diff is read whole before it is searched (a `| grep -vq` consumer leaves early, the producer dies of SIGPIPE under pipefail, T833)
   task_diff="$(git diff -U0 "$base" "$head" -- "$file")" || return 1
-  grep -E '^[+-]' <<< "$task_diff" | grep -vE '^(\+\+\+|---) ' | grep -vqE '^[+-][[:space:]]+sha256: [0-9a-f]+$' && return 1
+  [ -z "$(grep -E '^[+-]' <<< "$task_diff" | grep -vE '^(\+\+\+|---) ' | grep -vE '^[+-][[:space:]]+sha256: [0-9a-f]+$')" ] || return 1
   old="$(mktemp)"; git show "$base:$file" > "$old"
   while read -r path hash; do
     [ "$(task_locked "$old" | awk -v p="$path" '$1 == p { print $2 }')" = "$hash" ] && continue
@@ -38,8 +38,12 @@ hash_only() {
 note_only() {
   local file="tasks/$1.yml"
   git cat-file -e "$base:$file" 2> /dev/null || return 1
-  git diff -U0 "$base" "$head" -- "$file" | grep -E '^[+-]' | grep -vE '^(\+\+\+|---) ' | grep -vqE '^[+-]release_note:' && return 1
-  return 0
+  # the diff is read whole into a variable and no `grep -q` sits in a pipe: a consumer that leaves early makes the producer die of
+  # SIGPIPE under pipefail, and a long diff of other changed lines would then count as release_note-only (T833, the hash_only race)
+  local diff other
+  diff="$(git diff -U0 "$base" "$head" -- "$file")" || return 1
+  other="$(grep -E '^[+-]' <<< "$diff" | grep -vE '^(\+\+\+|---) ' | grep -vE '^[+-]release_note:')"
+  [ -z "$other" ]
 }
 
 # Task files are the record of why each change was made (T767, QO528): none is deleted or renamed.
