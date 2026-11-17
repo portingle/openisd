@@ -99,6 +99,10 @@ export const SHARED_BRANCH_MAP:BranchMap={
   'conditional-branch-265d98b1829da319':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:35
   'conditional-branch-ad20275eedeb4b3a':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:34 (the catcher over the greyed control)
   'conditional-branch-b989dd12d68f1ae3':{kind:'notAView',reason:'summary button that opens the driver disagreements list'}, // components/DriverConsistencyList.vue:12
+  'conditional-branch-1b1597ea6d643d49':{kind:'view',view:'editor-general'}, // components/DriverEditorModal.vue:747
+  'conditional-branch-8f4547819e788ef8':{kind:'view',view:'editor-parameters'}, // components/DriverEditorModal.vue:769
+  'conditional-branch-9eadd3d4c6c45bc6':{kind:'view',view:'editor-advanced'}, // components/DriverEditorModal.vue:835
+  'conditional-branch-2c60497fd0fa53a0':{kind:'view',view:'editor-dimensions'}, // components/DriverEditorModal.vue:874
   'surface-root-45df5e0dad260e9f':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:703
   'surface-root-f94135dc62e865bf':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:704
   'native-ui-2bba9f9bd34d1c4b':{kind:'notAView',reason:'help or close button of the driver editor'}, // components/DriverEditorModal.vue:705

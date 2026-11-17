@@ -11,7 +11,7 @@ Nothing told the person the entry was refused and lost. John: "nothing the app d
 `DriverEditorModal.vue` shows each tab with `v-if`, so leaving a tab unmounts its number boxes and the refused text with its red mark. `OK` never looks at refused boxes.
 
 ## Fix
-Tabs are kept mounted (`v-show`), so a refused entry and its mark stay where they were typed. The tab button carries a red mark while its tab holds one, and OK says which entry was refused and not applied.
+A tab holding a refused entry is kept mounted (hidden) while another shows, so the entry and its mark stay where they were typed. The tab button carries a red mark while its tab holds one, and OK says which entry was refused and not applied.
 
 ## Tests
 `packages/ui/test/hooks/DriverEditorModal-hooks.test.ts` (refusal ledger); `packages/ui/test/ui/driver-editor-refusal.browser.spec.ts`.
