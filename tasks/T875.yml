@@ -8,3 +8,6 @@ why: Lead brief 17 Nov 2026 after the 7.0.960 release
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T875.yml
+  - scripts/release.sh
+  - scripts/land/test/release.test.sh
+  - build/RELEASE_FIX_REPORT.md
