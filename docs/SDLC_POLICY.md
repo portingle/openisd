@@ -82,7 +82,9 @@ Every line answers "what can I do now, or what works better for me", in a design
 - No edge-case bug fixes (a value stuck after an extreme entry): users never met them. They go in the release notes
   only. A fix goes in the popup only when many users saw the wrong result in normal use (false warnings on dual-coil
   drivers).
-- Catalogue additions are counted against the last production release, with two or three names users search for.
+- The catalogue line gives the counts ("Now 1,923 drivers and 86 passive radiators from 21 makers"), counted from the live
+  catalogues of production and test, plus two or three new names users search for (John: "give a counter of new drivers
+  or manus").
 - Sell it: the title is the headline benefit; say where OpenISD beats WinISD when it is true and checked against the
   build (never claim a feature that is only planned).
 - No line repeats the title or another line; no "now matches its datasheet" lines (users expect that already).
@@ -94,5 +96,5 @@ Every line answers "what can I do now, or what works better for me", in a design
 
 Worked example (7.0.960, after "be more salesman"): title "Dual-coil drivers, done right"; summary "Wire any dual-coil driver
 in series or parallel and get the real answer."; lines "Impedance, inductance and BL all follow the wiring. WinISD gets
-the top end wrong." / "Export every chart in one click." / "More drivers and passive radiators, including SEAS
-L22ROY2 and CSS APR10." / "Works better on phones."
+the top end wrong." / "Export every chart in one click." / "Now 1,923 drivers and 86 passive radiators from 21
+makers, including the new SEAS L22ROY2 and CSS APR10." / "Works better on phones."

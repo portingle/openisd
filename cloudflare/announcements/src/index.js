@@ -8,7 +8,7 @@ const ANNOUNCEMENTS = [
     body: [
       'Impedance, inductance and BL all follow the wiring. WinISD gets the top end wrong.',
       'Export every chart in one click.',
-      'More drivers and passive radiators, including SEAS L22ROY2 and CSS APR10.',
+      'Now 1,923 drivers and 86 passive radiators from 21 makers, including the new SEAS L22ROY2 and CSS APR10.',
       'Works better on phones.',
     ],
     href: 'https://openisd.app/',
