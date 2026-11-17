@@ -65,7 +65,7 @@ session what it means to do and waits for an ok. The keeper's resume prompt says
 
 > "this is too obvious what it should do already so make it all sound like new features since last prod release";
 > "1 is boring"; "boring remove"; "make this popup stuff users care about"; "they don't give a shit about fonts";
-> "or buttons"; "come on get it right and then update the Claude SDLC docs for these messages so I don't have to explain again"
+> "or buttons"; "simplify"; "come on get it right and then update the Claude SDLC docs for these messages so I don't have to explain again"
 
 The update popup (`cloudflare/announcements/src/index.js`, one entry per release) is what a user reads after an update.
 Every line answers "what can I do now, or what works better for me", in a designer's words.
@@ -77,10 +77,12 @@ Every line answers "what can I do now, or what works better for me", in a design
 - No dull or obvious lines ("passive radiators have Select, Info and Edit"). A fix to something that should always have
   worked is said as the benefit ("every box keeps up with you"), not as a confession or a feature list item.
 - Catalogue additions are counted against the last production release, with two or three names users search for.
+- Short, plain sentences: one fact per line, about 12 words at most, no colon followed by an explanation. Say the
+  benefit, not the mechanism: "now match their datasheets", not "no more false 'values disagree' warnings".
 - Six lines at most; the title names the two or three things users care about most.
 - The release notes (`release.sh --notes-file`) can be fuller; the popup cannot.
 - The lead drafts the popup and shows John the full text before it is merged; John's words win.
 
-Worked example (7.0.960, approved wording): "Dual-coil drivers match their datasheets: no more false 'values disagree'
-warnings, and you can design with the coils in series or in parallel." / "Export every chart in one go, as a ZIP of CSV
-files plus your project." / "Every box keeps up with you: a vent length or Qtc no longer sticks after an extreme value."
+Worked example (7.0.960, after John's "simplify"): "Dual-coil drivers now match their datasheets, wired in series or in
+parallel." / "Export all your charts at once." / "Every value now updates when you change an input." / "Works better on
+phones."
