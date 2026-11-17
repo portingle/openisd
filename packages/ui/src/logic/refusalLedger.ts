@@ -23,7 +23,12 @@ export interface RefusalLedger {
 }
 
 /** The tab a box sits in: the nearest ancestor marked `data-de-tab`; '' when it sits in none. */
-export function tabOf(el: Element | null): string {
+/** What `tabOf` needs of a DOM element. */
+export interface TabHost {
+  closest(selector: string): {getAttribute(name: string): string | null} | null;
+}
+
+export function tabOf(el: TabHost | null): string {
   return el?.closest('[data-de-tab]')?.getAttribute('data-de-tab') ?? '';
 }
 

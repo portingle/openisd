@@ -1,10 +1,10 @@
 import {describe, expect, it} from 'vitest';
-import {createRefusalLedger, tabOf} from '../../src/logic/refusalLedger.js';
+import {createRefusalLedger, tabOf, type TabHost} from '../../src/logic/refusalLedger.js';
 
 /** An element as far as the ledger looks: the nearest ancestor naming a tab. */
-function inTab(name: string | null): Element {
+function inTab(name: string | null): TabHost {
   const holder = name === null ? null : {getAttribute: (attr: string) => attr === 'data-de-tab' ? name : null};
-  return {closest: (selector: string) => selector === '[data-de-tab]' ? holder : null} as unknown as Element;
+  return {closest: (selector: string) => selector === '[data-de-tab]' ? holder : null};
 }
 
 /** BUG_20261117_driver-editor-tab-switch-drops-refused-entry: the editor must know which boxes hold a refused entry. */
