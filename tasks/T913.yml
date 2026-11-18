@@ -1,0 +1,12 @@
+id: T913
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+label: fixes
+goal: A Peaking 2nd order highpass filter with a negative peak magnitude shows a clear issue instead of a blank chart, as ruled.
+done_test: bash scripts/test.sh packages/design/test/engine/filters
+files:
+  - bugs/BUG_20261118_peak-highpass-negative-gain-nan.md
+  - tasks/T913.yml
+note: Blocked on a ruling. WinISD dies on Add at Gpk -6 dB (winisd_research/runs/peakhp-negative-20261118/), so there is no WinISD curve to copy.
