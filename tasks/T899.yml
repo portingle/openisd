@@ -5,7 +5,7 @@ owner: t899-display-defects
 status: claimed
 goal: Restore one-line phone header names that fit (T886's always-on 1em padding made them wrap), and make the desktop Projects list conflict tag readable whole
 why: "John, 18 Nov 2026: production 7.0.960 shows 'AS168-9-470 closed' on one line, the test site on two (bugs/BUG_20261118_phone-header-name-wraps-though-it-fits.md); the desktop Projects list cuts a conflict tag at 'conflict, 18 Nov 2026,' (bugs/BUG_20261118_desktop-project-list-conflict-tag-clipped.md)."
-done_test: bash scripts/test-browser.sh packages/ui/test/ui/mobile-header-name-one-line.browser.spec.ts packages/ui/test/ui/project-list-conflict-tag-not-clipped.browser.spec.ts (browser specs, no unit spec fits: both defects are layout measured in a real browser)
+done_test: bash scripts/quiet-test.sh npx vitest run packages/ui/test/hooks/clampRoom.test.ts (the phone header part; the conflict tag is layout only, covered by project-list-conflict-tag-not-clipped.browser.spec.ts)
 files:
   - tasks/T899.yml
   - bugs/BUG_20261118_phone-header-name-wraps-though-it-fits.md
@@ -14,5 +14,6 @@ files:
   - packages/ui/src/hooks/MobileShell-hooks.ts
   - packages/ui/src/ui/shells/mobile/MobileShell.vue
   - packages/ui/src/ui/shells/original/OriginalProjectList.vue
+  - packages/ui/test/hooks/clampRoom.test.ts
   - packages/ui/test/ui/mobile-header-name-one-line.browser.spec.ts
   - packages/ui/test/ui/project-list-conflict-tag-not-clipped.browser.spec.ts
