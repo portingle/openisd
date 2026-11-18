@@ -15,3 +15,11 @@ files:
   - docs/design/VISUAL_BASELINES.md
   - bugs/BUG_20261115_visual-baselines-cover-no-dialogs.md
   - scripts/visual/compare-local.sh
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-bin.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-empty.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu-projects.png
+  - packages/ui/test/fixtures/viewOpenSavedState.ts
+visual:
+  - mobile-dialog-bin
+  - mobile-dialog-empty
+  - mobile-dialog-menu-projects
