@@ -28,3 +28,4 @@ files:
   - packages/ui/test/logic/usageEventsT885.test.ts
   - packages/ui/test/logic/boot.test.ts
   - packages/ui/test/hooks/NumInput-hooks.test.ts
+  - packages/ui/test/hooks/OriginalShell-hooks.test.ts

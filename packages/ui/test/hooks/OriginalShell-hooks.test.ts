@@ -327,7 +327,8 @@ describe('OriginalShell-hooks', () => {
   it('starts on the empty screen, with no project focused, without reading the focused project', () => {
     const app = createApp({render: () => null});
     app.provide(APP_LOGIC, testAppLogic());
-    app.provide(FOCUSED_PROJECT, computed((): OpenISDProject => { throw new Error('no project is focused'); }));
+    const noProjectFocused = (): OpenISDProject => { throw new Error('no project is focused'); };
+    app.provide(FOCUSED_PROJECT, computed(() => noProjectFocused()));
     app.provide(SplashModalKey, {
       open: computed(() => false), driverCount: ref(null), passiveRadiatorCount: ref(null), versions: ref(null), aboutLabel: computed(() => 'About OpenISD'),
       dismiss: () => undefined, show: () => undefined,
