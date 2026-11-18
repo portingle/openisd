@@ -9,6 +9,7 @@ why: 'WinISD 0.7.0 proposes N times the volume and the same Fb (winisd_research/
 done_test: npx vitest run packages/design/test/domain/winisd-vented-picker-counts-drivers.test.ts
 files:
   - tasks/T921.yml
+  - scripts/dupscan-allow.json
   - bugs/BUG_20261118_vented-picker-ignores-driver-count.md
   - packages/design/domain/driver/openISDDriver.ts
   - packages/design/domain/box/openISDBox.ts

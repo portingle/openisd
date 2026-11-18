@@ -652,13 +652,7 @@ export class OpenISDBox implements Box {
                 return;
             }
             case 'vented': {
-                if (!isStated(this.vented.volume_m3.value)) {
-                    const design = this.#driver.ventedDesign(STARTING.ventedAlignment, this.#load(), this.vented.losses.Ql.value);
-                    if (design) {
-                        this.vented.volume_m3.set(design.Vb);
-                        this.vented.tuning_goal_hz.set(design.Fb, displayedHalfWidth(NumberField.BOX_FB_HZ));
-                    }
-                }
+                if (!isStated(this.vented.volume_m3.value)) this.resetVentedAlignment(STARTING.ventedAlignment);
                 startVentGeometry(this.vented.vent, this.#driver.specs.Dd_m.value);
                 return;
             }

@@ -16,7 +16,7 @@ One sentence: the vented alignment picker (the Alignment popup on the Box tab, t
 `OpenISDDriver.ventedDesign` passed one driver's Vas to `VentedEngine.alignment`.
 
 ## Fix
-`ventedDesign(alignment, load, Ql)` takes the project's drive load instead of the bare source resistance and passes the engine's rule `SealedEngine.arrayVas(Vas, load.nDrivers, load.loading)` (N times Vas, halved for Iso-barik), the rule the sealed readout and sealed picker use. No second copy. Callers pass the project's load: the Box tab's starting and reset volume, the project builder, the Alignment popup (desktop and phone) and New Project's vented step (its drivers asked for). Tuning is unchanged, as in WinISD.
+`ventedDesign(alignment, load, Ql)` takes the project's drive load instead of the bare source resistance and passes the engine's rule `SealedEngine.arrayVas(Vas, load.nDrivers, load.loading)` (N times Vas, halved for Iso-barik), the rule the sealed readout and sealed picker use. No second copy. The starting-volume copy in the Box (the same body as `resetVentedAlignment`) is now one call to `resetVentedAlignment`, so its dupscan baseline entry is marked resolved (QO949 procedure). Callers pass the project's load: the Box tab's starting and reset volume, the project builder, the Alignment popup (desktop and phone) and New Project's vented step (its drivers asked for). Tuning is unchanged, as in WinISD.
 
 ## Tests
 - packages/design/test/domain/winisd-vented-picker-counts-drivers.test.ts: the 10 WinISD cases (C4 and QB3, Nd 1/2/4, Nd 1 and 2 Iso-barik), Vb and Fb to relative 1e-9, the tolerance of the sealed picker test.
