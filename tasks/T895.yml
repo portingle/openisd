@@ -10,6 +10,10 @@ done_test: npx vitest run packages/ui/test/hooks/dismissOnOutside.test.ts
 files:
   - tasks/T895.yml
   - packages/ui/src/hooks/dismissOnOutside.ts
+  - packages/ui/src/hooks/focusLeft.ts
+  - packages/ui/src/ui/components/focusLeft.ts
+  - packages/ui/src/ui/components/ExportMenu.vue
+  - packages/ui/test/ui/focusLeft.test.ts
   - packages/ui/src/hooks/MobileChartView-hooks.ts
   - packages/ui/src/hooks/OriginalShell-hooks.ts
   - packages/ui/src/ui/components/GraphPanel.vue
