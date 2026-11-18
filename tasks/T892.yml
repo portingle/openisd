@@ -2,7 +2,7 @@ id: T892
 release_note: With Cloud sync on, your other devices get the whole project a few seconds after you stop editing, unsaved changes included and shown as unsaved there, so Revert goes back to the same saved version on every device; the Save reminder bar and the Cloud sync dialog's list of unsaved projects are gone.
 repo: openisd
 owner: t892-whole-project-sync
-status: claimed
+status: done
 goal: Cloud sync sends the whole project, unsaved edits included, a few seconds after editing stops; Save stays the checkpoint and syncs too; T886's save bar, the dialog's unsaved list and the sync Save tooltip are removed
 why: "John, 18 Nov 2026, QO946.c247: \"why are we sending on saved state and not entire project? why force user to do anything\"; QO946.c248 chose option A: sync the whole project including unsaved edits, Save stays the user's checkpoint (Revert goes back to it) and syncs too, T886's save bar and the dialog's 'Not on your other devices yet' list are removed and the Save tooltip goes back, conflict copies still keep both and are announced. The data-model change (the synced document carries the unsaved layer) is the one John approved with A."
 design: |
