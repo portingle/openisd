@@ -4,7 +4,7 @@
  *  validation and reconstruction are entirely `@openisd/design`'s
  *  (`OpenISDProject.fromOwprText()` — QO116: one whole-record `.safeParse()` at the load
  *  boundary). This file supplies no shape of its own and never holds the project's record. */
-import {OpenISDProject, ProjectSummary, withMovedChamberQicl, type FieldPath} from '@openisd/design';
+import {OpenISDProject, ProjectSummary, withMovedChamberQicl, type FieldPath, type OpenedProject} from '@openisd/design';
 import type {Engine} from '@openisd/design/engine';
 import type {FileStorage, SaveResult} from '../storage/fileStorage.js';
 import type {KeyValueStorage} from '../storage/keyValueStorage.js';
@@ -66,6 +66,9 @@ export interface ProjectRepo {
   /** A design parsed from opened file TEXT — File → Open's JSON branch. Project only (QO90);
    *  same validator every other door uses, so a payload another door wrote loads identically. */
   readProjectText(text: string): OpenISDProject | string[];
+  /** `readProjectText`, with every value the load repaired, one line each for the opening message
+   *  (QO953.c31): File → Open of a project file. */
+  openProjectText(text: string): OpenedProject | string[];
   /** Write to the previously-picked file (first save prompts). `naming` carries the
    *  suggested filename and the picker's format bits. */
   saveToFile(project: OpenISDProject, naming: FileNaming): Promise<SaveResult>;
@@ -326,6 +329,12 @@ export function createProjectRepo(
    *  the stored record it came from is backed up (before anything can write over it) and the
    *  repair is reported. `source` is null for a file or a link, which still hold the original. */
   function readRepairing(text: string, source: StoredSource | null): OpenISDProject | string[] {
+    const opened = openRepairing(text, source);
+    return Array.isArray(opened) ? opened : opened.project;
+  }
+
+  /** `readRepairing`, with every value the load repair pass set (`OpenISDProject.openSession`). */
+  function openRepairing(text: string, source: StoredSource | null): OpenedProject | string[] {
     let parsed: unknown;
     try { parsed = JSON.parse(text); } catch { return ['not valid JSON']; }
     // The same upgrade every door applies, so a design saved by an older build opens anywhere.
@@ -342,7 +351,7 @@ export function createProjectRepo(
         backupKey: original === null ? null : source.backupKey,
       });
     }
-    return result.project;
+    return result;
   }
 
   /** The last session write reached the store; a session read from it is held by definition. */
@@ -660,13 +669,18 @@ function migrateEntries<T extends { text: string }>(entries: readonly T[]): { en
     },
 
     readProjectText(text: string): OpenISDProject | string[] {
+      const opened = this.openProjectText(text);
+      return Array.isArray(opened) ? opened : opened.project;
+    },
+
+    openProjectText(text: string): OpenedProject | string[] {
       const opened = exportedFiles.open(text);
       if (opened.kind === 'newer') {
         return [`this file was saved by a newer OpenISD (its layout ${opened.layout}; this OpenISD reads up to layout ${opened.reads}). The file is unchanged: reload this page to get the latest OpenISD, then open it again`];
       }
-      const project = readRepairing(opened.text, null);
-      if (!Array.isArray(project)) claimId(project);
-      return project;
+      const result = openRepairing(opened.text, null);
+      if (!Array.isArray(result)) claimId(result.project);
+      return result;
     },
 
     saveToFile(project: OpenISDProject, naming: FileNaming): Promise<SaveResult> {
