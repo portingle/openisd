@@ -146,8 +146,24 @@ async function bothOpen() {
   return {drive, desk, phone, id};
 }
 
-function layersOnDrive(drive: DriveEmulator): {saved: {box: {portVelocityLimit_m_per_s: unknown}}; edited: {box: {portVelocityLimit_m_per_s: unknown}} | null} {
-  return JSON.parse(drive.bodyOf('project-'));
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** The port limit a stored project text holds in its `side` layer: null when it has no such layer. */
+function limitIn(text: string, side: 'saved' | 'edited'): unknown {
+  const parsed: unknown = JSON.parse(text);
+  if (!isRecord(parsed)) throw new Error('not a stored project');
+  const layer = parsed[side];
+  if (!isRecord(layer)) return null;
+  const box = layer['box'];
+  return isRecord(box) ? box['portVelocityLimit_m_per_s'] : undefined;
+}
+
+/** The port limit Drive's copy of the project holds in its `side` layer: null when it has no such layer. */
+function onDrive(drive: DriveEmulator, side: 'saved' | 'edited'): unknown {
+  return limitIn(drive.bodyOf('project-'), side);
 }
 
 describe('an edit is sent with the project, unsaved', () => {
@@ -157,12 +173,11 @@ describe('an edit is sent with the project, unsaved', () => {
     await desk.wait(1000);
     desk.open().portVelocityLimit_m_per_s.set(20);
     await desk.wait(SYNC_AFTER_EDIT_MS - 1);
-    expect(layersOnDrive(drive).edited).toBeNull();
+    expect(onDrive(drive, 'edited')).toBeNull();
 
     await desk.wait(1);
-    const onDrive = layersOnDrive(drive);
-    expect(onDrive.saved.box.portVelocityLimit_m_per_s).toBe(17);
-    expect(onDrive.edited?.box.portVelocityLimit_m_per_s).toBe(20);
+    expect(onDrive(drive, 'saved')).toBe(17);
+    expect(onDrive(drive, 'edited')).toBe(20);
     // Still unsaved on the device that edited it: sending it is not a Save.
     expect(desk.appState.projectHasUnsavedChanges(desk.open())).toBe(true);
   });
@@ -172,7 +187,7 @@ describe('an edit is sent with the project, unsaved', () => {
     desk.open().portVelocityLimit_m_per_s.set(20);
     await nextTick();
     await desk.sync();
-    expect(layersOnDrive(drive).edited?.box.portVelocityLimit_m_per_s).toBe(20);
+    expect(onDrive(drive, 'edited')).toBe(20);
   });
 
   it('Save sends the new checkpoint with no unsaved layer', async () => {
@@ -183,9 +198,8 @@ describe('an edit is sent with the project, unsaved', () => {
     expect(desk.projectRepo.saveToStorage(project.committedSnapshot()).kind).toBe('saved');
     project.save();
     await desk.sync();
-    const onDrive = layersOnDrive(drive);
-    expect(onDrive.saved.box.portVelocityLimit_m_per_s).toBe(20);
-    expect(onDrive.edited).toBeNull();
+    expect(onDrive(drive, 'saved')).toBe(20);
+    expect(onDrive(drive, 'edited')).toBeNull();
   });
 });
 
@@ -212,7 +226,7 @@ describe('the other device', () => {
     expect(await phone.open().cancel(async () => true)).toBe(true);
     expect(phone.open().portVelocityLimit_m_per_s.value).toBe(17);
     await phone.wait(SYNC_AFTER_EDIT_MS);
-    expect(layersOnDrive(drive).edited).toBeNull();
+    expect(onDrive(drive, 'edited')).toBeNull();
 
     await desk.sync();
     expect(desk.open().portVelocityLimit_m_per_s.value).toBe(17);
@@ -224,11 +238,11 @@ describe('the other device', () => {
     const {drive, desk, id} = await bothOpen();
     desk.open().portVelocityLimit_m_per_s.set(20);
     await desk.wait(SYNC_AFTER_EDIT_MS);
-    expect(layersOnDrive(drive).edited).not.toBeNull();
+    expect(onDrive(drive, 'edited')).toBe(20);
 
     desk.appState.removeProject(0);
     await desk.wait(0);
-    expect(layersOnDrive(drive).edited).toBeNull();
+    expect(onDrive(drive, 'edited')).toBeNull();
     const reopened = desk.projectRepo.loadStoredProject(id);
     expect(Array.isArray(reopened) ? null : reopened.isModified()).toBe(false);
   });
@@ -278,8 +292,11 @@ describe('older documents', () => {
     phone.appState.removeProject(0);
     // Written by a build that wrote no `edited` key: the saved project only, at a port limit of 21 m/s.
     drive.editAsDevice('project-', body => {
-      const {edited: _edited, saved, ...rest} = JSON.parse(body);
-      return JSON.stringify({...rest, saved: {...saved, box: {...saved.box, portVelocityLimit_m_per_s: 21}}});
+      const parsed: unknown = JSON.parse(body);
+      if (!isRecord(parsed)) throw new Error('not a stored project');
+      const {edited: _edited, saved, ...rest} = parsed;
+      if (!isRecord(saved) || !isRecord(saved['box'])) throw new Error('not a stored project');
+      return JSON.stringify({...rest, saved: {...saved, box: {...saved['box'], portVelocityLimit_m_per_s: 21}}});
     }, 'Old laptop');
     await phone.sync();
     expect(JSON.parse(drive.bodyOf('project-'))).not.toHaveProperty('edited');

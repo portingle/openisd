@@ -34,8 +34,19 @@ function savedProject() {
   return {repo, project, entry};
 }
 
-function editedLimit(text: string): unknown {
-  return JSON.parse(text).edited?.box.portVelocityLimit_m_per_s ?? null;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** The port limit a stored project text holds in its `side` layer: null when it has no such layer. */
+function limitIn(text: string, side: 'saved' | 'edited'): unknown {
+  const parsed: unknown = JSON.parse(text);
+  if (!isRecord(parsed)) throw new Error('not a stored project');
+  const layer = parsed[side];
+  if (!isRecord(layer)) return null;
+  const box = layer['box'];
+  return isRecord(box) ? box['portVelocityLimit_m_per_s'] : undefined;
 }
 
 describe('storeWithUnsavedLayer', () => {
@@ -45,8 +56,8 @@ describe('storeWithUnsavedLayer', () => {
     project.portVelocityLimit_m_per_s.set(20);
     const result = repo.storeWithUnsavedLayer(project, null);
     expect(result).toEqual({kind: 'written', held: entry()});
-    expect(editedLimit(entry())).toBe(20);
-    expect(JSON.parse(entry()).saved.box.portVelocityLimit_m_per_s).toBe(17);
+    expect(limitIn(entry(), 'edited')).toBe(20);
+    expect(limitIn(entry(), 'saved')).toBe(17);
     expect(repo.listStoredProjects()[0]?.modified).toBe(modified);
   });
 
@@ -56,7 +67,7 @@ describe('storeWithUnsavedLayer', () => {
     const first = repo.storeWithUnsavedLayer(project, null);
     project.portVelocityLimit_m_per_s.set(22);
     expect(repo.storeWithUnsavedLayer(project, first.kind === 'written' ? first.held : null).kind).toBe('written');
-    expect(editedLimit(entry())).toBe(22);
+    expect(limitIn(entry(), 'edited')).toBe(22);
   });
 
   it('writes nothing for a project with nothing unsaved over an entry with nothing unsaved', () => {
@@ -94,7 +105,7 @@ describe('dropUnsavedLayer (closing without saving)', () => {
     project.portVelocityLimit_m_per_s.set(20);
     repo.storeWithUnsavedLayer(project, null);
     expect(repo.dropUnsavedLayer(project.uuid())).toBe('written');
-    expect(JSON.parse(entry()).edited).toBeNull();
+    expect(limitIn(entry(), 'edited')).toBeNull();
     const reopened = repo.loadStoredProject(project.uuid());
     expect(Array.isArray(reopened) ? null : [reopened.isModified(), reopened.portVelocityLimit_m_per_s.value]).toEqual([false, 17]);
   });
@@ -109,7 +120,9 @@ describe('dropUnsavedLayer (closing without saving)', () => {
 describe('a stored text with no unsaved layer key', () => {
   it('loads as saved with nothing unsaved', () => {
     const {repo, project, entry} = savedProject();
-    const {edited: _edited, ...old} = JSON.parse(entry());
+    const parsed: unknown = JSON.parse(entry());
+    if (!isRecord(parsed)) throw new Error('not a stored project');
+    const {edited: _edited, ...old} = parsed;
     expect(repo.putStoredDoc(project.uuid(), JSON.stringify(old))).toBe('done');
     const loaded = repo.loadStoredProject(project.uuid());
     if (Array.isArray(loaded)) throw new Error(loaded.join('; '));
