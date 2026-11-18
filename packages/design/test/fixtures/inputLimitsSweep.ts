@@ -352,7 +352,7 @@ function filterInputs(): Input[] {
   out.push(filterInput('peaking.Q', NumberField.FILTER_Q, 'Q (Parametric EQ)', 'peaking', (f, v) => f.type === 'peaking' ? fe.editParametricEq(f, {Q: v}) : f, same));
   out.push(filterInput('peaking.gain', NumberField.FILTER_GAIN_DB, 'Gain (Parametric EQ)', 'peaking', (f, v) => f.type === 'peaking' ? fe.editParametricEq(f, {gain: v}) : f, same));
   out.push(filterInput('peakHighpass.fpk', NumberField.FILTER_FC_HZ, 'fpk (Peaking 2nd order highpass)', 'peakHighpass', (f, v) => f.type === 'peakHighpass' ? fe.editPeakHighpass(f, {fpk: v}) : f, same));
-  out.push(filterInput('peakHighpass.gainPk', NumberField.FILTER_GAIN_DB, 'Gpk (Peaking 2nd order highpass)', 'peakHighpass', (f, v) => f.type === 'peakHighpass' ? fe.editPeakHighpass(f, {gainPk: v}) : f, same));
+  out.push(filterInput('peakHighpass.gainPk', NumberField.FILTER_PEAK_HIGHPASS_GAIN_DB, 'Gpk (Peaking 2nd order highpass)', 'peakHighpass', (f, v) => f.type === 'peakHighpass' ? fe.editPeakHighpass(f, {gainPk: v}) : f, same));
   out.push(filterInput('staticGain.gain', NumberField.FILTER_GAIN_DB, 'Gain (Static gain)', 'staticGain', (f, v) => f.type === 'staticGain' ? fe.editStaticGain(f, {gain: v}) : f, same));
   out.push(filterInput('raisedCosine.fc', NumberField.FILTER_FC_HZ, 'fc (Raised cosine)', 'raisedCosine', (f, v) => f.type === 'raisedCosine' ? fe.editRaisedCosine(f, {fc: v}) : f, same));
   out.push(filterInput('raisedCosine.bw', NumberField.FILTER_BW_OCT, 'BW (Raised cosine)', 'raisedCosine', (f, v) => f.type === 'raisedCosine' ? fe.editRaisedCosine(f, {bwOct: v}) : f, same));

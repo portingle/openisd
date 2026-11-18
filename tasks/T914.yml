@@ -23,4 +23,5 @@ files:
   - packages/ui/test/ui/filter-peak-highpass-gain-floor.browser.spec.ts
   - packages/ui/test/ui/filters-dependent-values.browser.spec.ts
   - packages/ui/test/ui/filter-negative-peak-message.browser.spec.ts
+  - packages/design/test/fixtures/inputLimitsSweep.ts
 note: Ruled QO951. The browser journey packages/ui/test/ui/filter-peak-highpass-gain-floor.browser.spec.ts runs in the full suite. A typed refusal follows ruling "b" (bugs/archive/BUG_20261005_no-common-ui-field-component.md) - the typed text stays, red, with the note, and nothing is stored. The desktop Filters list no longer clips a field's note (it never scrolled; its overflow only cut popups off). T913 journey loads -6 from a file: typing it is refused since QO951.c9 (John 18 Nov: 'UI should not allow and maths should do what you said anyway').
