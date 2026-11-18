@@ -2,7 +2,7 @@ id: T914
 release_note: internal
 repo: openisd
 owner: agent
-status: claimed
+status: done
 label: fixes
 goal: The Peaking 2nd order highpass Peak mag (Gpk) box refuses a typed value below 0 dB with a note saying a 2nd-order high-pass cannot peak below its flat level (desktop and phone); other filter gains keep -60..+60 dB; a negative Gpk loaded from a file is kept and shows T913's message.
 why: QO951 (John, 18 Nov 2026, QO951.c9 "UI should not allow and maths should do what you said anyway"; QO951.c11, no WinISD-range tick-box).
