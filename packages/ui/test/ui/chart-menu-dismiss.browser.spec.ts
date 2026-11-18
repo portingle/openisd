@@ -32,6 +32,7 @@ test('desktop: the chart menu closes on a press outside, Escape and Tab out; the
   const list = select.locator('.dropdown-menu');
   await checkEveryWay(page, async () => { if (!(await list.isVisible())) await select.click(); }, list, select,
     page.locator('.graph-wrap canvas'), select.locator('input[type=checkbox]').last());
+  await expect(list).toBeHidden();
 });
 
 test('phone: the Graph tab chart picker closes on a press outside (even on the header), Escape and Tab out; the picker button still toggles it', async ({page}) => {
