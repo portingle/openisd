@@ -113,6 +113,7 @@ export const SHARED_BRANCH_MAP:BranchMap={
   'conditional-branch-ab106a8dc4990e67':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:726
   'conditional-branch-ff14eac5c4729225':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:732
   'conditional-branch-38a18ddd3fdbd7ea':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:735
+  'conditional-branch-7f2d63a62de41f1f':{kind:'partOf',view:'editor-general'}, // components/DriverEditorModal.vue:738 (the warning sign on a tab that holds a refused entry; the tab bar is part of the editor frame)
   'conditional-branch-c390ed4038fc77d6':{kind:'partOf',view:'editor-parameters'}, // components/DriverEditorModal.vue:744
   'conditional-branch-8b38f9a3d547aa83':{kind:'partOf',view:'editor-parameters'}, // components/DriverEditorModal.vue:745
   'conditional-branch-c390ed4038fc77d6-2':{kind:'partOf',view:'editor-parameters'}, // components/DriverEditorModal.vue:756
