@@ -10,7 +10,7 @@ import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
 import {fillAndCommit} from '../fixtures/numField.js';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
 
-const NOTE = /^Gpk is below its minimum — enter a value between 0\.000 and 60\.000 dB\. A 2nd-order high-pass cannot peak below its flat level\.$/;
+const NOTE = /^Gpk is below its minimum — enter a value between 0\.00 and 60\.00 dB\. A 2nd-order high-pass cannot peak below its flat level\.$/;
 
 function gpkField(scope: Locator): Locator {
   return scope.locator('.ui-field').filter({has: scope.page().locator('label').filter({hasText: /^Gpk$/})});
@@ -38,7 +38,7 @@ async function typeMinusSixThenZero(page: Page, scope: Locator): Promise<void> {
 
   await box.focus();
   await box.press('Escape');
-  await expect(box).toHaveValue('6.000');
+  await expect(box).toHaveValue('6.00');
   await expect(box).not.toHaveClass(/inp-bad/);
 
   await fillAndCommit(box, '0');
