@@ -2,11 +2,16 @@ id: T913
 release_note: internal
 repo: openisd
 owner: agent
-status: open
+status: claimed
 label: fixes
 goal: A Peaking 2nd order highpass filter with a negative peak magnitude shows a clear issue instead of a blank chart, as ruled.
-done_test: bash scripts/test.sh packages/design/test/engine/filters
+why: A negative peak magnitude (allowed, -60..+60 dB) made the filter's chart blank with no explanation; WinISD closes on it, so the user needs to be told.
+done_test: bash scripts/test.sh packages/design/test/engine/filter-peak-highpass-negative-gain.test.ts
 files:
   - bugs/BUG_20261118_peak-highpass-negative-gain-nan.md
   - tasks/T913.yml
-note: Blocked on a ruling. WinISD dies on Add at Gpk -6 dB (winisd_research/runs/peakhp-negative-20261118/), so there is no WinISD curve to copy.
+  - packages/design/test/engine/filter-peak-highpass-negative-gain.test.ts
+  - packages/design/engine/types.ts
+  - packages/design/engine/filters/FilterEngine.ts
+  - packages/design/engine/filters/PeakHighpassFilterModel.ts
+note: Ruled option 1 by the coordinator (uncontroversial fix). WinISD dies on Add at Gpk -6 dB (winisd_research/runs/peakhp-negative-20261118/), so there is no WinISD curve to copy.

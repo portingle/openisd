@@ -1,6 +1,6 @@
 # Peaking 2nd order highpass: a peak magnitude below 0 dB draws nothing, with no issue shown
 
-Status: OPEN, waiting for a ruling on what OpenISD does (WinISD itself dies on this value, see below). Task T913 (tasks/T913.yml). Found by the copy sweep (`portingle/copysweep`, `scripts/copysweep/`): 0, 3 and 12 dB are right, every negative value is blank.
+Status: FIXED by T913 (engine draws no curve and raises an issue; WinISD itself dies on this value, see below). Task T913 (tasks/T913.yml). Found by the copy sweep (`portingle/copysweep`, `scripts/copysweep/`): 0, 3 and 12 dB are right, every negative value is blank.
 
 ## Symptom
 
