@@ -5,7 +5,7 @@ owner: slice3-wiring
 status: done
 goal: Several-driver wiring slice 3: Driver wiring control, Advanced switch, charts follow
 why: ruling: QO946 (John, plan 519 wiring: decided in docs/plans/PLAN_20261116_DRIVER_WIRING.md sections 1 and 10)
-ruling: QO946.c235
+ruling: QO946
 done_test: bash scripts/test.sh packages/design/test/domain/driver-wiring-feature-on.test.ts packages/ui/test/hooks/DriverWiring-hooks.test.ts
 visual:
   - desktop-box-abc
