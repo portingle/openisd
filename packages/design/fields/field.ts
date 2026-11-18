@@ -1347,8 +1347,8 @@ export class NumberField extends Field {
     allowedEmpty: true,
   });
   /** The Peaking 2nd order highpass peak gain: 0..60 dB when typing (QO951.c9). */
-  static readonly PEAK_HIGHPASS_GAIN_DB = new NumberField({
-    value: "filter_PeakHighpassGain_dB",
+  static readonly FILTER_PEAK_HIGHPASS_GAIN_DB = new NumberField({
+    value: "filter_Peak_Highpass_Gain_dB",
     label: "Gpk",
     display: {kind: 'fixed', symbol: 'dB'},
     limits: PEAK_HIGHPASS_GAIN_LIMITS,

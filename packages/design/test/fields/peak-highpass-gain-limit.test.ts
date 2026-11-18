@@ -14,11 +14,11 @@ const engine = createEngine();
 
 describe('Peaking 2nd order highpass Peak mag limit', () => {
   it('accepts 0 to 60 dB', () => {
-    expect(NumberField.PEAK_HIGHPASS_GAIN_DB.limits).toEqual({min: 0, max: 60});
+    expect(NumberField.FILTER_PEAK_HIGHPASS_GAIN_DB.limits).toEqual({min: 0, max: 60});
   });
 
   it('says why a value below 0 dB is refused', () => {
-    expect(NumberField.PEAK_HIGHPASS_GAIN_DB.minimumReason)
+    expect(NumberField.FILTER_PEAK_HIGHPASS_GAIN_DB.minimumReason)
       .toBe('A 2nd-order high-pass cannot peak below its flat level.');
   });
 
