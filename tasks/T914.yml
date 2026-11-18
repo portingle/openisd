@@ -20,6 +20,7 @@ files:
   - packages/ui/src/ui/shells/mobile/filters/PeakHighpassFields.vue
   - packages/ui/test/logic/entryRefusal.test.ts
   - packages/ui/test/ui/filter-peak-highpass-gain-floor.browser.spec.ts
+  - packages/ui/test/ui/filters-dependent-values.browser.spec.ts
   - tasks/T913.yml
   - bugs/BUG_20261118_peak-highpass-negative-gain-nan.md
   - packages/design/test/engine/filter-peak-highpass-negative-gain.test.ts
