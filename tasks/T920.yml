@@ -1,0 +1,18 @@
+id: T920
+release_note: internal
+repo: openisd
+owner: agent
+status: blocked
+label: fixes
+goal: Main is red since T916 (input-limits sweep phase 2). On an ABC box whose rear tuning the rear port cannot reach, the message "This port can't reach that tuning" shows once, in the Vent length popup, and the chart behaves the same way it does for the front port and the vented box.
+why: "packages/ui/test/ui/abc-vent-message.browser.spec.ts:64 (desktop) finds the message twice: in the Vent length popup and in the SPL chart's 'Can't plot' panel. T916 made the rear port's own vent issues block the sweep (projectSweep.ts ventSweepIssuesOf), as the front port's always did."
+done_test: bash scripts/test-browser.sh packages/ui/test/ui/abc-vent-message.browser.spec.ts
+files:
+  - tasks/T920.yml
+note: >-
+  Blocked on a judgement for the lead. Before T916 the chart drew the ABC box with the unreachable rear tuning
+  (the sweep took the stated 2000 Hz as the rear port's tuning, a port that cannot be built). After T916 it is
+  blocked with the field's own message, exactly as the front port and the vented box were already blocked before
+  T916 (their message shows 3-4 times on the page: chart panel, field popup, Limits line). Options: A, the chart
+  draws again for an unreachable rear tuning only (front and vented keep blocking); B, the chart stays blocked
+  and the chart panel names the field instead of repeating its message, for every port.
