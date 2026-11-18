@@ -1,7 +1,6 @@
 /**
  * The Driver Editor shows every refused entry, as every other number box does (John, 17 Nov 2026: nothing the app does happens silently).
  *  - bugs/BUG_20261117_driver-editor-tab-switch-drops-refused-entry.md: a refused entry vanished, unmarked, when another tab was opened.
- *  - bugs/BUG_20261117_exponent-entry-silently-dropped.md: the key e was dropped, so 1e9 became 19.
  * A person types, clicks tabs and presses OK; nothing else is used.
  */
 import type {Page} from '@playwright/test';
@@ -67,28 +66,6 @@ for (const viewport of ['desktop', 'phone'] as const) {
       await tabButton(page, 'Advanced').click();
       await page.locator('.de-footer, .de-btns').getByRole('button', {name: 'OK', exact: true}).click();
       await expect(page.locator('.flash, [data-testid="flash-strip"]').first()).toContainText(/Not applied: Qts must be greater than 0/);
-    });
-
-    test('typing 1e9 keeps the e, and a number above the maximum in exponent form is refused with a note', async ({page}) => {
-      await typeInto(page, 'Fs_hz', '1e9');
-      await expect(box(page, 'Fs_hz'), 'the e is not dropped (it used to read 19)').toHaveValue('1e9');
-      await expect(box(page, 'Fs_hz')).toHaveClass(/inp-bad/);
-      await expect(page.locator('.de-modal .ui-field[data-field-key="Fs_hz"] .ui-field-note')).toHaveText(/Fs is above its maximum/);
-    });
-
-    test('1e2 is accepted as 100 and shown as the number it means', async ({page}) => {
-      await typeInto(page, 'Fs_hz', '1e2');
-      await expect(box(page, 'Fs_hz')).not.toHaveClass(/inp-bad/);
-      await box(page, 'Fs_hz').press('Tab');
-      await tabButton(page, 'Advanced').click();
-      await tabButton(page, 'Parameters').click();
-      await expect(box(page, 'Fs_hz')).toHaveValue(/^100(\.0+)?$/);
-    });
-
-    test('an exponent not yet finished (1e) is marked as not a number', async ({page}) => {
-      await typeInto(page, 'Fs_hz', '1e');
-      await expect(box(page, 'Fs_hz')).toHaveClass(/inp-bad/);
-      await expect(page.locator('.de-modal .ui-field[data-field-key="Fs_hz"] .ui-field-note')).toHaveText(/Fs is not a number/);
     });
   });
 }

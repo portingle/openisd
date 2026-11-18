@@ -1,16 +1,11 @@
 # BUG_20261117_exponent-entry-silently-dropped
 
-**Status:** OPEN (T868)
+**Status:** CLOSED by John's ruling (T868, the fix that stops the Driver Editor silently dropping refused entries): the 'e' key keeps doing nothing.
 
 ## Symptom
-Typing `1e9` into any number box: the `e` never appears (the box shows `19`), no mark, no note. A pasted or filled `1e9` is shown as "not a number".
-The shared number parser (`parseEntry` in `packages/design/fields/dimensions.ts`) already reads `1e9`, `2.5E-3` and `1e+3` correctly, with the right precision.
+Typing `1e9` into any number box: the `e` never appears (the box shows `19`), no mark, no note.
 
-## Cause
-`NUMBER_TEXT` in `packages/design/fields/numberText.ts` (what a box accepts while typing) has no exponent part, so `typedEdit` refuses the key `e`; the box hook then reads the text with `parseFloat` after the same pattern.
+## Ruling
+John, 18 Nov 2026 00:01 UTC, on the board card exponent-entry: "Remove the e: key does nothing, as today". Earlier (17 Nov 2026 23:58 UTC) on whether to accept 1e9 or refuse it with a mark: "asked for it or even know how to use that? noone will use it imho".
 
-## Fix
-Accepted, not refused: `NUMBER_TEXT` allows an exponent, and a new design function `numberFromText` reads the box text (whole, with exponent) so the UI does no parsing. A half-typed exponent (`1e`) is marked "not a number" until finished.
-
-## Tests
-`packages/design/test/fields/numberText.test.ts`; `packages/ui/test/hooks/NumInput-hooks.test.ts`; `packages/ui/test/ui/driver-editor-refusal.browser.spec.ts`.
+So number boxes do not accept exponent entries and show no note for them; the key `e` is ignored as before, and pasted text is read as before. The earlier change that accepted exponents was removed.
