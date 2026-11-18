@@ -6,6 +6,7 @@ status: open
 goal: The copies of engine logic that give users different answers are gone - the formula panel comes from the engine's routes (each route declaring every quantity it reads - SPLmax, USPL, Re from USPL, Mcost), both sealed pickers store the engine's volume, and the starting radiator is sized by the engine to its own 2x rule
 why: "Duplicate-logic scan of 18 Nov 2026 (_agent_files/dupscan/REPORT.md findings 4, 5, 6), assigned by the lead session as T902; John's rules: the engine does the calculations, the UI is display only (27 Sep), the 2x rule (16 Nov). bugs/BUG_20261118_formula-panel-is-a-hand-typed-copy-of-the-engine.md, bugs/BUG_20261118_wizard-rounds-the-picked-sealed-volume.md, bugs/BUG_20261118_dummy-radiator-sized-by-a-1x-rule-the-2x-line-contradicts.md. Changed existing test: OriginalNewProject-hooks.test.ts 'rounds the derived sealed volume to the 2dp litres' now expects the engine's volume (0.02049685518650786, shown 20.50 L), allowed by the lead under John's ruling (27 Sep 2026): \"UI is display only: no calcs, defaults, option lists, rounding or decisions in packages/ui\". Changed existing test: provenance.test.ts Mpow line now expects the engine's first route ['BL_Tm','Re_ohm'] and √Rme ['Rme_kg_per_s'] second; John chose A on the board (18 Nov 2026): \"the test follows the engine: Bl/√Re first, √Rme only when Bl is missing\" (WinISD is right)."
 done_test: npx vitest run packages/design/test/engine/routes-declare-what-they-read.test.ts packages/design/test/engine/splmax-route-declares-inputs.test.ts packages/ui/test/logic/provenance-from-engine.test.ts packages/ui/test/hooks/sealed-pick-same-volume.test.ts packages/design/test/domain/dummy-radiator-twice-rule.test.ts packages/ui/test/hooks/passiveRadiatorEditor.test.ts
+gates_approved: QO949
 files:
   - tasks/T902.yml
   - bugs/BUG_20261118_formula-panel-is-a-hand-typed-copy-of-the-engine.md
@@ -20,6 +21,7 @@ files:
   - packages/design/engine/driver/routes/DriverRoutes.ts
   - packages/design/engine/driver/routes/index.ts
   - packages/design/engine/efficiency.ts
+  - scripts/dupscan-allow.json
   - packages/design/engine/driver/DriverEngine.ts
   - packages/design/engine/pr/PrEngine.ts
   - packages/design/engine/index.ts
