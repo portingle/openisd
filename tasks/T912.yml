@@ -107,6 +107,3 @@ files:
   - packages/design/test/winisd/winIsdProjectToOpenIsdProject.test.ts
   - packages/ui/test/ui/closed-box-typing-cue.browser.spec.ts
   - packages/ui/test/ui/original-box-tab.browser.spec.ts
-  - tasks/T429.yml
-  - tasks/T559.yml
-  - tasks/T560.yml

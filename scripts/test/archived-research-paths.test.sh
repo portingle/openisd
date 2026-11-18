@@ -14,10 +14,11 @@ fails=0
 ok() { echo "ok   $1"; }
 bad() { echo "FAIL $1"; fails=$((fails + 1)); }
 
-# scan <git tree> <file to leave out>: prints file:line:text of each old-path reference, exit 0 when there is none
+# scan <git tree> <file to leave out>: prints file:line:text of each old-path reference, exit 0 when there is none.
+# tasks/ is left out: a finished task's files: list records the paths it touched at the time, and task files are locked history.
 scan() {
   local hits
-  hits="$(git -C "$1" grep -nE "$PATTERN" -- . ":!$2" || true)"
+  hits="$(git -C "$1" grep -nE "$PATTERN" -- . ":!$2" ":!tasks/" || true)"
   [ -z "$hits" ] || { echo "$hits"; return 1; }
 }
 
