@@ -17,10 +17,7 @@ import {forceMobileSkin} from '../fixtures/mobileSkin.js';
 const DRIVER = 'W5-1138SMF';
 
 /** Journeys that fail because of an app bug: the bug file, red until fixed (`test.fail`). Key: the test's title. */
-const KNOWN: ReadonlyMap<string, string> = new Map([
-  ['2 drivers: the starting radiator meets the 2x rule line', 'bugs/BUG_20261118_dummy-radiator-sized-by-a-1x-rule-the-2x-line-contradicts.md'],
-  ['4 drivers: the starting radiator meets the 2x rule line', 'bugs/BUG_20261118_dummy-radiator-sized-by-a-1x-rule-the-2x-line-contradicts.md'],
-]);
+const KNOWN: ReadonlyMap<string, string> = new Map([]);
 
 async function makeProject(page: Page, drivers: number): Promise<void> {
   await forceMobileSkin(page);

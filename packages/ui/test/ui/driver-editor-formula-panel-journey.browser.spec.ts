@@ -12,10 +12,7 @@ import type {Page} from '@playwright/test';
  */
 
 /** Journeys that fail because of an app bug: the bug file, red until fixed (`test.fail`). Key: the test's title. */
-const KNOWN: ReadonlyMap<string, string> = new Map([
-  ['Hc calculated from Hg 10 and Xmax 3 agrees with its formula', 'bugs/BUG_20261118_formula-panel-is-a-hand-typed-copy-of-the-engine.md'],
-  ['Mpow calculated agrees with its formula', 'bugs/BUG_20261118_formula-panel-is-a-hand-typed-copy-of-the-engine.md'],
-]);
+const KNOWN: ReadonlyMap<string, string> = new Map([]);
 
 const TABS = ['Parameters', 'Advanced', 'Dimensions'] as const;
 

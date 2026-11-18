@@ -17,10 +17,7 @@ const DRIVER = 'W5-1138SMF';
 const PICKS = [0.577, 0.707, 0.8, 0.9, 1, 1.1, 1.2, 1.5] as const;
 
 /** Journeys that fail because of an app bug: the bug file, red until fixed (`test.fail`). Key: the test's title. */
-const KNOWN: ReadonlyMap<string, string> = new Map([
-  ['desktop: pick 0.9', 'bugs/BUG_20261118_wizard-rounds-the-picked-sealed-volume.md'],
-  ['phone: pick 0.9', 'bugs/BUG_20261118_wizard-rounds-the-picked-sealed-volume.md'],
-]);
+const KNOWN: ReadonlyMap<string, string> = new Map([]);
 
 interface Skin {
   newProject(page: Page): Promise<Locator>;
