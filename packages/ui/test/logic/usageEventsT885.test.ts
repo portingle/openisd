@@ -211,3 +211,14 @@ describe('FeatureUse once-only rules', () => {
     expect(events).toHaveLength(2);
   });
 });
+
+describe('announcement events are sent once per stage per announcement', () => {
+  it('a popup seen twice in one session sends one seen', () => {
+    const {telemetryUi, events} = recordingTelemetryUi();
+    const seen = {kind: 'announcement', stage: 'seen', id: 'a1', view: 'latest'} as const;
+    telemetryUi.featureUse.announcement(seen);
+    telemetryUi.featureUse.announcement(seen);
+    telemetryUi.featureUse.announcement({kind: 'announcement', stage: 'dismissed', id: 'a1', view: 'latest'});
+    expect(events).toEqual([seen, {kind: 'announcement', stage: 'dismissed', id: 'a1', view: 'latest'}]);
+  });
+});

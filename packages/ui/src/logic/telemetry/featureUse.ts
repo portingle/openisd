@@ -78,7 +78,15 @@ export class FeatureUse {
     this.telemetry.record(event);
   }
 
-  announcement(event: AnnouncementEvent): void { this.telemetry.record(event); }
+  private readonly announcements = new Set<string>();
+
+  /** The update popup was seen, dismissed or closed: once per stage per announcement per page session. */
+  announcement(event: AnnouncementEvent): void {
+    const key = `${event.stage}|${event.id}|${event.view}`;
+    if (this.announcements.has(key)) return;
+    this.announcements.add(key);
+    this.telemetry.record(event);
+  }
 
   feature(name: FeatureName): void {
     this.actions?.record(FEATURE_ACTIONS[name]);
