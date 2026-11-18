@@ -2,7 +2,7 @@ id: T913
 release_note: internal
 repo: openisd
 owner: agent
-status: claimed
+status: done
 label: fixes
 goal: A Peaking 2nd order highpass filter with a negative peak magnitude draws no curve and says so in the Filters list (desktop and phone), as ruled.
 why: QO951 (John, 18 Nov 2026, "Yes" to the fix of BUG_20261118_peak-highpass-negative-gain-nan.md: keep the value, draw no curve, say so on screen).
