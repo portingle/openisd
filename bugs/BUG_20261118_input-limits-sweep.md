@@ -3,7 +3,8 @@
 Status: OPEN, phase 1 (finding only; no limit or app code changed). Task T915, the input-limits sweep (`tasks/T915.yml`).
 Asked by John, 18 Nov 2026 (board general chat, 20:17 UTC): "ok look make the ap robust / and include proper limits on ui",
 after the Peaking 2nd order highpass with a negative peak gain turned the charts to NaN (that one is fixed separately by T913,
-the change that draws no curve for a negative peak gain, ruled QO951).
+the change that draws no curve for a negative peak gain, ruled QO951, which reached main during this sweep; the sweep
+was re-run on it).
 
 ## What was done
 
@@ -18,7 +19,7 @@ impedance peak were run and every NaN, Infinity, thrown exception and call slowe
 carried it. A NaN the project already had before the edit is not counted. No AI judged any case.
 
 - Sweep: `packages/design/test/fixtures/inputLimitsSweep.ts`.
-- Unit test: `packages/design/test/domain/input-limits-sweep.test.ts` (3231 tests; each breaking case is an `it.fails` naming
+- Unit test: `packages/design/test/domain/input-limits-sweep.test.ts` (3231 tests, 135 of them `it.fails`; each breaking case is an `it.fails` naming
   this file, so a fix turns it red and it moves to a plain test).
 - WinISD crash list replay: `packages/design/test/domain/winisd-crash-replay.test.ts`.
 - Report (the "Generated table" below): `npx vite-node packages/design/test/domain/input-limits-sweep-report.ts`.
@@ -29,8 +30,9 @@ carried it. A NaN the project already had before the edit is not counted. No AI 
 
 - 152 boxes swept (97 distinct number fields; the other 15 fields feed no engine call or cannot be typed, each listed with
   its reason in `NOT_SWEPT`), 3229 cases.
-- 141 cases break: 109 NaN, 32 a thrown exception. 0 Infinity (outside the ruled case below), 0 slow.
-- 26 of the 141 are values the screen stores today. The other 115 are values the screen refuses, so they reach the engine only
+- 135 cases break: 103 NaN, 32 a thrown exception. 0 Infinity, 0 slow. (Before T913 reached main: 141, the other six being
+  the Peaking 2nd order highpass Gpk at -60, -1 and -100 dB on the sealed and vented projects; they now pass.)
+- 22 of the 135 are values the screen stores today. The other 113 are values the screen refuses, so they reach the engine only
   by another way (a loaded file, a calculated value); the sweep did not check which of those ways exist.
 - 229 further cases the app refuses with a message and nothing breaks (a blank chart that says why).
 - In every NaN case the app's own after-the-fact check (`classifyFiniteIssues`/`classifyMaxFinite`, used by `appState.ts`)
@@ -60,7 +62,7 @@ carried it. A NaN the project already had before the edit is not counted. No AI 
 | **Series resistance** | -100 Ω | sealed, vented, passive radiator, bandpass4 | NaN in the transfer function and port gain. Screen: refuses (min 0) | `domain/project/projectSweep.ts:103` passes Rs unchecked; only the VA path clamps it (`SimulationEngine.ts:520`) | Keep the screen min 0; Rs ≥ 0 in the engine | plain |
 | **Frequency range start / end** (chart) | -1, -100 Hz | all four | NaN in every chart, including the frequency axis. Screen: refuses (min 1 Hz) | `engine/simulation/SimulationEngine.ts:495`: `P.fmin \|\| default` lets a negative start through to the log grid | Keep the screen min 1 Hz; refuse a grid below 1 Hz in the engine | plain |
 | **System input power / Driver input voltage** (Signal tab) | 0, -1, -100, 1e-9 | all four | thrown RangeError at the set, no message. Screen: refuses (min 0.01 W, 0.01 V) | `domain/project/projectSignal.ts:71` and `:126`: the 10 mV floor is a throw, not a refusal with a message | Keep the screen mins; the domain refuses with a message instead of throwing | plain |
-| **Gpk** (Peaking 2nd order highpass) | -60 (its min), -1, -100 dB | sealed, vented | NaN in every chart. Screen: stores -60 to 0 | `engine/filters/PeakHighpassFilterModel.ts` (√(P²−1) with P < 1) | Already ruled, QO951 (John, 18 Nov 2026, "Yes" to: keep the value, draw no curve, say so on screen); being fixed by T913. No new limit. When T913 lands, its six `it.fails` cases here turn red and move to plain tests | ruled |
+| **Gpk** (Peaking 2nd order highpass) | -60 (its min), -1, -100 dB | sealed, vented | was NaN in every chart; finite since T913 reached main (plain tests now) | `engine/filters/PeakHighpassFilterModel.ts` | Already ruled, QO951 (John, 18 Nov 2026, "Yes" to: keep the value, draw no curve, say so on screen). No new limit | ruled |
 
 ### Found by the WinISD crash list replay
 
@@ -72,7 +74,7 @@ carried it. A NaN the project already had before the edit is not counted. No AI 
 
 | entry | what the person does | OpenISD | test |
 |---|---|---|---|
-| D1 | Peaking 2nd order highpass at -6 dB, 50 Hz | NaN in every chart (T913 fixes it) | `it.fails` |
+| D1 | Peaking 2nd order highpass at -6 dB, 50 Hz | finite: draws no curve for that filter (T913) | plain |
 | D2 | empty the passive radiator Vas box | finite | plain |
 | D3 | driver with Mms, Cms, BL, Re, Qms, Sd only | sweeps finite; max SPL and max power are unbounded with "state Pe or Xmax" (QO143, John 15 Sep 2026) | plain |
 | D4 | driver with Vas 0, save, reopen | reopen from storage works; Duplicate project refuses (above) | plain + `it.fails` |
@@ -94,12 +96,12 @@ carried it. A NaN the project already had before the edit is not counted. No AI 
 
 ## Generated table
 
-Output of `npx vite-node packages/design/test/domain/input-limits-sweep-report.ts` at this commit (20:35 UTC, 18 Nov 2026).
+Output of `npx vite-node packages/design/test/domain/input-limits-sweep-report.ts` on main with T913 (20:38 UTC, 18 Nov 2026).
 
 Swept 152 boxes (97 distinct number fields), 3229 cases.
-Breaking cases: 141. Refused with a message, nothing broken: 229.
-By symptom (a case can have more than one): NaN 109, throw 32.
-Breaking cases the screen would store: 26.
+Breaking cases: 135. Refused with a message, nothing broken: 229.
+By symptom (a case can have more than one): NaN 103, throw 32.
+Breaking cases the screen would store: 22.
 
 | box (as labelled) | where | value | projects | symptom | engine output | screen stores it | app says so |
 |---|---|---|---|---|---|---|---|
@@ -162,6 +164,3 @@ Breaking cases the screen would store: 26.
 | Frequency range start `chart.fmin` | Chart range (desktop and phone) | -100 | sealed, vented, passive radiator, bandpass4 | NaN (sweep), NaN (maxCurves) | sweep.fs, sweep.H.re, sweep.H.im, sweep.spl and 17 more | no | yes |
 | Frequency range end `chart.fmax` | Chart range (desktop and phone) | -1 | sealed, vented, passive radiator, bandpass4 | NaN (sweep), NaN (maxCurves) | sweep.fs, sweep.H.re, sweep.H.im, sweep.spl and 17 more | no | yes |
 | Frequency range end `chart.fmax` | Chart range (desktop and phone) | -100 | sealed, vented, passive radiator, bandpass4 | NaN (sweep), NaN (maxCurves) | sweep.fs, sweep.H.re, sweep.H.im, sweep.spl and 17 more | no | yes |
-| Gpk (Peaking 2nd order highpass) `filter.peakHighpass.gainPk` | Filters tab, filter editor (desktop) / Signal tab filter card (phone) | min | sealed, vented | NaN (sweep) | sweep.H.re, sweep.H.im, sweep.spl, sweep.phase and 10 more | yes | yes |
-| Gpk (Peaking 2nd order highpass) `filter.peakHighpass.gainPk` | Filters tab, filter editor (desktop) / Signal tab filter card (phone) | -1 | sealed, vented | NaN (sweep) | sweep.H.re, sweep.H.im, sweep.spl, sweep.phase and 10 more | yes | yes |
-| Gpk (Peaking 2nd order highpass) `filter.peakHighpass.gainPk` | Filters tab, filter editor (desktop) / Signal tab filter card (phone) | -100 | sealed, vented | NaN (sweep) | sweep.H.re, sweep.H.im, sweep.spl, sweep.phase and 10 more | no | yes |

@@ -30,9 +30,8 @@ function driverEditorValues(project: OpenISDProject): readonly (number | null)[]
 const nonFinite = (values: readonly (number | null)[]) => values.filter(v => v !== null && !Number.isFinite(v));
 
 describe('WinISD crash list, replayed on OpenISD', () => {
-  // D1: WinISD dies on Add. The Peaking 2nd order highpass is being fixed by T913, the change that
-  // draws no curve for a negative peak gain (bugs/BUG_20261118_peak-highpass-negative-gain-nan.md).
-  it.fails('D1: a Peaking 2nd order highpass at -6 dB and 50 Hz on a sealed W5 leaves the charts finite (BUG_20261118_input-limits-sweep)', () => {
+  // D1: WinISD dies on Add. OpenISD keeps the value and draws no curve for that filter (T913, ruled QO951).
+  it('D1: a Peaking 2nd order highpass at -6 dB and 50 Hz on a sealed W5 leaves the charts finite', () => {
     const project = loadProject('sealed');
     project.filters.set([{...engine.filters.default('peakHighpass'), id: 'd1', enabled: true, fpk: 50, gainPk: -6}]);
     expect(projectFindings(project, DEFAULT_GRID).findings).toEqual([]);

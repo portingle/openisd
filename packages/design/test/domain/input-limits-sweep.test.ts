@@ -152,12 +152,6 @@ const BREAKING_TODAY: ReadonlySet<string> = new Set([
   'chart.fmax | -100 | vented',
   'chart.fmax | -100 | passive radiator',
   'chart.fmax | -100 | bandpass4',
-  'filter.peakHighpass.gainPk | min | sealed',
-  'filter.peakHighpass.gainPk | min | vented',
-  'filter.peakHighpass.gainPk | -1 | sealed',
-  'filter.peakHighpass.gainPk | -1 | vented',
-  'filter.peakHighpass.gainPk | -100 | sealed',
-  'filter.peakHighpass.gainPk | -100 | vented',
 ]);
 
 const cases = allCases();

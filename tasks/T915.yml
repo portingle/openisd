@@ -15,4 +15,4 @@ files:
   - packages/design/test/domain/input-limits-sweep.test.ts
   - packages/design/test/domain/input-limits-sweep-report.ts
   - packages/design/test/domain/winisd-crash-replay.test.ts
-note: Finding only. The report is bugs/BUG_20261118_input-limits-sweep.md; its generated table is the output of npx vite-node packages/design/test/domain/input-limits-sweep-report.ts. Breaking cases run as it.fails naming that bug file; the six Peaking 2nd order highpass Gpk cases and replay D1 turn red when T913 (draw no curve for a negative peak gain) lands and then move to plain tests.
+note: Finding only. The report is bugs/BUG_20261118_input-limits-sweep.md; its generated table is the output of npx vite-node packages/design/test/domain/input-limits-sweep-report.ts. Breaking cases run as it.fails naming that bug file. The six Peaking 2nd order highpass Gpk cases and replay D1 are plain tests: T913 (draw no curve for a negative peak gain) fixed them on main during the sweep.
