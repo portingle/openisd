@@ -7,6 +7,18 @@ goal: In-app feedback: one-tap face answer from Info menu and an occasional prom
 why: John, 17 Nov 2026: I want a comment feature, ask if do you like it, faces happy etc, comment; needs to popup occasionally; make it super convenient
 ruling: QO946.c235
 done_test: bash scripts/quiet-test.sh npm run typecheck
+visual:
+  - desktop-dialog-navigation-info-menu
+  - desktop-dialog-settings-options-your-data
+  - desktop-dialog-shared-storage-restore-picker
+  - mobile-dialog-confirmation
+  - mobile-dialog-exports
+  - mobile-dialog-menu
+  - mobile-dialog-options-your-data
+  - mobile-dialog-shared-storage-restore-picker
+  - mobile-menu
+  - desktop-dialog-shared-feedback-dialog
+  - mobile-dialog-shared-feedback-dialog
 files:
   - tasks/T878.yml
   - packages/design/fields/feedback.ts
@@ -33,3 +45,14 @@ files:
   - packages/ui/test/ui/feedback.browser.spec.ts
   - packages/ui/test/ui/mobile-menu.browser.spec.ts
   - scripts/ui-gallery/screens.mjs
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-navigation-info-menu.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-settings-options-your-data.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-storage-restore-picker.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-confirmation.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-exports.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-menu.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-options-your-data.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-storage-restore-picker.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-menu.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-feedback-dialog.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-feedback-dialog.png
