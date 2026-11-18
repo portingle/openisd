@@ -2,7 +2,7 @@ id: T877
 release_note: internal
 repo: openisd
 owner: slice3-wiring
-status: open
+status: done
 goal: Several-driver wiring slice 3: Driver wiring control, Advanced switch, charts follow
 why: ruling: QO946 (John, plan 519 wiring: decided in docs/plans/PLAN_20261116_DRIVER_WIRING.md sections 1 and 10)
 done_test: bash scripts/test.sh packages/design/test/domain/driver-wiring-feature-on.test.ts packages/ui/test/hooks/DriverWiring-hooks.test.ts
