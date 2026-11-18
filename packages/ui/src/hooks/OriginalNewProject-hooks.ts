@@ -4,7 +4,7 @@ import { computed, type ComputedRef, ref, type Ref, shallowRef, triggerRef, watc
 import { type OpenISDDriver, type OpenISDProject, OpenISDPassiveRadiatorStandalone, defaultProjectName, startingChambersOf, takesChamberTunings, WizardPlan, WizardStep } from '@openisd/design';
 import type { BundledPassiveRadiatorRepo, MyPassiveRadiatorRepo } from '@openisd/persistence';
 import { type BoxType, type DriveLoad, type EbpSuitability, type EnvironmentEngine, FixedAir, type PrEngine, type SealedEngine, type VentedAlignment, type VentedEngine } from '@openisd/design/engine';
-import {DEFAULT_NEW_PROJECT_QA, DEFAULT_NEW_PROJECT_VENTED_QL, DEFAULT_SEALED_QTC, DEFAULT_SEALED_VOLUME_L, DEFAULT_SOURCE_RESISTANCE_OHM, DEFAULT_VENTED_ALIGNMENT, NumberField, SEALED_ALIGNMENT_OPTIONS, VENTED_ALIGNMENT_OPTIONS, type SelectorOption} from '@openisd/design/fields';
+import {DEFAULT_ALFAVC_PER_K, DEFAULT_NEW_PROJECT_QA, DEFAULT_NEW_PROJECT_VENTED_QL, DEFAULT_SEALED_QTC, DEFAULT_SEALED_VOLUME_L, DEFAULT_SOURCE_RESISTANCE_OHM, DEFAULT_VC_TEMP_RISE_K, DEFAULT_VENTED_ALIGNMENT, NumberField, SEALED_ALIGNMENT_OPTIONS, VENTED_ALIGNMENT_OPTIONS, type SelectorOption} from '@openisd/design/fields';
 import {DUAL_CHAMBER} from './boxFields.js';
 import {useApp} from '../logic/app.js';
 import type {AppState} from '../logic/appState.js';
@@ -315,8 +315,11 @@ export function useOgNewProject(deps?: OriginalNewProjectDeps): OriginalNewProje
     }
   });
 
-  /** What the project being made will load its driver with: the default source resistance, the drivers asked for. */
-  const newProjectLoad = (): DriveLoad => ({Rs_ohm: DEFAULT_SOURCE_RESISTANCE_OHM, nDrivers: nDrivers.value, loading: 'standard'});
+  /** What the project being made will load its driver with: the default source resistance and coil heating, the drivers asked for. */
+  const newProjectLoad = (): DriveLoad => ({
+    Rs_ohm: DEFAULT_SOURCE_RESISTANCE_OHM, nDrivers: nDrivers.value, loading: 'standard',
+    alfaVC_per_K: DEFAULT_ALFAVC_PER_K, vcTempRise_K: DEFAULT_VC_TEMP_RISE_K,
+  });
 
   const qtc = computed(() => {
     const driver = selectedDriver.value;
@@ -344,10 +347,8 @@ export function useOgNewProject(deps?: OriginalNewProjectDeps): OriginalNewProje
   function recomputeSealedVolume(driver: OpenISDDriver, target: number): void {
     const winisdPicker = winisdSealedPicker();
     const calculated_m3 = driver.sealedPickerVolume(target, newProjectLoad(), NEW_PROJECT_SEALED_LOSSES, winisdPicker);
-    // Vb is a 2dp field everywhere else in the app — match that here instead of showing the solver's raw float.
-    if (calculated_m3 != null) {
-      sealedVolume_m3.value = NumberField.BOX_VB_L.toSI(Number(NumberField.BOX_VB_L.format(calculated_m3)));
-    }
+    // The engine's volume as it gives it, as the Box tab's picker stores it; the volume field rounds only what it shows (T902).
+    if (calculated_m3 != null) sealedVolume_m3.value = calculated_m3;
   }
 
   function selectDriver(driver: OpenISDDriver): void {
@@ -481,7 +482,7 @@ export function useOgNewProject(deps?: OriginalNewProjectDeps): OriginalNewProje
   }
 
   const passiveRadiatorEditor = createPassiveRadiatorEditor({
-    myPassiveRadiators: prRepos.saved, resolve: resolveCopy,
+    myPassiveRadiators: prRepos.saved, resolve: resolveCopy, radiatorFormulas: eng.pr.routeFormulas(),
     files: deps === undefined ? appPassiveRadiatorFiles(useApp()) : deps.passiveRadiatorFiles,
   });
   function startDefinePassiveRadiator(): void {

@@ -617,16 +617,14 @@ export class OpenISDBox implements Box {
         radiator.model.set(STARTING.radiatorModel);
         const spec = radiator.spec;
         const driverSd = this.#driver.specs.Sd_m2.value;
-        const driverXmax = this.#driver.specs.Xmax_m.value;
         if (spec.Sd_m2.value === null) spec.Sd_m2.set(driverSd !== null && driverSd > 0 ? driverSd : STARTING.radiatorSd_m2);
         const sd = spec.Sd_m2.value;
-        if (sd !== null && sd > 0 && driverSd !== null && driverXmax !== null && driverXmax > 0) {
-            const excursion = Math.max(driverXmax * STARTING.radiatorXmaxMultiple,
-                driverSd * driverXmax * this.#load().nDrivers / (sd * pr.count.value));
-            if ((spec.Xmax_m.value ?? 0) < excursion) spec.Xmax_m.set(excursion);
-        }
-        const xmax = spec.Xmax_m.value;
-        if (sd !== null && xmax !== null) spec.Vd_m3.set(sd * xmax);
+        // Sized by the engine to meet the engine's own "2×" rule shown under the radiator (T902).
+        const excursion = this.#engine.pr.placeholderRadiatorXmax(this.#driver.specs.Xmax_m.value, this.#driver.specs.Vd_m3.value,
+            this.#load().nDrivers, sd, pr.count.value);
+        if (excursion !== null && (spec.Xmax_m.value ?? 0) < excursion) spec.Xmax_m.set(excursion);
+        const displacement = this.#engine.pr.displacement(sd, spec.Xmax_m.value);
+        if (displacement !== null) spec.Vd_m3.set(displacement);
         if (spec.Qms.value === null) spec.Qms.set(STARTING.radiatorQms);
         if (spec.Fs_hz.value === null) spec.Fs_hz.set(this.#engine.pr.fsWithMass(STARTING.radiatorMms_kg, 0, STARTING.radiatorCms_m_per_N));
         const air = this.#air();
@@ -784,7 +782,7 @@ export class OpenISDBox implements Box {
         const ts = this.#driver.specs;
         const Fs = ts.Fs_hz.value;
         const Vas = ts.Vas_m3.value;
-        const Qts = this.#driver.sourceLoadedQts(this.#load().Rs_ohm);
+        const Qts = this.#driver.heatedSourceLoadedQts(this.#load());
         if (Fs === null || Vas === null || Qts === null) return null;
         // The same lossy model the Box tab reads Fsc from, so the volume gives back the value typed.
         const feed = {Fs, Vas: this.#arrayVas(Vas), Qts, Ql: losses.Ql.value, Qa: losses.Qa.value};
@@ -805,7 +803,9 @@ export class OpenISDBox implements Box {
      * `Box.Fr` readout bit-for-bit (`winisd-parity-goldens.test.ts` "Box.Fr") passes exactly
      * the driver's stored Vas and `sourceLoadedQts(Qms, Qes, Re, Rg, Qts)` — never the inline
      * compliance reconstruction `Cms·Sd²·ρc²` and never bare `Qts` (Rg alone moves Fsc by 0.040 Hz
-     * on the golden scene; `SEALED_FSC_MODEL.md` §5).
+     * on the golden scene; `winisd_research/spec/S04_sealed_box.md` §2). The voice coil's heating is folded in with Rg
+     * (`heatedSourceLoadedQts`): WinISD's dTVC 100 moves the W5-1138SMF's Qtc 0.719 to 0.920
+     * (winisd_research/spec/S04_sealed_box.md quirk Q8).
      */
     #sealedResonance(volume_m3: number | null, losses: SealedLosses,
                      form: 'lossy' | 'lossless'): { Fsc: number; Qtc: number } | null {
@@ -813,7 +813,7 @@ export class OpenISDBox implements Box {
         const ts = this.#driver.specs;
         const Fs_hz = ts.Fs_hz.value;
         const Vas = ts.Vas_m3.value;
-        const QtsLoaded = this.#driver.sourceLoadedQts(this.#load().Rs_ohm);
+        const QtsLoaded = this.#driver.heatedSourceLoadedQts(this.#load());
         if (Fs_hz === null || Vas === null || QtsLoaded === null) return null;
         // WinISD displays and saves the LOSSY figure by default (John 2026-08-27: "default is
         // winisd = Lossy") and it MOVES with the chamber's losses: measured, `Fr` shifts 5.8 Hz
