@@ -1,5 +1,5 @@
-import { onUnmounted, watch, type Ref } from 'vue';
-import { focusLeft } from '../ui/components/focusLeft.js';
+import { onMounted, onUnmounted, watch, type Ref } from 'vue';
+import { focusLeft } from './focusLeft.js';
 
 /**
  * A pop-up menu closes when the user leaves it (John, 18 Nov 2026, QO946.c253: "the drop down menu on the
@@ -18,6 +18,6 @@ export function useDismissOnOutside(open: Ref<boolean>, inside: readonly Ref<HTM
     act('focusin', onFocusIn);
     act('keydown', onKeyDown);
   }
-  watch(open, o => listen(o), { immediate: true });
+  onMounted(() => { watch(open, o => listen(o), { immediate: true }); });
   onUnmounted(() => listen(false));
 }
