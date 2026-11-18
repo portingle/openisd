@@ -5,6 +5,11 @@ owner: stats-bot-cleanup
 status: done
 goal: Feedback answers no longer carry age_s (session age), which existed only for the removed feedback bot checks
 why: John, 18 Nov 2026 (QO946.c237): "ok ditch the bot prev stuff then"
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/quiet-test.sh npx vitest run packages/ui/test/logic/feedback packages/ui/test/hooks/FeedbackDialog-hooks.test.ts
 files:
   - tasks/T883.yml
+  - packages/ui/src/logic/feedback/feedbackOutbox.ts
+  - packages/ui/src/logic/telemetry/events.ts
+  - packages/ui/src/main.ts
+  - packages/ui/test/hooks/FeedbackDialog-hooks.test.ts
+  - packages/ui/test/logic/feedback/feedbackOutbox.test.ts
