@@ -7,6 +7,8 @@
  * driver count and Iso-barik radio into the design object, writes `0x4b0 = Nd·Vas`, halved for Iso-barik
  * (GHIDRA_FINDINGS.md "Number of drivers and placement"; spec/S04_sealed_box.md section 2, 0x45e0ad-0x45e0f2).
  * One driver: the W5-1138SMF at Qtc 0.800 gives WinISD's captured 3.1338 L (runs/sealed_picker_formula.jsonl).
+ * Four drivers, OBSERVED: WinISD's wizard saved Vr 0.0125353494668224 m3, four times the one-driver volume
+ * (winisd_research/runs/s04-picker-nd-20261118/results.jsonl, nd 4, 18 Nov 2026).
  */
 import {describe, expect, it} from 'vitest';
 import {OpenISDDriver} from '../../domain/driver/openISDDriver.js';
@@ -17,6 +19,8 @@ const engine = createEngine();
 const LOSSES = {Ql: 10, Qa: 100};
 /** WinISD's own picker volume for the W5-1138SMF at Qtc 0.800, one driver (runs/sealed_picker_formula.jsonl). */
 const WINISD_ONE_DRIVER_M3 = 0.00313383736670561;
+/** WinISD's own picker volume for four W5-1138SMF at Qtc 0.800 (runs/s04-picker-nd-20261118/results.jsonl). */
+const WINISD_FOUR_DRIVERS_M3 = 0.0125353494668224;
 
 function w5(): OpenISDDriver {
   const d = OpenISDDriver.empty(engine);
@@ -37,6 +41,11 @@ describe('the WinISD-bug sealed picker counts the drivers', () => {
   it.each([1, 2, 4])('ticked, %i W5-1138SMF at Qtc 0.800 give that many times WinISD\'s one-driver 3.1338 L', (n) => {
     const vb = w5().sealedPickerVolume(0.8, load(n, 'standard'), LOSSES, true)!;
     expect(vb * 1000).toBeCloseTo(n * WINISD_ONE_DRIVER_M3 * 1000, 6);
+  });
+
+  it('ticked, 4 W5-1138SMF at Qtc 0.800 give the 12.5353 L WinISD\'s wizard saved', () => {
+    const vb = w5().sealedPickerVolume(0.8, load(4, 'standard'), LOSSES, true)!;
+    expect(Math.abs(vb / WINISD_FOUR_DRIVERS_M3 - 1)).toBeLessThan(1e-9);
   });
 
   it('ticked, an isobaric pair gives half the one-driver volume', () => {
