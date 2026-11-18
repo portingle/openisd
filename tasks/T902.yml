@@ -1,0 +1,36 @@
+id: T902
+release_note: The Driver Editor's formula panel shows the formulas the engine really uses; the New-project wizard keeps the exact sealed volume for a picked Qtc, as the Box tab does; a new passive-radiator project's placeholder radiator meets the 2× rule for any number of drivers.
+repo: openisd
+owner: t902-engine-copies
+status: open
+goal: The copies of engine logic that give users different answers are gone - the formula panel comes from the engine's routes, both sealed pickers store the engine's volume, and the starting radiator is sized by the engine to its own 2x rule
+why: "Duplicate-logic scan of 18 Nov 2026 (_agent_files/dupscan/REPORT.md findings 4, 5, 6), assigned by the lead session as T902; John's rules: the engine does the calculations, the UI is display only (27 Sep), the 2x rule (16 Nov). bugs/BUG_20261118_formula-panel-is-a-hand-typed-copy-of-the-engine.md, bugs/BUG_20261118_wizard-rounds-the-picked-sealed-volume.md, bugs/BUG_20261118_dummy-radiator-sized-by-a-1x-rule-the-2x-line-contradicts.md"
+done_test: npx vitest run packages/ui/test/logic/provenance-from-engine.test.ts packages/ui/test/hooks/sealed-pick-same-volume.test.ts packages/design/test/domain/dummy-radiator-twice-rule.test.ts packages/ui/test/hooks/passiveRadiatorEditor.test.ts
+files:
+  - tasks/T902.yml
+  - bugs/BUG_20261118_formula-panel-is-a-hand-typed-copy-of-the-engine.md
+  - bugs/BUG_20261118_wizard-rounds-the-picked-sealed-volume.md
+  - bugs/BUG_20261118_dummy-radiator-sized-by-a-1x-rule-the-2x-line-contradicts.md
+  - packages/design/engine/driver/routes/SolveRoute.ts
+  - packages/design/engine/driver/routes/advancedRoutes.ts
+  - packages/design/engine/driver/routes/efficiencyRoutes.ts
+  - packages/design/engine/driver/routes/geometryRoutes.ts
+  - packages/design/engine/driver/routes/smallSignalRoutes.ts
+  - packages/design/engine/driver/routes/routeFormulas.ts
+  - packages/design/engine/driver/routes/index.ts
+  - packages/design/engine/driver/DriverEngine.ts
+  - packages/design/engine/pr/PrEngine.ts
+  - packages/design/engine/index.ts
+  - packages/design/domain/box/openISDBox.ts
+  - packages/ui/src/logic/provenance.ts
+  - packages/ui/src/ui/components/DriverEditorModal.vue
+  - packages/ui/src/hooks/passiveRadiatorEditor.ts
+  - packages/ui/src/hooks/passiveRadiatorActions.ts
+  - packages/ui/src/hooks/OriginalNewProject-hooks.ts
+  - packages/ui/test/logic/provenance-from-engine.test.ts
+  - packages/ui/test/logic/provenance.test.ts
+  - packages/ui/test/hooks/sealed-pick-same-volume.test.ts
+  - packages/ui/test/hooks/passiveRadiatorEditor.test.ts
+  - packages/ui/test/architecture/driver-editor-provenance-row-tint.test.ts
+  - packages/ui/test/ui/driver-editor-provenance.browser.spec.ts
+  - packages/design/test/domain/dummy-radiator-twice-rule.test.ts

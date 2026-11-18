@@ -3,6 +3,7 @@ import {NO_ROUTES, QES_FROM_NO_ROUTES, SPL_FROM_NO_ROUTES, USPL_ROUTES, VAS_ROUT
 import {MAGNET_ROUTES, SD_DD_ROUTES, SD_FROM_VD_ROUTES, VD_ROUTES, XMAX_ROUTES} from './geometryRoutes.js';
 import {
   CMS_SD_ROUTES,
+  EBP_AFTER_FIXED_POINT_ROUTE,
   FS_ROUTES,
   MMS_FROM_FS_CMS_ROUTES,
   MOTOR_ROUTES,
@@ -37,3 +38,7 @@ export const DRIVER_ROUTES: readonly DriverRoute[] = Object.freeze([
   ...ZNOM_ROUTES,               // 14
   ...KLE_ROUTES,                // 24
 ]);
+
+/** Every route the driver solve works a quantity out by: the passes' routes, then EBP after the fixed point. The formula
+ *  panel shows these (T902). */
+export const DRIVER_SOLVE_ROUTES: readonly DriverRoute[] = Object.freeze([...DRIVER_ROUTES, EBP_AFTER_FIXED_POINT_ROUTE]);
