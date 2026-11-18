@@ -33,7 +33,9 @@ describe('WinISD crash list, replayed on OpenISD', () => {
   // D1: WinISD dies on Add. OpenISD keeps the value and draws no curve for that filter (T913, ruled QO951).
   it('D1: a Peaking 2nd order highpass at -6 dB and 50 Hz on a sealed W5 leaves the charts finite', () => {
     const project = loadProject('sealed');
-    project.filters.set([{...engine.filters.default('peakHighpass'), id: 'd1', enabled: true, fpk: 50, gainPk: -6}]);
+    const start = {...engine.filters.default('peakHighpass'), id: 'd1', enabled: true};
+    if (start.type !== 'peakHighpass') throw new Error('the default peaking highpass is not one');
+    project.filters.set([engine.filters.editPeakHighpass(start, {fpk: 50, gainPk: -6})]);
     expect(projectFindings(project, DEFAULT_GRID).findings).toEqual([]);
   });
 
