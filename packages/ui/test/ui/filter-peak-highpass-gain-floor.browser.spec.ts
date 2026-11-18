@@ -41,7 +41,8 @@ async function expectNotClipped(page: Page, note: Locator): Promise<void> {
   expect(await note.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1)).toBe(true);
 }
 
-async function typeMinusSixThenZero(page: Page, scope: Locator): Promise<void> {
+/** Types -6 (refused, with its note), Esc, then 0; returns the Gpk field for the caller's checks on 0. */
+async function typeMinusSixThenZero(page: Page, scope: Locator): Promise<Locator> {
   const field = gpkField(scope);
   const box = field.locator('input');
   await fillAndCommit(box, '-6');
@@ -58,9 +59,7 @@ async function typeMinusSixThenZero(page: Page, scope: Locator): Promise<void> {
   await expect(box).not.toHaveClass(/inp-bad/);
 
   await fillAndCommit(box, '0');
-  await expect(box).not.toHaveClass(/inp-bad/);
-  await expect(field.locator('.ui-field-note')).toHaveCount(0);
-  await expect(scope.locator('.filter-issue')).toHaveCount(0);
+  return field;
 }
 
 test('desktop: typing -6 into a Peak HP Gpk box is refused with a note saying why; 0 is accepted', async ({page}) => {
@@ -69,7 +68,10 @@ test('desktop: typing -6 into a Peak HP Gpk box is refused with a note saying wh
   await page.locator('.project-nav li', {hasText: 'Filters'}).click();
   const panel = page.locator('.content-panel');
   await panel.locator('.action-btn', {hasText: '+ Peak HP'}).click();
-  await typeMinusSixThenZero(page, panel);
+  const gpk = await typeMinusSixThenZero(page, panel);
+  await expect(gpk.locator('input')).not.toHaveClass(/inp-bad/);
+  await expect(gpk.locator('.ui-field-note')).toHaveCount(0);
+  await expect(panel.locator('.filter-issue')).toHaveCount(0);
 });
 
 test('phone: typing -6 into a Peak HP Gpk box is refused with a note saying why; 0 is accepted', async ({appPage: page}) => {
@@ -78,7 +80,11 @@ test('phone: typing -6 into a Peak HP Gpk box is refused with a note saying why;
   await openAMobileProject(page);
   await page.locator('.mob-tab', {hasText: 'Filters'}).click();
   await page.getByText('+ Peak HP', {exact: true}).click();
-  await typeMinusSixThenZero(page, page.locator('.mob-fcard'));
+  const card = page.locator('.mob-fcard');
+  const gpk = await typeMinusSixThenZero(page, card);
+  await expect(gpk.locator('input')).not.toHaveClass(/inp-bad/);
+  await expect(gpk.locator('.ui-field-note')).toHaveCount(0);
+  await expect(card.locator('.filter-issue')).toHaveCount(0);
 });
 
 test('desktop: a project file holding a -6 dB Gpk still opens, keeps -6 and shows the message', async ({page}, testInfo) => {
