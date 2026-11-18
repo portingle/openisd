@@ -163,18 +163,8 @@ export function resolveProject(ctx: ProjectResolveContext): ProjectIssues {
     }
     case 'sealed': {
         const ts = driver.specs;
-        // The Rg-loaded, coil-heated Qts, inlined rather than `heatedSourceLoadedQts(load)` (that method reads the
-        // NOTIFYING `this.driver.ts` — calling it from inside a resolve would re-enter the
-        // write-on-read loop this function's own doc comment warns against). Mirrors
-        // `#sealedResonance_hz`'s pre-S10 feed exactly (golden Fsc 63.1762 Hz/Qtc 0.5995).
-        const rgLoadedQts = (): number | null => {
-            const Qts = ts.Qts.value;
-            if (Qts === null) return null;
-            const load = driveLoadOf(directRoot.value.driverEmbedding);
-            return engine.driver.heatedSourceLoadedQts(
-                ts.Qms.value ?? NaN, ts.Qes.value ?? NaN, ts.solverParams().Re_terminal_ohm.value ?? NaN,
-                load.Rs_ohm, load.alfaVC_per_K, load.vcTempRise_K, Qts);
-        };
+        // The Rg-loaded, coil-heated Qts of the direct-root driver: the same feed the Box tab's readout uses.
+        const rgLoadedQts = (): number | null => driver.heatedSourceLoadedQts(driveLoadOf(directRoot.value.driverEmbedding));
         const sealed = engine.sealed.solve({
             Qts: inputOf(rgLoadedQts),
             Vas_m3: inputOf(() => {
