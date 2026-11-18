@@ -35,24 +35,24 @@ async function measure(page: Page): Promise<{fixed: Record<string, Box>; nameLin
   });
 }
 
+/** Every measured part except the name's own cell, which is the one allowed to change. */
+const HEADER_AND_CONTENT = ['bar', 'brand', 'hamburger', 'sync', 'save', 'content', 'tabbar'] as const;
+
 for (const width of [360, 390]) {
   test(`${width} px wide: short, 3-line and very long names leave every part of the header and the content where it was`, async ({page}) => {
     await page.setViewportSize({width, height: 844});
     await forceMobileSkin(page);
     await connectedToDrive(page);
-    let reference: Record<string, Box> | null = null;
+    let reference: Awaited<ReturnType<typeof measure>>['fixed'] | null = null;
     for (const name of NAMES) {
       await page.goto('/');
       await openAMobileProject(page, undefined, `${name}.owpr`);
       await expect(page.locator('.mob-header-sync')).toBeVisible();
       const h = await measure(page);
-      const {bar, brand, name: cell, sync, save} = h.fixed as Record<string, Box>;
+      const {bar, brand, name: cell, sync, save} = h.fixed;
       reference ??= h.fixed;
       // Everything but the name's own cell is exactly where the short name left it: nothing grew, moved or was pushed.
-      for (const part of Object.keys(h.fixed)) {
-        if (part === 'name') continue;
-        expect(h.fixed[part], `${name}: ${part}`).toEqual(reference[part]);
-      }
+      for (const part of HEADER_AND_CONTENT) expect(h.fixed[part], `${name}: ${part}`).toEqual(reference[part]);
       // The name is inside the bar and between the logo and the cloud badge.
       expect(cell.top, name).toBeGreaterThanOrEqual(bar.top);
       expect(cell.bottom, name).toBeLessThanOrEqual(bar.bottom);
