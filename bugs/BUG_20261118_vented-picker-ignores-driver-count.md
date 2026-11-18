@@ -20,4 +20,7 @@ One sentence: the vented alignment picker (the Alignment popup on the Box tab, t
 
 ## Tests
 - packages/design/test/domain/winisd-vented-picker-counts-drivers.test.ts: the 10 WinISD cases (C4 and QB3, Nd 1/2/4, Nd 1 and 2 Iso-barik), Vb and Fb to relative 1e-9, the tolerance of the sealed picker test.
-- packages/ui/test/ui/vented-alignment-driver-count-journey.browser.spec.ts: 2 drivers on the Driver tab, then the vented Alignment on the Box tab proposes twice the one-driver volume (10.70 L then 21.39 L; desktop and phone).
+- packages/ui/test/ui/vented-alignment-driver-count-journey.browser.spec.ts: 2 drivers on the Driver tab, then the vented Alignment on the Box tab proposes 10.70 L with one driver and 21.39 L with two, WinISD's figures (desktop and phone). It picks the catalogue W5-1138SMF, not a My Drivers copy.
+
+## Separate finding: a spec's seeded driver outlives its test
+`packages/ui/test/ui/new-project-wizard.browser.spec.ts` imports a "Tang Band W5-1138SMF" (different specs: Qts 0.49 but other Qes/Qms) through the wizard's file input (`importDrivers`). That driver goes to My Drivers in the shared worker page and is not removed by `resetApp` (which removes only what the fixtures' `TestAdditions` made). It persists across tests and across spec files on the same worker: a later spec on that worker that takes the first "W5-1138SMF" in the New Project list got it (Vb 10.60 L, Fb 36.0028 Hz, not the catalogue's 10.70 L, 35.9002 Hz). Seen when this journey ran after that spec on one worker. This journey avoids it by choosing `.ditem:not(.my-ditem)`. The isolation fix (the import cleaned up, or tracked in `TestAdditions`) is not done here.

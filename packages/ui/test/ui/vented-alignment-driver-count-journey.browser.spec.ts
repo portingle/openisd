@@ -63,12 +63,13 @@ async function litres(box: Locator): Promise<number> {
   return Number(await box.inputValue());
 }
 
-/** The person's actions up to a vented project on the Box tab, its volume the alignment's for one driver. */
+/** The person's actions up to a vented project on the Box tab. The driver is the catalogue's, never a My Drivers copy of
+ *  the same name (another spec's import stays in My Drivers on the shared page). */
 async function makeProject(skin: Skin, page: Page): Promise<void> {
   const root = await skin.newProject(page);
   await expect(root).toBeVisible();
   await root.locator('input.filter').fill('W5-1138SMF');
-  await root.locator('.dlist .ditem', {hasText: 'W5-1138SMF'}).first().click();
+  await root.locator('.dlist .ditem:not(.my-ditem)', {hasText: 'W5-1138SMF'}).first().click();
   await expect(root.locator('.preview .prev-name')).toContainText('W5-1138SMF');
   await skin.next(page).click();
   await skin.next(page).click();
@@ -80,21 +81,23 @@ async function makeProject(skin: Skin, page: Page): Promise<void> {
   await openTab(page, 'Box');
 }
 
-async function journey(skin: Skin, page: Page): Promise<void> {
+/** The person's actions: pick the Alignment with 1 driver, then with 2; the volumes the Box tab shows after each. */
+async function volumesAfterAlignment(skin: Skin, page: Page): Promise<{one: number; two: number}> {
   await makeProject(skin, page);
   await skin.pickAlignment(page);
-  // The wizard's first match for the name may be another test's seeded copy of the driver (shared page), so the journey
-  // compares the two volumes as a person would; WinISD's absolute volumes are asserted in winisd-vented-picker-counts-drivers.test.ts.
-  const oneDriver = await litres(skin.volume(page));
-  expect(oneDriver, 'one driver: the alignment proposes a volume').toBeGreaterThan(1);
+  await expect(skin.volume(page)).toHaveValue(/\d/);
+  const one = await litres(skin.volume(page));
   await skin.setDrivers(page, 2);
   await skin.pickAlignment(page);
-  await expect.poll(async () => (await litres(skin.volume(page))) / oneDriver, {message: 'two drivers: the alignment proposes twice the one-driver volume, as WinISD does (10.70 L then 21.39 L)'}).toBeCloseTo(2, 2);
+  await expect.poll(() => litres(skin.volume(page)), {message: 'the volume the second Alignment pick writes'}).not.toBe(one);
+  return {one, two: await litres(skin.volume(page))};
 }
 
 test.describe('Journey: the vented Alignment counts the number of drivers', () => {
   test('desktop: 2 drivers then the vented Alignment proposes twice the volume', async ({appPage: page}) => {
-    await journey(desktop, page);
+    const {one, two} = await volumesAfterAlignment(desktop, page);
+    expect(one, 'one driver: WinISD\'s 10.70 L').toBeCloseTo(10.70, 2);
+    expect(two, 'two drivers: WinISD\'s 21.39 L').toBeCloseTo(21.39, 2);
   });
 
   test.describe('phone', () => {
@@ -103,7 +106,9 @@ test.describe('Journey: the vented Alignment counts the number of drivers', () =
     test('phone: 2 drivers then the vented Alignment proposes twice the volume', async ({page}) => {
       await forceMobileSkin(page);
       await page.goto('/');
-      await journey(phone, page);
+      const {one, two} = await volumesAfterAlignment(phone, page);
+      expect(one, 'one driver: WinISD\'s 10.70 L').toBeCloseTo(10.70, 2);
+      expect(two, 'two drivers: WinISD\'s 21.39 L').toBeCloseTo(21.39, 2);
     });
   });
 });
