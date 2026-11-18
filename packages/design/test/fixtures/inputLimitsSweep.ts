@@ -53,12 +53,21 @@ const ALL_PROJECTS: readonly ProjectName[] = ['sealed', 'vented', 'passive radia
 const engine: Engine = createEngine();
 const imported = new Map<ProjectName, OpenISDProjectSessionJson>();
 
+/** A starting project's `.wpr` file text, as it sits on disk. */
+export function wprText(name: ProjectName): string {
+  return readFileSync(join(WPR_DIR, PROJECT_FILES[name]), 'utf8');
+}
+
+/** `.wpr` file text imported as File > Open imports it; `label` names the file in a failure. */
+export function importWprText(label: string, text: string): OpenISDProject {
+  const {value, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+  if (value === null) throw new Error(`${label} did not import: ${JSON.stringify(errors)}`);
+  return value;
+}
+
 /** A starting project imported as File > Open imports a `.wpr`. */
 export function importProject(name: ProjectName): OpenISDProject {
-  const text = readFileSync(join(WPR_DIR, PROJECT_FILES[name]), 'utf8');
-  const {value, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
-  if (value === null) throw new Error(`${PROJECT_FILES[name]} did not import: ${JSON.stringify(errors)}`);
-  return value;
+  return importWprText(PROJECT_FILES[name], wprText(name));
 }
 
 /** A fresh copy of a starting project: the import done once, then its session copied, as a
