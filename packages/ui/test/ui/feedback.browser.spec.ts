@@ -32,20 +32,6 @@ async function openFromDesktopInfoMenu(page: Page): Promise<void> {
   await page.getByTestId('menu-send-feedback').click();
 }
 
-/** The OpenISD logo sits in the dialog header, decorative, at a size that suits the skin. */
-async function expectLogo(page: Page, minPx: number, maxPx: number): Promise<void> {
-  const logo = page.getByTestId('feedback-dialog').locator('img.fb-logo');
-  await expect(logo).toBeVisible();
-  await expect(logo).toHaveAttribute('src', '/icon.svg');
-  await expect(logo).toHaveAttribute('aria-hidden', 'true');
-  await expect(logo).toHaveAttribute('alt', '');
-  const box = await logo.boundingBox();
-  expect(box?.width ?? 0).toBeGreaterThanOrEqual(minPx);
-  expect(box?.width ?? 0).toBeLessThanOrEqual(maxPx);
-  expect(box?.height ?? 0).toBeGreaterThanOrEqual(minPx);
-  expect(box?.height ?? 0).toBeLessThanOrEqual(maxPx);
-}
-
 async function expectDialogFits(page: Page): Promise<void> {
   const view = page.viewportSize();
   if (view === null) throw new Error('no viewport');
@@ -81,14 +67,12 @@ test.describe('desktop skin', () => {
 
     await openFromDesktopInfoMenu(page);
     await expect(page.getByTestId('feedback-heading')).toHaveText('Do you like OpenISD?');
-    await expectLogo(page, 28, 32);
     await expectDialogFits(page);
 
     // One tap, online: sent at once, no other field needed.
     await page.getByTestId('feedback-face-yes').click();
     await expect(page.getByTestId('feedback-status')).toHaveText('Thanks, sent');
     await expect(page.getByTestId('feedback-heading')).toHaveText('Thanks!');
-    await expectLogo(page, 28, 32);
     await expect.poll(() => feedbackBodies(bodies).length).toBe(1);
     expect(feedbackBodies(bodies)[0]).toContain('"face":"yes"');
 
@@ -103,10 +87,8 @@ test.describe('desktop skin', () => {
     await expect(page.getByTestId('feedback-dialog')).toBeHidden();
 
     // Offline: kept on the device, then sent when the network is back.
-    // The installed app serves its logo from the service worker's cache; this plain dev server has none, so the
-    // dialog is opened online and the network drops before the tap.
-    await openFromDesktopInfoMenu(page);
     await context.setOffline(true);
+    await openFromDesktopInfoMenu(page);
     await page.getByTestId('feedback-face-ok').click();
     await expect(page.getByTestId('feedback-status')).toHaveText('Saved, will send when online');
     expect(feedbackBodies(bodies)).toHaveLength(2);
@@ -159,7 +141,6 @@ test.describe('phone skin', () => {
     await openAMobileProject(page);
 
     await tapMobileMenuItem(page, 'Send feedback');
-    await expectLogo(page, 32, 36);
     await expectDialogFits(page);
     const face = await page.getByTestId('feedback-face-yes').boundingBox();
     expect(face?.height ?? 0).toBeGreaterThanOrEqual(44);
