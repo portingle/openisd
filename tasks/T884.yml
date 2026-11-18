@@ -2,7 +2,7 @@ id: T884
 release_note: internal
 repo: openisd
 owner: agent
-status: open
+status: done
 goal: Feedback question is offered at app start after the splash closes, from the 3rd launch, not on Save
 why: 'John, 18 Nov 2026 02:47 UTC, QO946.c238 (the feedback prompt trigger): "relying on save is useless, it needs to be around the splasfy screen opening somewhere there"'
 done_test: npx vitest run packages/design/test/fields/feedback.test.ts packages/ui/test/hooks/FeedbackDialog-hooks.test.ts
