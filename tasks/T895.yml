@@ -1,5 +1,5 @@
 id: T895
-release_note: fixes
+release_note: The chart drop-down menus now close when you click or tap elsewhere, press Escape or move focus away.
 repo: openisd
 owner: agent
 status: done
