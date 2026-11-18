@@ -39,6 +39,12 @@ async function expectNotClipped(page: Page, note: Locator): Promise<void> {
   expect(box.x + box.width).toBeLessThanOrEqual(page.viewportSize()!.width);
   expect(box.y + box.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   expect(await note.evaluate(el => el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+  // Not cut off by a scrolling box around it: the note itself is what shows at each of its corners.
+  expect(await note.evaluate(el => {
+    const r = el.getBoundingClientRect();
+    return [[r.left + 2, r.top + 2], [r.right - 2, r.top + 2], [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2]]
+      .every(([x, y]) => el.contains(document.elementFromPoint(x, y)));
+  }), 'the note shows whole, not cut off by the list around it').toBe(true);
 }
 
 /** Types -6 (refused, with its note), Esc, then 0; returns the Gpk field for the caller's checks on 0. */
