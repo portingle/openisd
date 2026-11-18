@@ -6,6 +6,7 @@ status: done
 label: docs
 goal: Every openisd reference to a winisd_research note that moved to winisd_research/archive/ on 18 Nov 2026 points at the new path, four wrong sealed-box statements agree with the research repo's sealed-box page, and a test fails if an old path comes back
 why: 'John, 18 Nov 2026, about the research repo retiring its old notes: "I would rather you retire old docs"; "archive so not visited unless some strange cause"; "if you are changing something you MUST have proof". The sealed-box statements are corrected from winisd_research/spec/S04_sealed_box.md (sections 2 and 5b Q1, Q2, Q6, Q7) with the proof paths it lists, each with a "Corrected 18 Nov 2026" line; the comment, doc and task-file changes carry no code behaviour change.'
+ruling: QO946
 done_test: bash scripts/test/archived-research-paths.test.sh
 files:
   - tasks/T912.yml
