@@ -193,7 +193,7 @@ test.describe('phone skin', () => {
     await expect(page.getByTestId('feedback-dialog')).toBeHidden();
     await page.reload();
     await openAMobileProject(page);
-    await expect(page.getByTestId('feedback-dialog')).toBeVisible({timeout: 6000});
+    await expect(page.getByTestId('feedback-dialog')).toBeVisible();
     await expectDialogFits(page);
   });
 });
