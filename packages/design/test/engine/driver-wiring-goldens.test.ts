@@ -149,6 +149,25 @@ describe('maximum curves', () => {
   });
 });
 
+describe('maximum curves, power limit with Rg at the amplifier (John, 18 Nov 2026, "A: real circuit")', () => {
+  // DA215: Re 6.8, Pe 100 W, 4 drivers in parallel, Rg 0.5 at the amplifier, so each driver sees Re + 4 x 0.5 = 8.8 ohm.
+  // The amplifier voltage at which each driver takes its rated Pe: V = sqrt(Pe x 8.8) = sqrt(880) = 29.665 V
+  // (not sqrt(100 x 7.3) = 27.02 V, which would put Rg at each driver). At 10 kHz the excursion is far below Xmax, so
+  // the power limit is the one that applies: array power = N x Pe = 4 x 100 = 400 W whatever Rg is.
+  const wired: SweepParams = {...on(SEALED_160L, 'parallel', false), Rs: 0.5, rgAtDriverSide: false};
+  const V_PE = Math.sqrt(100 * (6.8 + N * 0.5));
+  it('the power limit is the amplifier voltage sqrt(Pe x (Re + N x Rg)) = sqrt(880) V, and the array power is 400 W', () => {
+    expect(V_PE).toBeCloseTo(29.6648, 4);
+    const m = engine.simulation.maxCurves(DA215, undefined, 'sealed', wired).values!;
+    expect(at(m.fs, m.maxpwr, 10000)).toBeCloseTo(400, 6);
+  });
+  it('the maximum SPL at 10 kHz is the SPL the same array makes when the amplifier is set to sqrt(880) V', () => {
+    const m = engine.simulation.maxCurves(DA215, undefined, 'sealed', wired).values!;
+    const s = sweepOf(DA215, 'sealed', {...wired, eg: V_PE});
+    expect(at(m.fs, m.maxspl, 10000) - at(s.fs, s.spl, 10000)).toBeCloseTo(0, 9);
+  });
+});
+
 describe('Coil wiring first, Driver wiring second: Dayton MX12-22 x4 (plan section 6)', () => {
   const mx = (Re: number) => sweepDriver(solveConsistencyGroup({
     Fs_hz: 33, Qes: 0.39, Qms: 3.25, Vas_m3: 0.12, Sd_m2: 0.0507, Re_ohm: Re, Re_terminal_ohm: Re,
