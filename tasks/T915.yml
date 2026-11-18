@@ -2,7 +2,7 @@ id: T915
 release_note: internal
 repo: openisd
 owner: agent
-status: claimed
+status: done
 label: fixes
 goal: Phase 1 of the input-limits sweep. Every number box a person can type, set to its band's edges and to mistyped values on real WinISD projects, is swept through the engine, and every NaN, throw or slow call is recorded with its cause line and a proposed limit. The WinISD crash list D1-D12 is replayed on OpenISD. No limit or app code changes in this phase.
 why: "John, 18 Nov 2026: 'ok look make the ap robust / and include proper limits on ui'"
