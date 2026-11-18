@@ -24,10 +24,11 @@ export const ADVANCED_ROUTES: readonly DriverRoute[] = Object.freeze([
   new SolveRoute('Mpow_N_per_sqrtW', ['BL_Tm', 'Re_ohm'], 'Mpow_N_per_sqrtW = BL_Tm / √Re_ohm', v => v.BL_Tm / Math.sqrt(v.Re_ohm), v => v.Re_ohm > 0).inRelation(MPOW_FROM_MOTOR),
   new SolveRoute('Mpow_N_per_sqrtW', ['Rme_kg_per_s'], 'Mpow_N_per_sqrtW = √Rme_kg_per_s', v => Math.sqrt(v.Rme_kg_per_s), v => v.Rme_kg_per_s > 0).inRelation(MPOW_FROM_RME),
   new SolveRoute('gamma_m_per_s2_A', ['BL_Tm', 'Mms_kg'], 'γ = BL_Tm / Mms_kg', v => v.BL_Tm / v.Mms_kg, v => v.Mms_kg > 0).inRelation(GAMMA_FROM_MOTOR),
-  new SolveRoute('SPLmax_dB', ['Pe_W'], 'SPLmax_dB = SPL_dB (else SPLref_dB) + 10 × log₁₀(Pe_W) − 3', v => {
-    const base = v.SPL_dB ?? v.SPLref_dB;
-    return base == null ? null : base + 10 * Math.log10(v.Pe_W) - 3;
-  }, v => v.Pe_W > 0),
+  // SPLmax on the stated SPL, else on the SPLref the efficiency routes produced: one route per base, each declaring it (T902).
+  new SolveRoute('SPLmax_dB', ['SPL_dB', 'Pe_W'], 'SPLmax_dB = SPL_dB + 10 × log₁₀(Pe_W) − 3',
+    v => v.SPL_dB + 10 * Math.log10(v.Pe_W) - 3, v => v.Pe_W > 0),
+  new SolveRoute('SPLmax_dB', ['SPLref_dB', 'Pe_W'], 'SPLmax_dB = SPLref_dB + 10 × log₁₀(Pe_W) − 3',
+    v => v.SPLref_dB + 10 * Math.log10(v.Pe_W) - 3, v => v.Pe_W > 0),
   new SolveRoute('Gloss', ['Fs_hz', 'Xmax_m'], 'Gloss = g / ((2π × Fs_hz)² × Xmax_m)', v => G_STANDARD / ((TAU * v.Fs_hz) ** 2 * v.Xmax_m), v => v.Fs_hz > 0 && v.Xmax_m > 0),
   new SolveRoute('SPLmaxLF_dB', ['Vd_m3', 'roo_kg_per_m3'], 'SPLmaxLF_dB = 20 × log₁₀(ρ × (2π × 20)² × Vd_m3 / (2π√2) / p_ref)', v => {
     const p20 = v.roo_kg_per_m3 * (TAU * 20) ** 2 * v.Vd_m3 / (TAU * Math.SQRT2);
