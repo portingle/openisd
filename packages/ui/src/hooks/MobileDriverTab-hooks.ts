@@ -4,7 +4,8 @@
  * decision made here); browsing/editing a driver reuses the app's existing global overlays
  * (`DriverBrowser`, `DriverEditorModal`), reached the same way the desktop shell reaches them.
  */
-import {computed} from 'vue';
+import {computed, watch} from 'vue';
+import {reportDisagreementsSeen} from '../logic/telemetry/valuesProblem.js';
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {useApp} from '../logic/app.js';
 import {useFeatureUse} from './telemetryContext.js';
@@ -35,6 +36,7 @@ export function useMobileDriverTab() {
     void projectChanged.value;
     return project.value.driver.inconsistentInputReasons();
   });
+  watch(consistencyReasons, reasons => { if (reasons.length > 0) reportDisagreementsSeen(featureUse, project.value.driver); }, {immediate: true});
 
   function browseDrivers(): void { presentationState.browseOpen = true; }
   function editDriver(): void { featureUse.feature('driver_editor'); selection.editProjectDriver(); }
