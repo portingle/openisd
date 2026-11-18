@@ -16,6 +16,7 @@ files:
   - packages/design/engine/index.ts
   - packages/design/engine/simulation/SimulationEngine.ts
   - packages/design/engine/environment/airSolver.ts
+  - packages/design/engine/environment/EnvironmentEngine.ts
   - packages/design/engine/signal/SignalEngine.ts
   - packages/design/engine/sealed/SealedEngine.ts
   - packages/design/engine/vent/VentEngine.ts
@@ -28,4 +29,5 @@ files:
   - packages/design/test/domain/winisd-crash-replay.test.ts
   - packages/design/test/domain/project/project-sweep-source.test.ts
   - packages/ui/test/ui/input-limits-stop.browser.spec.ts
-note: Ruled QO951 and QO953. The 32 System input power / Driver input voltage cases stay it.fails. Turning that throw into an issue makes the existing test project-signal.test.ts ("type V 0.005 ... refused, unchanged", which expects a throw) fail, so it waits for the lead's ruling. The patch is ready.
+  - packages/ui/src/hooks/NumInput-hooks.ts
+note: Ruled QO951 and QO953. The browser journey packages/ui/test/ui/input-limits-stop.browser.spec.ts (desktop and phone) runs in the full suite. NumInput-hooks.ts: a box bound allow-out-of-range (the five air boxes) now honours its field's floor, so pressure, sound velocity, density and temperature at or below 0 are refused while any value above 0 is stored as before. The 32 System input power / Driver input voltage cases stay it.fails. Turning that throw into an issue makes the existing test project-signal.test.ts ("type V 0.005 ... refused, unchanged", which expects a throw) fail, so it waits for the lead's ruling. The patch is ready.

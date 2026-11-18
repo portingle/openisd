@@ -1,5 +1,5 @@
 import type {
-    Air, AirValues, BoxParamsIssue, EnvironmentIssue, Engine, MaxCurvesSolveResult, PrIssue, SimulatableBoxType,
+    Air, AirIssue, AirValues, BoxParamsIssue, EnvironmentIssue, Engine, MaxCurvesSolveResult, PrIssue, SimulatableBoxType,
     SignalIssue, SimulationEngine, SweepDriver, SweepIssue, SweepParams, SweepSolveResult, VentIssue,
 } from '../../engine/index.js';
 import { FixedAir } from '../../engine/index.js';
@@ -53,8 +53,9 @@ export interface ProjectSweepSource {
     /** The project's air. */
     readonly air: Air;
     /** What is wrong with the conditions the air runs in (an entered temperature the air model
-     *  does not support); a sweep does not run while any is. */
-    readonly airIssues: readonly EnvironmentIssue[];
+     *  does not support, a stated pressure, sound velocity or density at or below zero); a sweep
+     *  does not run while any is. */
+    readonly airIssues: readonly (EnvironmentIssue | AirIssue)[];
     readonly engine: Engine;
     readonly ventIssues: readonly VentIssue[];
     /** The rear port's own vent issues: `bandpass6`/`abc` only (their rear chamber is vented). */

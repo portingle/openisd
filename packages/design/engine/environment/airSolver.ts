@@ -286,6 +286,16 @@ function unavailable(target: AirQuantityName, relation: AirRelation, why: string
   };
 }
 
+/** A stated air quantity at or below zero where its field's floor is positive (pressure, sound
+ *  velocity, density): air with none of it is not air, so no sweep runs while one is stated
+ *  (QO953). Empty when the value clears its floor. */
+export function airFloorIssues(name: AirQuantityName, value: number): readonly AirIssue[] {
+  if (AIR_FLOORS[name] !== 'positive' || value > 0) return [];
+  const said = `${SAYS[name][0]?.toUpperCase() ?? ''}${SAYS[name].slice(1)}`;
+  const base = missingDependencies(name, [{formula: `${SAYS[name]} greater than 0`, required: [name], missing: [name]}]);
+  return [{...base, fields: [name], text: `${said} must be greater than 0: air with no ${SAYS[name]} carries no sound, so the charts are not drawn.`}];
+}
+
 /** The app's value of one of the three conditions the app holds. */
 function appValue(appAir: AppAir, name: AppQuantityName): number {
   switch (name) {
@@ -404,16 +414,14 @@ export function solveAir(inputs: AirInputs, appAir: AppAir): AirSolution {
     const typed = inputs[name];
     if (name === 'tempK' || typed.kind !== 'entered') continue;
     const {min, max} = LIMITS[name];
-    const said = `${SAYS[name][0]?.toUpperCase() ?? ''}${SAYS[name].slice(1)}`;
-    const floor = AIR_FLOORS[name];
-    if (floor === 'positive' && !(typed.value > 0)) {
-      const base = missingDependencies(name, [{formula: `${SAYS[name]} greater than 0`, required: [name], missing: [name]}]);
-      issues.push({...base, fields: [name], text: `${said} must be greater than 0: air with no ${SAYS[name]} carries no sound, so the charts are not drawn.`});
+    const belowFloor = airFloorIssues(name, typed.value);
+    if (belowFloor.length > 0) {
+      issues.push(...belowFloor);
       continue;
     }
     if (Number.isFinite(typed.value) && typed.value >= min && typed.value <= max) continue;
     const base = missingDependencies(name, [{formula: `${SAYS[name]} between ${min} and ${max}`, required: [name], missing: [name]}]);
-    issues.push({...base, fields: [name], text: `${said} is outside the sane range (${min}–${max}).`});
+    issues.push({...base, fields: [name], text: `${SAYS[name][0]?.toUpperCase() ?? ''}${SAYS[name].slice(1)} is outside the sane range (${min}–${max}).`});
   }
 
   return {
