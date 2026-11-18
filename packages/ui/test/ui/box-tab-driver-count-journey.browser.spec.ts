@@ -55,13 +55,14 @@ async function number(box: Locator): Promise<number> {
   return Number(await box.inputValue());
 }
 
-async function expectReadout(skin: Skin, page: Page, qtc: number, fsc: number, when: string): Promise<void> {
+/** The Box tab's sealed readout as the screen shows it now. */
+async function readBox(skin: Skin, page: Page, which: 'qtc' | 'fsc'): Promise<number> {
   await openTab(page, 'Box');
-  await expect.poll(async () => number(skin.qtc(page)), {message: `${when}: Qtc`}).toBeCloseTo(qtc, 3);
-  expect.soft(await number(skin.fsc(page)), `${when}: Fsc`).toBeCloseTo(fsc, 1);
+  return number(which === 'qtc' ? skin.qtc(page) : skin.fsc(page));
 }
 
-async function journey(skin: Skin, page: Page): Promise<void> {
+/** The person's actions up to a closed-box project on the Box tab. */
+async function makeProject(skin: Skin, page: Page): Promise<void> {
   const root = await skin.newProject(page);
   await expect(root).toBeVisible();
   await root.locator('input.filter').fill('W5-1138SMF');
@@ -74,23 +75,27 @@ async function journey(skin: Skin, page: Page): Promise<void> {
   await skin.next(page).click();
   await skin.create(page).click();
   await expect(root).toHaveCount(0);
-
   await openTab(page, 'Box');
-  await skin.volume(page).fill('4.48');
-  await skin.volume(page).press('Tab');
-  await expectReadout(skin, page, 0.719, 67.23, 'one driver, 4.48 L');
+}
 
-  await skin.setDrivers(page, 4);
-  await expectReadout(skin, page, 1.085, 107.38, 'four drivers, 4.48 L');
-
-  await skin.volume(page).fill('17.92');
+async function typeVolume(skin: Skin, page: Page, litres: string): Promise<void> {
+  await openTab(page, 'Box');
+  await skin.volume(page).fill(litres);
   await skin.volume(page).press('Tab');
-  await expectReadout(skin, page, 0.719, 67.23, 'four drivers, 17.92 L');
 }
 
 test.describe('Journey: the Box tab reads the number of drivers', () => {
   test('desktop: 1 driver, then 4 in the same volume, then 4 in four times the volume', async ({appPage: page}) => {
-    await journey(desktop, page);
+    await makeProject(desktop, page);
+    await typeVolume(desktop, page, '4.48');
+    await expect.poll(() => readBox(desktop, page, 'qtc'), {message: 'one driver, 4.48 L: Qtc'}).toBeCloseTo(0.719, 3);
+    expect.soft(await readBox(desktop, page, 'fsc'), 'one driver, 4.48 L: Fsc').toBeCloseTo(67.23, 1);
+    await desktop.setDrivers(page, 4);
+    await expect.poll(() => readBox(desktop, page, 'qtc'), {message: 'four drivers, 4.48 L: Qtc'}).toBeCloseTo(1.085, 3);
+    expect.soft(await readBox(desktop, page, 'fsc'), 'four drivers, 4.48 L: Fsc').toBeCloseTo(107.38, 1);
+    await typeVolume(desktop, page, '17.92');
+    await expect.poll(() => readBox(desktop, page, 'qtc'), {message: 'four drivers, 17.92 L: Qtc'}).toBeCloseTo(0.719, 3);
+    expect.soft(await readBox(desktop, page, 'fsc'), 'four drivers, 17.92 L: Fsc').toBeCloseTo(67.23, 1);
   });
 
   test.describe('phone', () => {
@@ -99,7 +104,16 @@ test.describe('Journey: the Box tab reads the number of drivers', () => {
     test('phone: 1 driver, then 4 in the same volume, then 4 in four times the volume', async ({page}) => {
       await forceMobileSkin(page);
       await page.goto('/');
-      await journey(phone, page);
+      await makeProject(phone, page);
+      await typeVolume(phone, page, '4.48');
+      await expect.poll(() => readBox(phone, page, 'qtc'), {message: 'one driver, 4.48 L: Qtc'}).toBeCloseTo(0.719, 3);
+      expect.soft(await readBox(phone, page, 'fsc'), 'one driver, 4.48 L: Fsc').toBeCloseTo(67.23, 1);
+      await phone.setDrivers(page, 4);
+      await expect.poll(() => readBox(phone, page, 'qtc'), {message: 'four drivers, 4.48 L: Qtc'}).toBeCloseTo(1.085, 3);
+      expect.soft(await readBox(phone, page, 'fsc'), 'four drivers, 4.48 L: Fsc').toBeCloseTo(107.38, 1);
+      await typeVolume(phone, page, '17.92');
+      await expect.poll(() => readBox(phone, page, 'qtc'), {message: 'four drivers, 17.92 L: Qtc'}).toBeCloseTo(0.719, 3);
+      expect.soft(await readBox(phone, page, 'fsc'), 'four drivers, 17.92 L: Fsc').toBeCloseTo(67.23, 1);
     });
   });
 });
