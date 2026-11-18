@@ -13,5 +13,5 @@ Evidence: the new test "scrolling the chips sideways does not move them" failed 
 Not shown: the CI failure itself did not reproduce locally (about 340 runs of the phone fc and Gain cases at 4 to 6 workers, restricted to 2 cores, with CPU throttling, before and after, all green), so the neighbour-chip tap is the inferred route.
 
 ## Fix
-The arrow keeps its place and is hidden with `visibility: hidden` (no click, no focus, no screen reader), so the strip never changes width.
+The arrow keeps its place and is greyed and `disabled` (aria-disabled; not clickable or focusable; opacity 0.4 as the other phone disabled buttons) at the end with nothing more to show, so the strip never changes width and leaves no hole. (A first try, `visibility: hidden`, left a blank 48 px slot at the start; the lead rejected it, 18 Nov 2026.) The old assertions that the arrow is hidden at the start became assertions that it is disabled.
 The sweep fixture now checks that the card that appeared is the one tapped (`.mob-fcard-name` is the chip's short name), so a wrong tap names itself instead of timing out 20 s later.
