@@ -70,7 +70,7 @@ const diagnostics = injectDiagnosticsModal();
         <img src="/icon.svg" alt="" aria-hidden="true">
         <span>OpenISD</span>
       </div>
-      <button v-if="projectTitle" type="button" class="mob-project-title" :title="projectTitle" @click="openProjectsPane">{{ projectTitle }}</button>
+      <button v-if="projectTitle" type="button" class="mob-project-title" :title="projectTitle" @click="openProjectsPane"><span class="mob-project-title-text">{{ projectTitle }}</span></button>
       <CloudSyncBadge
         v-if="cloudEnabled"
         class="mob-header-sync"
@@ -378,9 +378,15 @@ const diagnostics = injectDiagnosticsModal();
   flex: 1; min-width: 0; margin-left: 12px; text-align: right;
   max-height: var(--mob-header-control);
   font-size: var(--mob-header-title-px); line-height: var(--mob-header-title-lh); overflow-wrap: anywhere;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--mob-header-title-lines); overflow: hidden;
+  overflow: hidden;
   cursor: pointer;
   color: inherit;
+}
+/* The clamp sits on the text inside the button: on the button itself it did not apply, and the fourth line was cut off bare. */
+.mob-project-title-text {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--mob-header-title-lines); overflow: hidden;
+  /* Room for the ellipsis: right-aligned, it would be drawn past the edge and cut off. */
+  padding-right: 1em;
 }
 .mob-hamburger span { display: block; width: 20px; height: 2px; background: var(--fg); border-radius: 1px; }
 .mob-header-sync {

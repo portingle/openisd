@@ -40,7 +40,8 @@ describe('Cloud sync on: telling and asking people to save (John, 18 Nov 2026, Q
       {id: 'p2', name: 'Tower', saveLabel: 'Save', saveAria: 'Save Tower'},
     ]);
     expect(unsavedSyncList(false, projects)).toBeNull();
-    expect(unsavedSyncList(true, [])).toBeNull();
+    expect(unsavedSyncList(true, [])?.rows).toEqual([]);
+    expect(unsavedSyncList(true, [])?.empty).toBe('Every open project is saved.');
   });
 
   it('words the bar with a Save and a Later', () => {

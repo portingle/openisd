@@ -16,6 +16,8 @@ export const UNSAVED_SYNC_TEXT = {
   listHeading: 'Not on your other devices yet',
   listNote: 'Cloud sync sends saved versions only. These projects have unsaved changes.',
   listSave: 'Save',
+  /** Shown in the list's place when no project holds unsaved changes, so the dialog keeps its size. */
+  listEmpty: 'Every open project is saved.',
   /** The bar after 5 minutes of unsaved edits. */
   barText: 'Your changes are not on your other devices yet.',
   barSave: 'Save',
@@ -41,18 +43,21 @@ export interface UnsavedSyncRow {
   readonly saveAria: string;
 }
 
-/** The dialog's list; null (nothing drawn) when sync is off or no project holds unsaved changes. */
+/** The dialog's list, drawn with a fixed space whenever sync is on; null (nothing drawn) while sync is off. */
 export interface UnsavedSyncList {
   readonly heading: string;
   readonly note: string;
   readonly rows: readonly UnsavedSyncRow[];
+  /** The line shown when `rows` is empty. */
+  readonly empty: string;
 }
 
 export function unsavedSyncList(syncOn: boolean, projects: readonly UnsavedProject[]): UnsavedSyncList | null {
-  if (!syncOn || projects.length === 0) return null;
+  if (!syncOn) return null;
   return {
     heading: UNSAVED_SYNC_TEXT.listHeading,
     note: UNSAVED_SYNC_TEXT.listNote,
+    empty: UNSAVED_SYNC_TEXT.listEmpty,
     rows: projects.map(p => ({id: p.id, name: p.name, saveLabel: UNSAVED_SYNC_TEXT.listSave, saveAria: `Save ${p.name}`})),
   };
 }

@@ -50,15 +50,34 @@ test.describe('desktop, Cloud sync on', () => {
     await expect(list).toContainText('Not on your other devices yet');
     await expect(list).toContainText(PROJECT);
     await list.getByRole('button', {name: `Save ${PROJECT}`}).click();
-    await expect(page.locator('.cloud-sync-unsaved-section')).toHaveCount(0);
+    await expect(page.locator('.cloud-sync-unsaved-row')).toHaveCount(0);
+    await expect(list).toContainText('Every open project is saved.');
     await expect(page.locator('.tb-btn[aria-label="Save"]')).not.toHaveClass(/dirty/);
+  });
+
+  test('the dialog keeps its size with no project listed and with two', async ({page}) => {
+    await connectedDesktop(page);
+    const dialog = page.locator('.cloud-modal');
+    const height = async (): Promise<number> => (await dialog.boundingBox())?.height ?? 0;
+    await page.locator('.cloud-sync-badge').click();
+    await expect(page.locator('.cloud-sync-unsaved-section')).toContainText('Every open project is saved.');
+    const none = await height();
+    await page.locator('.cloud-modal-x').click();
+
+    await dirtyFocusedDesign(page);
+    await openAProject(page, undefined, 'second.owpr');
+    await dirtyFocusedDesign(page);
+    await page.locator('.cloud-sync-badge').click();
+    await expect(page.locator('.cloud-sync-unsaved-row')).toHaveCount(2);
+    expect(await height()).toBe(none);
   });
 
   test('nothing is listed when no project has unsaved changes', async ({page}) => {
     await connectedDesktop(page);
     await page.locator('.cloud-sync-badge').click();
     await expect(page.locator('.cloud-modal')).toBeVisible();
-    await expect(page.locator('.cloud-sync-unsaved-section')).toHaveCount(0);
+    await expect(page.locator('.cloud-sync-unsaved-section')).toContainText('Every open project is saved.');
+    await expect(page.locator('.cloud-sync-unsaved-row')).toHaveCount(0);
   });
 
   test('5 minutes of unsaved edits bring the bar; Save saves the project and the bar goes', async ({page}) => {

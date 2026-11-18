@@ -79,9 +79,12 @@ async function handleAction(action: SyncDialogAction): Promise<void> {
       <template v-if="unsaved !== null">
         <PhoneBand :section="PhoneDialogHelp.syncUnsaved(unsaved.heading)" />
         <p class="mob-dhint cloud-sync-unsaved-note">{{ unsaved.note }}</p>
-        <div v-for="row in unsaved.rows" :key="row.id" class="mob-dkv cloud-sync-unsaved-row">
-          <div class="cloud-sync-conflict-info"><div class="cloud-sync-conflict-title">{{ row.name }}</div></div>
-          <button type="button" class="cloud-sync-conflict-open-btn" :aria-label="row.saveAria" @click="emit('saveProject', row.id)">{{ row.saveLabel }}</button>
+        <div class="cloud-sync-unsaved-rows">
+          <p v-if="unsaved.rows.length === 0" class="mob-dhint cloud-sync-unsaved-empty">{{ unsaved.empty }}</p>
+          <div v-for="row in unsaved.rows" :key="row.id" class="mob-dkv cloud-sync-unsaved-row">
+            <div class="cloud-sync-conflict-info"><div class="cloud-sync-conflict-title">{{ row.name }}</div></div>
+            <button type="button" class="cloud-sync-conflict-open-btn" :aria-label="row.saveAria" @click="emit('saveProject', row.id)">{{ row.saveLabel }}</button>
+          </div>
         </div>
       </template>
       <template v-if="model.activity.length > 0">
@@ -138,6 +141,7 @@ async function handleAction(action: SyncDialogAction): Promise<void> {
       <div class="cloud-sync-heading">{{ unsaved.heading }}</div>
       <p class="cloud-sync-unsaved-note">{{ unsaved.note }}</p>
       <div class="cloud-sync-unsaved-rows">
+        <p v-if="unsaved.rows.length === 0" class="cloud-sync-unsaved-empty">{{ unsaved.empty }}</p>
         <div v-for="row in unsaved.rows" :key="row.id" class="cloud-sync-conflict-row cloud-sync-unsaved-row">
           <div class="cloud-sync-conflict-info"><div class="cloud-sync-conflict-title">{{ row.name }}</div></div>
           <button type="button" class="cloud-sync-conflict-open-btn" :aria-label="row.saveAria" @click="emit('saveProject', row.id)">{{ row.saveLabel }}</button>
@@ -306,8 +310,15 @@ async function handleAction(action: SyncDialogAction): Promise<void> {
 }
 
 .cloud-sync-unsaved-rows {
-  max-height: 160px;
+  /* Fixed: the dialog is the same size with no project listed and with several. */
+  height: 112px;
   overflow-y: auto;
+}
+
+.cloud-sync-unsaved-empty {
+  color: var(--mut);
+  font-size: 13px;
+  margin: 8px 0;
 }
 
 .cloud-sync-conflicts-section {
