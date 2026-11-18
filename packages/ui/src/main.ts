@@ -184,6 +184,8 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
     testOptIn: Reflect.get(globalThis, 'openisdTelemetryOn') === true,
   });
   const telemetryStorage = localStore;
+  // One id for this visit, shared by the usage events and the feedback answer so the two can be read together.
+  const visitSessionId = newUuid();
   const usageTelemetry: Telemetry = telemetryTarget === null
     ? new NoTelemetry()
     : new BeaconTelemetry({
@@ -193,7 +195,7 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
         beacon: (url, body) => navigator.sendBeacon(url, body),
         online: () => navigator.onLine,
         now: () => Date.now(),
-        sessionId: newUuid(),
+        sessionId: visitSessionId,
         browserId: browserIdOf(telemetryStorage, newUuid),
       });
   // Feedback is the user's own answer to "Do you like OpenISD?", sent to the same collector with the same
@@ -210,7 +212,7 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
     sessionAgeS: () => Math.floor((Date.now() - pageOpenedAt) / 1000),
     newId: newUuid,
     version: appVersionText,
-    sessionId: newUuid(),
+    sessionId: visitSessionId,
     browserId: browserIdOf(telemetryStorage, newUuid),
     environment: telemetryTarget === null ? 'test' : telemetryTarget.environment,
   });
