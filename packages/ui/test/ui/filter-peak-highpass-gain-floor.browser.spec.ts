@@ -4,27 +4,13 @@
  * each shell: add the filter, type -6 dB, read the note saying why. Nothing is stored (ruling "b",
  * bugs/archive/BUG_20261005_no-common-ui-field-component.md): the filter keeps its 6 dB, draws its
  * curve, and Esc puts 6 back in the box. 0 dB is accepted.
- * Loaded data is repaired, never refused: a project file that already holds a -6 dB Gpk (saved
- * before this limit) still opens, keeps -6 dB, and shows the engine's message (T913).
+ * A file that already holds a -6 dB Gpk still opens, keeps it and shows the engine's message:
+ * filter-negative-peak-message.browser.spec.ts (T913).
  */
-import {writeFileSync} from 'node:fs';
-import type {Locator, Page, TestInfo} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
 import {fillAndCommit} from '../fixtures/numField.js';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
-import {readSampleProject} from '../fixtures/sampleProject.js';
-
-const LOADED_MESSAGE = /WinISD closes when this filter has a negative peak gain, but a peak gain below 0 dB has no curve to draw, so OpenISD keeps the value and draws no curve for this filter \(here -6 dB at 50 Hz\)\./;
-
-/** The sample project with one Peak HP filter at -6 dB, 50 Hz, as a file a person would open. */
-function negativePeakProject(testInfo: TestInfo): string {
-  const sample = readSampleProject().toString('utf8');
-  const withFilter = sample.replace(/"filters": \[\]/, '"filters": [{"id": "00000000-0000-4000-0001-0000000009f1", "type": "peakHighpass", "enabled": true, "fpk": 50, "gainPk": -6}]');
-  expect(withFilter, 'the sample project lists its filters as "filters": []').not.toBe(sample);
-  const path = testInfo.outputPath('negative-peak-hp.owpr');
-  writeFileSync(path, withFilter);
-  return path;
-}
 
 const NOTE = /^Gpk is below its minimum — enter a value between 0\.00 and 60\.00 dB\. A 2nd-order high-pass cannot peak below its flat level\.$/;
 
@@ -91,24 +77,4 @@ test('phone: typing -6 into a Peak HP Gpk box is refused with a note saying why;
   await expect(gpk.locator('input')).not.toHaveClass(/inp-bad/);
   await expect(gpk.locator('.ui-field-note')).toHaveCount(0);
   await expect(card.locator('.filter-issue')).toHaveCount(0);
-});
-
-test('desktop: a project file holding a -6 dB Gpk still opens, keeps -6 and shows the message', async ({page}, testInfo) => {
-  await page.goto('/');
-  await openAProject(page, negativePeakProject(testInfo));
-  await page.locator('.project-nav li', {hasText: 'Filters'}).click();
-  const panel = page.locator('.content-panel');
-  await expect(panel.locator('.filter-issue')).toHaveText(LOADED_MESSAGE);
-  await panel.locator('.filter-edit-hint').click();
-  await expect(gpkField(panel).locator('input')).toHaveValue('-6.00');
-});
-
-test('phone: a project file holding a -6 dB Gpk still opens, keeps -6 and shows the message', async ({appPage: page}, testInfo) => {
-  await forceMobileSkin(page);
-  await page.goto('/');
-  await openAMobileProject(page, negativePeakProject(testInfo));
-  await page.locator('.mob-tab', {hasText: 'Filters'}).click();
-  const card = page.locator('.mob-fcard');
-  await expect(card.locator('.filter-issue')).toHaveText(LOADED_MESSAGE);
-  await expect(gpkField(card).locator('input')).toHaveValue('-6.00');
 });
