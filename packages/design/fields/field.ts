@@ -230,7 +230,8 @@ export class NumberField extends Field {
   }
 
   /** Format valueSI or Quantity into display string for this field using unit conversion & precision rules.
-   *  `maxSignificant` (the phone's narrow boxes) trims decimals beyond that many significant digits (never below two, or the field's own precision when that is smaller). */
+   *  `maxSignificant` (the phone's narrow boxes) trims decimals beyond that many significant digits (never below two, or the field's own precision when that is smaller),
+   *  and shows a value below 1 whose fixed form would not fit the phone box in exponent form ("2.857e-5"). */
   format(valueSIOrQuantity: number | Quantity, halfWidthSI?: number | null, token?: string, maxSignificant?: number): string {
     let val: number;
     let hw: number | null | undefined;
@@ -264,7 +265,14 @@ export class NumberField extends Field {
     if (valDisp !== 0) decimals = Math.max(decimals, NumberField.MIN_SIGNIFICANT - (Math.floor(Math.log10(Math.abs(valDisp))) + 1));
     decimals = Math.max(0, Math.min(20, decimals));
     const sanitizedVal = valDisp === 0 ? 0 : valDisp;
-    return formatTrimmedTo(sanitizedVal, decimals, Math.min(keep, decimals));
+    const fixed = formatTrimmedTo(sanitizedVal, decimals, Math.min(keep, decimals));
+    // A phone box holds `maxSignificant + 3` characters ("100000.00"). A value so small that its leading
+    // zeros and four figures run past that (the 0.00002857 W that drives the 10 mV minimum) is shown in
+    // exponent form, still four figures ("2.857e-5"): a value is never cut (rule 11, John, 10 Nov 2026).
+    if (maxSignificant !== undefined && Math.abs(valDisp) < 1 && valDisp !== 0 && fixed.length > maxSignificant + 3) {
+      return valDisp.toExponential(NumberField.MIN_SIGNIFICANT - 1);
+    }
+    return fixed;
   }
 
   /** Parse raw typed string input into a Quantity or Text discriminant for this field. */

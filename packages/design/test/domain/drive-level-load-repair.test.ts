@@ -111,3 +111,16 @@ describe('a drive level below 10 mV in a file is repaired on opening, with no da
     expect(wprWithPower('2').loadRepairs).toEqual([]);
   });
 });
+
+describe('Duplicate, What-if and a snapshot copy a project the opening already repaired: nothing is left to repair or report (QO953.c31)', () => {
+  it('a project opened from a -6 V file copies as 0.01 V, and opening the copy repairs nothing', () => {
+    const {project} = opened(owprWithSignal({voltage_V: {state: 'E', value: -6}}));
+    // Duplicate (appState.duplicateFocusedProject) round-trips the project's own .owpr text.
+    expect(opened(project.toOwprText()).loadRepairs).toEqual([]);
+    expect(opened(project.toStoredText()).loadRepairs).toEqual([]);
+    expect(project.committedSnapshot().driveVoltage_V.value).toBe(0.01);
+    project.beginWhatIf();
+    expect(project.driveVoltage_V.value).toBe(0.01);
+    expect(project.driveVoltage_V.dq).toEqual([]);
+  });
+});

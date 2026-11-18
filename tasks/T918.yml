@@ -36,6 +36,21 @@ files:
   - packages/ui/src/ui/shells/mobile/MobileShell.vue
   - packages/ui/src/ui/shells/mobile/MobileSignalTab.vue
   - packages/ui/src/ui/shells/original/OriginalShell.vue
+  - packages/design/test/fields/phone-tiny-value-fits.test.ts
+  - packages/persistence/src/index.ts
+  - packages/persistence/test/load-repair-report.test.ts
+  - packages/persistence/test/fixtures/repoOn.ts
+  - packages/persistence/test/projectBin.test.ts
+  - packages/persistence/test/projectRepo.test.ts
+  - packages/persistence/test/storageHistory.test.ts
+  - packages/ui/src/logging/flash.ts
+  - packages/ui/src/logic/loadRepairNotice.ts
+  - packages/ui/src/main.ts
+  - packages/ui/test/fixtures/repoOn.ts
+  - packages/ui/test/logic/cloudSyncWiring.firstConnect.test.ts
+  - packages/ui/test/logic/cloudSyncWiring.test.ts
+  - packages/ui/test/logic/liveProjectSync.test.ts
+  - packages/ui/test/logic/loadRepairNotice.test.ts
   - packages/ui/test/ui/drive-level-limits.browser.spec.ts
 note: >-
   Ruled QO953.c21-c31. Test changed with John's approval (QO953.c26, "a repair is ok but it has to be automatic", which
@@ -51,3 +66,10 @@ note: >-
   shown once in the "Project imported from X" message, one line each, never as a mark on the box (QO953.c30, c31). The
   desktop toast and the phone message strip keep line breaks and fit the screen width. The browser journey
   packages/ui/test/ui/drive-level-limits.browser.spec.ts (desktop and phone) runs in the full suite.
+  Restoring a stored project (the open projects at start-up, a saved project, the autosave, a backup or archive entry, a
+  share link) reports its repairs through createProjectRepo's onLoadRepaired to one toast, "Project opened: <name>" and a
+  line per repair; a listing reports nothing. Duplicate, What-if and snapshots copy a project the opening already repaired,
+  so nothing is left to repair (tested). A toast stays 2 s plus 4 s per line after the first, so a plain one-line toast
+  is unchanged. The power that drives 10 mV (about 0.00002857 W) ran past the phone's Power box: a phone box shows a value
+  below 1 whose fixed form is longer than the box in exponent form, four figures ("2.857e-5"); the desktop keeps the fixed
+  form. The other createProjectRepo callers in tests pass a no-op for the new callback; no expectation changed.

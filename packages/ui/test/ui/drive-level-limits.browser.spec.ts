@@ -19,6 +19,8 @@ import {readSampleProject, SAMPLE_PROJECT_OWPR} from '../fixtures/sampleProject.
 type Shell = 'desktop' | 'phone';
 
 const VOLTS_NOTE = /^Driver input voltage \(each\) is below its minimum — enter a value between 0\.01 and 1000(\.00)? V\. The drive level must be at least 10 mV\.$/;
+/** The System input power that drives 10 mV, in four figures: the phone's narrow box shows it in exponent form. */
+const POWER_AT_10_MV: Readonly<Record<Shell, RegExp>> = {phone: /^\d\.\d{3}e-\d$/, desktop: /^0\.0000\d{4}$/};
 const REPAIR_LINE = 'Driver input voltage (each) -6 V in the file: set to the 10 mV minimum';
 
 /** The sample project with its drive level set to an entered -6 V, as a file a person opens. */
@@ -109,6 +111,44 @@ for (const shell of ['desktop', 'phone'] as const) {
     await expect(volts.locator('.ui-field-dq-btn')).toHaveCount(0);
     await page.screenshot({path: testInfo.outputPath(`${shell}-opened-minus-six-volts-signal.png`)});
   });
+
+  test(`${shell}: the System input power that drives 10 mV is shown whole in its box, never cut`, async ({page}, testInfo) => {
+    await open(page, shell, minusSixVoltProject(testInfo));
+    await openSignal(page, shell);
+    const power = row(page, shell, 'System input power', 'Power').locator('input').first();
+    await expect(power).toHaveValue(POWER_AT_10_MV[shell]);
+    await expectWhole(power);
+    await power.screenshot({path: testInfo.outputPath(`${shell}-power-box-at-10mV.png`)});
+    await page.screenshot({path: testInfo.outputPath(`${shell}-power-at-10mV-signal.png`)});
+  });
+
+  test(`${shell}: an open project stored by an earlier build with -6 V is restored at 0.01 V, and a toast names the repair`, async ({page}, testInfo) => {
+    await open(page, shell, SAMPLE_PROJECT_OWPR);
+    // The stored open project as an earlier build, which let -6 V through, could have left it.
+    const raw = await page.evaluate(() => localStorage.getItem('openisd_open_sessions'));
+    const broken = (raw ?? '').replace(/\\"signal\\":\{\\"power_W\\":\{[^}]*\},\\"voltage_V\\":\{[^}]*\}\}/g, String.raw`\"signal\":{\"voltage_V\":{\"state\":\"E\",\"value\":-6}}`);
+    expect(broken, 'the stored project states its signal').not.toBe(raw ?? '');
+    await page.evaluate(next => localStorage.setItem('openisd_open_sessions', next), broken);
+    await page.reload();
+    const message = openingMessage(page, shell);
+    await expect(message).toHaveText(new RegExp(`^Project opened: [^\\n]+\\n${escaped(REPAIR_LINE)}$`), {useInnerText: true});
+    await expectInside(page, message);
+    await page.screenshot({path: testInfo.outputPath(`${shell}-restored-minus-six-volts-toast.png`)});
+    await openSignal(page, shell);
+    const input = row(page, shell, 'Driver input voltage', 'Volts').locator('input').first();
+    await expect(input).toHaveValue('0.01');
+    await expect(row(page, shell, 'Driver input voltage', 'Volts').locator('.ui-field-dq-btn')).toHaveCount(0);
+  });
+}
+
+function escaped(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** The box's whole text fits inside it: nothing runs past its edge. */
+async function expectWhole(input: Locator): Promise<void> {
+  const fits = await input.evaluate(e => e.scrollWidth <= e.clientWidth);
+  expect(fits, `the value ${await input.inputValue()} runs past the edge of its box`).toBe(true);
 }
 
 test('desktop: the chart keeps drawing while -6 V is refused', async ({page}) => {
