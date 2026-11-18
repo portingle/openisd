@@ -636,7 +636,11 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
 
   /** The stated values that disagree with each other, as the Driver Editor lists them. */
   const driverConsistencyReasons = computed(() => { void projectChanged.value; return project.value.driver.inconsistentInputReasons(); });
-  watch(driverConsistencyReasons, reasons => { if (reasons.length > 0) reportDisagreementsSeen(featureUse, project.value.driver); }, {immediate: true});
+  // Reads the project only while one is focused: with none (the empty start screen) nothing is read.
+  watch(() => focusedProject() === null ? [] : driverConsistencyReasons.value, reasons => {
+    const focused = focusedProject();
+    if (reasons.length > 0 && focused !== null) reportDisagreementsSeen(featureUse, focused.driver);
+  }, {immediate: true});
 
   // The Project tab's text fields bind here. Each `SimpleField<string>` on `OpenISDProject` is not
   // itself `v-model`-able, so this is a thin get/set bridge onto `.value`/`.set()` — reading
