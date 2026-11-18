@@ -200,14 +200,12 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
   // Feedback is the user's own answer to "Do you like OpenISD?", sent to the same collector with the same
   // anonymous browser id; it is kept on the device until the collector has it.
   const telemetry: Telemetry = usageTelemetry;
-  const pageOpenedAt = Date.now();
   const feedbackOutbox = new FeedbackOutbox({
     storage: telemetryStorage,
     transport: telemetryTarget === null
       ? new OfflineFeedbackTransport()
       : new FetchFeedbackTransport(telemetryTarget.endpoint, window.fetch.bind(window), () => navigator.onLine),
     now: () => Date.now(),
-    sessionAgeS: () => Math.floor((Date.now() - pageOpenedAt) / 1000),
     newId: newUuid,
     version: appVersionText,
     sessionId: visitSessionId,
