@@ -2,7 +2,7 @@ id: T886
 release_note: When Cloud sync is on, the Save button says it sends this version to your other devices, the Cloud sync dialog lists projects with unsaved changes (each with a Save button), a bar asks you to save after 5 minutes of unsaved edits, and a sync conflict copy of an open project shows a notice naming both projects
 repo: openisd
 owner: sonnet-save-for-sync
-status: claimed
+status: done
 goal: With Cloud sync on, tell users that only saved versions reach their other devices (Save tooltip, a list in the Cloud sync dialog) and ask them to save after 5 minutes of unsaved edits; show a notice naming both projects when sync makes a conflict copy of an open project
 why: "John, 18 Nov 2026, QO946.c244: \"if cloud sync isn't enabled then don't tell user to save\"; QO946.c245 (tell and ask, sync on only): \"ok do that\". Only 78 of 664 people ever pressed Save, so most projects never sync, because Cloud sync sends saved versions only."
 done_test: bash scripts/quiet-test.sh npx vitest run packages/ui/test/logic/unsavedNudge.test.ts packages/ui/test/logic/pulledProjects.test.ts packages/design/test/cloud/unsavedSync.test.ts
