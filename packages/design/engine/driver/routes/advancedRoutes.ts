@@ -1,4 +1,5 @@
 import {G_STANDARD, P0} from '../../constants.js';
+import {splMaxAtRatedPower} from '../../efficiency.js';
 import {nominalImpedance} from '../../solvers/driverQuantities.js';
 import {TAU} from './constants.js';
 import {SolveRoute} from './SolveRoute.js';
@@ -26,9 +27,9 @@ export const ADVANCED_ROUTES: readonly DriverRoute[] = Object.freeze([
   new SolveRoute('gamma_m_per_s2_A', ['BL_Tm', 'Mms_kg'], 'γ = BL_Tm / Mms_kg', v => v.BL_Tm / v.Mms_kg, v => v.Mms_kg > 0).inRelation(GAMMA_FROM_MOTOR),
   // SPLmax on the stated SPL, else on the SPLref the efficiency routes produced: one route per base, each declaring it (T902).
   new SolveRoute('SPLmax_dB', ['SPL_dB', 'Pe_W'], 'SPLmax_dB = SPL_dB + 10 × log₁₀(Pe_W) − 3',
-    v => v.SPL_dB + 10 * Math.log10(v.Pe_W) - 3, v => v.Pe_W > 0),
+    v => splMaxAtRatedPower(v.SPL_dB, v.Pe_W), v => v.Pe_W > 0),
   new SolveRoute('SPLmax_dB', ['SPLref_dB', 'Pe_W'], 'SPLmax_dB = SPLref_dB + 10 × log₁₀(Pe_W) − 3',
-    v => v.SPLref_dB + 10 * Math.log10(v.Pe_W) - 3, v => v.Pe_W > 0),
+    v => splMaxAtRatedPower(v.SPLref_dB, v.Pe_W), v => v.Pe_W > 0),
   new SolveRoute('Gloss', ['Fs_hz', 'Xmax_m'], 'Gloss = g / ((2π × Fs_hz)² × Xmax_m)', v => G_STANDARD / ((TAU * v.Fs_hz) ** 2 * v.Xmax_m), v => v.Fs_hz > 0 && v.Xmax_m > 0),
   new SolveRoute('SPLmaxLF_dB', ['Vd_m3', 'roo_kg_per_m3'], 'SPLmaxLF_dB = 20 × log₁₀(ρ × (2π × 20)² × Vd_m3 / (2π√2) / p_ref)', v => {
     const p20 = v.roo_kg_per_m3 * (TAU * 20) ** 2 * v.Vd_m3 / (TAU * Math.SQRT2);

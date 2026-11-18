@@ -2,10 +2,12 @@ import {
   efficiencyConstant,
   efficiencyFromSpl,
   motorEfficiency,
+  reFromSplAt283V,
   referenceEfficiency,
+  spl1WFromSplAt283V,
+  splAt283V,
   splFromEfficiency,
 } from '../../efficiency.js';
-import {V283_SQ} from './constants.js';
 import {SolveRoute} from './SolveRoute.js';
 import type {DriverRoute} from './SolveRoute.js';
 import {VAS_FROM_COMPLIANCE} from './relations.js';
@@ -71,12 +73,12 @@ export const SPL_FROM_NO_ROUTES: readonly DriverRoute[] = Object.freeze([
 export const USPL_ROUTES: readonly DriverRoute[] = Object.freeze([
   // On the stated SPL, else on the SPLref the efficiency routes produced: one route per base, each declaring it (T902).
   new SolveRoute('USPL_dB', ['SPL_dB', 'Re_ohm'], 'USPL_dB = SPL_dB + 10 × log₁₀(2.83² / Re_ohm)',
-    v => v.SPL_dB + 10 * Math.log10(V283_SQ / v.Re_ohm), v => v.Re_ohm > 0),
+    v => splAt283V(v.SPL_dB, v.Re_ohm), v => v.Re_ohm > 0),
   new SolveRoute('USPL_dB', ['SPLref_dB', 'Re_ohm'], 'USPL_dB = SPLref_dB + 10 × log₁₀(2.83² / Re_ohm)',
-    v => v.SPLref_dB + 10 * Math.log10(V283_SQ / v.Re_ohm), v => v.Re_ohm > 0),
+    v => splAt283V(v.SPLref_dB, v.Re_ohm), v => v.Re_ohm > 0),
   new SolveRoute('Re_ohm', ['USPL_dB', 'SPL_dB'], 'Re_ohm = 2.83² / 10^((USPL_dB − SPL_dB) / 10)',
-    v => V283_SQ / Math.pow(10, (v.USPL_dB - v.SPL_dB) / 10)),
+    v => reFromSplAt283V(v.USPL_dB, v.SPL_dB)),
   new SolveRoute('Re_ohm', ['USPL_dB', 'SPLref_dB'], 'Re_ohm = 2.83² / 10^((USPL_dB − SPLref_dB) / 10)',
-    v => V283_SQ / Math.pow(10, (v.USPL_dB - v.SPLref_dB) / 10)),
-  new SolveRoute('SPLref_dB', ['USPL_dB', 'Re_ohm'], 'SPLref_dB = USPL_dB − 10 × log₁₀(2.83² / Re_ohm)', v => v.USPL_dB - 10 * Math.log10(V283_SQ / v.Re_ohm), v => v.Re_ohm > 0),
+    v => reFromSplAt283V(v.USPL_dB, v.SPLref_dB)),
+  new SolveRoute('SPLref_dB', ['USPL_dB', 'Re_ohm'], 'SPLref_dB = USPL_dB − 10 × log₁₀(2.83² / Re_ohm)', v => spl1WFromSplAt283V(v.USPL_dB, v.Re_ohm), v => v.Re_ohm > 0),
 ]);
