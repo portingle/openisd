@@ -45,6 +45,8 @@ export const SHARED_BRANCH_MAP:BranchMap={
   'conditional-branch-42f6a358b0c19bba':{kind:'partOf',view:'cloud'}, // components/CloudSyncDialog.vue:76
   'conditional-branch-f5ac6b93c6b72790':{kind:'partOf',view:'cloud'}, // components/CloudSyncDialog.vue:82
   'conditional-branch-4933bbebee2997ab':{kind:'partOf',view:'cloud'}, // components/CloudSyncDialog.vue:93
+  'conditional-branch-5d0d963f0a1972a8':{kind:'notAView',reason:"the Cloud sync dialog's list of open projects with unsaved changes: only with Cloud sync on and an unsaved project; walked by cloud-save-for-sync.browser.spec.ts"}, // components/CloudSyncDialog.vue:79
+  'conditional-branch-fa3e77a80cf84b28':{kind:'notAView',reason:"the Cloud sync dialog's list of open projects with unsaved changes: only with Cloud sync on and an unsaved project; walked by cloud-save-for-sync.browser.spec.ts"}, // components/CloudSyncDialog.vue:137
   'conditional-branch-f134281bfa40a9e0':{kind:'partOf',view:'desktop/settings/cloud/account-and-activity'}, // components/CloudSyncDialog.vue:102
   'conditional-branch-82129c92e7a9b011':{kind:'partOf',view:'desktop/settings/cloud/account-and-activity'}, // components/CloudSyncDialog.vue:105
   'conditional-branch-cf49bf429ddf905b':{kind:'partOf',view:'desktop/settings/cloud/account-and-activity'}, // components/CloudSyncDialog.vue:108
