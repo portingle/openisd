@@ -20,3 +20,19 @@ describe('MobileDriverTab-hooks usage counts', () => {
     expect(telemetryUi.actions.snapshot()).toEqual(['dialog:driver-editor', 'dialog:driver-editor']);
   });
 });
+
+describe('MobileDriverTab-hooks Driver help (T882)', () => {
+  it('lists Driver wiring only while the control is drawn (2 or more drivers)', () => {
+    const logic = testAppLogic();
+    const project = ProjectBuilder.empty(logic.appState.engine);
+    logic.appState.addProject(project);
+    const {telemetryUi} = recordingTelemetryUi();
+    const tab = runHook(computed(() => project), () => useMobileDriverTab(), logic, telemetryUi);
+    project.nDrivers.set(1);
+    logic.appState.projectChanged.value++;
+    expect(tab.driverHelp.value.rows.map(r => r.label)).not.toContain('Driver wiring');
+    project.nDrivers.set(2);
+    logic.appState.projectChanged.value++;
+    expect(tab.driverHelp.value.rows.map(r => r.label)).toContain('Driver wiring');
+  });
+});
