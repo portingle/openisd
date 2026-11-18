@@ -1,0 +1,10 @@
+id: T883
+release_note: internal
+repo: openisd
+owner: stats-bot-cleanup
+status: open
+goal: Feedback answers no longer carry age_s (session age), which existed only for the removed feedback bot checks
+why: John, 18 Nov 2026 (QO946.c237): "ok ditch the bot prev stuff then"
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T883.yml
