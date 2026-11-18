@@ -1,0 +1,10 @@
+id: T884
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Feedback question is offered at app start after the splash closes, from the 3rd launch, not on Save
+why: John, 18 Nov 2026 02:47 UTC, QO946.c238: relying on save is useless
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T884.yml
