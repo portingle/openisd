@@ -92,6 +92,25 @@ for (const [width, height] of [[374, 705], [360, 740]] as const) {
   });
 }
 
+for (const [width, height] of [[374, 705], [360, 740]] as const) {
+  test(`scrolling the chips sideways does not move them: the strip keeps its place and width from the start to the end at ${width}x${height} (BUG_20261118_phone-chip-strip-shifts-when-scrolled)`, async ({ appPage: page }) => {
+    await page.setViewportSize({width, height});
+    const strip = page.locator('.mob-fstrip');
+    const next = page.getByRole('button', { name: 'More filter types' });
+    const earlier = page.getByRole('button', { name: 'Earlier filter types' });
+    const frame = () => strip.evaluate(el => { const r = el.getBoundingClientRect(); return {left: r.left, width: r.width}; });
+    const atStart = await frame();
+    // A person taps the next arrow until the last chip is in view; the arrow with nothing more to show goes away each time.
+    for (let tap = 0; tap < 12 && await next.isVisible(); tap++) {
+      await next.click();
+      await expect.poll(async () => { const before = await strip.evaluate(el => el.scrollLeft); await page.waitForTimeout(150); return before === await strip.evaluate(el => el.scrollLeft); }, {message: 'the strip has stopped scrolling'}).toBe(true);
+      expect(await frame(), `the strip after tap ${tap + 1} sits where it did at the start`).toEqual(atStart);
+    }
+    await expect(next, 'scrolled to the end').toBeHidden();
+    await expect(earlier).toBeVisible();
+  });
+}
+
 test('the chip text is a little smaller than the 15 px of the other phone buttons, and still readable', async ({ appPage: page }) => {
   const sizes = await page.locator('.mob-fstrip .mob-btn').evaluateAll(els => els.map(e => parseFloat(getComputedStyle(e).fontSize)));
   for (const px of sizes) { expect(px).toBeLessThan(15); expect(px).toBeGreaterThanOrEqual(12); }

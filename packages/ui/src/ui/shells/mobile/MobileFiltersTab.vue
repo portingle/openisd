@@ -65,7 +65,8 @@ onBeforeUnmount(() => resize?.disconnect());
 </template>
 
 <style scoped>
-/* The arrows sit beside the strip, never over a chip; each goes at the end where there is nothing more to see. */
+/* The arrows sit beside the strip, never over a chip; each goes at the end where there is nothing more to see. It keeps its place (hidden,
+   not removed), so the strip never changes width and the chips never jump sideways under a finger that is about to tap one. */
 .mob-fstrip-wrap { display: flex; align-items: center; gap: 4px; padding: 0 8px; }
 .mob-fstrip { flex: 1 1 0; min-width: 0; display: flex; gap: 6px; padding: 6px 4px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mob-fstrip::-webkit-scrollbar { display: none; }
@@ -74,5 +75,5 @@ onBeforeUnmount(() => resize?.disconnect());
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 50%; border-color: #d0d0d0; background: #fff; color: #333; }
 .mob-fstrip-nav svg { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.mob-fstrip-wrap.at-start .mob-fstrip-prev, .mob-fstrip-wrap.at-end .mob-fstrip-next { display: none; }
+.mob-fstrip-wrap.at-start .mob-fstrip-prev, .mob-fstrip-wrap.at-end .mob-fstrip-next { visibility: hidden; }
 </style>
