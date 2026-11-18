@@ -213,7 +213,7 @@ function startApp(store: OpenStore, overlay: LoadingOverlay | null, recordedProj
     newId: newUuid,
     version: appVersionText,
     sessionId: visitSessionId,
-    browserId: browserIdOf(telemetryStorage, newUuid),
+    browserId: () => browserIdOf(telemetryStorage, newUuid),
     environment: telemetryTarget === null ? 'test' : telemetryTarget.environment,
   });
   const installMarker = new InstallMarker(telemetry, telemetryStorage);

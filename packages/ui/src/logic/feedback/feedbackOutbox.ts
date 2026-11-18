@@ -17,7 +17,8 @@ export interface FeedbackOutboxDeps {
   readonly newId: () => string;
   readonly version: string;
   readonly sessionId: string;
-  readonly browserId: string;
+  /** Asked only when an answer is about to be sent, so a start-up that sends nothing stores no browser id. */
+  readonly browserId: () => string;
   readonly environment: TelemetryEnvironment;
 }
 
@@ -139,7 +140,7 @@ export class FeedbackOutbox {
   private wireOf(e: OutboxEntry): WireEvent {
     return {
       name: 'feedback', ts: e.ts, version: this.deps.version, session: this.deps.sessionId,
-      browser_id: this.deps.browserId, environment: this.deps.environment,
+      browser_id: this.deps.browserId(), environment: this.deps.environment,
       fields: fieldsOf({kind: 'feedback', id: e.id, face: e.face, comment: e.comment, screen: e.screen, skin: e.skin, ageS: e.ageS}),
     };
   }

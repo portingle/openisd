@@ -37,7 +37,7 @@ function setup(busy: () => boolean = () => false) {
   let ids = 0;
   const outbox = new FeedbackOutbox({
     storage, transport: net, now: () => clock.now, sessionAgeS: () => 30, newId: () => `id${++ids}`,
-    version: 'v', sessionId: 's', browserId: 'b', environment: 'test',
+    version: 'v', sessionId: 's', browserId: () => 'b', environment: 'test',
   });
   const deps: FeedbackDialogDeps = {
     outbox, storage, now: () => clock.now, skin: () => 'original', screen: () => 'original/Vented',

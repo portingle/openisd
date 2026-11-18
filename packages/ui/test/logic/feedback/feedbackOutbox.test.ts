@@ -32,7 +32,7 @@ function setup() {
   let n = 0;
   const make = () => new FeedbackOutbox({
     storage, transport, now: () => 1_800_000_000_000, sessionAgeS: () => 42, newId: () => `id-${++n}`,
-    version: '7.1.0', sessionId: 'sess', browserId: 'brow', environment: 'test',
+    version: '7.1.0', sessionId: 'sess', browserId: () => 'brow', environment: 'test',
   });
   return {transport, storage, outbox: make(), make};
 }
@@ -138,12 +138,26 @@ describe('FeedbackOutbox during a slow send', () => {
         return true;
       },
     };
-    const outbox = new FeedbackOutbox({storage, transport, now: () => 1_800_000_000_000, sessionAgeS: () => 42, newId: () => 'a', version: 'v', sessionId: 's', browserId: 'b', environment: 'test'});
+    const outbox = new FeedbackOutbox({storage, transport, now: () => 1_800_000_000_000, sessionAgeS: () => 42, newId: () => 'a', version: 'v', sessionId: 's', browserId: () => 'b', environment: 'test'});
     const answering = outbox.answer(FeedbackFace.Yes, 'scr', 'original');
     const commenting = outbox.comment('a', 'late words');
     release();
     await answering;
     expect(await commenting).toBe('sent');
     expect(bodies.join('')).toContain('late words');
+  });
+  it('stores nothing and asks for no browser id at start-up, so two start-ups leave byte-identical storage', async () => {
+    const storage = createMemoryStorage();
+    let asked = 0;
+    const start = () => new FeedbackOutbox({
+      storage, transport: new FakeTransport(), now: () => 1_800_000_000_000, sessionAgeS: () => 0, newId: () => 'x',
+      version: 'v', sessionId: 's', browserId: () => { asked += 1; return 'b'; }, environment: 'test',
+    });
+    await start().flush();
+    const afterFirst = JSON.stringify(storage.keys().map(k => [k, storage.get(k)]));
+    await start().flush();
+    expect(JSON.stringify(storage.keys().map(k => [k, storage.get(k)]))).toBe(afterFirst);
+    expect(afterFirst).toBe('[]');
+    expect(asked).toBe(0);
   });
 });
