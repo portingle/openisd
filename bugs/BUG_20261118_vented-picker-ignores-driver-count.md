@@ -20,4 +20,4 @@ One sentence: the vented alignment picker (the Alignment popup on the Box tab, t
 
 ## Tests
 - packages/design/test/domain/winisd-vented-picker-counts-drivers.test.ts: the 10 WinISD cases (C4 and QB3, Nd 1/2/4, Nd 1 and 2 Iso-barik), Vb and Fb to relative 1e-9, the tolerance of the sealed picker test.
-- packages/ui/test/ui/vented-alignment-driver-count-journey.browser.spec.ts: 2 drivers on the Driver tab, then the vented Alignment on the Box tab proposes 21.39 L, twice the one-driver 10.70 L (desktop and phone).
+- packages/ui/test/ui/vented-alignment-driver-count-journey.browser.spec.ts: 2 drivers on the Driver tab, then the vented Alignment on the Box tab proposes twice the one-driver volume (10.70 L then 21.39 L; desktop and phone).
