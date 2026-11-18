@@ -9,7 +9,6 @@ import {fillAndBlur} from '../fixtures/numField.js';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
 
 const MESSAGE = /WinISD closes when this filter has a negative peak gain, but a peak gain below 0 dB has no curve to draw, so OpenISD keeps the value and draws no curve for this filter \(here -6 dB at 50 Hz\)\./;
-const shotDir = process.env['SHOT_DIR'];
 
 function field(scope: Locator, label: string): Locator {
   return scope.locator('.ui-field').filter({has: scope.page().locator('label').filter({hasText: new RegExp(`^${label}$`)})}).locator('input');
@@ -35,7 +34,6 @@ test('desktop: a Peak HP filter at -6 dB shows the engine message in the list, a
   const message = panel.locator('.filter-issue');
   await expect(message).toHaveText(MESSAGE);
   await expectNotClipped(page, message);
-  if (shotDir !== undefined) await page.screenshot({path: `${shotDir}/desktop-negative-peak.png`});
   await fillAndBlur(field(panel, 'Gpk'), '6');
   await expect(message).toHaveCount(0);
 });
@@ -52,5 +50,4 @@ test('phone: a Peak HP filter at -6 dB shows the engine message on its card', as
   const message = card.locator('.filter-issue');
   await expect(message).toHaveText(MESSAGE);
   await expectNotClipped(page, message);
-  if (shotDir !== undefined) await page.screenshot({path: `${shotDir}/phone-negative-peak.png`});
 });
