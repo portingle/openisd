@@ -1,0 +1,15 @@
+id: T922
+release_note: internal
+repo: openisd
+owner: agent
+status: in-progress
+label: fixes
+goal: Every browser test starts with the same empty My Drivers. A driver one test imports or saves through the app is gone before the next test on the same worker, whichever spec made it and without the spec registering it.
+why: "John's rule: 'if there is a unexpected data hold over then isn't that a bug' (16-17 Oct), and 'no backdoor in UI testing': the reset acts as a user does. Found by T921: the new-project wizard spec's imported Tang Band W5-1138SMF stayed in My Drivers and a later spec picked it instead of the catalogue driver."
+done_test: bash scripts/test-browser.sh packages/ui/test/ui/reset-between-tests.browser.spec.ts
+files:
+  - tasks/T922.yml
+  - bugs/BUG_20261118_browser-tests-leak-my-drivers.md
+  - packages/ui/test/fixtures.ts
+  - packages/ui/test/ui/reset-between-tests.browser.spec.ts
+note: resetApp removes every My Drivers row through the library's own cross buttons. My Passive Radiators and favourite stars are not reset (no user path from the library); reported, not changed.

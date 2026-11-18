@@ -104,6 +104,7 @@ export class TestAdditions {
  * - clears storage back to splashSeen / persist_warning_dismissed baseline
  * - closes all open projects and resets focused project to null
  * - resets application settings (difference cues, vented limits, env defaults)
+ * - removes every driver in My Drivers (anything a test imported, saved or edited)
  * - closes all dialogs / modals and clears presentation state (unit tokens, skin override, zoom)
  */
 export async function resetApp(page: Page, additions: TestAdditions): Promise<void> {
@@ -118,6 +119,7 @@ export async function resetApp(page: Page, additions: TestAdditions): Promise<vo
   await restoreAutomaticSkin(page);
   await closeAllProjects(page);
   await restoreOptions(page);
+  await emptyMyDrivers(page);
   await restoreSidebarWidth(page);
   await clearHash(page);
 }
@@ -205,6 +207,23 @@ async function emptyBin(page: Page): Promise<void> {
     await page.locator('.confirm-dialog-confirm').click();
   }
   await page.getByRole('button', { name: 'Back to projects' }).click();
+}
+
+/** Empties My Drivers the way a user does: open Manage Drivers and press the ✕ on each saved row until none
+ *  is left. My Drivers lives in the browser's storage, which the worker's shared page keeps from one test to
+ *  the next, so whatever a test imported or saved would otherwise be in the next test's driver lists. This
+ *  does not depend on the test having registered what it made (T922). */
+async function emptyMyDrivers(page: Page): Promise<void> {
+  await page.locator('.tb-btn[title^="Manage Drivers"]').click();
+  const library = page.locator('.driver-library');
+  await library.locator('.dlist').waitFor({ state: 'visible' });
+  const rows = library.locator('.my-ditem');
+  for (let guard = 0; guard < 500 && await rows.count() > 0; guard++) {
+    await rows.first().locator('.my-del').click();
+  }
+  const left = await rows.count();
+  if (left > 0) throw new Error(`resetApp: ${left} driver(s) still in My Drivers after removing them`);
+  await dismissOverlays(page);
 }
 
 /** Puts Options back to the app's defaults through the Options dialog's own controls. */
