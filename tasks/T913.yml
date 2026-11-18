@@ -17,6 +17,8 @@ files:
   - packages/ui/src/hooks/OriginalFilters-hooks.ts
   - packages/ui/src/ui/shells/original/OriginalFilters.vue
   - packages/ui/src/ui/shells/mobile/MobileFilterCard.vue
+  - packages/ui/test/fixtures/branchMap/desktop.ts
+  - packages/ui/test/fixtures/branchMap/phone.ts
   - packages/design/engine/filters/FilterEngine.ts
   - packages/design/engine/filters/PeakHighpassFilterModel.ts
 note: Ruled QO951. The browser journey packages/ui/test/ui/filter-negative-peak-message.browser.spec.ts runs in the full suite. WinISD dies on Add at Gpk -6 dB (winisd_research/runs/peakhp-negative-20261118/), so there is no WinISD curve to copy.
