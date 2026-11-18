@@ -24,6 +24,7 @@
  * width moves the prediction.
  */
 import {NumberField} from '../../fields/field.js';
+import type {ValueFloor} from '../../fields/field.js';
 import {GAMMA, soundSpeedAt, temperatureIssues} from '../air.js';
 import type {AppAir} from '../air.js';
 import {inconsistentInputs, missingDependencies} from '../consistency.js';
@@ -94,6 +95,16 @@ const LIMITS: Readonly<Record<AirQuantityName, {readonly min: number; readonly m
   pressurePa: NumberField.ADV_PRESSURE_KPA.limits,
   c: NumberField.ADV_SOUNDVELOCITY_M_PER_S.limits,
   rho: NumberField.ADV_AIRDENSITY_KG_PER_M3.limits,
+});
+
+/** Whether zero and below are possible at all: the Advanced-pane fields' own floors. Air with no
+ *  pressure, no density or no sound velocity is not air. */
+const AIR_FLOORS: Readonly<Record<AirQuantityName, ValueFloor>> = Object.freeze<Record<AirQuantityName, ValueFloor>>({
+  tempK: NumberField.ADV_TEMP_K.floor,
+  humidityPct: NumberField.ADV_HUMIDITY_PCT.floor,
+  pressurePa: NumberField.ADV_PRESSURE_KPA.floor,
+  c: NumberField.ADV_SOUNDVELOCITY_M_PER_S.floor,
+  rho: NumberField.ADV_AIRDENSITY_KG_PER_M3.floor,
 });
 
 function solved(value: number): Outcome { return {kind: 'solved', value}; }
@@ -393,9 +404,16 @@ export function solveAir(inputs: AirInputs, appAir: AppAir): AirSolution {
     const typed = inputs[name];
     if (name === 'tempK' || typed.kind !== 'entered') continue;
     const {min, max} = LIMITS[name];
+    const said = `${SAYS[name][0]?.toUpperCase() ?? ''}${SAYS[name].slice(1)}`;
+    const floor = AIR_FLOORS[name];
+    if (floor === 'positive' && !(typed.value > 0)) {
+      const base = missingDependencies(name, [{formula: `${SAYS[name]} greater than 0`, required: [name], missing: [name]}]);
+      issues.push({...base, fields: [name], text: `${said} must be greater than 0: air with no ${SAYS[name]} carries no sound, so the charts are not drawn.`});
+      continue;
+    }
     if (Number.isFinite(typed.value) && typed.value >= min && typed.value <= max) continue;
     const base = missingDependencies(name, [{formula: `${SAYS[name]} between ${min} and ${max}`, required: [name], missing: [name]}]);
-    issues.push({...base, fields: [name], text: `${SAYS[name][0]?.toUpperCase() ?? ''}${SAYS[name].slice(1)} is outside the sane range (${min}–${max}).`});
+    issues.push({...base, fields: [name], text: `${said} is outside the sane range (${min}–${max}).`});
   }
 
   return {

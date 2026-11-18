@@ -91,7 +91,7 @@ export class OpenISDProject {
     readonly #appContext: AppContext;
 
     /** The current layer's cached issues — see the class doc comment's "ONE EXCEPTION". */
-    #issues: ProjectIssues = { driver: [], signal: [], vent: [], rearVent: [], pr: [], radiator: [], sealed: [], ventTuningExtra: null, air: [] };
+    #issues: ProjectIssues = { driver: [], signal: [], driveLevel: [], vent: [], rearVent: [], pr: [], radiator: [], sealed: [], ventTuningExtra: null, air: [] };
 
     private constructor(saved: OpenISDProjectJson, uuid: string, engine: Engine, appContext: AppContext) {
         this.#saved = saved;
@@ -874,7 +874,9 @@ export class OpenISDProject {
             airIssues: this.#airRangeIssues(root),
             engine: this.#engine,
             ventIssues: this.#issues.vent,
+            rearVentIssues: this.#issues.rearVent,
             prIssues: this.#issues.pr,
+            driveLevelIssues: this.#issues.driveLevel,
         };
     }
 
