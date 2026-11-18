@@ -3,9 +3,25 @@
  * rows, a one-line chip carousel, filter frequencies in whole hertz. The filter chain itself is the
  * desktop's logic (OriginalFilters); its own spec files cover how it behaves.
  */
+import type {Locator} from '@playwright/test';
 import {expect, openAMobileProject, test} from '../fixtures.js';
 import {forceMobileSkin, tapMobileMenuItem} from '../fixtures/mobileSkin.js';
 import {PHONE_FILTER_CHIPS, PhoneRowSizes} from '@openisd/design/fields';
+
+/** Where the chip strip sits on the screen. */
+async function chipFrame(strip: Locator): Promise<{left: number; width: number}> {
+  return strip.evaluate(el => { const r = el.getBoundingClientRect(); return {left: r.left, width: r.width}; });
+}
+
+/** Taps the next arrow while it shows, waiting for each scroll to come to rest, and calls `after` with the tap number. */
+async function tapUntilEnd(next: Locator, strip: Locator, after: (tap: number) => Promise<void>): Promise<void> {
+  for (let tap = 1; tap <= 12 && await next.isVisible(); tap++) {
+    await next.click();
+    let last = -1;
+    await expect.poll(async () => { const now = await strip.evaluate(el => el.scrollLeft); const rested = now === last; last = now; return rested; }, {message: 'the strip has stopped scrolling'}).toBe(true);
+    await after(tap);
+  }
+}
 
 test.beforeEach(async ({ appPage: page }) => {
   await forceMobileSkin(page);
@@ -98,14 +114,9 @@ for (const [width, height] of [[374, 705], [360, 740]] as const) {
     const strip = page.locator('.mob-fstrip');
     const next = page.getByRole('button', { name: 'More filter types' });
     const earlier = page.getByRole('button', { name: 'Earlier filter types' });
-    const frame = () => strip.evaluate(el => { const r = el.getBoundingClientRect(); return {left: r.left, width: r.width}; });
-    const atStart = await frame();
+    const atStart = await chipFrame(strip);
     // A person taps the next arrow until the last chip is in view; the arrow with nothing more to show goes away each time.
-    for (let tap = 0; tap < 12 && await next.isVisible(); tap++) {
-      await next.click();
-      await expect.poll(async () => { const before = await strip.evaluate(el => el.scrollLeft); await page.waitForTimeout(150); return before === await strip.evaluate(el => el.scrollLeft); }, {message: 'the strip has stopped scrolling'}).toBe(true);
-      expect(await frame(), `the strip after tap ${tap + 1} sits where it did at the start`).toEqual(atStart);
-    }
+    await tapUntilEnd(next, strip, async tap => expect(await chipFrame(strip), `the strip after tap ${tap} sits where it did at the start`).toEqual(atStart));
     await expect(next, 'scrolled to the end').toBeHidden();
     await expect(earlier).toBeVisible();
   });
