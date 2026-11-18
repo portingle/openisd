@@ -1,0 +1,10 @@
+id: T881
+release_note: internal
+repo: openisd
+owner: feedbackfix
+status: open
+goal: Feedback dialog shows one confirmation after a face and a comment are sent, not two
+why: John, 18 Nov 2026: feedback feature on test; lead found the double confirmation on test.openisd.app
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T881.yml
