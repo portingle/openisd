@@ -118,7 +118,24 @@ export interface ProjectRepo {
   deleteStoredProject(id: string): 'done' | 'refused';
   /** The saved-list id `project` was loaded from or saved as, or null when it has none yet. */
   storedIdOf(project: OpenISDProject): string | null;
+  /** Cloud sync sends the whole project (John, QO946.c248): the project's saved entry takes its unsaved
+   *  layer too, so a sync run sends both, and Save stays the checkpoint. The entry keeps its `modified`
+   *  time (the last Save). `base` is the entry text this project was last written as or found equal to
+   *  (null when not known yet).
+   *  - 'same': the entry holds the project already; `held` is the entry.
+   *  - 'idle': neither has unsaved edits: nothing to send, nothing written.
+   *  - 'written': the entry held `base`, or the same checkpoint with no unsaved edits: it now holds the project.
+   *  - 'moved': the entry holds another version (a pull, another device): nothing is written, so neither is lost.
+   *  - 'notStored' / 'refused': no entry, or the store refused the write. */
+  storeWithUnsavedLayer(project: OpenISDProject, base: string | null): LayerWrite;
+  /** The saved entry `id` without its unsaved layer: what closing a project without saving leaves. */
+  dropUnsavedLayer(id: string): 'written' | 'same' | 'notStored' | 'refused';
 }
+
+/** What writing a saved entry's unsaved layer did; `held` is the entry's text afterwards. */
+export type LayerWrite =
+  | { readonly kind: 'written' | 'same'; readonly held: string }
+  | { readonly kind: 'idle' | 'moved' | 'notStored' | 'refused' };
 
 export interface StoredProjectDoc {
   readonly id: string;
@@ -543,6 +560,43 @@ function migrateEntries<T extends { text: string }>(entries: readonly T[]): { en
     return project;
   }
 
+  /** A stored project text's saved checkpoint and unsaved layer, each as one text (null: no unsaved layer); null when
+   *  it is not a session. Each leaves out `charts` (view state and the trace colour opening stamps), as the project's
+   *  own unsaved-changes test does. */
+  function layersOf(text: string): { readonly saved: string; readonly edited: string | null } | null {
+    const design = (layer: Readonly<Record<string, unknown>>): string => {
+      const {charts: _charts, ...rest} = layer;
+      return JSON.stringify(rest);
+    };
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (!isRecord(parsed) || !isRecord(parsed.saved)) return null;
+      return {saved: design(parsed.saved), edited: isRecord(parsed.edited) ? design(parsed.edited) : null};
+    } catch {
+      return null;
+    }
+  }
+
+  /** Saved entry `id` replaced by `text`, keeping its place and `modified` time. */
+  function rewriteEntry(id: string, text: string): 'written' | 'refused' | 'notStored' {
+    const entries = readStoredEntries();
+    const index = entries.findIndex(entry => entry.id === id);
+    const held = entries[index];
+    if (held === undefined) return 'notStored';
+    const rewritten = entries.slice();
+    rewritten[index] = {...held, text};
+    try {
+      writeStoredEntries(rewritten);
+    } catch {
+      return 'refused';
+    }
+    return 'written';
+  }
+
+  function heldText(id: string): string | null {
+    return readStoredEntries().find(entry => entry.id === id)?.text ?? null;
+  }
+
   function saveToStorage(project: OpenISDProject): StorageSaveResult {
     const entries = readStoredEntries();
     const id = project.uuid();
@@ -797,6 +851,32 @@ function migrateEntries<T extends { text: string }>(entries: readonly T[]): { en
     },
     storedIdOf(project: OpenISDProject): string | null {
       return readStoredEntries().some(entry => entry.id === project.uuid()) ? project.uuid() : null;
+    },
+    storeWithUnsavedLayer(project: OpenISDProject, base: string | null): LayerWrite {
+      const id = project.uuid();
+      const held = heldText(id);
+      if (held === null) return {kind: 'notStored'};
+      const text = project.toStoredText();
+      const heldLayers = layersOf(held);
+      const ours = layersOf(text);
+      // The entry holds this project's design already (it may differ in view state only).
+      if (held === text || (heldLayers !== null && ours !== null && heldLayers.saved === ours.saved && heldLayers.edited === ours.edited)) {
+        return {kind: 'same', held};
+      }
+      // Nothing unsaved on either side: the entry is the project's checkpoint, as Save wrote it.
+      if (!project.isModified() && heldLayers !== null && heldLayers.edited === null) return {kind: 'idle'};
+      const sameCheckpoint = heldLayers !== null && ours !== null && heldLayers.saved === ours.saved && heldLayers.edited === null;
+      if (held !== base && !sameCheckpoint) return {kind: 'moved'};
+      const written = rewriteEntry(id, text);
+      return written === 'written' ? {kind: 'written', held: text} : {kind: written};
+    },
+    dropUnsavedLayer(id: string): 'written' | 'same' | 'notStored' | 'refused' {
+      const held = heldText(id);
+      if (held === null) return 'notStored';
+      let parsed: unknown;
+      try { parsed = JSON.parse(held); } catch { return 'same'; }
+      if (!isRecord(parsed) || !isRecord(parsed.edited)) return 'same';
+      return rewriteEntry(id, JSON.stringify({...parsed, edited: null}));
     },
     deleteStoredProject(id: string): 'done' | 'refused' {
       const entries = readStoredEntries();
