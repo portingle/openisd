@@ -338,6 +338,7 @@ describe('OriginalShell-hooks', () => {
       dismiss: () => undefined, show: () => undefined,
     });
     provideCloudSync(app, null, createCloudUiStore(createMemoryStorage()));
+    provideUnsavedNudgeTo(app, idleUnsavedNudge());
     expect(() => app.runWithContext(() => useOriginalShell())).not.toThrow();
   });
 
