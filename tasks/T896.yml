@@ -2,7 +2,7 @@ id: T896
 release_note: internal
 repo: openisd
 owner: lead
-status: claimed
+status: done
 goal: The visual baseline pictures show the address a user sees (https://openisd.app/), never the test server's http://localhost:4300/
 why: 'The phone footer in the CI-drawn baselines read "Projects saved in this browser at http://localhost:4300/". The app is right to name the page address; the pictures were taken at the test server. They are now taken at the release address, served by a stand-in.'
 done_test: npx vitest run packages/persistence/test/projectRepo.test.ts
