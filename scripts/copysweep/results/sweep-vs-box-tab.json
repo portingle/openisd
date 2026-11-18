@@ -1,0 +1,30 @@
+[
+ {
+  "copy": "Box tab Fsc (arrayVas, source-loaded Qts)",
+  "engine": "sweep impedance-peak Fsc (1% tol)",
+  "checks": 960,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "Box tab Qtc (arrayVas, source-loaded Qts)",
+  "engine": "sweep impedance-peak Qtc (10% tol)",
+  "checks": 240,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "OpenISDProject.impedancePeak (array impedance / one driver Re) Qtc",
+  "engine": "impedance-peak Qtc of the one-driver curve",
+  "checks": 158,
+  "differences": 158,
+  "worst": {
+   "group": "sweep-vs-box-tab",
+   "copy": "OpenISDProject.impedancePeak (array impedance / one driver Re) Qtc",
+   "engine": "impedance-peak Qtc of the one-driver curve",
+   "inputs": "volt/vm753 n=4 standard parallel Rg=0 dT=0 Vb=5.120e-4",
+   "copyValue": 18.602545769719157,
+   "engineValue": 1.648589536946251
+  }
+ }
+]

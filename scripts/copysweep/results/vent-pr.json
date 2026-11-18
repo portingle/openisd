@@ -1,0 +1,37 @@
+[
+ {
+  "copy": "VentEngine.lengthForTuning",
+  "engine": "VentEngine.tuningFromLength (round trip)",
+  "checks": 540,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "VentEngine.tuningFromLength (Helmholtz)",
+  "engine": "sweep vented lossless port branch: impedance dip (1.5% tol)",
+  "checks": 513,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PrEngine.tuning",
+  "engine": "sweep passive-radiator box lossless: impedance dip (1.5% tol)",
+  "checks": 342,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "VentEngine.tuningFromLength default end correction 0.732 (default parameter)",
+  "engine": "project default end correction 0.613 (boxDefaults.NO_VENT)",
+  "checks": 2,
+  "differences": 2,
+  "worst": {
+   "group": "vent-pr",
+   "copy": "VentEngine.tuningFromLength default end correction 0.732 (default parameter)",
+   "engine": "project default end correction 0.613 (boxDefaults.NO_VENT)",
+   "inputs": "Vb=0.03 m3, port area=7.500e-3 m2, L=0.2 m: 52.486 Hz vs 53.647 Hz",
+   "copyValue": 52.48552763696175,
+   "engineValue": 53.64685097081986
+  }
+ }
+]

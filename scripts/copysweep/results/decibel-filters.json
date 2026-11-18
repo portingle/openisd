@@ -1,0 +1,44 @@
+[
+ {
+  "copy": "StaticGainFilterModel 10^(gain/20) -> sweep SPL shift",
+  "engine": "stated gain dB",
+  "checks": 300,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "StaticGainFilterModel -> filter chain chart fltMag",
+  "engine": "stated gain dB",
+  "checks": 300,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "ParametricEqFilterModel gain at fc -> sweep SPL shift",
+  "engine": "stated gain dB",
+  "checks": 100,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PeakHighpassFilterModel with gainPk < 0: filter chart is finite (0 = finite, 1 = NaN)",
+  "engine": "finite",
+  "checks": 100,
+  "differences": 40,
+  "worst": {
+   "group": "decibel-filters",
+   "copy": "PeakHighpassFilterModel with gainPk < 0: filter chart is finite (0 = finite, 1 = NaN)",
+   "engine": "finite",
+   "inputs": "accuton/as168-9-470 gainPk=-20 fpk=200.00",
+   "copyValue": 1,
+   "engineValue": 0
+  }
+ },
+ {
+  "copy": "PeakHighpassFilterModel peak gain -> filter chart max",
+  "engine": "stated gain dB",
+  "checks": 60,
+  "differences": 0,
+  "worst": null
+ }
+]

@@ -1,0 +1,86 @@
+[
+ {
+  "copy": "SealedEngine.qtcFromVolume (Qts*sqrt(1+Vas/Vb))",
+  "engine": "sealedResonanceWinisd lossless branch",
+  "checks": 360,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "sealedResonanceLossless (Qts*boxRatio)",
+  "engine": "sealedResonanceWinisd lossless branch",
+  "checks": 360,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "sealedResonanceLossless Fsc",
+  "engine": "sealedResonanceWinisd lossless branch",
+  "checks": 360,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "boxRatio^2-1 vs Vas/Vb",
+  "engine": "sealedResonanceWinisd",
+  "checks": 360,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "SealedEngine.volumeForQtc (lossless branch)",
+  "engine": "volumeForLossyQtc at Ql=Qa=1e6",
+  "checks": 360,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "SealedEngine.volumeForQtc round trip",
+  "engine": "Vb input",
+  "checks": 360,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "arrayVas (module function)",
+  "engine": "engine.sealed.arrayVas",
+  "checks": 120,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "SealedEngine.winisdPickerVolume inline QtsLoaded",
+  "engine": "DriverEngine.sourceLoadedQts",
+  "checks": 60,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "winisdPickerVolume",
+  "engine": "sourceLoadedQts + volumeForQtc composed",
+  "checks": 17,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "driverQuantities Qts = Qes*Qms/(Qes+Qms)",
+  "engine": "DriverEngine.solveValues Qts",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "lossless branch Qtc at Ql=1e6",
+  "engine": "lossy cubic at Ql=9.9e5",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "lossless branch Fsc at Ql=1e6",
+  "engine": "lossy cubic at Ql=9.9e5",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ }
+]

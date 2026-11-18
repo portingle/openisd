@@ -1,0 +1,30 @@
+[
+ {
+  "copy": "projectResolve vent area = PI*(d/2)^2 (via project)",
+  "engine": "driver route Sd_m2 from Dd_m",
+  "checks": 180,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "Vent.lengthForTuning_m (project, count 1)",
+  "engine": "VentEngine.lengthForTuning",
+  "checks": 60,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "openISDBox.#startDummyRadiator: radiator Vd x count (domain starting rule)",
+  "engine": "PrEngine.twiceDriverDisplacement (2 x N x driver Vd)",
+  "checks": 60,
+  "differences": 40,
+  "worst": {
+   "group": "domain",
+   "copy": "openISDBox.#startDummyRadiator: radiator Vd x count (domain starting rule)",
+   "engine": "PrEngine.twiceDriverDisplacement (2 x N x driver Vd)",
+   "inputs": "accuton/as168-9-470 drivers=2 radiator Vd=2.576e-4 x count 1",
+   "copyValue": 0.00025760000000000003,
+   "engineValue": 0.0005152000000000001
+  }
+ }
+]

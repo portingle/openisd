@@ -1,0 +1,44 @@
+[
+ {
+  "copy": "multiCoilAsPublished series Re (N*r)",
+  "engine": "convertWiring parallel->series Re",
+  "checks": 60,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "multiCoilAsPublished series BL (N*b)",
+  "engine": "convertWiring parallel->series BL",
+  "checks": 60,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "multiCoilAsPublished parallel Re (r/N)",
+  "engine": "convertWiring series->parallel Re",
+  "checks": 60,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "multiCoilAsPublished parallel BL (b)",
+  "engine": "convertWiring series->parallel BL",
+  "checks": 60,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "projectResolve vent area = PI*(d/2)^2",
+  "engine": "driver route Sd_m2 from Dd_m",
+  "checks": 7,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "projectResolve vent diameter = 2*sqrt(A/PI)",
+  "engine": "VentEngine.effectiveLength(0,A,1,1) (d = 2*sqrt(A/PI))",
+  "checks": 7,
+  "differences": 0,
+  "worst": null
+ }
+]

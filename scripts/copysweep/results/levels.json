@@ -1,0 +1,93 @@
+[
+ {
+  "copy": "DriverEngine.referenceEfficiency",
+  "engine": "solveValues no (route)",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "DriverEngine.splFromEfficiency(no)",
+  "engine": "solveValues SPLref_dB (route)",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "USPL = SPLref + 10log10(2.83^2/Re) (efficiencyRoutes)",
+  "engine": "solveValues USPL_dB",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "driver routes USPL_dB (2.83 V, 1 m, half space)",
+  "engine": "sweep SPL at 100*Fs in a huge sealed box (0.1 dB tol)",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PrEngine.fsWithMass (1/(2pi sqrt(M C)))",
+  "engine": "driver route Fs_hz from Mms, Cms",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PrEngine.vas (Cms Sd^2 rho c^2)",
+  "engine": "driver route Vas_m3 from Cms, Sd",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PrEngine.qms (sqrt(M/C)/Rms)",
+  "engine": "driver route Qms from Mms, Cms, Rms",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PrEngine.mmdFromFs",
+  "engine": "driver route Mms_kg from Fs, Cms",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PrEngine.cmsFromVas",
+  "engine": "driver route Cms from Vas, Sd",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "PrEngine.displacement (Sd x Xmax)",
+  "engine": "driver route Vd_m3 from Sd, Xmax",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "SimulationEngine BL from Qes (sweep, BL absent)",
+  "engine": "DriverEngine solveValues BL_Tm given to the sweep",
+  "checks": 140,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "maxCurves Pe plateau (sqrt(Pe*(Re_hot+Rg)) then V^2/Re)",
+  "engine": "n * Pe (the power the array is rated for)",
+  "checks": 960,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "SignalEngine.driveVoltage^2/(Re+Rg) for Pe",
+  "engine": "Pe",
+  "checks": 960,
+  "differences": 0,
+  "worst": null
+ }
+]

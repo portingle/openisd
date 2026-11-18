@@ -1,0 +1,36 @@
+{
+ "seen": {
+  "solve/sealed": [
+   1,
+   2
+  ],
+  "hfAsymptote": [
+   1
+  ],
+  "solve/vented": [
+   1
+  ],
+  "solve/box-passive-radiator": [
+   1
+  ],
+  "solve/bandpass4": [
+   1
+  ],
+  "solve/bandpass6": [
+   1
+  ],
+  "solve/abc": [
+   1
+  ]
+ },
+ "sweepsThatProducedValues": 72,
+ "driver": "beyma/10br60v2",
+ "live60HzSplSeries2": 84.55851647571768,
+ "circuitSolveDirectSeries2": 90.57443066004927,
+ "live60HzSplParallel2": 90.5791163889973,
+ "circuitSolveDirectParallel2": 90.57443066004927,
+ "circuitModuleExports": [
+  "hfAsymptotePressure_Pa",
+  "solve"
+ ]
+}

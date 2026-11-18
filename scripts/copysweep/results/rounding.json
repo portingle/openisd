@@ -1,0 +1,37 @@
+[
+ {
+  "copy": "formatFixed(2) within its own half-unit",
+  "engine": "exact value within half a displayed unit",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "formatTrimmed(2) within its own half-unit",
+  "engine": "exact value within half a displayed unit",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "formatSignificant within its own half-unit",
+  "engine": "exact value within half a displayed unit",
+  "checks": 20,
+  "differences": 0,
+  "worst": null
+ },
+ {
+  "copy": "formatFixed(2) vs formatSignificant (digits shown)",
+  "engine": "same digits",
+  "checks": 20,
+  "differences": 4,
+  "worst": {
+   "group": "rounding",
+   "copy": "formatFixed(2) vs formatSignificant (digits shown)",
+   "engine": "same digits",
+   "inputs": "dayton-audio/ce81pf-8: \"1.00\" vs \"0.998\"",
+   "copyValue": 1,
+   "engineValue": 0.998
+  }
+ }
+]
