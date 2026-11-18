@@ -14,6 +14,7 @@ import {describe, expect, it} from 'vitest';
 import {OpenISDDriver} from '../../domain/driver/openISDDriver.js';
 import {createEngine} from '../../engine/Engine.js';
 import type {DriveLoad} from '../../engine/index.js';
+import {DEFAULT_ALFAVC_PER_K, DEFAULT_VC_TEMP_RISE_K} from '../../fields/index.js';
 
 const engine = createEngine();
 const LOSSES = {Ql: 10, Qa: 100};
@@ -34,7 +35,7 @@ function w5(): OpenISDDriver {
 }
 
 function load(nDrivers: number, loading: 'standard' | 'isobaric'): DriveLoad {
-  return {Rs_ohm: 0.1, nDrivers, loading};
+  return {Rs_ohm: 0.1, nDrivers, loading, alfaVC_per_K: DEFAULT_ALFAVC_PER_K, vcTempRise_K: DEFAULT_VC_TEMP_RISE_K};
 }
 
 describe('the WinISD-bug sealed picker counts the drivers', () => {
