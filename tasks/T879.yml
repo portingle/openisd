@@ -2,7 +2,7 @@ id: T879
 release_note: internal
 repo: openisd
 owner: sonnet-help-fix
-status: open
+status: done
 goal: Driver wiring help row appears only when its caption is on screen; main browser(6) green
 why: John: main red after several-driver wiring slice 3 merged
 done_test: bash scripts/quiet-test.sh npm run typecheck
