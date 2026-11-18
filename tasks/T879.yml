@@ -8,3 +8,8 @@ why: "Main red after T877 (suite 44209403950): desktop help listed Driver wiring
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T879.yml
+  - packages/design/fields/desktopHelp.ts
+  - packages/design/test/fields/desktopHelp.test.ts
+  - packages/ui/src/hooks/OriginalShell-hooks.ts
+  - packages/ui/src/hooks/desktopHelp.ts
+  - packages/ui/test/hooks/desktopHelp.test.ts
