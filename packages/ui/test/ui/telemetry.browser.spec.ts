@@ -70,7 +70,8 @@ test('the app reports how long its key steps take, and the session summary of ed
 
   const perfEvents = (): unknown[] => bodies.flatMap(b => {
     const parsed: unknown = JSON.parse(b);
-    return Array.isArray(parsed) ? parsed : [];
+    const list: unknown[] = Array.isArray(parsed) ? parsed : [];
+    return list;
   }).filter(e => typeof e === 'object' && e !== null && 'name' in e && e.name === 'perf');
   await expect.poll(() => perfEvents().length).toBeGreaterThanOrEqual(8);
   const rows = perfEvents().map(e => (typeof e === 'object' && e !== null && 'fields' in e ? e.fields : null));
