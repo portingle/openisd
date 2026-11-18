@@ -74,13 +74,16 @@ describe('provenance — driver field provenance inspector', () => {
 
   /* The inspector tells the user how a value was reached, so a path that names inputs the
    * engine does not actually use is a lie about our own code. Rme takes 2π·Fs·Mms/Qes in
-   * preference to Bl²/Re (engine driver.ts block 13), and Mpow is √Rme so that it cannot
-   * print a number contradicting the Rme beside it. */
+   * preference to Bl²/Re (engine driver.ts block 13). Mpow is Bl/√Re, WinISD's own definition, and √Rme only for a
+   * record with no Bl (John, 18 Nov 2026, T902: "the test follows the engine: Bl/√Re first, √Rme only when Bl is
+   * missing"; WinISD is right). */
   it('the Advanced figures of merit name the inputs the engine really uses', () => {
     assert.deepEqual(getProvenanceInfo(PROVENANCE_MAP, 'Rme_kg_per_s')?.paths[0].inputs, ['Fs_hz', 'Mms_kg', 'Qes']);
     assert.deepEqual(getProvenanceInfo(PROVENANCE_MAP, 'gamma_m_per_s2_A')?.paths[0].inputs, ['BL_Tm', 'Mms_kg']);
-    assert.deepEqual(getProvenanceInfo(PROVENANCE_MAP, 'Mpow_N_per_sqrtW')?.paths[0].inputs, ['Rme_kg_per_s'],
-      'Mpow is derived from Rme, not independently from Bl and Re');
+    assert.deepEqual(getProvenanceInfo(PROVENANCE_MAP, 'Mpow_N_per_sqrtW')?.paths[0].inputs, ['BL_Tm', 'Re_ohm'],
+      'Mpow is Bl/√Re first');
+    assert.deepEqual(getProvenanceInfo(PROVENANCE_MAP, 'Mpow_N_per_sqrtW')?.paths[1].inputs, ['Rme_kg_per_s'],
+      'Mpow falls back to √Rme only when Bl is missing');
     assert.deepEqual(getProvenanceInfo(PROVENANCE_MAP, 'SPLmax_dB')?.paths[0].inputs, ['SPL_dB', 'Pe_W']);
     assert.match(getProvenanceInfo(PROVENANCE_MAP, 'SPLmax_dB')?.paths[0].formulaText ?? '', /Pe_W/);
   });
