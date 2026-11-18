@@ -34,10 +34,8 @@ export const ADVANCED_ROUTES: readonly DriverRoute[] = Object.freeze([
     const p20 = v.roo_kg_per_m3 * (TAU * 20) ** 2 * v.Vd_m3 / (TAU * Math.SQRT2);
     return 20 * Math.log10(p20 / P0);
   }, v => v.Vd_m3 > 0),
-  new SolveRoute('Mcost_kg_per_s', ['Rme_kg_per_s', 'Xmax_m'], 'Mcost_kg_per_s = Rme_kg_per_s × (1 + Xmax_m / min(Hc_m, Hg_m))', v => {
-    const minHeight = v.Hc_m != null && v.Hg_m != null ? Math.min(v.Hc_m, v.Hg_m) : 0;
-    return minHeight > 0 ? v.Rme_kg_per_s * (1 + v.Xmax_m / minHeight) : null;
-  }),
+  new SolveRoute('Mcost_kg_per_s', ['Rme_kg_per_s', 'Xmax_m', 'Hc_m', 'Hg_m'], 'Mcost_kg_per_s = Rme_kg_per_s × (1 + Xmax_m / min(Hc_m, Hg_m))',
+    v => v.Rme_kg_per_s * (1 + v.Xmax_m / Math.min(v.Hc_m, v.Hg_m)), v => Math.min(v.Hc_m, v.Hg_m) > 0),
 ]);
 
 /**

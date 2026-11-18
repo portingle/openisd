@@ -69,13 +69,14 @@ export const SPL_FROM_NO_ROUTES: readonly DriverRoute[] = Object.freeze([
  * docs/spec/SPEC_ENGINE.md "USPL / SPLmax").
  */
 export const USPL_ROUTES: readonly DriverRoute[] = Object.freeze([
-  new SolveRoute('USPL_dB', ['Re_ohm'], 'USPL_dB = SPL_dB (else SPLref_dB) + 10 × log₁₀(2.83² / Re_ohm)', v => {
-    const base = v.SPL_dB ?? v.SPLref_dB;
-    return base == null ? null : base + 10 * Math.log10(V283_SQ / v.Re_ohm);
-  }, v => v.Re_ohm > 0),
-  new SolveRoute('Re_ohm', ['USPL_dB'], 'Re_ohm = 2.83² / 10^((USPL_dB − SPL_dB (else SPLref_dB)) / 10)', v => {
-    const base = v.SPL_dB ?? v.SPLref_dB;
-    return base == null ? null : V283_SQ / Math.pow(10, (v.USPL_dB - base) / 10);
-  }),
+  // On the stated SPL, else on the SPLref the efficiency routes produced: one route per base, each declaring it (T902).
+  new SolveRoute('USPL_dB', ['SPL_dB', 'Re_ohm'], 'USPL_dB = SPL_dB + 10 × log₁₀(2.83² / Re_ohm)',
+    v => v.SPL_dB + 10 * Math.log10(V283_SQ / v.Re_ohm), v => v.Re_ohm > 0),
+  new SolveRoute('USPL_dB', ['SPLref_dB', 'Re_ohm'], 'USPL_dB = SPLref_dB + 10 × log₁₀(2.83² / Re_ohm)',
+    v => v.SPLref_dB + 10 * Math.log10(V283_SQ / v.Re_ohm), v => v.Re_ohm > 0),
+  new SolveRoute('Re_ohm', ['USPL_dB', 'SPL_dB'], 'Re_ohm = 2.83² / 10^((USPL_dB − SPL_dB) / 10)',
+    v => V283_SQ / Math.pow(10, (v.USPL_dB - v.SPL_dB) / 10)),
+  new SolveRoute('Re_ohm', ['USPL_dB', 'SPLref_dB'], 'Re_ohm = 2.83² / 10^((USPL_dB − SPLref_dB) / 10)',
+    v => V283_SQ / Math.pow(10, (v.USPL_dB - v.SPLref_dB) / 10)),
   new SolveRoute('SPLref_dB', ['USPL_dB', 'Re_ohm'], 'SPLref_dB = USPL_dB − 10 × log₁₀(2.83² / Re_ohm)', v => v.USPL_dB - 10 * Math.log10(V283_SQ / v.Re_ohm), v => v.Re_ohm > 0),
 ]);

@@ -13,7 +13,7 @@ import {
 import type {DriverRoute} from './SolveRoute.js';
 
 /**
- * The driver's 55 routes in the order one pass runs them. The order is the data: it decides which
+ * The driver's 57 routes in the order one pass runs them. The order is the data: it decides which
  * route fills a quantity when several could (WinISD's own site order, FINDING-027/028), so a
  * route is never moved without a case in test/domain/driver-consistency-solver-golden.test.ts failing.
  */
