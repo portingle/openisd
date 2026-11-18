@@ -81,26 +81,43 @@ const AIR: readonly {readonly label: string; readonly note: RegExp; readonly odd
   {label: 'Air density', note: /^Air density must be greater than 0 — enter a value above 0 kg\/m³\.$/, odd: '0.5'},
 ];
 
+/** The Box tab's Tuning freq (Frc) box: the desktop Box tab's first one (the Vents pane has another), the phone's row. */
+function frcField(page: Page, shell: Shell): Locator {
+  return shell === 'phone'
+    ? mobileFieldRow(page, 'Frc')
+    : page.locator('.field', {has: page.getByRole('textbox', {name: 'Tuning freq (Frc)'}).first()}).first();
+}
+
+const FRC_NOTE = /^Tuning freq \(Frc\) must be greater than 0 — enter a value above 0, up to 20000(\.00)? Hz\.$/;
+
 for (const shell of ['desktop', 'phone'] as const) {
   test(`${shell}: air pressure, sound velocity and air density refuse 0 and -1 with a note, and take a value above 0`, async ({page}) => {
     await open(page, shell);
     await openAdvanced(page, shell);
     for (const {label, note, odd} of AIR) {
       const field = row(page, shell, label);
+      await expect(field).toBeVisible();
       await expectRefused(page, field, '0', note);
       await expectRefused(page, field, '-1', note);
       await expectAccepted(field, odd);
     }
   });
 
-  test(`${shell}: Frc 0 Hz on a 6th-order bandpass is refused with a note, the chart keeps drawing, and 30 Hz is taken`, async ({page}) => {
+  test(`${shell}: Frc 0 Hz on a 6th-order bandpass is refused with a note, and 30 Hz is taken`, async ({page}) => {
     await open(page, shell);
     await setFocusedBoxType(page, 'bandpass6');
-    const field = shell === 'phone'
-      ? mobileFieldRow(page, 'Frc')
-      : page.locator('.field', {has: page.getByRole('textbox', {name: 'Tuning freq (Frc)'}).first()}).first();
-    await expectRefused(page, field, '0', /^Tuning freq \(Frc\) must be greater than 0 — enter a value above 0, up to 20000(\.00)? Hz\.$/);
-    if (shell === 'desktop') await expectChartDrawn(page);
+    const field = frcField(page, shell);
+    await expect(field).toBeVisible();
+    await expectRefused(page, field, '0', FRC_NOTE);
     await expectAccepted(field, '30');
   });
 }
+
+test('desktop: the chart keeps drawing while Frc 0 Hz is refused', async ({page}) => {
+  await open(page, 'desktop');
+  await setFocusedBoxType(page, 'bandpass6');
+  const field = frcField(page, 'desktop');
+  await expect(field).toBeVisible();
+  await expectRefused(page, field, '0', FRC_NOTE);
+  await expectChartDrawn(page);
+});

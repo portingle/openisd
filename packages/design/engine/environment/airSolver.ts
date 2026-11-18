@@ -290,7 +290,8 @@ function unavailable(target: AirQuantityName, relation: AirRelation, why: string
  *  velocity, density): air with none of it is not air, so no sweep runs while one is stated
  *  (QO953). Empty when the value clears its floor. */
 export function airFloorIssues(name: AirQuantityName, value: number): readonly AirIssue[] {
-  if (AIR_FLOORS[name] !== 'positive' || value > 0) return [];
+  const floor = AIR_FLOORS[name];
+  if (floor !== 'positive' || value > 0) return [];
   const said = `${SAYS[name][0]?.toUpperCase() ?? ''}${SAYS[name].slice(1)}`;
   const base = missingDependencies(name, [{formula: `${SAYS[name]} greater than 0`, required: [name], missing: [name]}]);
   return [{...base, fields: [name], text: `${said} must be greater than 0: air with no ${SAYS[name]} carries no sound, so the charts are not drawn.`}];
