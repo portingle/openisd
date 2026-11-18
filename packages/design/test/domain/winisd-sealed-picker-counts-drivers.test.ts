@@ -2,7 +2,7 @@
  * bugs/BUG_20261118_winisd-sealed-picker-ignores-driver-count.md: with the "Sealed picker volume" WinISD bug switch
  * ticked, the sealed alignment picker counts the drivers, as the unticked picker does since T901 (PR 230).
  *
- * WinISD: the picker `0x45c140` divides `[ESI+0x4b0]` (winisd_research/GHIDRA_FINDINGS.md "SEALED (CLOSED) ALIGNMENT
+ * WinISD: the picker `0x45c140` divides `[ESI+0x4b0]` (winisd_research/archive/GHIDRA_FINDINGS.md "SEALED (CLOSED) ALIGNMENT
  * PICKER FORMULA FOUND"), and `fr_45e090`, which the wizard dispatcher `0x44e9b0` runs after copying the wizard's
  * driver count and Iso-barik radio into the design object, writes `0x4b0 = Nd·Vas`, halved for Iso-barik
  * (GHIDRA_FINDINGS.md "Number of drivers and placement"; spec/S04_sealed_box.md section 2, 0x45e0ad-0x45e0f2).

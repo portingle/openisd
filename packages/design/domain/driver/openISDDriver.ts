@@ -260,7 +260,7 @@ export abstract class OpenISDDriver extends OpenISDDevice {
      *  volume" bug switch unticked): the volume at which the Box tab shows `targetQtc`, as `sealedVolumeForQtc`.
      *  On: WinISD's picker volume, which ignores the load's `Rs_ohm` and `losses` for its own fixed Rg 0.1 and Qa 100,
      *  but counts the drivers as the Box tab does: WinISD's picker divides the design object's Nd·Vas (`0x4b0`, halved
-     *  for Iso-barik), written by `fr_45e090` (winisd_research/GHIDRA_FINDINGS.md, "Number of drivers and placement"). */
+     *  for Iso-barik), written by `fr_45e090` (winisd_research/archive/GHIDRA_FINDINGS.md, "Number of drivers and placement"). */
     sealedPickerVolume(targetQtc: number, load: DriveLoad, losses: SealedBoxLosses, winisdPicker: boolean): number | null {
         if (!winisdPicker) return this.sealedVolumeForQtc(targetQtc, load, losses);
         const {Vas_m3, Qes, Qms} = this.specs;
