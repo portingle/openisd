@@ -5,6 +5,7 @@
  * (`DriverBrowser`, `DriverEditorModal`), reached the same way the desktop shell reaches them.
  */
 import {computed, watch} from 'vue';
+import {PhoneHelp} from '@openisd/design/fields';
 import {reportDisagreementsSeen} from '../logic/telemetry/valuesProblem.js';
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {useApp} from '../logic/app.js';
@@ -38,13 +39,16 @@ export function useMobileDriverTab() {
   });
   watch(consistencyReasons, reasons => { if (reasons.length > 0) reportDisagreementsSeen(featureUse, project.value.driver); }, {immediate: true});
 
+  /** The "User options" band's help: lists Driver wiring only while that control is drawn (2 or more drivers, T882). */
+  const driverHelp = computed(() => { void projectChanged.value; return PhoneHelp.driver(project.value.driverWiringApplies); });
+
   function browseDrivers(): void { presentationState.browseOpen = true; }
   function editDriver(): void { featureUse.feature('driver_editor'); selection.editProjectDriver(); }
   /** The "N values disagree" link: the same editor, with its disagreement list showing. */
   function showDisagreements(): void { featureUse.feature('driver_editor'); selection.editProjectDriver(true); }
 
   return {
-    project, brand, model, fullName, keyFigures, consistencyReasons, browseDrivers, editDriver, showDisagreements,
+    project, brand, model, fullName, driverHelp, keyFigures, consistencyReasons, browseDrivers, editDriver, showDisagreements,
     showDriverInfo: driverBrowsing.showProjectDriverInfo,
     selectedOption,
   };
