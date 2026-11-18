@@ -120,21 +120,24 @@ export interface ProjectRepo {
   storedIdOf(project: OpenISDProject): string | null;
   /** Cloud sync sends the whole project (John, QO946.c248): the project's saved entry takes its unsaved
    *  layer too, so a sync run sends both, and Save stays the checkpoint. The entry keeps its `modified`
-   *  time (the last Save). `base` is the entry text this project was last written as or found equal to
-   *  (null when not known yet).
-   *  - 'same': the entry holds the project already; `held` is the entry.
+   *  stamp, which only a Save, a pull or a conflict copy changes (see `savedStampOf`). `base` is the stamp
+   *  the entry had when this project was opened, shown or last written (null when not known).
+   *  - 'same': the entry holds the project's design already (view state aside).
    *  - 'idle': neither has unsaved edits: nothing to send, nothing written.
-   *  - 'written': the entry held `base`, or the same checkpoint with no unsaved edits: it now holds the project.
-   *  - 'moved': the entry holds another version (a pull, another device): nothing is written, so neither is lost.
+   *  - 'written': the entry still has stamp `base`, or the same checkpoint with no unsaved edits: it now holds the project.
+   *  - 'moved': the entry holds another version (a pull, another device's Save): nothing is written, so neither is lost.
    *  - 'notStored' / 'refused': no entry, or the store refused the write. */
   storeWithUnsavedLayer(project: OpenISDProject, base: string | null): LayerWrite;
+  /** The `modified` stamp of saved entry `id`, or null when there is none. A Save, a pull and a conflict copy
+   *  give it a new one; the unsaved-layer writes keep it, so every tab of this browser shares one lineage. */
+  savedStampOf(id: string): string | null;
   /** The saved entry `id` without its unsaved layer: what closing a project without saving leaves. */
   dropUnsavedLayer(id: string): 'written' | 'same' | 'notStored' | 'refused';
 }
 
-/** What writing a saved entry's unsaved layer did; `held` is the entry's text afterwards. */
+/** What writing a saved entry's unsaved layer did; `stamp` is the entry's `modified` stamp afterwards. */
 export type LayerWrite =
-  | { readonly kind: 'written' | 'same'; readonly held: string }
+  | { readonly kind: 'written' | 'same'; readonly stamp: string }
   | { readonly kind: 'idle' | 'moved' | 'notStored' | 'refused' };
 
 export interface StoredProjectDoc {
@@ -593,15 +596,23 @@ function migrateEntries<T extends { text: string }>(entries: readonly T[]): { en
     return 'written';
   }
 
-  function heldText(id: string): string | null {
-    return readStoredEntries().find(entry => entry.id === id)?.text ?? null;
+  /** The time a save or a pull stamps an entry with: now, but always after this tab's last stamp and after
+   *  `previous` (the entry's own stamp), so a replaced entry never keeps its stamp. */
+  function nextStamp(previous: string | null): number {
+    const after = previous === null ? 0 : Date.parse(previous) + 1;
+    const now = Math.max(Date.now(), lastSavedAt + 1, Number.isNaN(after) ? 0 : after);
+    lastSavedAt = now;
+    return now;
+  }
+
+  function heldEntry(id: string): StoredProjectEntry | null {
+    return readStoredEntries().find(entry => entry.id === id) ?? null;
   }
 
   function saveToStorage(project: OpenISDProject): StorageSaveResult {
     const entries = readStoredEntries();
     const id = project.uuid();
-    const now = Math.max(Date.now(), lastSavedAt + 1);
-    lastSavedAt = now;
+    const now = nextStamp(entries.find(candidate => candidate.id === id)?.modified ?? null);
     const entry: StoredProjectEntry = { id, text: project.toStoredText(), modified: new Date(now).toISOString() };
     
     try {
@@ -831,7 +842,8 @@ function migrateEntries<T extends { text: string }>(entries: readonly T[]): { en
         }
       }
 
-      const nowIso = new Date().toISOString();
+      // A new stamp, never the one the entry had: an open project tells by it that its entry was replaced.
+      const nowIso = new Date(nextStamp(existingIdx >= 0 ? currentEntries[existingIdx]?.modified ?? null : null)).toISOString();
       if (existingIdx >= 0) {
         const guarded = backup.guard('sync', () => {
           const nextEntries = [...currentEntries];
@@ -854,27 +866,31 @@ function migrateEntries<T extends { text: string }>(entries: readonly T[]): { en
     },
     storeWithUnsavedLayer(project: OpenISDProject, base: string | null): LayerWrite {
       const id = project.uuid();
-      const held = heldText(id);
-      if (held === null) return {kind: 'notStored'};
+      const entry = heldEntry(id);
+      if (entry === null) return {kind: 'notStored'};
+      const {text: held, modified: stamp} = entry;
       const text = project.toStoredText();
       const heldLayers = layersOf(held);
       const ours = layersOf(text);
       // The entry holds this project's design already (it may differ in view state only).
       if (held === text || (heldLayers !== null && ours !== null && heldLayers.saved === ours.saved && heldLayers.edited === ours.edited)) {
-        return {kind: 'same', held};
+        return {kind: 'same', stamp};
       }
       // Nothing unsaved on either side: the entry is the project's checkpoint, as Save wrote it.
       if (!project.isModified() && heldLayers !== null && heldLayers.edited === null) return {kind: 'idle'};
       const sameCheckpoint = heldLayers !== null && ours !== null && heldLayers.saved === ours.saved && heldLayers.edited === null;
-      if (held !== base && !sameCheckpoint) return {kind: 'moved'};
+      if (stamp !== base && !sameCheckpoint) return {kind: 'moved'};
       const written = rewriteEntry(id, text);
-      return written === 'written' ? {kind: 'written', held: text} : {kind: written};
+      return written === 'written' ? {kind: 'written', stamp} : {kind: written};
+    },
+    savedStampOf(id: string): string | null {
+      return heldEntry(id)?.modified ?? null;
     },
     dropUnsavedLayer(id: string): 'written' | 'same' | 'notStored' | 'refused' {
-      const held = heldText(id);
-      if (held === null) return 'notStored';
+      const entry = heldEntry(id);
+      if (entry === null) return 'notStored';
       let parsed: unknown;
-      try { parsed = JSON.parse(held); } catch { return 'same'; }
+      try { parsed = JSON.parse(entry.text); } catch { return 'same'; }
       if (!isRecord(parsed) || !isRecord(parsed.edited)) return 'same';
       return rewriteEntry(id, JSON.stringify({...parsed, edited: null}));
     },

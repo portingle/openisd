@@ -19,7 +19,7 @@ import type {AppState} from './appState.js';
 
 export interface LiveProjectSyncDeps {
   readonly appState: Pick<AppState, 'openProjects' | 'projectChanged'>;
-  readonly projectRepo: Pick<ProjectRepo, 'storeWithUnsavedLayer' | 'dropUnsavedLayer'>;
+  readonly projectRepo: Pick<ProjectRepo, 'storeWithUnsavedLayer' | 'savedStampOf' | 'dropUnsavedLayer'>;
   /** Cloud sync is connected. */
   readonly active: () => boolean;
   readonly timer: Timer;
@@ -39,7 +39,8 @@ export interface LiveProjectSync {
 export function startLiveProjectSync(deps: LiveProjectSyncDeps): LiveProjectSync {
   const {appState, projectRepo} = deps;
   let cancelPending: (() => void) | null = null;
-  /** The entry text each open project was last written as, or found equal to. */
+  /** The `modified` stamp each open project's entry had when the project appeared or was last written. Shared by
+   *  every tab (a Save, a pull or a conflict copy changes it; these writes do not), so tabs never conflict. */
   const base = new WeakMap<OpenISDProject, string>();
 
   /** Writes one project's unsaved layer; true when the store changed (its entry, or a conflict copy). */
@@ -48,7 +49,7 @@ export function startLiveProjectSync(deps: LiveProjectSyncDeps): LiveProjectSync
     switch (result.kind) {
       case 'written':
       case 'same':
-        base.set(project, result.held);
+        base.set(project, result.stamp);
         return result.kind === 'written';
       case 'moved':
         // Its edits are not lost and the other version is not overwritten: both are kept.
@@ -81,9 +82,13 @@ export function startLiveProjectSync(deps: LiveProjectSyncDeps): LiveProjectSync
    *  A project swapped for its pulled version or for another tab's copy keeps its id, and is not closed. */
   function openChanged(now: readonly OpenISDProject[], before: readonly OpenISDProject[]): void {
     if (!deps.active()) return;
-    // A project that has just appeared (opened, pulled in place, restored) is looked at once: an entry that holds
-    // it already becomes its base, so its next edit or Revert is written over that entry and nothing else.
-    const appeared = now.filter(project => !before.includes(project)).filter(store).length;
+    // A project that has just appeared (opened, shown as pulled, restored, adopted from another tab) comes from its
+    // entry as it is now: that entry is its base, so its edits and Revert are written over it and nothing else.
+    const appeared = now.filter(project => !before.includes(project)).filter(project => {
+      const stamp = projectRepo.savedStampOf(project.uuid());
+      if (stamp !== null) base.set(project, stamp);
+      return store(project);
+    }).length;
     if (appeared > 0) deps.push();
     if (now.length >= before.length) return;
     const stillOpen = new Set(now.map(project => project.uuid()));

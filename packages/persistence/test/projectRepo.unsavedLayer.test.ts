@@ -55,30 +55,45 @@ describe('storeWithUnsavedLayer', () => {
     const modified = repo.listStoredProjects()[0]?.modified;
     project.portVelocityLimit_m_per_s.set(20);
     const result = repo.storeWithUnsavedLayer(project, null);
-    expect(result).toEqual({kind: 'written', held: entry()});
+    expect(result).toEqual({kind: 'written', stamp: modified});
+    expect(repo.savedStampOf(project.uuid())).toBe(modified);
     expect(limitIn(entry(), 'edited')).toBe(20);
     expect(limitIn(entry(), 'saved')).toBe(17);
     expect(repo.listStoredProjects()[0]?.modified).toBe(modified);
   });
 
-  it('writes again over the text it wrote last', () => {
+  it('writes again over the entry it wrote last', () => {
     const {repo, project, entry} = savedProject();
     project.portVelocityLimit_m_per_s.set(20);
     const first = repo.storeWithUnsavedLayer(project, null);
     project.portVelocityLimit_m_per_s.set(22);
-    expect(repo.storeWithUnsavedLayer(project, first.kind === 'written' ? first.held : null).kind).toBe('written');
+    expect(repo.storeWithUnsavedLayer(project, first.kind === 'written' ? first.stamp : null).kind).toBe('written');
     expect(limitIn(entry(), 'edited')).toBe(22);
+  });
+
+  it('a second tab showing the same project writes over the first tab\'s write: one browser is one version', () => {
+    const {repo, project, entry} = savedProject();
+    const stamp = repo.savedStampOf(project.uuid());
+    project.portVelocityLimit_m_per_s.set(20);
+    expect(repo.storeWithUnsavedLayer(project, stamp).kind).toBe('written');
+    // The other tab adopted the session (its own object of the same project) and edited on.
+    const otherTab = repo.loadStoredProject(project.uuid());
+    if (Array.isArray(otherTab)) throw new Error(otherTab.join('; '));
+    otherTab.portVelocityLimit_m_per_s.set(23);
+    expect(repo.storeWithUnsavedLayer(otherTab, stamp).kind).toBe('written');
+    expect(limitIn(entry(), 'edited')).toBe(23);
   });
 
   it('writes nothing for a project with nothing unsaved over an entry with nothing unsaved', () => {
     const {repo, project, entry} = savedProject();
     const before = entry();
-    expect(repo.storeWithUnsavedLayer(project, null)).toEqual({kind: 'same', held: before});
+    expect(repo.storeWithUnsavedLayer(project, null)).toEqual({kind: 'same', stamp: repo.savedStampOf(project.uuid())});
     expect(entry()).toBe(before);
   });
 
-  it('never writes over another version: an entry that is not the one the edits started from is "moved"', () => {
+  it('never writes over another version: an entry a pull replaced since is "moved", and it gets a new stamp', () => {
     const {repo, project, entry} = savedProject();
+    const stamp = repo.savedStampOf(project.uuid());
     const other: OpenISDProject = ProjectBuilder.empty(engine);
     other.name.set('Sub 12');
     other.portVelocityLimit_m_per_s.set(30);
@@ -86,8 +101,9 @@ describe('storeWithUnsavedLayer', () => {
     other.adoptId(project.uuid());
     expect(repo.putStoredDoc(project.uuid(), other.toStoredText())).toBe('done');
     const theirs = entry();
+    expect(repo.savedStampOf(project.uuid())).not.toBe(stamp);
     project.portVelocityLimit_m_per_s.set(20);
-    expect(repo.storeWithUnsavedLayer(project, null)).toEqual({kind: 'moved'});
+    expect(repo.storeWithUnsavedLayer(project, stamp)).toEqual({kind: 'moved'});
     expect(entry()).toBe(theirs);
   });
 

@@ -12,6 +12,9 @@ design: |
   Pushed when: SYNC_AFTER_EDIT_MS (3 s) after the last edit of an open project its session is written to its entry and a run
   starts; every run first writes the open projects' sessions (so Sync now sends what is on screen). Save writes the checkpoint
   with no unsaved layer and its run follows 3 s later, as before. Closing without saving clears the entry's unsaved layer.
+  Guard: a project writes its unsaved layer only over the entry it came from, told by the entry's `modified` stamp (only a
+  Save, a pull or a conflict copy gives a new stamp; unsaved-layer writes keep it), so tabs of one browser share one version
+  and a pull that landed meanwhile is never written over.
   Receiver: a pulled project that is open is shown in place with the pulled checkpoint and unsaved edits (unsaved marker on,
   Revert to the shared checkpoint), when everything it showed was already in its store.
   Conflict: both devices changed the project since they last synced -> both kept. The run keeps the other version under the

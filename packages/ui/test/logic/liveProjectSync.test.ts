@@ -320,3 +320,55 @@ describe('with Cloud sync not connected', () => {
     expect(Array.isArray(stored) ? null : stored.isModified()).toBe(false);
   });
 });
+
+describe('two tabs of one browser', () => {
+  /** A tab over `storage`: its own app state and store reader, Cloud sync connected. */
+  function tabOn(storage: ReturnType<typeof createMemoryStorage>) {
+    const {appState} = createAppStateFixture(storage);
+    const rules: LayoutRules = {layout: STORAGE_LAYOUT, steps: createLayoutSteps(createEngine(), () => 'test-project-id')};
+    const projectRepo = createProjectRepo(appState.engine, noFiles, storage, 'http://localhost/', createStorageBackup(storage, () => NOW), createExportedFiles(rules), () => undefined, () => undefined);
+    const timer = manualTimer();
+    const keepBoth = vi.fn<(project: OpenISDProject) => void>();
+    startLiveProjectSync({appState, projectRepo, timer, active: () => true, push: () => undefined, keepBoth});
+    /** Shows stored project `id` as this tab has it now (as adopting the other tab's session does). */
+    function show(id: string): OpenISDProject {
+      for (const open of [...appState.openProjects()]) appState.removeProject(appState.openProjects().indexOf(open));
+      const project = projectRepo.loadStoredProject(id);
+      if (Array.isArray(project)) throw new Error(project.join('; '));
+      return appState.openProjectOnce(project, {kind: 'stored', id});
+    }
+    async function wait(ms: number): Promise<void> {
+      await nextTick();
+      timer.advance(ms);
+    }
+    return {appState, projectRepo, keepBoth, show, wait};
+  }
+
+  it('write over each other\'s unsaved edits without making conflict copies', async () => {
+    const storage = createMemoryStorage();
+    const first = tabOn(storage);
+    const project = ProjectBuilder.empty(first.appState.engine);
+    project.name.set('Sub 12');
+    project.save();
+    expect(first.projectRepo.saveToStorage(project).kind).toBe('saved');
+    const id = project.uuid();
+    const second = tabOn(storage);
+    const mine = first.show(id);
+    await first.wait(0);
+
+    mine.portVelocityLimit_m_per_s.set(20);
+    await first.wait(SYNC_AFTER_EDIT_MS);
+    const theirs = second.show(id);
+    await second.wait(0);
+    theirs.portVelocityLimit_m_per_s.set(23);
+    await second.wait(SYNC_AFTER_EDIT_MS);
+    mine.portVelocityLimit_m_per_s.set(24);
+    await first.wait(SYNC_AFTER_EDIT_MS);
+
+    expect(first.keepBoth).not.toHaveBeenCalled();
+    expect(second.keepBoth).not.toHaveBeenCalled();
+    const stored = first.projectRepo.loadStoredProject(id);
+    expect(Array.isArray(stored) ? null : stored.portVelocityLimit_m_per_s.value).toBe(24);
+    expect(first.projectRepo.listStoredProjects()).toHaveLength(1);
+  });
+});
