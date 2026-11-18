@@ -19,7 +19,6 @@ import type {BinRow} from './binRows.js';
 import type {ProjectListRow} from './projectBinView.js';
 import {openStoredProject as openStoredProjectFromStore} from '../logic/storedProjectOpen.js';
 import {createProjectBinView} from './projectBinView.js';
-import {watchClampRoom, type ClampRoom} from './clampRoom.js';
 import {
   type ConflictCopy,
   type SyncDisplay,
@@ -63,8 +62,6 @@ export interface MobileShellApi {
   projectOpen: import('vue').ComputedRef<boolean>;
   /** The focused project's title for the top bar; '' with no project open. */
   projectTitle: import('vue').ComputedRef<string>;
-  /** The header name's text element: it keeps room for its ellipsis only while it is clamped. */
-  projectTitleText: import('vue').Ref<HTMLElement | null>;
   destination: import('vue').Ref<MobileDestination>;
   fileInput: import('vue').Ref<HTMLInputElement | null>;
   openImportedFile: (e: Event) => void;
@@ -199,12 +196,6 @@ export function useMobileShell(): MobileShellApi {
   const { show: about, aboutLabel } = injectSplashModal();
   const projectOpen = computed(() => focusedProject() != null);
   const projectTitle = computed(() => { void projectChanged.value; return focusedProject()?.title() ?? ''; });
-  const projectTitleText = ref<HTMLElement | null>(null);
-  watch(projectTitleText, (el, _before, onCleanup) => {
-    if (el === null) return;
-    const room: ClampRoom = watchClampRoom(el);
-    onCleanup(() => room.stop());
-  }, {flush: 'post'});
   const destination = ref<MobileDestination>('box');
   const pane = ref<MobilePane | null>(null);
   const featureUse = useFeatureUse();
@@ -643,7 +634,7 @@ export function useMobileShell(): MobileShellApi {
   }
 
   return {
-    projectOpen, projectTitle, projectTitleText, destination, fileInput, openImportedFile, openNewProject, switchToDesktop, useAutomaticSkin, skinIsAutomatic,
+    projectOpen, projectTitle, destination, fileInput, openImportedFile, openNewProject, switchToDesktop, useAutomaticSkin, skinIsAutomatic,
     menuOpen, toggleMenu, closeMenu, exportProjectsArchive: () => designIO.exportProjectsArchive(), openFromDisk, isModified,
     saveProject, saveAllProjects, anyUnsaved, updateBannerVisible, reloadForUpdate, dismissUpdateBanner, revertProject, browseDrivers, optionsOpen, openOptions, about, aboutLabel, goToProject,
     contentEl, canScrollUp, canScrollDown, updateScrollEdges, username, appVersion: appVersion.label, flashMessage: logging.message,
