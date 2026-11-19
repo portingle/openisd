@@ -45,7 +45,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python3 -m pip install pyyaml==6.0.2
+      # -I (isolated): no module from the checkout is imported (T934 review 6)
+      - run: python3 -I -m pip install pyyaml==6.0.2
       - name: gate files approved, checked by the base commit's own scripts
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
@@ -58,7 +59,7 @@ jobs:
           BOOTSTRAP_SHA256: |
             09f2ec4155654d3dd4ed20905c9122b0f0c58fbd8e0daf42be938791dfc6edab  scripts/ci/contract-from-base.sh
             bd74afc8a1e0462c139f7b0a1a76fb301ea7b644b54bb4e5d08aba6b5deed0a1  scripts/land/pr-task.sh
-            824dcaba2bbc3ae7c83f9fc1f14248fb3e3d375470cc7f866aabc2ad9512ef9a  scripts/land/check-task-contract.sh
+            56f73cadd94184549924939a90fa6561b6aa7a78e7eebf46f6cc3a793c334304  scripts/land/check-task-contract.sh
             c88c1e927597717479befd32ad56832818cf2374f317df0ca853552df1dc1c24  scripts/land/core/task.sh
             2cfb2f891b0b779fa07f83d9166cab0315374b254f91075fb2d0e83b616e714c  scripts/land/task-gates/check-commit.sh
         run: |
@@ -109,8 +110,12 @@ jobs:
           tools="$RUNNER_TEMP/dupscan-tools"; mkdir -p "$tools"
           git show "$BASE_SHA:package.json" > "$tools/package.json" && git show "$BASE_SHA:package-lock.json" > "$tools/package-lock.json" || exit 1
           (cd "$tools" && npm ci --ignore-scripts --no-audit --no-fund) || { echo "::error title=dupscan::cannot install the base's jscpd and typescript"; exit 1; }
-          ln -s "$tools/node_modules" node_modules
-          node scripts/dupscan.mjs . --jscpd "$tools/node_modules/.bin/jscpd" --allow scripts/dupscan-allow.json --homes scripts/dupscan-homes.json --rekey scripts/dupscan-rekey-T934.json --base "$BASE_SHA"
+          # The scanner is staged from the head commit beside the trusted node_modules and run there (T934 review 6): Node resolves
+          # its "typescript" import from the script's own folder, so a node_modules in the checkout is never loaded.
+          git show "$HEAD_SHA:scripts/dupscan.mjs" > "$tools/dupscan.mjs" || exit 1
+          co="$(pwd -P)"
+          node "$tools/dupscan.mjs" "$co" --jscpd "$tools/node_modules/.bin/jscpd" --allow "$co/scripts/dupscan-allow.json" --homes "$co/scripts/dupscan-homes.json" \
+            --rekey "$co/scripts/dupscan-rekey-T934.json" --base "$BASE_SHA"
 
   # The task contract, attribution, driver-model ruling and visual baselines: no node needed.
   task:

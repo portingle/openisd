@@ -25,6 +25,8 @@ setup() {
     [ "${NO_RUNNER_ON_BASE:-0}" = 1 ] || { mkdir -p scripts/ci; cp "$REPO/scripts/ci/contract-from-base.sh" scripts/ci/; }
     # BASE_FILES: more files on the base (24-25), each of three lines so git could pair a rename
     for bf in ${BASE_FILES:-}; do mkdir -p "$(dirname "$bf")"; printf 'one\ntwo\nthree\n' > "$bf"; done
+    # BASE_COPY: files copied from this repo onto the base (30)
+    for bf in ${BASE_COPY:-}; do mkdir -p "$(dirname "$bf")"; cp "$REPO/$bf" "$bf"; done
     printf '#!/usr/bin/env bash\nexit 0\n' > gates/ok.sh; chmod +x gates/ok.sh
     cat > "$SCRATCH/questions.yml" <<'Q'
 questions:
@@ -63,7 +65,7 @@ LAND_LOCK="$SCRATCH/land.lock"
 POST_LAND_LOCK="$SCRATCH/post.lock"
 POST_LAND_RECORD="$SCRATCH/post.lock"
 QUESTIONS_FILE=$SCRATCH/questions.yml
-$gate_files
+$([ "${NO_BASE_GATE_FILES:-0}" = 1 ] || printf '%s' "$gate_files")
 CONF
     printf 'id: T9\nowner: t\nstatus: claimed\nrelease_note: internal\ngoal: Do the thing.\ndone_test: true\nfiles:\n  - f.txt\n%s' "${1:-}" > tasks/T9.yml
     git add -A; git commit -qm base; git push -q origin main
@@ -150,7 +152,7 @@ ci_contract() { ci_step gate-approval "$1" "$(git rev-parse origin/main)" "$(git
 # ci_setup <task extra lines> <sabotage 1|0>: setup, then the change: a gate file (tsconfig.json) changed; with sabotage the
 # change also edits its own checker, pr-task.sh, pr-setup.sh and runner to pass everything, and its land.conf to run a command.
 ci_setup() {
-    setup "$(printf '  - tsconfig.json\n  - land.conf\n  - scripts/**\nwhy: John asked for this change (John, 10 Nov 2026)\n%s' "$1")" f.txt
+    setup "$(printf '  - tsconfig.json\n  - land.conf\n  - scripts/**\n  - fnmatch.py\n  - packages/**\nwhy: John asked for this change (John, 10 Nov 2026)\n%s' "$1")" f.txt
     if [ "$2" = 1 ]; then
         printf '#!/usr/bin/env bash\nexit 0\n' > scripts/land/check-task-contract.sh
         printf '#!/usr/bin/env bash\necho T1\nexit 0\n' > scripts/land/pr-task.sh
@@ -241,9 +243,30 @@ if "(cd \"$tools\" && npm ci --ignore-scripts" not in runs or runs.count("npm ci
 if "git show \"$BASE_SHA:package-lock.json\"" not in runs: problems.append("dupscan does not install from the base lockfile")
 if "--base \"$BASE_SHA\"" not in runs or "origin/main" in runs: problems.append("dupscan does not compare with BASE_SHA")
 if "dupscan" in str(jobs["architecture"]): problems.append("the architecture job still scans")
+if "ln -s" in runs or "node \"$tools/dupscan.mjs\"" not in runs or "git show \"$HEAD_SHA:scripts/dupscan.mjs\" > \"$tools/dupscan.mjs\"" not in runs: problems.append("dupscan does not run the scanner staged beside the trusted node_modules")
+for st in jobs["gate-approval"]["steps"]:
+    if "python3" in st.get("run", "") and "python3 -I" not in st["run"]: problems.append("gate-approval runs python3 without -I")
 print("; ".join(problems)); sys.exit(1 if problems else 0)
 ' "$REPO/.github/workflows/pr.yml" > "$SCRATCH/out" 2>&1
 [ "$?" = 0 ] && ok "29 pr.yml binds both jobs to the event's base sha and github.sha for pull_request and merge_group, and the dupscan job runs nothing of the change first" || fail "29: $(tr '\n' ' ' < "$SCRATCH/out")"
+
+# 30 (T934 review 6): the dupscan job loads only the base's trusted typescript and jscpd: a checkout carrying its own
+# node_modules/typescript and scripts/node_modules/typescript (each throws when loaded) is scanned as usual, through the ratchet.
+# The base has the real package.json and package-lock.json (npm ci, scripts off, needs the npm registry or its cache).
+BASE_COPY="package.json package-lock.json scripts/dupscan.mjs" ci_setup "" 0
+mkdir -p packages/design/engine; printf 'export const area = (w: number, h: number): number => w + h;\n' > packages/design/engine/clean.ts
+echo '{}' > scripts/dupscan-allow.json; echo '{}' > scripts/dupscan-homes.json; echo '{"pairs": {}}' > scripts/dupscan-rekey-T934.json
+git add -A; git commit -qm scan; git push -q origin HEAD:main; echo 3 > f.txt; git commit -qam change
+for nm in node_modules/typescript scripts/node_modules/typescript; do mkdir -p "$nm"; printf '{"name": "typescript", "version": "0.0.0", "main": "index.js"}\n' > "$nm/package.json"
+    printf 'throw new Error("PLANTED typescript from the checkout was loaded");\n' > "$nm/index.js"; done
+r=$(ci_step dupscan "$NOT_BASE" "$(git rev-parse origin/main)" "$(git rev-parse HEAD)")
+if [ "$r" = 0 ] && grep -q '^dupscan: [0-9]* findings' "$SCRATCH/out" && grep -q 'OK: no new duplicated logic' "$SCRATCH/out" && ! grep -q PLANTED "$SCRATCH/out"; then ok "30 the dupscan job ignores a checkout's own node_modules/typescript and scans through the ratchet"; else fail "30 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | tail -c 400)"; fi
+# 31 (T934 review 6): the base's GATE_FILES is read fail-closed: a base land.conf without it refuses, never trusting the change's list alone.
+NO_BASE_GATE_FILES=1 ci_setup "" 0; printf 'GATE_FILES="nothing.txt"\n' >> land.conf; git commit -qam list; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q "the base's land.conf .* sets no GATE_FILES" "$SCRATCH/out"; then ok "31 a base land.conf without GATE_FILES refuses"; else fail "31 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+# 32 (T934 review 6): the checker's Python runs isolated (-I): a fnmatch.py in the checkout that matches nothing is not imported.
+ci_setup "" 0; printf 'def fnmatchcase(name, pat):\n    return False\n' > fnmatch.py; git add -A; git commit -qm planted; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q $'REFUSE\tgates\tgate files changed: [^;]*tsconfig.json' "$SCRATCH/out"; then ok "32 a checkout-local fnmatch.py is not imported by the checker"; else fail "32 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
 
 [ $fails = 0 ] && { echo "land-gates: all passed"; exit 0; }
 echo "land-gates: $fails failed"; exit 1
