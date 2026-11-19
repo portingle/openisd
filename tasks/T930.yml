@@ -1,0 +1,10 @@
+id: T930
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Engine: passive radiator geometry needs Mmd, Sd and Cms above 0 (no NaN or Infinity readouts), radiator zeros repaired on load, and the air solver tries the next relation after a failed step (a typed sound velocity solves temperature)
+why: lead 19 Nov 2026: ultra review 1 findings 8 and 10, verified by probe (_agent_files/reference/ULTRA_REVIEW_20261119_engine_findings.md); loaded impossible values repaired automatically (John 18 Nov, QO953.c10-c26)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T930.yml
