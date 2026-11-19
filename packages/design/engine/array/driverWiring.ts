@@ -32,3 +32,12 @@ export function driverDrive(n: number, wiring: DriverWiring, amp_V: number, Rg_o
 export function amplifierVoltage(n: number, wiring: DriverWiring, eg_V: number): number {
   return n > 1 && wiring === 'series' ? n * eg_V : eg_V;
 }
+
+/**
+ * The power the array can take: Pe x Nd, x 2 for an Iso-Barik pair, which is two drivers per position, each rated Pe.
+ * WinISD's Maximum power does the same: 40 / 80 / 80 / 160 W for the W5-1138SMF (Pe 40 W) at Nd 1, Nd 1 Iso-Barik,
+ * Nd 2, Nd 2 Iso-Barik (winisd_research runs/isobarik-more-20261119).
+ */
+export function arrayPowerHandling(pe_W: number, nDrivers: number, loading: 'standard' | 'isobaric'): number {
+  return pe_W * nDrivers * (loading === 'isobaric' ? 2 : 1);
+}
