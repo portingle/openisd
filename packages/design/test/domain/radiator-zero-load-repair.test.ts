@@ -12,6 +12,8 @@ import {ProjectBuilder} from '../../domain/openisdTransforms.js';
 import {OpenISDProject} from '../../domain/project/openISDProject.js';
 import type {OpenedProject} from '../../domain/project/openISDProject.js';
 import {driverFromSpec} from '../fixtures/recordBuilders.js';
+import {wprText} from '../fixtures/inputLimitsSweep.js';
+import {WinIsdProjectConverter} from '../../domain/winIsdProjectConverter.js';
 
 const engine = createEngine();
 
@@ -72,4 +74,22 @@ describe('a radiator figure of 0 in a project file is repaired on opening (T930)
     p.save();
     expect(opened(p.toOwprText()).loadRepairs).toEqual([]);
   });
+});
+
+describe('a radiator figure of 0 in a WinISD .wpr is repaired on opening the same way (T930)', () => {
+  for (const key of ['Sd', 'Fs', 'Vas', 'Qms']) {
+    it(`[PassiveRadiator] ${key}=0: the figure is emptied and named, and no readout is NaN or Infinity`, () => {
+      const plain = wprText('passive radiator');
+      const text = plain.replace(new RegExp(`(\\[PassiveRadiator\\][^\\[]*?\\n${key}=)[^\\r\\n]*`), '$10');
+      expect(text, `the PR .wpr states ${key}`).not.toBe(plain);
+      const {value, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+      if (value === null) throw new Error(errors.map(e => e.message).join('; '));
+      const radiatorLines = loadRepairs.filter(r => r.text.startsWith('Passive radiator '));
+      expect(radiatorLines).toHaveLength(1);
+      const pr = value.box.passiveRadiator;
+      for (const f of [pr.systemTuning_hz, pr.tuning_goal_hz, pr.addedMass_kg]) {
+        expect(f.value === null || Number.isFinite(f.value), `${f.value}`).toBe(true);
+      }
+    });
+  }
 });
