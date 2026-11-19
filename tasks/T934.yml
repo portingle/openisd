@@ -6,7 +6,7 @@ status: open
 goal: 'The duplicate-logic check knows each kind of sum''s one home in the engine, so the home is never flagged; the known-copies list can only shrink; every driver-count and coil-wiring copy calls the engine''s home function.'
 why: 'John, 19 Nov 2026: ''remove the dupe and fix the guardrail'''
 done_test: bash scripts/test/dupscan.test.sh
-gates_approved: QO949
+gates_approved: QO956
 files:
   - tasks/T934.yml
   - AGENTS.md
