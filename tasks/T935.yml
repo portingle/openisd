@@ -9,5 +9,5 @@ done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T935.yml
   - packages/design/domain/box/openISDBox.ts
-  - packages/design/engine/index.ts
+  - packages/design/engine/pr/PrEngine.ts
   - packages/design/test/domain/box-passive-radiator.test.ts
