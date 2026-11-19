@@ -1,0 +1,10 @@
+id: T933
+release_note: internal
+repo: openisd
+owner: test-strategy-plan
+status: open
+goal: A measured plan for testing the sums engine (coverage, WinISD comparison gaps, journeys, invariants, mutation) is in docs/plans/PLAN_20261119_TEST_STRATEGY.md and indexed.
+why: John, 19 Nov 2026: 'your notes make it clear we have inadequate testing and problems with coverage analysis'
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T933.yml
