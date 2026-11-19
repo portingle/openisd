@@ -27,11 +27,11 @@ import {NumberField} from '../../fields/field.js';
 import type {ValueFloor} from '../../fields/field.js';
 import {GAMMA, soundSpeedAt, temperatureIssues} from '../air.js';
 import type {AppAir} from '../air.js';
-import {inconsistentInputs, missingDependencies} from '../consistency.js';
-import type {CalculationIssue} from '../consistency.js';
+import {inconsistentInputs, missingDependencies, outsideNormalBand} from '../consistency.js';
+import type {CalculationIssue, NormalBandIssue} from '../consistency.js';
 
 export type AirQuantityName = 'tempK' | 'humidityPct' | 'pressurePa' | 'c' | 'rho';
-export type AirIssue = CalculationIssue<AirQuantityName>;
+export type AirIssue = CalculationIssue<AirQuantityName> | NormalBandIssue<AirQuantityName>;
 
 /** One air quantity as the caller states it: typed, with the half-width (SI) that typing states,
  *  or open to be calculated. */
@@ -317,9 +317,7 @@ export function airBandIssues(name: AirQuantityName, value: number): readonly Ai
   if (value < field.limits.min || value > field.limits.max || airFloorIssues(name, value).length > 0) return [];
   const unit = field.unitLabel();
   const said = (v: number): string => `${field.format(v)} ${unit}`;
-  const base = missingDependencies(name, [{formula: `${SAYS[name]} between ${min} and ${max}`, required: [name], missing: [name]}]);
-  return [{...base, fields: [name],
-    text: `${field.label} ${said(value)} is outside the sane range for air (${said(min)} to ${said(max)}). It is kept and used; check it.`}];
+  return [outsideNormalBand(name, `${field.label} ${said(value)} is outside the sane range for air (${said(min)} to ${said(max)}). It is kept and used; check it.`)];
 }
 
 /** The app's value of one of the three conditions the app holds. */

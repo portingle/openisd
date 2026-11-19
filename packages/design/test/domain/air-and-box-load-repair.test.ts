@@ -114,6 +114,8 @@ describe('the air boxes warn outside their normal band, keeping and using the va
       set(project).set(value);
       expect(set(project).value).toBe(value);
       expect(set(project).dq.map(i => i.text)).toContain(says);
+      // A warning of its own kind, never a conflict: the box says it without "Conflicts with other values".
+      expect(set(project).dq.filter(i => i.text === says).map(i => i.kind)).toEqual(['outside-normal-band']);
       expectCharts(project);
     });
   }

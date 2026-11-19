@@ -23,9 +23,9 @@ type Shell = 'desktop' | 'phone';
 const HUMIDITY_NOTE_ABOVE = /^Relative humidity is above its maximum — enter a value between 0(\.00)? and 100(\.00)? %\.$/;
 const HUMIDITY_NOTE_BELOW = /^Relative humidity is below its minimum — enter a value between 0(\.00)? and 100(\.00)? %\.$/;
 const TEMPERATURE_NOTE = /^Temperature must be greater than 0 — enter a value above 0 K\.$/;
-/** An entered value's ⚠ opens with "Conflicts with other values:", as on every other box (`dqReason`). */
-const PRESSURE_WARNING = 'Conflicts with other values: Air pressure 5000 Pa is outside the sane range for air (30000 Pa to 110000 Pa). It is kept and used; check it.';
-const TEMPERATURE_WARNING = 'Conflicts with other values: Temperature 400.00 K is outside the sane range for air (174.00 K to 373.00 K). It is kept and used; check it.';
+/** A band warning conflicts with nothing, so its ⚠ says only the warning, with no conflict prefix. */
+const PRESSURE_WARNING = 'Air pressure 5000 Pa is outside the sane range for air (30000 Pa to 110000 Pa). It is kept and used; check it.';
+const TEMPERATURE_WARNING = 'Temperature 400.00 K is outside the sane range for air (174.00 K to 373.00 K). It is kept and used; check it.';
 /** In the order the boxes stand on the Advanced tab. */
 const REPAIR_LINES = [
   "Relative humidity 150 % in the file: emptied, so the box shows the app's humidity (Options)",
@@ -113,18 +113,22 @@ async function expectRefused(page: Page, field: Locator, text: string, note: Reg
   await expect(input).not.toHaveClass(/inp-bad/);
 }
 
-/** Types `text`; it is stored (not red) and the box carries the ⚠ warning `warning`, shown whole. */
+/** Types `text`; it is stored and the box carries the ⚠ warning `warning`, shown whole in an amber
+ *  note. The box is amber (`dq-warn`), never red: red is a refusal (`inp-bad`) or a conflict (`dq-flag`). */
 async function expectWarned(page: Page, field: Locator, text: string, warning: string, picture: string): Promise<void> {
   const input = field.locator('input').first();
   await fillAndBlur(input, text);
   await expect(input).not.toHaveClass(/inp-bad/);
   expect(Number(await input.inputValue())).toBeCloseTo(Number(text), 6);
-  await expect(input).toHaveClass(/dq-flag/);
+  await expect(input).toHaveClass(/dq-warn/);
+  await expect(input).not.toHaveClass(/dq-flag/);
+  await expect(input).toHaveCSS('border-top-color', 'rgb(184, 121, 15)');   // --acc2, the amber of the ⚠
   const mark = field.locator('.ui-field-dq-btn');
   await expect(mark).toHaveAttribute('title', warning);
   await mark.click();
   const shown = field.locator('.ui-field-note');
   await expect(shown).toHaveText(warning);
+  await expect(shown).toHaveClass(/ui-field-note-warning/);
   await expectInside(page, shown);
   await page.screenshot({path: picture});
   await mark.click();
