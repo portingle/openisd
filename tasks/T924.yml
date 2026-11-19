@@ -1,0 +1,10 @@
+id: T924
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Loaded impossible air values (pressure, sound speed, density at or below 0, humidity outside 0-100 %, temperature at or below 0 K) and the other loaded impossible values the input-limits sweep left flag-and-block are repaired automatically and listed in the opening toast; typed impossible humidity and temperature are refused with a note; air values outside the normal band keep the value with a warning note.
+why: John, QO953.c14 (18 Nov 2026): air boxes refuse pressure, sound speed and density at 0 or below, humidity outside 0-100 %, temperature at or below 0 K, and warn outside each box's normal band; number-input rule QO953.c27-c32 (18 Nov 2026): 'a repair is ok but it has to be automatic', 'no dq must match value shown'.
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T924.yml
