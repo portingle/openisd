@@ -4,7 +4,7 @@ repo: openisd
 owner: agent
 status: open
 goal: Fix three engine bugs found by the Gemini review: force-flat in max curves, wide-magnet MagDepth refusal, air fill order
-why: agy review verified 19 Nov 2026, card agy-bugs-4
+why: 'agy review verified 19 Nov 2026, card agy-bugs-4: BUG_20261119_max-curves-include-force-flat-gain, BUG_20261119_magdepth-refused-for-a-wide-magnet, BUG_20261119_air-fill-order-gives-false-conflict'
 done_test: bash scripts/test.sh packages/design/test/domain/max-curves-ignore-force-flat.test.ts packages/design/test/domain/project-air.test.ts packages/design/test/engine/driver-solve.test.ts
 note: 'Bug files: bugs/BUG_20261119_max-curves-include-force-flat-gain.md (Maximum SPL and Maximum power used the force-flat boost), bugs/BUG_20261119_magdepth-refused-for-a-wide-magnet.md (Magnet depth refused for a magnet wider than sqrt(S/3)), bugs/BUG_20261119_air-fill-order-gives-false-conflict.md (typed temperature and density after the air reset gave a false disagreement and a wrong c).'
 files:
