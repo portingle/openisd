@@ -1,0 +1,10 @@
+id: T931
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: new-task.sh writes goal and why as YAML-safe quoted strings, so a colon or quote in them no longer makes the task file invalid
+why: lead 19 Nov 2026 - T923, T925, T927, T928 task files were invalid YAML because goal or why held a colon followed by a space; ship refused or agents rewrote them
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T931.yml
