@@ -46,7 +46,7 @@ conf_value() {
 # its own land.conf. The proposed list is added to it, so a change that protects more is held to more.
 head_gate_files="${GATE_FILES:-}"
 base_gate_files="$(conf_value "$BASE" GATE_FILES)"
-GATE_FILES="$(printf '%s %s' "$base_gate_files" "${GATE_FILES:-}" | xargs)"
+GATE_FILES="$base_gate_files ${GATE_FILES:-}"
 
 if [ -n "$PR_MODE" ]; then
   # `why:` is asked of a task file this pull request adds or really changes; a hash-only or status-only edit of an old one is exempt (T767)
@@ -105,7 +105,11 @@ if [ -n "$PR_MODE" ]; then
   done < <(git diff --name-only --diff-filter=ACMR "$BASE" "$HEAD_REF")
 fi
 # A file this branch changed that another task locks warns (T786, QO512): refusing here blocked fixes to process tests; the landing task's own locked tests (above) still refuse.
-changed="$(git diff --name-only "$BASE" "$HEAD_REF")"
+# Every path the change touches, renames split into the old and the new path (T934 review 5: with rename detection on, a
+# renamed protected file showed only its new name). Read NUL-delimited into a file, its status checked.
+changed_z="$(mktemp)" || exit 2; trap 'rm -f "$changed_z" "${work:-}"' EXIT
+git diff --no-renames --name-only -z "$BASE" "$HEAD_REF" > "$changed_z" || fail gates "cannot list the files changed between $BASE and $HEAD_REF"
+changed="$(tr '\0' '\n' < "$changed_z")"
 for other in tasks/*.yml; do
   [ "$other" = "$TASK" ] && continue
   while read -r path hash; do
@@ -119,13 +123,16 @@ done
 
 # gate files: John approves changes to them (30 Oct 2026). An unset or empty GATE_FILES refuses: deleting the list must not switch the check off.
 [ -n "$head_gate_files" ] || fail gates "GATE_FILES is not set in land.conf"
-gate_hits="$(printf '%s\n' "$changed" | python3 -c '
-import fnmatch, sys
-globs = sys.argv[1:]
-for line in sys.stdin.read().split("\n"):
-    if line and any(fnmatch.fnmatchcase(line, g) for g in globs):
-        print(line)
-' $GATE_FILES | tr '\n' ' ')"
+# The patterns reach fnmatch as one literal string, split there (T934 review 5: unquoted, the shell expanded a pattern against
+# the checkout, so a deleted scripts/coverage-a.sh dropped out while scripts/coverage-b.sh remained). A matcher failure refuses.
+gate_hits="$(GATE_PATTERNS="$GATE_FILES" python3 -c '
+import fnmatch, os, sys
+globs = os.environ["GATE_PATTERNS"].split()
+if not globs:
+    sys.exit("no gate patterns")
+paths = [p for p in open(sys.argv[1], "rb").read().decode("utf-8").split("\0") if p]
+print(" ".join(p for p in paths if any(fnmatch.fnmatchcase(p, g) for g in globs)))
+' "$changed_z")" || fail gates "cannot match the changed files against GATE_FILES"
 if [ -n "$gate_hits" ]; then
   gates_qo="$(task_field "$TASK" gates_approved)"; gates_id="$ID"
   # a pull request carrying several tasks needs the approval on one of them (T762): the first that has it speaks for the change

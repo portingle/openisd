@@ -55,4 +55,5 @@ notes: |
   gate file, but the check that says so runs inside pr.yml. Options: a pull_request_target workflow for the gate approval
   (runs the base branch's workflow file), or a repository rule requiring a reviewer's approval for changes under
   .github/workflows/. Until then every pr.yml change is reviewed by hand.
-  Bootstrap: pr.yml pins BOOTSTRAP_BASE to 6082d07aa (main when T934 was made); update it if main moves before T934 lands.
+  Bootstrap: pr.yml pins BOOTSTRAP_BASE to 6082d07aa (main when T934 was made) and BOOTSTRAP_SHA256 to the reviewed runner and
+  checker scripts; update the pin if main moves before T934 lands, and the sums if those scripts change.

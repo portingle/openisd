@@ -23,6 +23,8 @@ setup() {
     cp "$REPO/scripts/land.sh" "$REPO/scripts/paths.sh" scripts/; cp -r "$REPO/scripts/land" scripts/; cp -r "$REPO/scripts/lib" scripts/
     # the pull request check's runner (17-23) is on the base unless NO_RUNNER_ON_BASE=1
     [ "${NO_RUNNER_ON_BASE:-0}" = 1 ] || { mkdir -p scripts/ci; cp "$REPO/scripts/ci/contract-from-base.sh" scripts/ci/; }
+    # BASE_FILES: more files on the base (24-25), each of three lines so git could pair a rename
+    for bf in ${BASE_FILES:-}; do mkdir -p "$(dirname "$bf")"; printf 'one\ntwo\nthree\n' > "$bf"; done
     printf '#!/usr/bin/env bash\nexit 0\n' > gates/ok.sh; chmod +x gates/ok.sh
     cat > "$SCRATCH/questions.yml" <<'Q'
 questions:
@@ -134,13 +136,17 @@ if refused_gates "$r" && grep -q 'gate files changed: [^;]*scripts/dupscan-homes
 # gate-approval job, read out of .github/workflows/pr.yml, in a scratch clone: it takes the runner from the base commit, and the
 # runner runs the base commit's scripts/land/, reading the change's land.conf, task file and file list as data. The land.conf
 # here sets QUESTIONS_FILE unquoted, as the real one does.
-ci_contract() {   # <bootstrap base>: pr.yml's gate-approval step, base = origin/main, head = HEAD
-    python3 -c 'import sys, yaml; steps = yaml.safe_load(open(sys.argv[1]))["jobs"]["gate-approval"]["steps"]; print(steps[-1]["run"])' \
-      "$REPO/.github/workflows/pr.yml" > "$SCRATCH/step.sh" || { echo "no gate-approval step in pr.yml" > "$SCRATCH/out"; echo 2; return; }
-    mkdir -p "$SCRATCH/rt"
-    (unset GATE_FILES QUESTIONS_FILE; BASE_SHA="$(git rev-parse origin/main)" HEAD_SHA="$(git rev-parse HEAD)" BOOTSTRAP_BASE="$1" RUNNER_TEMP="$SCRATCH/rt" \
-      timeout 120 bash "$SCRATCH/step.sh") > "$SCRATCH/out" 2>&1; echo $?
+# ci_step <job> <bootstrap base> <base sha> <head sha>: the last step of that pr.yml job, run as GitHub runs it (its env from
+# the yaml, the event's shas given here). ci_contract <bootstrap base>: gate-approval with base origin/main, head HEAD.
+ci_step() {
+    python3 -c 'import sys, yaml; steps = yaml.safe_load(open(sys.argv[1]))["jobs"][sys.argv[2]]["steps"]; print(steps[-1]["run"])' \
+      "$REPO/.github/workflows/pr.yml" "$1" > "$SCRATCH/step.sh" || { echo "no $1 step in pr.yml" > "$SCRATCH/out"; echo 2; return; }
+    sums="$(python3 -c 'import sys, yaml; print(yaml.safe_load(open(sys.argv[1]))["jobs"]["gate-approval"]["steps"][-1]["env"]["BOOTSTRAP_SHA256"])' "$REPO/.github/workflows/pr.yml")"
+    rm -rf "$SCRATCH/rt"; mkdir -p "$SCRATCH/rt"
+    (unset GATE_FILES QUESTIONS_FILE; BASE_SHA="$3" HEAD_SHA="$4" BOOTSTRAP_BASE="$2" BOOTSTRAP_SHA256="$sums" RUNNER_TEMP="$SCRATCH/rt" \
+      timeout 300 bash "$SCRATCH/step.sh") > "$SCRATCH/out" 2>&1; echo $?
 }
+ci_contract() { ci_step gate-approval "$1" "$(git rev-parse origin/main)" "$(git rev-parse HEAD)"; }
 # ci_setup <task extra lines> <sabotage 1|0>: setup, then the change: a gate file (tsconfig.json) changed; with sabotage the
 # change also edits its own checker, pr-task.sh, pr-setup.sh and runner to pass everything, and its land.conf to run a command.
 ci_setup() {
@@ -189,6 +195,55 @@ if "contract-from-base" in str(jobs["task"]): problems.append("the task job stil
 print("; ".join(problems)); sys.exit(1 if problems else 0)
 ' "$REPO/.github/workflows/pr.yml" > "$SCRATCH/out" 2>&1
 [ "$?" = 0 ] && ok "23 pr.yml's gate-approval job runs nothing of the change and pr-gate needs it" || fail "23: $(tr '\n' ' ' < "$SCRATCH/out")"
+
+# 24-25 (T934 review 5): every path the change touches counts, a rename's old path included, and a pattern is matched literally
+# (never expanded by the shell against the checkout).
+BASE_FILES=scripts/dupscan-homes.json ci_setup "" 0; git mv scripts/dupscan-homes.json scripts/moved-homes.json; git commit -qm move; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q $'REFUSE\tgates\tgate files changed: [^;]*scripts/dupscan-homes.json' "$SCRATCH/out"; then ok "24 a protected file renamed is refused, naming its old path"; else fail "24 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+BASE_FILES="scripts/coverage-a.sh scripts/coverage-b.sh" ci_setup "" 0; git rm -q scripts/coverage-a.sh; git commit -qm del; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q $'REFUSE\tgates\tgate files changed: [^;]*scripts/coverage-a.sh' "$SCRATCH/out"; then ok "25 a deletion covered by scripts/coverage-*.sh is refused while scripts/coverage-b.sh remains"; else fail "25 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+# 26-29: the event's commits are checked in both jobs: the checkout must be the head, and the base an ancestor of it.
+ci_setup "" 0; other_root="$(git commit-tree "$(git hash-object -t tree /dev/null)" -m orphan)"
+for job in gate-approval dupscan; do
+    r=$(ci_step "$job" "$NOT_BASE" "$(git rev-parse origin/main)" "$(git rev-parse origin/main)")
+    if [ "$r" = 1 ] && grep -q 'the checkout is not' "$SCRATCH/out"; then ok "26 $job refuses a checkout that is not the event's head"; else fail "26 $job (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-300)"; fi
+    r=$(ci_step "$job" "$NOT_BASE" "$other_root" "$(git rev-parse HEAD)")
+    if [ "$r" = 1 ] && grep -q 'is not an ancestor of' "$SCRATCH/out"; then ok "27 $job refuses a base that is not an ancestor of the head"; else fail "27 $job (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-300)"; fi
+done
+# 28: the bootstrap exception is bound to content: on the pinned base, a change whose runner is not the reviewed one fails closed.
+NO_RUNNER_ON_BASE=1 ci_setup "" 0; printf '\n# edited\n' >> scripts/ci/contract-from-base.sh; git commit -qam edit; r=$(ci_contract "$(git rev-parse origin/main)")
+if [ "$r" = 1 ] && grep -q 'bootstrap: scripts/ci/contract-from-base.sh is not the reviewed content' "$SCRATCH/out" && ! grep -q 'REFUSE' "$SCRATCH/out"; then ok "28 on the pinned bootstrap base, an edited runner fails closed"; else fail "28 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+NO_RUNNER_ON_BASE=1 ci_setup "" 0; printf '\n# edited\n' >> scripts/land/core/task.sh; git commit -qam edit; r=$(ci_contract "$(git rev-parse origin/main)")
+if [ "$r" = 1 ] && grep -q 'bootstrap: scripts/land/core/task.sh is not the reviewed content' "$SCRATCH/out"; then ok "28 on the pinned bootstrap base, an edited checker library fails closed"; else fail "28 core (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+# 29: the yaml bindings, for both events and both jobs: BASE_SHA is the pull request's base sha or the merge group's base sha,
+# HEAD_SHA and the checkout are github.sha (the pull request's merge commit; the merge group's head); the dupscan job runs
+# nothing of the change before the scan (no needs, no bash scripts/, npm ci only in RUNNER_TEMP) and compares with BASE_SHA;
+# pr-gate needs it and the architecture job no longer scans.
+python3 -c '
+import sys, yaml
+d = yaml.safe_load(open(sys.argv[1]))
+on = d.get("on", d.get(True))
+jobs = d["jobs"]; problems = []
+if "pull_request" not in on or "merge_group" not in on: problems.append("pr.yml does not run on pull_request and merge_group")
+for name in ("gate-approval", "dupscan"):
+    job = jobs[name]; step = job["steps"][-1]; env = step.get("env", {})
+    if env.get("BASE_SHA") != "${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}": problems.append(name + " BASE_SHA binding: " + str(env.get("BASE_SHA")))
+    if env.get("HEAD_SHA") != "${{ github.sha }}": problems.append(name + " HEAD_SHA binding: " + str(env.get("HEAD_SHA")))
+    co = [st for st in job["steps"] if str(st.get("uses", "")).startswith("actions/checkout")]
+    if len(co) != 1 or co[0].get("with", {}).get("ref") != "${{ github.sha }}" or co[0].get("with", {}).get("fetch-depth") != 0: problems.append(name + " checkout is not github.sha with full history")
+    if "needs" in job: problems.append(name + " has needs")
+    runs = "\n".join(st.get("run", "") for st in job["steps"])
+    for bad in ("bash scripts/", "pr-setup", "./scripts", "npm run"):
+        if bad in runs: problems.append(name + " runs " + bad)
+    if name not in jobs["pr-gate"]["needs"]: problems.append("pr-gate does not need " + name)
+runs = jobs["dupscan"]["steps"][-1]["run"]
+if "(cd \"$tools\" && npm ci --ignore-scripts" not in runs or runs.count("npm ci") != 1: problems.append("dupscan installs other than with npm ci --ignore-scripts in RUNNER_TEMP")
+if "git show \"$BASE_SHA:package-lock.json\"" not in runs: problems.append("dupscan does not install from the base lockfile")
+if "--base \"$BASE_SHA\"" not in runs or "origin/main" in runs: problems.append("dupscan does not compare with BASE_SHA")
+if "dupscan" in str(jobs["architecture"]): problems.append("the architecture job still scans")
+print("; ".join(problems)); sys.exit(1 if problems else 0)
+' "$REPO/.github/workflows/pr.yml" > "$SCRATCH/out" 2>&1
+[ "$?" = 0 ] && ok "29 pr.yml binds both jobs to the event's base sha and github.sha for pull_request and merge_group, and the dupscan job runs nothing of the change first" || fail "29: $(tr '\n' ' ' < "$SCRATCH/out")"
 
 [ $fails = 0 ] && { echo "land-gates: all passed"; exit 0; }
 echo "land-gates: $fails failed"; exit 1
