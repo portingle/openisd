@@ -2,7 +2,7 @@ id: T921
 release_note: The vented alignment picker now counts the number of drivers and Iso-barik as WinISD's does, so two W5-1138SMF drivers get 21.39 L from the C4 alignment instead of one driver's 10.70 L, at the same tuning 35.90 Hz.
 repo: openisd
 owner: t921
-status: in_progress
+status: done
 gates_approved: QO954
 label: fixes
 goal: The vented alignment picker (Box tab, phone sheet, New Project) uses all the project's drivers (N times Vas, halved for an isobaric pair) through the engine's arrayVas rule, so its proposed volume scales with the driver count as WinISD's does and its tuning does not change
