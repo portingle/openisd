@@ -1,0 +1,10 @@
+id: T929
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Engine: lossless shortcuts only when every loss the box uses is lossless - 6th-order bandpass lossless output sign, bandpass4/6/ABC lossless test on every chamber Q, sealed resonance lossless only when Ql and Qa are both lossless
+why: lead 19 Nov 2026: ultra review 1 findings 2, 4 and 5, verified by probe (_agent_files/reference/ULTRA_REVIEW_20261119_engine_findings.md); WinISD always computes losses (spec S04 6c)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T929.yml
