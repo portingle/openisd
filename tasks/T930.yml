@@ -1,5 +1,5 @@
 id: T930
-release_note: "A passive radiator with a 0 for Sd, Cms or Mms no longer shows NaN: opening a project or .wpr treats the 0 as an empty box and the opening message lists it; a typed sound velocity that is very low now solves the temperature"
+release_note: "A passive radiator with a 0 for Sd, Cms or Mms no longer shows NaN: opening a project or .wpr treats the 0 as an empty box and the opening message lists it; a typed sound velocity that is very low now solves the temperature."
 repo: openisd
 owner: agent
 status: done
