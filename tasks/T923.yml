@@ -4,7 +4,7 @@ repo: openisd
 owner: agent
 status: done
 goal: Name the causing field(s) in the can't-plot chart panel instead of saying 'listed inputs'
-why: QO955.c3/c4: panel said 'Fix the listed inputs' with no inputs listed; John chose chart shows reason AND the field
+why: "QO955.c3/c4 - panel said 'Fix the listed inputs' with no inputs listed; John chose chart shows reason AND the field"
 done_test: npx vitest run packages/design/test/fields/chart-block-text.test.ts
 files:
   - tasks/T923.yml
