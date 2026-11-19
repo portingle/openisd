@@ -297,6 +297,31 @@ export function airFloorIssues(name: AirQuantityName, value: number): readonly A
   return [{...base, fields: [name], text: `${said} must be greater than 0: air with no ${SAYS[name]} carries no sound, so the charts are not drawn.`}];
 }
 
+/** The Advanced-pane field of each air quantity. */
+const AIR_FIELDS: Readonly<Record<AirQuantityName, NumberField>> = Object.freeze<Record<AirQuantityName, NumberField>>({
+  tempK: NumberField.ADV_TEMP_K,
+  humidityPct: NumberField.ADV_HUMIDITY_PCT,
+  pressurePa: NumberField.ADV_PRESSURE_KPA,
+  c: NumberField.ADV_SOUNDVELOCITY_M_PER_S,
+  rho: NumberField.ADV_AIRDENSITY_KG_PER_M3,
+});
+
+/** A stated air quantity inside its field's limits but outside its normal band
+ *  (`NumberField.plausible`): kept and used, with a warning that names the band (QO953.c14, "refuse
+ *  impossible, warn odd"). Empty inside the band, and outside the limits, where the solver's own
+ *  range issue or the temperature issue already speaks. */
+export function airBandIssues(name: AirQuantityName, value: number): readonly AirIssue[] {
+  const field = AIR_FIELDS[name];
+  const {min, max} = field.plausible;
+  if (!Number.isFinite(value) || (value >= min && value <= max)) return [];
+  if (value < field.limits.min || value > field.limits.max || airFloorIssues(name, value).length > 0) return [];
+  const unit = field.unitLabel();
+  const said = (v: number): string => `${field.format(v)} ${unit}`;
+  const base = missingDependencies(name, [{formula: `${SAYS[name]} between ${min} and ${max}`, required: [name], missing: [name]}]);
+  return [{...base, fields: [name],
+    text: `${field.label} ${said(value)} is outside the sane range for air (${said(min)} to ${said(max)}). It is kept and used; check it.`}];
+}
+
 /** The app's value of one of the three conditions the app holds. */
 function appValue(appAir: AppAir, name: AppQuantityName): number {
   switch (name) {

@@ -621,7 +621,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
               <div class="adv-air-fields">
                 <div class="adv-air-col">
                 <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_TEMP_K" :value="advTemp" @update:value="v => advTemp = v" @clear="advTemp = null" :defaulted="!envTempStored" :dq="envTempDq.dq" :dq-state="envTempDq.dqState" stepper allow-out-of-range /></div>
-                <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_HUMIDITY_PCT" :value="advHumidity" @update:value="v => advHumidity = v" @clear="advHumidity = null" :defaulted="!envHumidityStored" :dq="envHumidityDq.dq" :dq-state="envHumidityDq.dqState" stepper allow-out-of-range /></div>
+                <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_HUMIDITY_PCT" :value="advHumidity" @update:value="v => advHumidity = v" @clear="advHumidity = null" :defaulted="!envHumidityStored" :dq="envHumidityDq.dq" :dq-state="envHumidityDq.dqState" stepper /></div>
                 <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_PRESSURE_KPA" :value="advPressure" @update:value="v => advPressure = v" @clear="advPressure = null" :defaulted="!envPressureStored" :dq="envPressureDq.dq" :dq-state="envPressureDq.dqState" stepper allow-out-of-range /></div>
                 </div>
                 <div class="adv-air-col">

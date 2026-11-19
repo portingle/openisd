@@ -2,9 +2,28 @@ id: T924
 release_note: internal
 repo: openisd
 owner: agent
-status: open
-goal: Loaded impossible air values (pressure, sound speed, density at or below 0, humidity outside 0-100 %, temperature at or below 0 K) and the other loaded impossible values the input-limits sweep left flag-and-block are repaired automatically and listed in the opening toast; typed impossible humidity and temperature are refused with a note; air values outside the normal band keep the value with a warning note.
-why: John, QO953.c14 (18 Nov 2026): air boxes refuse pressure, sound speed and density at 0 or below, humidity outside 0-100 %, temperature at or below 0 K, and warn outside each box's normal band; number-input rule QO953.c27-c32 (18 Nov 2026): 'a repair is ok but it has to be automatic', 'no dq must match value shown'.
-done_test: bash scripts/quiet-test.sh npm run typecheck
+status: done
+label: fixes
+goal: 'A value a project file holds that no design can use is repaired automatically when the project opens (OpenISD file, WinISD .wpr, stored project) and named once in the opening message, with no warning mark on its box: air pressure, sound velocity or density at or below 0, humidity outside 0-100 % and temperature at or below 0 K are emptied (the app''s air, or worked out from it); a port tuning at or below 0 Hz is worked out from the port length the file gave; a negative port length is worked out from the tuning; a loss Q at or below 0 takes WinISD''s default; a driver or radiator count below 1 becomes 1; a negative series resistance or added mass becomes 0. Typed humidity outside 0-100 % and typed temperature at or below 0 K are refused with a note; an air value outside its normal band is kept and used with a warning naming the band.'
+why: 'John, 18 Nov 2026, card air-box-limits: ''Agree: refuse impossible, warn odd, as above'' (QO953.c14); general chat: ''yeas a 0 bs and jsrhe same as clearing the vale in a sense'' (QO953.c28, a 0 is the same as clearing the value); ''there won''t be a dqnflag on a repair as the dq always relate to the value the user can see - this is a hard rule surely'' (QO953.c30); ''all you can do is show a toast'' (QO953.c31); ''ok decided'' (QO953.c32).'
+ruling: QO953
+done_test: bash scripts/test.sh packages/design/test/domain/air-and-box-load-repair.test.ts packages/design/test/domain/drive-level-load-repair.test.ts packages/ui/test/logic/entryRefusal.test.ts
 files:
-  - tasks/T924.yml
+- tasks/T924.yml
+- bugs/BUG_20261118_input-limits-sweep.md
+- packages/design/domain/project/loadRepair.ts
+- packages/design/domain/project/openISDProject.ts
+- packages/design/domain/project/projectAir.ts
+- packages/design/domain/project/projectLoadRepairRules.ts
+- packages/design/domain/project/projectSignal.ts
+- packages/design/domain/winIsdProjectConverter.ts
+- packages/design/engine/environment/EnvironmentEngine.ts
+- packages/design/engine/environment/airSolver.ts
+- packages/design/fields/field.ts
+- packages/design/test/domain/air-and-box-load-repair.test.ts
+- packages/ui/src/logic/entryRefusal.ts
+- packages/ui/src/ui/shells/mobile/MobileAdvancedTab.vue
+- packages/ui/src/ui/shells/original/OriginalShell.vue
+- packages/ui/test/logic/entryRefusal.test.ts
+- packages/ui/test/ui/air-limits.browser.spec.ts
+note: 'Reuses T918''s load repair pass, field-driven (NumberField.loadRepair, new ''band'' break and ''empty'' target); the record rules (projectLoadRepairRules.ts) run on the record before the first resolve. A box volume of 0 is not repaired: a built project holds 0 for an undesigned chamber (ProjectBuilder.empty()). Normal bands live on the fields (NumberField.plausible): T 174-373 K (WinISD Options), p 30-110 kPa, c 260-500 m/s, rho 0.15-2.25 kg/m3; the warning is added by the domain air resolve, the air solver''s own issues are unchanged. Browser journey packages/ui/test/ui/air-limits.browser.spec.ts (desktop and phone, 7 tests) passes locally; also run: air-dq-marks, drive-level-limits, file-import-export-message, input-limits-stop, mobile-advanced-tab, options-dialog, signal-advanced-radiator-dependent-values, unit-toggle (all pass). HELD FOR THE LEAD: num-input.browser.spec.ts (humidity -20 and 250 accepted with a dq-flag) and original-advanced-tab.browser.spec.ts (humidity 153 kept with a dq-flag) assert the 17 Sep 2026 contract that QO953.c14 reverses; both now fail and are not changed here.'
