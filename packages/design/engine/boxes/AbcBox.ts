@@ -17,24 +17,26 @@ export class AbcBox implements BoxModel {
 
     switch (loss) {
       case 'lossless': {
-        // OpenISD's own simple model (not WinISD-captured): each chamber an ordinary vented
-        // compliance with the SHARED Ql/Qa/Qp, port mass from its own tuning target. The intra port itself
+        // OpenISD's own simple model (not WinISD-captured), taken only when every loss Q is at the
+        // lossless limit (circuit.ts `boxLoss`): each chamber an ordinary vented compliance with the
+        // SHARED Ql/Qa and its own port's Qpr/Qpf, port mass from its own tuning target. The intra port itself
         // stays (Rai = 0 is a physical fact of this topology, not a loss-Q setting to drop) but
         // without Ricl, the same "no inter-chamber leak" simplification.
         const rc2 = rho * c * c;
-        const Qp = P.Qp || DEFAULT_NEW_PROJECT_QP;
+        // Each port's own Qpr/Qpf; the shared Qp only where a caller states neither.
+        const Qpr = P.Qpr ?? (P.Qp || DEFAULT_NEW_PROJECT_QP), Qpf = P.Qpf ?? (P.Qp || DEFAULT_NEW_PROJECT_QP);
 
         const Cabr = P.Vb / rc2;
         const wr = 2 * Math.PI * (P.Fr ?? NaN);
         const Mapr = 1 / (wr * wr * Cabr);
-        const RapBranchR = cAdd(cx(wr * Mapr / Qp, 0), cx(0, w * Mapr));
+        const RapBranchR = cAdd(cx(wr * Mapr / Qpr, 0), cx(0, w * Mapr));
         const Zcr = cAdd(cx(wr * Mapr / Qa, 0), cInv(cx(0, w * Cabr)));
         const Zr = cPar(cx(wr * Mapr * Ql, 0), Zcr, RapBranchR);
 
         const Cabf = (P.Vf ?? NaN) / rc2;
         const wf = 2 * Math.PI * (P.Ff ?? NaN);
         const Mapf = 1 / (wf * wf * Cabf);
-        const RapBranchF = cAdd(cx(wf * Mapf / Qp, 0), cx(0, w * Mapf));
+        const RapBranchF = cAdd(cx(wf * Mapf / Qpf, 0), cx(0, w * Mapf));
         const Zcf = cAdd(cx(wf * Mapf / Qa, 0), cInv(cx(0, w * Cabf)));
         const Zf = cPar(cx(wf * Mapf * Ql, 0), Zcf, RapBranchF);
 

@@ -20,10 +20,11 @@ describe('boxModel — one class per simulatable box type', () => {
     Sd_m2: 0.0133, Re_ohm: 5.6, Xmax_m: 0.0050, Pe_W: 60, Znom_ohm: 8,
   }));
 
-  // Lossless (Ql and Qa at the limit) so every branch reads geometry (Sp/Leff, prMmd/prCms/prSd)
-  // rather than a fixed-tuning `Fb`/`Fr` — no need to hand-tune a resonance for a dispatch-only test.
+  // Lossless (Ql and Qa at the limit, and the vented port's Qp: every loss the box reads, T929) so every
+  // branch reads geometry (Sp/Leff, prMmd/prCms/prSd) rather than a fixed-tuning `Fb`/`Fr` — no need to
+  // hand-tune a resonance for a dispatch-only test.
   const P_SEALED: SweepParams = {Vb: 0.030, eg: 2.83, Ql: 1e6, Qa: 1e6, fmin: 30, fmax: 300, N: 5, air: REFERENCE_AIR};
-  const P_VENTED: SweepParams = {...P_SEALED, Sp: Math.PI * 0.025 ** 2, Leff: 0.1366};
+  const P_VENTED: SweepParams = {...P_SEALED, Sp: Math.PI * 0.025 ** 2, Leff: 0.1366, Qp: 1e6};
   const P_PR: SweepParams = {...P_SEALED, prSd: 0.0133, prNum: 1, prMmd: 0.030, prMadd: 0, prCms: 0.0008, prRms: 1.0};
   const P_BP4: SweepParams = {...P_VENTED, Vf: 0.020};
   // `bandpass6`/`abc` read Fr/Ff (chamber tuning) for their own port mass under EVERY loss form,

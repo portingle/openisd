@@ -16,29 +16,32 @@ export class Bandpass6Box implements BoxModel {
 
     switch (loss) {
       case 'lossless': {
-        // OpenISD's own simple model (not WinISD-captured): each chamber an ordinary vented
-        // compliance with the SHARED Ql/Qa/Qp, port mass from its own tuning target (no separate
+        // OpenISD's own simple model (not WinISD-captured), taken only when every loss Q is at the
+        // lossless limit (circuit.ts `boxLoss`): each chamber an ordinary vented compliance with the
+        // SHARED Ql/Qa and its own port's Qpr/Qpf, port mass from its own tuning target (no separate
         // geometry field for a second port) — no inter-chamber leak (Ricl dropped).
         const rc2 = rho * c * c;
-        const Qp = P.Qp || DEFAULT_NEW_PROJECT_QP;
+        // Each port's own Qpr/Qpf; the shared Qp only where a caller states neither.
+        const Qpr = P.Qpr ?? (P.Qp || DEFAULT_NEW_PROJECT_QP), Qpf = P.Qpf ?? (P.Qp || DEFAULT_NEW_PROJECT_QP);
 
         const Cabr = P.Vb / rc2;
         const wr = 2 * Math.PI * (P.Fr ?? NaN);
         const Mapr = 1 / (wr * wr * Cabr);
-        const Zportr = cAdd(cx(wr * Mapr / Qp, 0), cx(0, w * Mapr));
+        const Zportr = cAdd(cx(wr * Mapr / Qpr, 0), cx(0, w * Mapr));
         const Zr = cPar(cInv(cx(0, w * Cabr)), cx(Ql / (w * Cabr), 0), cx(Qa / (w * Cabr), 0), Zportr);
 
         const Cabf = (P.Vf ?? NaN) / rc2;
         const wf = 2 * Math.PI * (P.Ff ?? NaN);
         const Mapf = 1 / (wf * wf * Cabf);
-        const Zportf = cAdd(cx(wf * Mapf / Qp, 0), cx(0, w * Mapf));
+        const Zportf = cAdd(cx(wf * Mapf / Qpf, 0), cx(0, w * Mapf));
         const Zf = cPar(cInv(cx(0, w * Cabf)), cx(Ql / (w * Cabf), 0), cx(Qa / (w * Cabf), 0), Zportf);
 
         const Zbox = cAdd(Zr, Zf);
         const UD = cDiv(pg, cAdd(cAdd(ZaE, ZaD), Zbox));
         const UP = cMul(UD, cDiv(Zf, Zportf));
         const UPr = cMul(UD, cDiv(Zr, Zportr));
-        const U0 = cAdd(UP, UPr);
+        // Front port minus rear port: the rear compliance current minus the front one, as the lossy branch.
+        const U0 = cSub(UP, UPr);
         return {Zbox, UD, UP, U0, UPr};
       }
       case 'winisd-lossy': {
