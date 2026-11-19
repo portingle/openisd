@@ -21,7 +21,8 @@ setup() {
     git config user.email t@t; git config user.name t
     mkdir -p scripts tasks/fixes gates
     cp "$REPO/scripts/land.sh" "$REPO/scripts/paths.sh" scripts/; cp -r "$REPO/scripts/land" scripts/; cp -r "$REPO/scripts/lib" scripts/
-    mkdir -p scripts/ci; cp "$REPO/scripts/ci/contract-from-base.sh" scripts/ci/ 2> /dev/null   # the pull request check's runner (17-19)
+    # the pull request check's runner (17-23) is on the base unless NO_RUNNER_ON_BASE=1
+    [ "${NO_RUNNER_ON_BASE:-0}" = 1 ] || { mkdir -p scripts/ci; cp "$REPO/scripts/ci/contract-from-base.sh" scripts/ci/; }
     printf '#!/usr/bin/env bash\nexit 0\n' > gates/ok.sh; chmod +x gates/ok.sh
     cat > "$SCRATCH/questions.yml" <<'Q'
 questions:
@@ -59,7 +60,7 @@ GATE_DEADLINE_S=30
 LAND_LOCK="$SCRATCH/land.lock"
 POST_LAND_LOCK="$SCRATCH/post.lock"
 POST_LAND_RECORD="$SCRATCH/post.lock"
-QUESTIONS_FILE="$SCRATCH/questions.yml"
+QUESTIONS_FILE=$SCRATCH/questions.yml
 $gate_files
 CONF
     printf 'id: T9\nowner: t\nstatus: claimed\nrelease_note: internal\ngoal: Do the thing.\ndone_test: true\nfiles:\n  - f.txt\n%s' "${1:-}" > tasks/T9.yml
@@ -128,27 +129,66 @@ setup "" scripts/dupscan-homes.json
 sed -i 's# scripts/dupscan-homes.json##' land.conf; git add -A; git commit -qm drop-gate; r=$(land)
 if refused_gates "$r" && grep -q 'gate files changed: [^;]*scripts/dupscan-homes.json' "$SCRATCH/out"; then ok "16 a gate file dropped from the proposed land.conf is still a gate file (the base list counts)"; else fail "16 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
 
-# 17-19: the pull request check runs the gate-approval check from the BASE revision's own scripts (T934 review 3, Codex
-# 19 Nov 2026: "CI invokes the proposed checker"): pr.yml takes scripts/ci/contract-from-base.sh from the base commit, and it
-# runs the base commit's scripts/land/, reading the proposed land.conf, task file and file list as data, never as shell.
-# A change that edits the checker to always pass, and changes a gate file, is still refused; its land.conf is never run.
-ci_contract() {   # what pr.yml's task-contract step does, with the base commit origin/main
-    git show origin/main:scripts/ci/contract-from-base.sh > "$SCRATCH/runner.sh" 2> /dev/null || { echo "no scripts/ci/contract-from-base.sh on the base" > "$SCRATCH/out"; echo 2; return; }
-    (unset GATE_FILES QUESTIONS_FILE; timeout 120 bash "$SCRATCH/runner.sh" origin/main) > "$SCRATCH/out" 2>&1; echo $?
+# 17-23: the pull request check's gate approval (T934 reviews 3 and 4, Codex 19 Nov 2026: "CI invokes the proposed checker";
+# "the task job still executes PR-controlled code before the base-controlled gate"). These run the real run script of pr.yml's
+# gate-approval job, read out of .github/workflows/pr.yml, in a scratch clone: it takes the runner from the base commit, and the
+# runner runs the base commit's scripts/land/, reading the change's land.conf, task file and file list as data. The land.conf
+# here sets QUESTIONS_FILE unquoted, as the real one does.
+ci_contract() {   # <bootstrap base>: pr.yml's gate-approval step, base = origin/main, head = HEAD
+    python3 -c 'import sys, yaml; steps = yaml.safe_load(open(sys.argv[1]))["jobs"]["gate-approval"]["steps"]; print(steps[-1]["run"])' \
+      "$REPO/.github/workflows/pr.yml" > "$SCRATCH/step.sh" || { echo "no gate-approval step in pr.yml" > "$SCRATCH/out"; echo 2; return; }
+    mkdir -p "$SCRATCH/rt"
+    (unset GATE_FILES QUESTIONS_FILE; BASE_SHA="$(git rev-parse origin/main)" HEAD_SHA="$(git rev-parse HEAD)" BOOTSTRAP_BASE="$1" RUNNER_TEMP="$SCRATCH/rt" \
+      timeout 120 bash "$SCRATCH/step.sh") > "$SCRATCH/out" 2>&1; echo $?
 }
-ci_setup() {   # setup (the runner is on the base), then the change: <task extra lines>
-    setup "$(printf '  - tsconfig.json\n  - land.conf\n  - scripts/land/check-task-contract.sh\nwhy: John asked for this change (John, 10 Nov 2026)\n%s' "$1")" f.txt
-    printf '#!/usr/bin/env bash\nexit 0\n' > scripts/land/check-task-contract.sh
-    printf 'touch "%s/sourced"\n' "$SCRATCH" >> land.conf
+# ci_setup <task extra lines> <sabotage 1|0>: setup, then the change: a gate file (tsconfig.json) changed; with sabotage the
+# change also edits its own checker, pr-task.sh, pr-setup.sh and runner to pass everything, and its land.conf to run a command.
+ci_setup() {
+    setup "$(printf '  - tsconfig.json\n  - land.conf\n  - scripts/**\nwhy: John asked for this change (John, 10 Nov 2026)\n%s' "$1")" f.txt
+    if [ "$2" = 1 ]; then
+        printf '#!/usr/bin/env bash\nexit 0\n' > scripts/land/check-task-contract.sh
+        printf '#!/usr/bin/env bash\necho T1\nexit 0\n' > scripts/land/pr-task.sh
+        mkdir -p scripts/ci; printf '#!/usr/bin/env bash\necho "PR_TASK=" >> "$GITHUB_ENV"\nexit 0\n' > scripts/ci/pr-setup.sh
+        printf '#!/usr/bin/env bash\nexit 0\n' > scripts/ci/contract-from-base.sh
+        printf 'touch "%s/sourced"\n' "$SCRATCH" >> land.conf
+    else
+        mkdir -p scripts/ci; cp "$REPO/scripts/ci/contract-from-base.sh" scripts/ci/
+    fi
     echo 2 > tsconfig.json; echo 2 > f.txt; rm -f "$SCRATCH/sourced"
     printf '\n# the change\n' >> tasks/T9.yml
-    git add -A; git commit -qm 'checker always passes'
+    git add -A; git commit -qm 'the change'
 }
-ci_setup ""; r=$(ci_contract)
-if [ "$r" = 1 ] && grep -q $'REFUSE\tgates' "$SCRATCH/out" && grep -q 'tsconfig.json' "$SCRATCH/out"; then ok "17 the checker edited to always pass: the base's checker still refuses the gate change"; else fail "17 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+NOT_BASE=0000000000000000000000000000000000000000
+ci_setup "" 1; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q $'REFUSE\tgates' "$SCRATCH/out" && grep -q 'tsconfig.json' "$SCRATCH/out"; then ok "17 the change edits its checker, pr-task.sh, pr-setup.sh and runner to pass: the base's scripts still refuse the gate change"; else fail "17 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
 [ "$r" != 2 ] && [ ! -e "$SCRATCH/sourced" ] && ok "18 the proposed land.conf is read as data, never run" || fail "18 the proposed land.conf was run as shell"
-ci_setup $'gates_approved: QO1\n'; r=$(ci_contract)
+ci_setup $'gates_approved: QO1\n' 1; r=$(ci_contract "$NOT_BASE")
 [ "$r" = 0 ] && ok "19 the same change with a John-answered gates_approved passes the base's checker" || fail "19 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"
+ci_setup $'gates_approved: QO2\n' 1; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q 'board item QO2 has no answer by John' "$SCRATCH/out"; then ok "20 with the board file present (QUESTIONS_FILE unquoted), a gates_approved item John has not answered is refused"; else fail "20 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+# 21-22: the one reviewed bootstrap. A base without the runner fails closed, unless it is the pinned bootstrap base; there the
+# change's own runner and scripts/land/ run (the pull request that adds them).
+NO_RUNNER_ON_BASE=1 ci_setup "" 0; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q 'has no scripts/ci/contract-from-base.sh and is not the reviewed bootstrap base' "$SCRATCH/out" && ! grep -q 'REFUSE' "$SCRATCH/out"; then ok "21 a base without the runner, not the pinned bootstrap base, fails closed"; else fail "21 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+NO_RUNNER_ON_BASE=1 ci_setup "" 0; r=$(ci_contract "$(git rev-parse origin/main)")
+if [ "$r" = 1 ] && grep -q $'REFUSE\tgates' "$SCRATCH/out"; then ok "22 on the pinned bootstrap base the change's own runner and checker run, and refuse its unapproved gate change"; else fail "22 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+# 23: the job runs nothing of the change: no needs, no checkout script run (no "bash scripts/", pr-setup.sh, npm or node), the
+# runner run from RUNNER_TEMP; pr-gate needs it; the task job no longer runs the contract.
+python3 -c '
+import sys, yaml
+jobs = yaml.safe_load(open(sys.argv[1]))["jobs"]
+job = jobs["gate-approval"]
+runs = "\n".join(st.get("run", "") for st in job["steps"])
+problems = []
+if "needs" in job: problems.append("gate-approval has needs")
+for bad in ("bash scripts/", "pr-setup", "npm ", "node ", "./scripts"):
+    if bad in runs: problems.append("gate-approval runs " + bad)
+if "bash \"$runner\"" not in runs or "runner=\"$RUNNER_TEMP/" not in runs: problems.append("the runner is not run from RUNNER_TEMP")
+if "gate-approval" not in jobs["pr-gate"]["needs"]: problems.append("pr-gate does not need gate-approval")
+if "contract-from-base" in str(jobs["task"]): problems.append("the task job still runs the contract")
+print("; ".join(problems)); sys.exit(1 if problems else 0)
+' "$REPO/.github/workflows/pr.yml" > "$SCRATCH/out" 2>&1
+[ "$?" = 0 ] && ok "23 pr.yml's gate-approval job runs nothing of the change and pr-gate needs it" || fail "23: $(tr '\n' ' ' < "$SCRATCH/out")"
 
 [ $fails = 0 ] && { echo "land-gates: all passed"; exit 0; }
 echo "land-gates: $fails failed"; exit 1

@@ -32,8 +32,12 @@ fail() { printf 'REFUSE\t%s\t%s\n' "$1" "$2"; exit 1; }
 [ -f "$TASK" ] || fail task-id "no task file $TASK"
 
 # land.conf is read as data, never sourced (T934 review 3, Codex 19 Nov 2026): the proposed land.conf is the change's own
-# file, and sourcing it would run the change's shell in the check that polices it. conf_value <rev> <NAME>: NAME="..." there.
-conf_value() { git show "$1:land.conf" 2> /dev/null | sed -n "s/^$2=\"\(.*\)\"\$/\1/p" | head -n 1; }
+# file, and sourcing it would run the change's shell in the check that polices it. conf_value <rev> <NAME>: NAME's value
+# there, in any form land.conf uses: NAME="v", NAME='v' or NAME=v (QUESTIONS_FILE is unquoted).
+conf_value() {
+  git show "$1:land.conf" 2> /dev/null | sed -n -e "s/^$2=\"\(.*\)\"[[:space:]]*\$/\1/p" -e "s/^$2='\(.*\)'[[:space:]]*\$/\1/p" \
+    -e "s/^$2=\([^\"'[:space:]][^[:space:]]*\)[[:space:]]*\$/\1/p" | head -n 1
+}
 # GATE_FILES and QUESTIONS_FILE from the environment win (land.sh and ship.sh read their own land.conf); else the proposed
 # land.conf's GATE_FILES and the BASE land.conf's QUESTIONS_FILE (a change cannot point the check at a board file of its own).
 [ -n "${GATE_FILES:-}" ] || GATE_FILES="$(conf_value "$HEAD_REF" GATE_FILES)"

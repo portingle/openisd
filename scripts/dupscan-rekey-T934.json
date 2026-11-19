@@ -79,7 +79,7 @@
  "hand_pairs": {
   "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|56c314107af0": {
    "to": "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|806f78704f8b",
-   "why": "The AbcBox/Bandpass6Box class preamble (constructor, solve's destructuring, the lossless case's Qp). On the base the comment-insensitive scan finds one copy, AbcBox.ts:11-30 = Bandpass6Box.ts:10-28, holding two previous-form copies: this one (lines 11-21 = 10-20) and 280c236f6777 (24-30 = 22-28, the chamber tuning). T934 moved the chamber tuning into port.ts:tunedChamber and marks 280c236f6777 resolved; what is left is this preamble running on into the two tunedChamber calls. Same two files, same count 1, nothing copied anew. Needs the lead's review (T934 review 3)."
+   "why": "The AbcBox/Bandpass6Box class preamble (constructor, solve's destructuring, the lossless case's Qp). On the base the comment-insensitive scan finds one copy, AbcBox.ts:11-30 = Bandpass6Box.ts:10-28, holding two previous-form copies: this one (lines 11-21 = 10-20) and 280c236f6777 (24-30 = 22-28, the chamber tuning). T934 moved the chamber tuning into port.ts:tunedChamber and marks 280c236f6777 resolved; what is left is this preamble running on into the first tunedChamber call in each file. Same two files, same count 1, nothing copied anew. Reviewed and kept by Codex, T934 review 4."
   }
  }
 }

@@ -25,6 +25,50 @@ env:
   GROUP_BASE: ${{ github.event.merge_group.base_sha }}
 
 jobs:
+  # The gate-approval check (locked hashes, files allowlist, task id and owner, status, gate files approved), in a job of its
+  # own (T934 reviews 3 and 4, Codex 19 Nov 2026): nothing of the change runs before or in it. It checks out the change as data,
+  # takes the runner from the BASE commit (git show), and the runner runs the base commit's scripts/land/ (pr-task.sh,
+  # check-task-contract.sh), which read the change's land.conf, task files and file list with git show, sed and the YAML
+  # parser. The change's own pr-setup.sh, pr-task.sh and checker are never run here. Commits: the event's own ids (the pull
+  # request's base sha and merge commit; the merge group's base and head sha).
+  # Known limit, an open owner decision (tasks/T934.yml): a pull_request run takes this workflow file from the change itself, so
+  # a change that edits pr.yml could drop this job; pr.yml is a gate file, and closing the gap needs pull_request_target or a
+  # repository rule requiring review of .github/workflows changes (John's call).
+  gate-approval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m pip install pyyaml==6.0.2
+      - name: gate files approved, checked by the base commit's own scripts
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.sha }}
+          # The one reviewed bootstrap: the pull request that adds the runner (T934) has none on its base, and only on this pinned
+          # base does it run its own reviewed copy (and its own scripts/land/). Any other base without the runner fails closed.
+          # Update the pin if main moves before T934 lands.
+          BOOTSTRAP_BASE: 6082d07aa96afb23155ee81bdc16d7b90de37257
+        run: |
+          set -uo pipefail
+          git cat-file -e "$BASE_SHA^{commit}" 2> /dev/null || git fetch -q origin "$BASE_SHA" || { echo "::error title=gate approval::no base commit $BASE_SHA"; exit 1; }
+          [ "$(git rev-parse HEAD)" = "$HEAD_SHA" ] || { echo "::error title=gate approval::the checkout is not $HEAD_SHA"; exit 1; }
+          git merge-base --is-ancestor "$BASE_SHA" "$HEAD_SHA" || { echo "::error title=gate approval::$BASE_SHA is not an ancestor of $HEAD_SHA"; exit 1; }
+          runner="$RUNNER_TEMP/contract-from-base.sh"
+          if git cat-file -e "$BASE_SHA:scripts/ci/contract-from-base.sh" 2> /dev/null; then
+            git show "$BASE_SHA:scripts/ci/contract-from-base.sh" > "$runner"; scripts="$BASE_SHA"
+          elif [ "$BASE_SHA" = "$BOOTSTRAP_BASE" ]; then
+            git show "$HEAD_SHA:scripts/ci/contract-from-base.sh" > "$runner"; scripts="$HEAD_SHA"
+          else
+            echo "::error title=gate approval::the base $BASE_SHA has no scripts/ci/contract-from-base.sh and is not the reviewed bootstrap base $BOOTSTRAP_BASE"; exit 1
+          fi
+          bash "$runner" "$BASE_SHA" "$scripts"
+
   # The task contract, attribution, driver-model ruling and visual baselines: no node needed.
   task:
     runs-on: ubuntu-latest
@@ -42,17 +86,6 @@ jobs:
           python-version: '3.12'
       - run: python3 -m pip install pyyaml==6.0.2
       - run: bash scripts/ci/pr-setup.sh "$EVENT" "$GROUP_BASE"
-      - name: task contract (locked hashes, files allowlist, task id and owner, status, gate files approved), from the base's scripts
-        # T934 review 3: the base commit's scripts/ci/contract-from-base.sh runs the base commit's scripts/land/ (pr-task.sh,
-        # check-task-contract.sh) on this change, reading its land.conf and task files as data, so a change cannot edit the
-        # checker that polices it. PR_TASK (pr-setup.sh) is not used here: the base's pr-task.sh says which tasks the change carries.
-        # The pull request that adds the runner has none on its base, and only that one run uses its own copy.
-        run: |
-          case "$EVENT" in pull_request) base="$(git rev-parse HEAD^1)" ;; merge_group) base="$GROUP_BASE" ;; *) exit 1 ;; esac
-          runner="$RUNNER_TEMP/contract-from-base.sh"
-          if git cat-file -e "$base:scripts/ci/contract-from-base.sh" 2> /dev/null; then git show "$base:scripts/ci/contract-from-base.sh" > "$runner"
-          else cp scripts/ci/contract-from-base.sh "$runner"; fi
-          bash "$runner" "$base"
       - name: task files say the truth (status, landed sha, release_note a sentence) on every pull request
         # T891: the shell job below runs task-status.test.sh only when scripts/ or workflows change, so a pull request that
         # changed only its task file was never checked (main went red on T886's release_note with no full stop, 18 Nov 2026).
@@ -272,7 +305,7 @@ jobs:
   # The one name the main ruleset requires. Red when any job above is not green.
   pr-gate:
     if: ${{ always() }}
-    needs: [task, lint, typecheck, unit, architecture, done-test, visual, shell, hold]
+    needs: [gate-approval, task, lint, typecheck, unit, architecture, done-test, visual, shell, hold]
     runs-on: ubuntu-latest
     steps:
       - name: every gate green
