@@ -744,7 +744,11 @@ export class SimulationEngineImpl implements SimulationEngine {
     if (swept.values === null) return { values: null, issues: swept.issues, driverPrerequisites: [] };
     const base = swept.values;
     const drvPe_W = drv.values.Pe_W;
-    const Pe   = (drvPe_W != null && drvPe_W > 0) ? drvPe_W * (P.nDrivers || 1) : null;
+    // An Iso-Barik pair is two drivers, each rated Pe: WinISD's Maximum power is Pe x Nd x 2 with Iso-Barik
+    // (40 / 80 / 80 / 160 W for the W5-1138SMF at Nd 1, Nd 1 Iso-Barik, Nd 2, Nd 2 Iso-Barik; winisd_research
+    // runs/isobarik-more-20261119).
+    const driversPerPosition = P.loading === 'isobaric' ? 2 : 1;
+    const Pe   = (drvPe_W != null && drvPe_W > 0) ? drvPe_W * (P.nDrivers || 1) * driversPerPosition : null;
     // The power reference is Re, not Znom — and the TERMINAL Re, because the amplifier drives the
     // coils as they are wired. `sweep` above already succeeded, and its circuit-required-fields
     // check (CIRCUIT_REQUIRED_FIELDS includes Re_terminal_ohm) demands this exact field be a
