@@ -1,9 +1,10 @@
 id: T917
-release_visual:
+visual:
   - desktop-dialog-difference-cue
   - desktop-tab-advanced
   - mobile-dialog-menu-winisddifferencesmodal
-note: A driver that states its own voice-coil temperature coefficient (AlfaVC) now heats its coil with it, as its wire's metal does, instead of the project's copper default; a new yellow switch "Coil coefficient from project" under "Enable WinISD bugs" gives WinISD's project-only sum back. Every catalogue driver states 0 and is unchanged.
+visual_note: "The Advanced tab (desktop) and the WinISD differences list (desktop cue dialog and phone menu) gain the yellow switch 'Coil coefficient from project'."
+release_note: A driver that states its own voice-coil temperature coefficient (AlfaVC) now heats its coil with it, as its wire's metal does, instead of the project's copper default; a new yellow switch "Coil coefficient from project" under "Enable WinISD bugs" gives WinISD's project-only sum back. Every catalogue driver states 0 and is unchanged.
 repo: openisd
 owner: t917
 status: done
