@@ -244,7 +244,10 @@ export class PrEngineImpl implements PrEngine {
         'Tuning frequency must be greater than zero', 0, tuning, 1));
     }
 
-    const geometryComplete = Vb != null && Vb > 0 && prMmd != null && prSd != null && prCms != null;
+    // The geometry needs Vb, Mmd, Sd and Cms all above 0 (T930): a zero Sd or Cms is not geometry,
+    // and tuning from it is NaN or Infinity, the same rule PR_GEOMETRY's own filter applies below.
+    const positive = (v: number | null): v is number => typeof v === 'number' && v > 0;
+    const geometryComplete = positive(Vb) && positive(prMmd) && positive(prSd) && positive(prCms);
     const missingGeometry = PR_GEOMETRY.filter(f => { const v = params[f].value; return !(typeof v === 'number' && v > 0); });
 
     if (addedMass != null && !params.tuning_goal_hz.entered) {
@@ -279,12 +282,12 @@ export class PrEngineImpl implements PrEngine {
     }
 
     const resolvedMass = params.addedMass_kg.value;
-    if (resolvedMass != null && prMmd != null && prCms != null) {
+    if (resolvedMass != null && positive(prMmd) && positive(prCms)) {
       params.resonanceWithAddedMass_hz.setCalculated(this.fsWithMass(prMmd, resolvedMass, prCms));
     } else {
       params.resonanceWithAddedMass_hz.setNotAvailable();
     }
-    if (resolvedMass != null && Vb != null && Vb > 0 && prMmd != null && prSd != null && prCms != null) {
+    if (resolvedMass != null && geometryComplete) {
       params.systemTuning_hz.setCalculated(this.tuning({ Vb, prMmd, prMadd: resolvedMass, prSd, prCms, prNum }, air));
     } else {
       params.systemTuning_hz.setNotAvailable();
