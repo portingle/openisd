@@ -134,7 +134,7 @@ async function expectWarned(page: Page, field: Locator, text: string, warning: s
 for (const shell of ['desktop', 'phone'] as const) {
   test(`${shell}: humidity above 100 % or below 0 %, and a temperature of 0 K or below, are refused with a note`, async ({page}, testInfo) => {
     await open(page, shell, SAMPLE_PROJECT_OWPR);
-    await expect(openingMessage(page, shell)).toBeHidden({timeout: 15000});
+    await expect(openingMessage(page, shell)).toBeHidden();
     await openAdvanced(page, shell);
     const humidity = row(page, shell, 'Relative humidity');
     await expect(humidity).toBeVisible();
@@ -148,7 +148,7 @@ for (const shell of ['desktop', 'phone'] as const) {
 
   test(`${shell}: an air pressure of 5000 Pa and a temperature of 400 K are kept with a warning naming the normal band`, async ({page}, testInfo) => {
     await open(page, shell, SAMPLE_PROJECT_OWPR);
-    await expect(openingMessage(page, shell)).toBeHidden({timeout: 15000});
+    await expect(openingMessage(page, shell)).toBeHidden();
     await openAdvanced(page, shell);
     await expectWarned(page, row(page, shell, 'Air pressure'), '5000', PRESSURE_WARNING, testInfo.outputPath(`${shell}-pressure-5000-warned.png`));
     await expectWarned(page, row(page, shell, 'Temperature'), '400', TEMPERATURE_WARNING, testInfo.outputPath(`${shell}-temperature-400K-warned.png`));
@@ -160,7 +160,7 @@ for (const shell of ['desktop', 'phone'] as const) {
     await expect(message).toHaveText(`Project imported from impossible-air.owpr\n${REPAIR_LINES.join('\n')}`, {useInnerText: true});
     await expectInside(page, message);
     await page.screenshot({path: testInfo.outputPath(`${shell}-opened-impossible-air-message.png`)});
-    await expect(message).toBeHidden({timeout: 30000});
+    await expect(message).toBeHidden();
     await openAdvanced(page, shell);
     for (const label of ['Temperature', 'Relative humidity', 'Air pressure', 'Sound velocity', 'Air density']) {
       const field = row(page, shell, label);
