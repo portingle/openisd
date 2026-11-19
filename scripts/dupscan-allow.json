@@ -24,10 +24,11 @@
   "where": "packages/ui/src/ui/shells/mobile/MobileNewProject.vue:24-34 = packages/ui/src/ui/shells/original/OriginalNewProject.vue:22-32",
   "count": 1
  },
- "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|aa8f3c30998d": {
+ "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|b0748fc9c77f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/shells/mobile/MobileNewProject.vue:61-107 = packages/ui/src/ui/shells/original/OriginalNewProject.vue:60-105",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|aa8f3c30998d"
  },
  "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|e23ccc1e35a0": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -64,10 +65,11 @@
   "where": "packages/persistence/src/cloud/auth/implicitSession.ts:78-88 = packages/persistence/src/cloud/auth/implicitSession.ts:52-62",
   "count": 1
  },
- "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|ae2196a8435d": {
+ "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|bf85526c33bb": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/logic/driverBrowsingState.ts:52-64 = packages/ui/src/logic/driverDisplay.ts:122-125",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|ae2196a8435d"
  },
  "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverBrowsingState.ts|516012bd10a2": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -84,35 +86,39 @@
   "where": "packages/ui/src/hooks/SealedAlignment-hooks.ts:66-71 = packages/ui/src/hooks/VentedAlignment-hooks.ts:60-65",
   "count": 1
  },
- "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|c576fa1fa226": {
+ "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|9652badf4100": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/SealedAlignment-hooks.ts:71-82 = packages/ui/src/hooks/VentedAlignment-hooks.ts:65-76",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|c576fa1fa226"
  },
  "copy|packages/ui/src/hooks/OriginalNewProject-hooks.ts|packages/ui/src/hooks/passiveRadiatorEditor.ts|6c0d55eb3d29": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/OriginalNewProject-hooks.ts:529-539 = packages/ui/src/hooks/passiveRadiatorEditor.ts:173-182",
   "count": 1
  },
- "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|079b9f77411a": {
+ "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|837da759745a": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileShell-hooks.ts:151-157 = packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue:20-26",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|079b9f77411a"
  },
- "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|2a4dff476cfd": {
+ "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|ca2dc48473df": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileShell-hooks.ts:250-261 = packages/ui/src/hooks/OriginalShell-hooks.ts:315-326",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|2a4dff476cfd"
  },
  "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|fc4755c48b24": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileShell-hooks.ts:411-420 = packages/ui/src/hooks/OriginalShell-hooks.ts:718-726",
   "count": 1
  },
- "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|00493df6a98f": {
+ "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|37736cbcba71": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileBoxTab-hooks.ts:32-42 = packages/ui/src/hooks/OriginalShell-hooks.ts:213-223",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|00493df6a98f"
  },
  "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|7e174c05b920": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -124,15 +130,17 @@
   "where": "packages/ui/src/hooks/MobileBoxTab-hooks.ts:60-70 = packages/ui/src/ui/shells/mobile/MobileBoxTab.vue:23-33",
   "count": 1
  },
- "copy|packages/ui/src/hooks/MobileAdvancedTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|e8430a26876f": {
+ "copy|packages/ui/src/hooks/MobileAdvancedTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|a76121f429ad": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileAdvancedTab-hooks.ts:29-41 = packages/ui/src/hooks/OriginalShell-hooks.ts:778-790",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/MobileAdvancedTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|e8430a26876f"
  },
- "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|a1bbf327291b": {
+ "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|3fbd80c8674f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/GraphPanel-hooks.ts:73-79 = packages/ui/src/hooks/OriginalShell-hooks.ts:535-537",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|a1bbf327291b"
  },
  "copy|packages/persistence/src/repos/myDriverRepo.ts|packages/persistence/src/repos/myPassiveRadiatorRepo.ts|2822dfcaa5dc": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -199,10 +207,11 @@
   "where": "packages/design/engine/filters/FilterEngine.ts:233-242 = packages/design/engine/filters/FilterEngine.ts:199-209",
   "count": 1
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|45bb464dbb2f": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|9d872fda104a": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass4Box.ts:9-18 = packages/design/engine/boxes/Bandpass6Box.ts:10-19",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|45bb464dbb2f"
  },
  "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|7acee83b8e5f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -219,10 +228,11 @@
   "where": "packages/design/engine/boxes/Bandpass4Box.ts:71-80 = packages/design/engine/boxes/Bandpass6Box.ts:90-99",
   "count": 1
  },
- "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|56c314107af0": {
+ "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|9d872fda104a": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:11-21 = packages/design/engine/boxes/Bandpass6Box.ts:10-20",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|56c314107af0"
  },
  "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|280c236f6777": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -273,25 +283,28 @@
   "where": "packages/design/engine/physicalRange.ts:30-37 = packages/design/domain/driver/openIsdDriverSpec.ts:111-70",
   "count": 1
  },
- "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|df756e078391": {
+ "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|688c3158918a": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/winIsdProjectConverter.ts:526-531 = packages/design/domain/winIsdProjectConverter.ts:442-450",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|df756e078391"
  },
  "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|19d1b94fa599": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/winIsdProjectConverter.ts:537-545 = packages/design/domain/winIsdProjectConverter.ts:507-515",
   "count": 1
  },
- "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|0b2155558645": {
+ "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|372b3d26fa0e": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/winIsdProjectConverter.ts:556-561 = packages/design/domain/winIsdProjectConverter.ts:442-531",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|0b2155558645"
  },
- "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|e1162a0d14d9": {
+ "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|801f9a5de62c": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/vent.ts:6-13 = packages/design/domain/box/ventWindow.ts:27-33",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|e1162a0d14d9"
  },
  "copy|packages/design/domain/openisdTransforms.ts|packages/design/domain/openisdTransforms.ts|dc01e805f506": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -308,20 +321,22 @@
   "where": "packages/design/domain/openisdSchema.ts:242-248 = packages/design/domain/openisdSchema.ts:218-224",
   "count": 1
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|98d0bb9526a7": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|07959a97722e": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/cell.ts:181-187 = packages/design/domain/cell.ts:151-155",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|98d0bb9526a7"
  },
  "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|36a8d20f2952": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/cell.ts:212-224 = packages/design/domain/cell.ts:174-155",
   "count": 1
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|1a2e0b92f5f6": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|e8e0ea57803a": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/cell.ts:222-235 = packages/design/domain/cell.ts:194-208",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|1a2e0b92f5f6"
  },
  "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|f9086c68dc3f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -358,10 +373,11 @@
   "where": "packages/design/cloud/driveJson.ts:446-455 = packages/design/cloud/driveJson.ts:401-410",
   "count": 1
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|58b8eb5741c8": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|fd1114671e9f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/driveJson.ts:455-491 = packages/design/cloud/driveJson.ts:410-446",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|58b8eb5741c8"
  },
  "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|c2662c45c185": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -498,7 +514,12 @@
  "sig|coil-wiring-scaling|packages/design/domain/driverRecordConverter.ts|const factor = wiring.value === \"series\" ? coils : 1 / coils;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/driverRecordConverter.ts:210",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/solvers/driverQuantities.ts:perCoilResistanceFactor",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/solvers/driverQuantities.ts:perCoilResistanceFactor"
  },
  "sig|display-rounding|packages/design/domain/driverRoundTripDiffs.ts|return typeof value === \"number\" ? Number(value.toPrecision(12)) : value;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -548,7 +569,12 @@
  "sig|driver-count-scaling|packages/design/engine/array/driverWiring.ts|return {eg_V: amp_V / n, Rg_ohm: rgAtDriverSide ? Rg_ohm : Rg_ohm / n, loadScale: n};": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/array/driverWiring.ts:28",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:driverDrive",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|air-compliance|packages/design/engine/boxes/AbcBox.ts|const rc2 = rho * c * c;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -593,32 +619,62 @@
  "sig|driver-count-scaling|packages/design/engine/circuit.ts|const pg = P.eg * BlPush / (drv.Sd_m2 * n * Rac);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/circuit.ts:93",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:combinedOfN"
  },
  "sig|driver-count-scaling|packages/design/engine/circuit.ts|const Mas = drv.Mms_kg / (drv.Sd_m2 * drv.Sd_m2) / n;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/circuit.ts:94",
-  "count": 2
+  "count": 2,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:eachOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:eachOfN"
  },
  "sig|driver-count-scaling|packages/design/engine/circuit.ts|const Sdt = drv.Sd_m2 * n;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/circuit.ts:107",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:combinedOfN"
  },
  "sig|driver-count-scaling|packages/design/engine/circuit.ts|return cScale(z1, 1/n);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/circuit.ts:132",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:eachOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:eachOfN"
  },
  "sig|driver-count-scaling|packages/design/engine/circuit.ts|const Cas = drv.Cms_m_per_N * drv.Sd_m2 * drv.Sd_m2 * n;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/circuit.ts:166",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:combinedOfN"
  },
  "sig|driver-count-scaling|packages/design/engine/circuit.ts|const Ras = drv.Rms_kg_per_s / (drv.Sd_m2 * drv.Sd_m2) / n;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/circuit.ts:168",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:eachOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:eachOfN"
  },
  "sig|air-compliance|packages/design/engine/circuit.ts|const Cab = P.Vb / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -831,17 +887,32 @@
  "sig|displacement|packages/design/engine/pr/PrEngine.ts|return prSd_m2 * prXmax_m;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/pr/PrEngine.ts:95",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/pr/PrEngine.ts:displacement",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|driver-count-scaling|packages/design/engine/pr/PrEngine.ts|return 2 * nDrivers * driverVd_m3;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/pr/PrEngine.ts:100",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:combinedOfN"
  },
  "sig|driver-count-scaling|packages/design/engine/pr/PrEngine.ts|return Math.max(1, Math.ceil(2 * nDrivers * driverVd_m3 / prVd_m3 - 1e-9));": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/pr/PrEngine.ts:106",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:combinedOfN"
  },
  "sig|air-compliance|packages/design/engine/pr/PrEngine.ts|const Cab = p.Vb / (air.rho() * air.c() * air.c());": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -911,7 +982,12 @@
  "sig|driver-count-scaling|packages/design/engine/sealedResonance.ts|return vas * nDrivers * (loading === 'isobaric' ? 0.5 : 1);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/sealedResonance.ts:38",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/sealedResonance.ts:arrayVas",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|sealed-box-ratio|packages/design/engine/sealedResonance.ts|return Math.sqrt(1 + vas / vb);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -931,7 +1007,12 @@
  "sig|driver-count-scaling|packages/design/engine/signal/SignalEngine.ts|return amplifierVoltage(n, wiring, driveVoltage(pin_W / n, re, drive.Rg_ohm));": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/signal/SignalEngine.ts:61",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:eachOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:eachOfN"
  },
  "sig|unit-factor|packages/design/engine/simulation/SimulationEngine.ts|const tau = -dphi / (2 * Math.PI * deltaF) * 1000;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -941,7 +1022,12 @@
  "sig|driver-count-scaling|packages/design/engine/simulation/SimulationEngine.ts|return { ...P, nDrivers: 1, Vb: P.Vb / n, ...(P.Vf !== undefined ? { Vf: P.Vf / n } : {}), ...(P.Sp !== undefined ? { Sp: P.Sp / n } : {}), ...(P.prNum !== undefined ? { prNum: P.prNum / n } : {}),": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/simulation/SimulationEngine.ts:220",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:oneBoxOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:oneBoxOfN"
  },
  "sig|bl-from-qes|packages/design/engine/simulation/SimulationEngine.ts|return Math.sqrt(Re_ohm / (2 * Math.PI * Fs_hz * Qes * Cms_m_per_N));": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -971,7 +1057,12 @@
  "sig|driver-count-scaling|packages/design/engine/simulation/SimulationEngine.ts|const Sdt = cq.Sd_m2 * (P.nDrivers || 1); // withAddedMass leaves Sd untouched": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/simulation/SimulationEngine.ts:548",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:combinedOfN"
  },
  "sig|decibel|packages/design/engine/simulation/SimulationEngine.ts|spl.push(pm === 0 ? SILENCE_DB : 20 * Math.log10(pm / P0));": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -1036,7 +1127,12 @@
  "sig|driver-count-scaling|packages/design/engine/simulation/SimulationEngine.ts|const Pe = (drvPe_W != null && drvPe_W > 0) ? drvPe_W * (P.nDrivers || 1) : null;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/simulation/SimulationEngine.ts:729",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "replaced by a call to packages/design/engine/array/driverWiring.ts:combinedOfN"
  },
  "sig|unit-factor|packages/design/engine/simulation/SimulationEngine.ts|const excAt283 = base.exc[i] / 1000;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -1071,7 +1167,12 @@
  "sig|coil-wiring-scaling|packages/design/engine/solvers/driverQuantities.ts|const n = target === 'parallel' ? 1 / numVC : numVC;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/solvers/driverQuantities.ts:151",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/solvers/driverQuantities.ts:convertWiring",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|end-correction|packages/design/engine/vent/VentEngine.ts|lengthForTuning(Vb: number, fb: number, Sp: number, count: number, air: Air, endCorrection: number = END_CORRECTION): number {": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -1299,62 +1400,122 @@
  "sig|drive-voltage-power|packages/design/engine/driver/routes/efficiencyRoutes.ts|new SolveRoute('USPL_dB', ['SPL_dB', 'Re_ohm'], 'USPL_dB = SPL_dB + 10 × log₁₀(2.83² / Re_ohm)',": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/efficiencyRoutes.ts:75",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/efficiencyRoutes.ts:USPL_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|drive-voltage-power|packages/design/engine/driver/routes/efficiencyRoutes.ts|new SolveRoute('USPL_dB', ['SPLref_dB', 'Re_ohm'], 'USPL_dB = SPLref_dB + 10 × log₁₀(2.83² / Re_ohm)',": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/efficiencyRoutes.ts:77",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/efficiencyRoutes.ts:USPL_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|drive-voltage-power|packages/design/engine/driver/routes/efficiencyRoutes.ts|new SolveRoute('Re_ohm', ['USPL_dB', 'SPL_dB'], 'Re_ohm = 2.83² / 10^((USPL_dB − SPL_dB) / 10)',": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/efficiencyRoutes.ts:79",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/efficiencyRoutes.ts:USPL_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|drive-voltage-power|packages/design/engine/driver/routes/efficiencyRoutes.ts|new SolveRoute('Re_ohm', ['USPL_dB', 'SPLref_dB'], 'Re_ohm = 2.83² / 10^((USPL_dB − SPLref_dB) / 10)',": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/efficiencyRoutes.ts:81",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/efficiencyRoutes.ts:USPL_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|drive-voltage-power|packages/design/engine/driver/routes/efficiencyRoutes.ts|new SolveRoute('SPLref_dB', ['USPL_dB', 'Re_ohm'], 'SPLref_dB = USPL_dB − 10 × log₁₀(2.83² / Re_ohm)', v => spl1WFromSplAt283V(v.USPL_dB, v.Re_ohm), v => v.Re_ohm > 0),": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/efficiencyRoutes.ts:83",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/efficiencyRoutes.ts:USPL_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|circle-area|packages/design/engine/driver/routes/geometryRoutes.ts|new SolveRoute('Sd_m2', ['Dd_m'], 'Sd_m2 = π × (Dd_m / 2)²', v => Math.PI * (v.Dd_m / 2) ** 2, v => v.Dd_m > 0).inRelation(DD_FROM_SD),": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/geometryRoutes.ts:8",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/geometryRoutes.ts:SD_DD_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|displacement|packages/design/engine/driver/routes/geometryRoutes.ts|new SolveRoute('Vd_m3', ['Sd_m2', 'Xmax_m'], 'Vd_m3 = Sd_m2 × Xmax_m', v => v.Sd_m2 * v.Xmax_m).inRelation(VD_FROM_EXCURSION),": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/geometryRoutes.ts:31",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/geometryRoutes.ts:VD_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|q-parallel|packages/design/engine/driver/routes/smallSignalRoutes.ts|new SolveRoute('Qts', ['Qes', 'Qms'], 'Qts = (Qes × Qms) / (Qes + Qms)', v => v.Qes * v.Qms / (v.Qes + v.Qms)).inRelation(Q_PARALLEL),": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/smallSignalRoutes.ts:9",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/smallSignalRoutes.ts:Q_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|resonance-mass-compliance|packages/design/engine/driver/routes/smallSignalRoutes.ts|new SolveRoute('Cms_m_per_N', ['Fs_hz', 'Mms_kg'], 'Cms_m_per_N = 1 / (4π² × Fs² × Mms_kg)', v => 1 / ((TAU * v.Fs_hz) ** 2 * v.Mms_kg)).inRelation(FS_FROM_MASS_AND_COMPLIANCE),": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/driver/routes/smallSignalRoutes.ts:68",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/driver/routes/smallSignalRoutes.ts:CMS_SD_ROUTES",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|decibel|packages/design/engine/efficiency.ts|return spl1W_dB + 10 * Math.log10(V283_SQ / Re_ohm);": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/efficiency.ts:71",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/efficiency.ts:splAt283V",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|decibel|packages/design/engine/efficiency.ts|return uspl_dB - 10 * Math.log10(V283_SQ / Re_ohm);": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/efficiency.ts:81",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/efficiency.ts:spl1WFromSplAt283V",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|decibel|packages/design/engine/efficiency.ts|return spl1W_dB + 10 * Math.log10(Pe_W) - 3;": {
   "reason": "consolidated by T902 (QO949)",
   "where": "packages/design/engine/efficiency.ts:90",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/efficiency.ts:splMaxAtRatedPower",
+  "resolved_by": "T934",
+  "ruling": "QO949",
+  "note": "this line is the home itself: the engine function that owns this kind of sum (T934, scripts/dupscan-homes.json)"
  },
  "sig|unit-factor|packages/design/fields/field.ts|description: \"Sealed picker volume: WinISD's sealed alignment picker suggests a box volume for the Qtc (total Q) you pick, but it works that out with a fixed Rg of 0.1 Ω and a fixed Qa of 100 and leaves out your own box leakage losses (Ql), Rg and Qa, which its charts do use. So WinISD is inconsistent with itself: its Box tab then shows a different Qtc from the one you picked (W5-1138SMF, Qts 0.49, Vas 4.85 L, Ql 10: picking 0.800 gives 3.13 L, and the Box tab shows 0.787). OpenISD gives the volume at which the Box tab shows the Qtc you picked (2.96 L, and the Box tab shows 0.800), counting the project's Rg and every box loss. Tick this to get WinISD's volume: Qt = 1/(1/Qts′ + 1/100), with Qts′ using Qes·(Re + 0.1)/Re, and Vb = Vas/((Qtc/Qt)² − 1).\\nQtc: the picked total Q. Qts′: the driver's Qts with Rg in it. Vas: the equivalent air volume of all the drivers (one driver's Vas times the number of drivers, half that for an isobaric pair), as WinISD's picker uses.\",": {
   "reason": "help text, no code (John, QO950, 18 Nov 2026: \"A: replace the old help-text entry on the known-copies list with the new text, marked help text, no code\")",

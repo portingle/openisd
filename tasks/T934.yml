@@ -5,6 +5,25 @@ owner: dupscan-guardrail
 status: open
 goal: 'The duplicate-logic check knows each kind of sum''s one home in the engine, so the home is never flagged; the known-copies list can only shrink; every driver-count and coil-wiring copy calls the engine''s home function.'
 why: 'John, 19 Nov 2026: ''remove the dupe and fix the guardrail'''
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test/dupscan.test.sh
+gates_approved: QO949
 files:
   - tasks/T934.yml
+  - AGENTS.md
+  - .github/workflows/pr.yml
+  - scripts/dupscan.mjs
+  - scripts/dupscan-allow.json
+  - scripts/dupscan-homes.json
+  - scripts/test/dupscan.test.sh
+  - packages/design/domain/driverRecordConverter.ts
+  - packages/design/engine/air.ts
+  - packages/design/engine/array/driverWiring.ts
+  - packages/design/engine/circuit.ts
+  - packages/design/engine/driver/DriverEngine.ts
+  - packages/design/engine/pr/PrEngine.ts
+  - packages/design/engine/signal/SignalEngine.ts
+  - packages/design/engine/simulation/SimulationEngine.ts
+  - packages/design/engine/solvers/driverQuantities.ts
+  - packages/design/test/engine/air.test.ts
+  - packages/design/test/engine/driver-quantities.test.ts
+  - packages/design/test/engine/driver-wiring.test.ts

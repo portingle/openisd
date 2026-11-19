@@ -138,7 +138,9 @@ jobs:
         run: bash scripts/land/unit-architecture.sh
       - name: no new copy of a formula (duplicate-logic scan against the allow-list; QO946.c256)
         # jscpd (pinned devDependency) plus the formula rules; exit 1 on any finding not in scripts/dupscan-allow.json. Runs in the merge queue like the job's other steps.
-        run: node scripts/dupscan.mjs . --jscpd node_modules/.bin/jscpd --allow scripts/dupscan-allow.json
+        # T934: a match inside its kind's home (scripts/dupscan-homes.json) is not a copy; the allow-list may only shrink against
+        # origin/main (pr-setup.sh points it at the base of the pull request or merge group).
+        run: node scripts/dupscan.mjs . --jscpd node_modules/.bin/jscpd --allow scripts/dupscan-allow.json --homes scripts/dupscan-homes.json --base origin/main
 
   done-test:
     runs-on: ubuntu-latest
