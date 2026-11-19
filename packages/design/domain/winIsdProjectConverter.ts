@@ -504,7 +504,10 @@ export class WinIsdProjectConverter {
         // true answer is exactly Me = 0). Entering `Me` directly — never negative, no boundary
         // check involved — lets `systemTuning_hz` recompute Fr as the OUTPUT it already is, self-
         // consistently, instead of fighting the pair the other way.
-        project = builder.passiveRadiator().volume_m3(Vr).tuning_goal_hz(Fr).count(Npr).radiator(radiator).build();
+        project = builder.passiveRadiator().volume_m3(Vr).tuning_goal_hz(Fr).radiator(radiator).build();
+        // The file's count is written after the build, like every other loaded value, so the load
+        // repair pass at the end (`repairLoadedValues`) names a count it repairs (T928).
+        project.box.passiveRadiator.count.set(Npr);
         const me = wpr.number('PassiveRadiator', 'Me');
         if (me != null) project.box.passiveRadiator.addedMass_kg.set(me);
         const Qlr = wpr.number('Box', 'Qlr');
@@ -621,7 +624,7 @@ export class WinIsdProjectConverter {
     const P = wpr.number('SignalSource', 'P');
     // P can be stated only against a usable Re; without one the voltage stands alone.
     const Re_ohm = project.driver.specs.Re_ohm.value;
-    const loadRepairs = P != null && Re_ohm !== null && Re_ohm > 0 ? project.loadPowerDrive_W(P) : [];
+    const loadRepairs = P != null && Re_ohm !== null && Re_ohm > 0 ? project.loadPowerDrive_W(P) : project.repairLoadedValues();
     const description = wpr.value('ProjectInfo', 'Description');
     const creator = wpr.value('ProjectInfo', 'Creator');
     const created = wpr.value('ProjectInfo', 'CreateDate');

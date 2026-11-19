@@ -40,9 +40,10 @@ export interface LoadRepairRule {
 }
 
 /** The line the opening message shows for a value repaired to `fixedTo` (a phrase such as "the
- *  10 mV minimum"). The file's number is quoted exactly as it was read. */
+ *  10 mV minimum"). The file's number is quoted exactly as it was read, with its unit where it has one. */
 export function loadRepairText(field: NumberField, loaded: number, fixedTo: string): string {
-  return `${field.label} ${loaded} ${field.unitLabel()} in the file: set to ${fixedTo}`;
+  const unit = field.unitLabel();
+  return `${field.label} ${loaded}${unit === '' ? '' : ` ${unit}`} in the file: set to ${fixedTo}`;
 }
 
 /** Whether `field`'s own load repair rule says `v` cannot be held: below `limits.min`, or not past

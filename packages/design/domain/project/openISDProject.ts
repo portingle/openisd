@@ -34,9 +34,10 @@ import { ProjectListeners } from './projectListeners.js';
 import { resolveProject, usableRe } from './projectResolve.js';
 import { PROJECT_DEFAULT_DRIVER_WIRING } from './driverWiringDefault.js';
 import { ProjectSignal } from './projectSignal.js';
-import { repairLoaded } from './loadRepair.js';
+import { fieldLoadRule, repairLoaded } from './loadRepair.js';
+import { NumberField } from '../../fields/field.js';
 import { enteredEntry } from '../specEntry.js';
-import type { LoadRepairNote } from './loadRepair.js';
+import type { LoadRepairNote, LoadRepairRule } from './loadRepair.js';
 import { TuneLimits } from './tuneLimits.js';
 import { tuneViewOf } from './tuneView.js';
 import type { TuneView } from './tuneView.js';
@@ -116,9 +117,17 @@ export class OpenISDProject {
      *  repairs made, for the opening message only: a repaired value is a good value, with no mark on
      *  its box (QO953.c26, c30, c31). Every door a record enters by runs it. */
     #repairOnLoad(): readonly LoadRepairNote[] {
-        const notes = repairLoaded(this.#signalOver(this.#directRoot()).loadRepairRules());
+        const root = this.#directRoot();
+        const notes = repairLoaded([...this.#signalOver(root).loadRepairRules(), this.#prCountLoadRule(root)]);
         if (notes.length > 0) this.#resolve();
         return notes;
+    }
+
+    /** The passive-radiator count's load repair: a count below 1 is set to 1 (`NumberField.PR_NUM`),
+     *  whatever the box type, so a later switch to a passive-radiator box draws (T928). */
+    #prCountLoadRule(root: SimpleField<OpenISDProjectJson>): LoadRepairRule {
+        const pr = focus(focus(root, 'box'), 'passiveRadiator');
+        return fieldLoadRule(NumberField.PR_NUM, () => pr.value.count, v => pr.set({ ...pr.value, count: v }));
     }
 
     /** A window onto a driver embedded in `root`'s whole record — `get driver()` below is
@@ -826,6 +835,14 @@ export class OpenISDProject {
      *  smallest power the System input power box takes. Built fresh on every access. */
     get signal(): ProjectSignal {
         return this.#signalOver(this.#root());
+    }
+
+    /** The load repair pass (`loadRepair.ts`) over values an import wrote after the project was
+     *  built (a WinISD `.wpr`). Returns the repairs made, for the opening message. */
+    repairLoadedValues(): readonly LoadRepairNote[] {
+        const repairs = this.#repairOnLoad();
+        if (repairs.length > 0) this.#notify();
+        return repairs;
     }
 
     /** A drive power read from a WinISD `.wpr` (`[SignalSource] P`): stored as the file states it,

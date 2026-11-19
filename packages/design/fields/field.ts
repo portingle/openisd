@@ -562,6 +562,7 @@ export class NumberField extends Field {
     label: "Num. of PRs",
     display: {kind: 'fixed', symbol: ''},
     limits: {min: 1, max: 4},
+    loadRepair: {breaks: 'min', to: 1, described: 'the minimum of 1'},
     spin: INTEGER_SPIN,
     precision: 0,
     description: "Passive Radiator Count\nNumber of identical passive radiators in the enclosure.",
