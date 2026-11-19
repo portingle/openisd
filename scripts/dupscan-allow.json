@@ -1,201 +1,231 @@
 {
- "copy|packages/ui/src/ui/shells/mobile/filters/PassFields.vue|packages/ui/src/ui/shells/original/filters/PassFilterEditor.vue|fe8f81efe81c": {
+ "copy|packages/ui/src/ui/shells/mobile/filters/PassFields.vue|packages/ui/src/ui/shells/original/filters/PassFilterEditor.vue|d49a0b9e607b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/shells/mobile/filters/PassFields.vue:9-17 = packages/ui/src/ui/shells/original/filters/PassFilterEditor.vue:11-20",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/shells/mobile/filters/PassFields.vue|packages/ui/src/ui/shells/original/filters/PassFilterEditor.vue|fe8f81efe81c"
  },
- "copy|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|packages/ui/src/ui/shells/mobile/MobileShell.vue|a945b15b9f4f": {
+ "copy|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|packages/ui/src/ui/shells/mobile/MobileShell.vue|a11c0cb165b0": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue:465-475 = packages/ui/src/ui/shells/mobile/MobileShell.vue:586-587",
-  "count": 1
+  "where": "packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue:465-475 = packages/ui/src/ui/shells/mobile/MobileShell.vue:588-589",
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|packages/ui/src/ui/shells/mobile/MobileShell.vue|a945b15b9f4f"
  },
- "copy|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|packages/ui/src/ui/shells/mobile/MobileShell.vue|fc4b5b8df2ff": {
+ "copy|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|packages/ui/src/ui/shells/mobile/MobileShell.vue|f3e8189749a5": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue:466-476 = packages/ui/src/ui/shells/mobile/MobileShell.vue:536-546",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|packages/ui/src/ui/shells/mobile/MobileShell.vue|fc4b5b8df2ff"
  },
- "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|31dfecad5920": {
+ "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|348a52d1a09b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/shells/mobile/MobileNewProject.vue:222-229 = packages/ui/src/ui/shells/mobile/MobileNewProject.vue:206-213",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|31dfecad5920"
  },
- "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|ec909d30f262": {
+ "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|99c999fe1249": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/shells/mobile/MobileNewProject.vue:24-34 = packages/ui/src/ui/shells/original/OriginalNewProject.vue:22-32",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|ec909d30f262"
  },
- "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|b0748fc9c77f": {
+ "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|8a088c4fddd5": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/shells/mobile/MobileNewProject.vue:61-107 = packages/ui/src/ui/shells/original/OriginalNewProject.vue:60-105",
   "count": 1,
   "was": "copy|packages/ui/src/ui/shells/mobile/MobileNewProject.vue|packages/ui/src/ui/shells/original/OriginalNewProject.vue|aa8f3c30998d"
  },
- "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|e23ccc1e35a0": {
+ "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|f771f0095c64": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/components/StorageHistory.vue:113-119 = packages/ui/src/ui/components/StorageHistory.vue:50-56",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|e23ccc1e35a0"
  },
- "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|efd771347a2e": {
+ "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|c9aec166e25e": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/components/StorageHistory.vue:135-142 = packages/ui/src/ui/components/StorageHistory.vue:71-78",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|efd771347a2e"
  },
- "copy|packages/ui/src/ui/components/CloudSyncBadge.vue|packages/ui/src/ui/components/CloudSyncDialog.vue|ace67f6cb311": {
+ "copy|packages/ui/src/ui/components/CloudSyncBadge.vue|packages/ui/src/ui/components/CloudSyncDialog.vue|a1f00d562b42": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/components/CloudSyncBadge.vue:16-25 = packages/ui/src/ui/components/CloudSyncDialog.vue:26-35",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/components/CloudSyncBadge.vue|packages/ui/src/ui/components/CloudSyncDialog.vue|ace67f6cb311"
  },
- "copy|packages/ui/src/ui/components/ChartDataDialog.vue|packages/ui/src/ui/components/ConfirmDialog.vue|58a879706da5": {
+ "copy|packages/ui/src/ui/components/ChartDataDialog.vue|packages/ui/src/ui/components/ConfirmDialog.vue|bfaad0e56377": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/ui/components/ChartDataDialog.vue:52-60 = packages/ui/src/ui/components/ConfirmDialog.vue:76-84",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/ui/components/ChartDataDialog.vue|packages/ui/src/ui/components/ConfirmDialog.vue|58a879706da5"
  },
- "copy|packages/persistence/src/cloud/drive/driveStore.ts|packages/persistence/src/cloud/drive/driveStore.ts|57988b520efb": {
+ "copy|packages/persistence/src/cloud/drive/driveStore.ts|packages/persistence/src/cloud/drive/driveStore.ts|1c7620e75622": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/drive/driveStore.ts:351-368 = packages/persistence/src/cloud/drive/driveStore.ts:290-308",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/drive/driveStore.ts|packages/persistence/src/cloud/drive/driveStore.ts|57988b520efb"
  },
- "copy|packages/persistence/src/cloud/docs/savedEntryDocs.ts|packages/persistence/src/cloud/docs/singletonDocs.ts|b998acc3e8dc": {
+ "copy|packages/persistence/src/cloud/docs/savedEntryDocs.ts|packages/persistence/src/cloud/docs/singletonDocs.ts|e4182eaf8bf4": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/docs/savedEntryDocs.ts:54-67 = packages/persistence/src/cloud/docs/singletonDocs.ts:41-54",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/docs/savedEntryDocs.ts|packages/persistence/src/cloud/docs/singletonDocs.ts|b998acc3e8dc"
  },
- "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/auth/implicitSession.ts|5315b4741065": {
+ "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/auth/implicitSession.ts|643843271d4b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/auth/implicitSession.ts:78-88 = packages/persistence/src/cloud/auth/implicitSession.ts:52-62",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/auth/implicitSession.ts|5315b4741065"
  },
- "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|bf85526c33bb": {
+ "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|58f54c823ec8": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/logic/driverBrowsingState.ts:52-64 = packages/ui/src/logic/driverDisplay.ts:122-125",
   "count": 1,
   "was": "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|ae2196a8435d"
  },
- "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverBrowsingState.ts|516012bd10a2": {
+ "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverBrowsingState.ts|c2ab1c739c2e": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/logic/driverBrowsingState.ts:459-466 = packages/ui/src/logic/driverBrowsingState.ts:446-453",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverBrowsingState.ts|516012bd10a2"
  },
- "copy|packages/ui/src/hooks/labelColumns.ts|packages/ui/src/hooks/phoneLabelColumn.ts|106209ac1e11": {
+ "copy|packages/ui/src/hooks/labelColumns.ts|packages/ui/src/hooks/phoneLabelColumn.ts|16efe2326b65": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/labelColumns.ts:77-91 = packages/ui/src/hooks/phoneLabelColumn.ts:55-69",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/labelColumns.ts|packages/ui/src/hooks/phoneLabelColumn.ts|106209ac1e11"
  },
- "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|494037c4ef0f": {
+ "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|1969ec39d073": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/SealedAlignment-hooks.ts:66-71 = packages/ui/src/hooks/VentedAlignment-hooks.ts:60-65",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|494037c4ef0f"
  },
- "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|9652badf4100": {
+ "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|d1c3f795107d": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/SealedAlignment-hooks.ts:71-82 = packages/ui/src/hooks/VentedAlignment-hooks.ts:65-76",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|c576fa1fa226"
  },
- "copy|packages/ui/src/hooks/OriginalNewProject-hooks.ts|packages/ui/src/hooks/passiveRadiatorEditor.ts|6c0d55eb3d29": {
+ "copy|packages/ui/src/hooks/OriginalNewProject-hooks.ts|packages/ui/src/hooks/passiveRadiatorEditor.ts|8b87e319df8c": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/hooks/OriginalNewProject-hooks.ts:529-539 = packages/ui/src/hooks/passiveRadiatorEditor.ts:173-182",
-  "count": 1
+  "where": "packages/ui/src/hooks/OriginalNewProject-hooks.ts:530-540 = packages/ui/src/hooks/passiveRadiatorEditor.ts:168-177",
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/OriginalNewProject-hooks.ts|packages/ui/src/hooks/passiveRadiatorEditor.ts|6c0d55eb3d29"
  },
- "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|837da759745a": {
+ "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|4792346f472c": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileShell-hooks.ts:151-157 = packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue:20-26",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|079b9f77411a"
  },
- "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|ca2dc48473df": {
+ "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|9d6843d1d70e": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileShell-hooks.ts:250-261 = packages/ui/src/hooks/OriginalShell-hooks.ts:315-326",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|2a4dff476cfd"
  },
- "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|fc4755c48b24": {
+ "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|ef15643e2901": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileShell-hooks.ts:411-420 = packages/ui/src/hooks/OriginalShell-hooks.ts:718-726",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|fc4755c48b24"
  },
- "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|37736cbcba71": {
+ "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|5b085c7459dc": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileBoxTab-hooks.ts:32-42 = packages/ui/src/hooks/OriginalShell-hooks.ts:213-223",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|00493df6a98f"
  },
- "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|7e174c05b920": {
+ "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|ef278ffee62b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileBoxTab-hooks.ts:44-54 = packages/ui/src/hooks/OriginalShell-hooks.ts:225-235",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|7e174c05b920"
  },
- "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/ui/shells/mobile/MobileBoxTab.vue|9b9de9c29ee9": {
+ "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/ui/shells/mobile/MobileBoxTab.vue|c2d2cd3a8458": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/ui/src/hooks/MobileBoxTab-hooks.ts:60-70 = packages/ui/src/ui/shells/mobile/MobileBoxTab.vue:23-33",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/ui/shells/mobile/MobileBoxTab.vue|9b9de9c29ee9"
  },
- "copy|packages/ui/src/hooks/MobileAdvancedTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|a76121f429ad": {
+ "copy|packages/ui/src/hooks/MobileAdvancedTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|124d263e2325": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/hooks/MobileAdvancedTab-hooks.ts:29-41 = packages/ui/src/hooks/OriginalShell-hooks.ts:778-790",
+  "where": "packages/ui/src/hooks/MobileAdvancedTab-hooks.ts:29-41 = packages/ui/src/hooks/OriginalShell-hooks.ts:780-792",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileAdvancedTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|e8430a26876f"
  },
- "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|3fbd80c8674f": {
+ "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|caa6a1acef57": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/hooks/GraphPanel-hooks.ts:73-79 = packages/ui/src/hooks/OriginalShell-hooks.ts:535-537",
+  "where": "packages/ui/src/hooks/GraphPanel-hooks.ts:76-82 = packages/ui/src/hooks/OriginalShell-hooks.ts:535-537",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|a1bbf327291b"
  },
- "copy|packages/persistence/src/repos/myDriverRepo.ts|packages/persistence/src/repos/myPassiveRadiatorRepo.ts|2822dfcaa5dc": {
+ "copy|packages/persistence/src/repos/myDriverRepo.ts|packages/persistence/src/repos/myPassiveRadiatorRepo.ts|a7b704cf3f31": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/repos/myDriverRepo.ts:75-96 = packages/persistence/src/repos/myPassiveRadiatorRepo.ts:67-88",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/repos/myDriverRepo.ts|packages/persistence/src/repos/myPassiveRadiatorRepo.ts|2822dfcaa5dc"
  },
- "copy|packages/persistence/src/repos/layoutSteps.ts|packages/persistence/src/repos/layoutSteps.ts|a852cb32aec9": {
+ "copy|packages/persistence/src/repos/layoutSteps.ts|packages/persistence/src/repos/layoutSteps.ts|0cf77845b79d": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/repos/layoutSteps.ts:135-140 = packages/persistence/src/repos/layoutSteps.ts:124-129",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/repos/layoutSteps.ts|packages/persistence/src/repos/layoutSteps.ts|a852cb32aec9"
  },
- "copy|packages/persistence/src/repos/bundledDriverRepo.ts|packages/persistence/src/repos/bundledPassiveRadiatorRepo.ts|a7dbbfb17ab6": {
+ "copy|packages/persistence/src/repos/bundledDriverRepo.ts|packages/persistence/src/repos/bundledPassiveRadiatorRepo.ts|88c6e163ce20": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/repos/bundledDriverRepo.ts:16-21 = packages/persistence/src/repos/bundledPassiveRadiatorRepo.ts:13-18",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/repos/bundledDriverRepo.ts|packages/persistence/src/repos/bundledPassiveRadiatorRepo.ts|a7dbbfb17ab6"
  },
- "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|027890cf1abc": {
+ "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|ddde619a1124": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/syncEngine.ts:266-287 = packages/persistence/src/cloud/syncEngine.ts:243-264",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|027890cf1abc"
  },
- "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|450ff64dbb50": {
+ "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|48feb2fa76f8": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/syncEngine.ts:674-681 = packages/persistence/src/cloud/syncEngine.ts:636-643",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|450ff64dbb50"
  },
- "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|bb0453ae62a4": {
+ "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|b217fd6ac1ba": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/syncEngine.ts:733-740 = packages/persistence/src/cloud/syncEngine.ts:653-660",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|bb0453ae62a4"
  },
- "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|ff202df1ddd4": {
+ "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|3b3945dc79ee": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/syncEngine.ts:743-753 = packages/persistence/src/cloud/syncEngine.ts:711-720",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|ff202df1ddd4"
  },
- "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|1a3759b3f699": {
+ "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|4ef72b9c7915": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/syncEngine.ts:797-808 = packages/persistence/src/cloud/syncEngine.ts:648-660",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|1a3759b3f699"
  },
- "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|ce4f590f9f15": {
+ "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|f26b8f6672c3": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/syncEngine.ts:808-817 = packages/persistence/src/cloud/syncEngine.ts:672-643",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/syncEngine.ts|packages/persistence/src/cloud/syncEngine.ts|ce4f590f9f15"
  },
- "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/cloudStore.ts|efc1ac3b719a": {
+ "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/cloudStore.ts|136345602c51": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/persistence/src/cloud/cloudStore.ts:26-32 = packages/persistence/src/cloud/auth/implicitSession.ts:100-106",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/cloudStore.ts|efc1ac3b719a"
  },
- "copy|packages/design/engine/simulation/SimulationEngine.ts|packages/design/engine/simulation/SimulationEngine.ts|e7f08c10820d": {
+ "copy|packages/design/engine/simulation/SimulationEngine.ts|packages/design/engine/simulation/SimulationEngine.ts|a8424ae7b99b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/simulation/SimulationEngine.ts:780-790 = packages/design/engine/simulation/SimulationEngine.ts:765-775",
-  "count": 1
+  "where": "packages/design/engine/simulation/SimulationEngine.ts:792-802 = packages/design/engine/simulation/SimulationEngine.ts:777-787",
+  "count": 1,
+  "was": "copy|packages/design/engine/simulation/SimulationEngine.ts|packages/design/engine/simulation/SimulationEngine.ts|e7f08c10820d"
  },
  "copy|packages/design/engine/pr/PrEngine.ts|packages/design/engine/vent/VentEngine.ts|94180610b0fb": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -206,72 +236,86 @@
   "resolved_by": "T930",
   "ruling": "QO949"
  },
- "copy|packages/design/engine/filters/FilterEngine.ts|packages/design/engine/filters/FilterEngine.ts|bcc3251bc511": {
+ "copy|packages/design/engine/filters/FilterEngine.ts|packages/design/engine/filters/FilterEngine.ts|1a4abfa02b3f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/filters/FilterEngine.ts:233-242 = packages/design/engine/filters/FilterEngine.ts:199-209",
-  "count": 1
+  "where": "packages/design/engine/filters/FilterEngine.ts:240-249 = packages/design/engine/filters/FilterEngine.ts:205-215",
+  "count": 1,
+  "was": "copy|packages/design/engine/filters/FilterEngine.ts|packages/design/engine/filters/FilterEngine.ts|bcc3251bc511"
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|9d872fda104a": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|4ba8bccf82ae": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/Bandpass4Box.ts:9-18 = packages/design/engine/boxes/Bandpass6Box.ts:10-19",
+  "where": "packages/design/engine/boxes/Bandpass4Box.ts:10-19 = packages/design/engine/boxes/Bandpass6Box.ts:11-20",
   "count": 1,
   "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|45bb464dbb2f"
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|7acee83b8e5f": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|ca8ed183faae": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/Bandpass4Box.ts:26-31 = packages/design/engine/boxes/Bandpass6Box.ts:34-40",
-  "count": 1
+  "where": "packages/design/engine/boxes/Bandpass4Box.ts:27-32 = packages/design/engine/boxes/Bandpass6Box.ts:34-40",
+  "count": 1,
+  "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|7acee83b8e5f"
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|3147922a3c08": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|1e3331b87e56": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/Bandpass4Box.ts:64-70 = packages/design/engine/boxes/Bandpass6Box.ts:82-88",
-  "count": 1
+  "where": "packages/design/engine/boxes/Bandpass4Box.ts:65-71 = packages/design/engine/boxes/Bandpass6Box.ts:82-88",
+  "count": 1,
+  "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|3147922a3c08"
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|6581f308092f": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|93bcb2b95cc8": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/Bandpass4Box.ts:71-80 = packages/design/engine/boxes/Bandpass6Box.ts:90-99",
-  "count": 1
+  "where": "packages/design/engine/boxes/Bandpass4Box.ts:72-81 = packages/design/engine/boxes/Bandpass6Box.ts:90-99",
+  "count": 1,
+  "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|6581f308092f"
  },
- "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|9d872fda104a": {
+ "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|4ba8bccf82ae": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/AbcBox.ts:11-21 = packages/design/engine/boxes/Bandpass6Box.ts:10-20",
+  "where": "packages/design/engine/boxes/AbcBox.ts:12-22 = packages/design/engine/boxes/Bandpass6Box.ts:11-21",
   "count": 1,
   "was": "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|56c314107af0"
  },
  "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|280c236f6777": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:24-30 = packages/design/engine/boxes/Bandpass6Box.ts:22-28",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:tunedChamber",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
- "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|bbc9e5c2bd5f": {
+ "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|466144eb39da": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/AbcBox.ts:86-113 = packages/design/engine/boxes/Bandpass6Box.ts:68-95",
-  "count": 1
+  "where": "packages/design/engine/boxes/AbcBox.ts:80-107 = packages/design/engine/boxes/Bandpass6Box.ts:62-89",
+  "count": 1,
+  "was": "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|bbc9e5c2bd5f"
  },
- "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/AbcBox.ts|9c572365934c": {
+ "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/AbcBox.ts|05f7cfecf7d2": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:117-124 = packages/design/engine/boxes/AbcBox.ts:43-50",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/AbcBox.ts|9c572365934c"
  },
- "copy|packages/design/domain/project/singleEnteredVentPairs.ts|packages/design/domain/project/withoutImportSku.ts|9220d69b56a5": {
+ "copy|packages/design/domain/project/singleEnteredVentPairs.ts|packages/design/domain/project/withoutImportSku.ts|1235a73180eb": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/project/singleEnteredVentPairs.ts:58-63 = packages/design/domain/project/withoutImportSku.ts:37-42",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/project/singleEnteredVentPairs.ts|packages/design/domain/project/withoutImportSku.ts|9220d69b56a5"
  },
- "copy|packages/design/domain/project/retiredLossMode.ts|packages/design/domain/project/withoutImportSku.ts|9220d69b56a5": {
+ "copy|packages/design/domain/project/retiredLossMode.ts|packages/design/domain/project/withoutImportSku.ts|1235a73180eb": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/project/retiredLossMode.ts:50-55 = packages/design/domain/project/withoutImportSku.ts:37-42",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/project/retiredLossMode.ts|packages/design/domain/project/withoutImportSku.ts|9220d69b56a5"
  },
- "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/engine/driver/DriverEngine.ts|7da05087891c": {
+ "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/engine/driver/DriverEngine.ts|0cd295b74a82": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/driver/openIsdDriverSpec.ts:111-117 = packages/design/engine/driver/DriverEngine.ts:63-70",
-  "count": 1
+  "where": "packages/design/domain/driver/openIsdDriverSpec.ts:111-117 = packages/design/engine/driver/DriverEngine.ts:64-71",
+  "count": 1,
+  "was": "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/engine/driver/DriverEngine.ts|7da05087891c"
  },
- "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/domain/passiveRadiator/openIsdPassiveRadiatorSpec.ts|94f4389d006d": {
+ "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/domain/passiveRadiator/openIsdPassiveRadiatorSpec.ts|3fc814366dc2": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/driver/openIsdDriverSpec.ts:213-218 = packages/design/domain/passiveRadiator/openIsdPassiveRadiatorSpec.ts:29-34",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/domain/passiveRadiator/openIsdPassiveRadiatorSpec.ts|94f4389d006d"
  },
  "copy|packages/design/domain/box/openISDBox.ts|packages/design/domain/box/openISDBox.ts|09d2a7da1fe0": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -282,121 +326,137 @@
   "resolved_by": "T921",
   "ruling": "QO949"
  },
- "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/engine/physicalRange.ts|f45079f8a209": {
+ "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/engine/physicalRange.ts|a34072a74806": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/physicalRange.ts:30-37 = packages/design/domain/driver/openIsdDriverSpec.ts:111-70",
-  "count": 1
+  "where": "packages/design/engine/physicalRange.ts:30-37 = packages/design/domain/driver/openIsdDriverSpec.ts:111-71",
+  "count": 1,
+  "was": "copy|packages/design/domain/driver/openIsdDriverSpec.ts|packages/design/engine/physicalRange.ts|f45079f8a209"
  },
- "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|688c3158918a": {
+ "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|f72c0e6de927": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/winIsdProjectConverter.ts:526-531 = packages/design/domain/winIsdProjectConverter.ts:442-450",
+  "where": "packages/design/domain/winIsdProjectConverter.ts:535-540 = packages/design/domain/winIsdProjectConverter.ts:451-459",
   "count": 1,
   "was": "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|df756e078391"
  },
- "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|19d1b94fa599": {
+ "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|1d68370d92eb": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/winIsdProjectConverter.ts:537-545 = packages/design/domain/winIsdProjectConverter.ts:507-515",
-  "count": 1
+  "where": "packages/design/domain/winIsdProjectConverter.ts:546-554 = packages/design/domain/winIsdProjectConverter.ts:516-524",
+  "count": 1,
+  "was": "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|19d1b94fa599"
  },
- "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|372b3d26fa0e": {
+ "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|4c8b7c73970c": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/winIsdProjectConverter.ts:556-561 = packages/design/domain/winIsdProjectConverter.ts:442-531",
+  "where": "packages/design/domain/winIsdProjectConverter.ts:565-570 = packages/design/domain/winIsdProjectConverter.ts:451-540",
   "count": 1,
   "was": "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|0b2155558645"
  },
- "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|801f9a5de62c": {
+ "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|726fae744d09": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/vent.ts:6-13 = packages/design/domain/box/ventWindow.ts:27-33",
   "count": 1,
   "was": "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|e1162a0d14d9"
  },
- "copy|packages/design/domain/openisdTransforms.ts|packages/design/domain/openisdTransforms.ts|dc01e805f506": {
+ "copy|packages/design/domain/openisdTransforms.ts|packages/design/domain/openisdTransforms.ts|17db50b3f7e4": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/openisdTransforms.ts:358-374 = packages/design/domain/openisdTransforms.ts:305-321",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/openisdTransforms.ts|packages/design/domain/openisdTransforms.ts|dc01e805f506"
  },
- "copy|packages/design/domain/openisdTransforms.ts|packages/design/domain/openisdTransforms.ts|e456dcd49d31": {
+ "copy|packages/design/domain/openisdTransforms.ts|packages/design/domain/openisdTransforms.ts|12bd87ea2476": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/openisdTransforms.ts:396-412 = packages/design/domain/openisdTransforms.ts:244-262",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/openisdTransforms.ts|packages/design/domain/openisdTransforms.ts|e456dcd49d31"
  },
- "copy|packages/design/domain/openisdSchema.ts|packages/design/domain/openisdSchema.ts|df108bcc2ad2": {
+ "copy|packages/design/domain/openisdSchema.ts|packages/design/domain/openisdSchema.ts|e4972acc5745": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/openisdSchema.ts:242-248 = packages/design/domain/openisdSchema.ts:218-224",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/openisdSchema.ts|packages/design/domain/openisdSchema.ts|df108bcc2ad2"
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|07959a97722e": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|7468ff7e6445": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/cell.ts:181-187 = packages/design/domain/cell.ts:151-155",
   "count": 1,
   "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|98d0bb9526a7"
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|36a8d20f2952": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|f28ecea5bdfe": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/cell.ts:212-224 = packages/design/domain/cell.ts:174-155",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|36a8d20f2952"
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|e8e0ea57803a": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|cab70f1ad38d": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/cell.ts:222-235 = packages/design/domain/cell.ts:194-208",
   "count": 1,
   "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|1a2e0b92f5f6"
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|f9086c68dc3f": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|00d0ed06093e": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/cell.ts:338-346 = packages/design/domain/cell.ts:307-315",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|f9086c68dc3f"
  },
- "copy|packages/design/domain/appContext.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|77595a33b15a": {
+ "copy|packages/design/domain/appContext.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|36f96d9c25aa": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/domain/appContext.ts:37-42 = packages/ui/src/hooks/OriginalShell-hooks.ts:60-65",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/domain/appContext.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|77595a33b15a"
  },
- "copy|packages/design/cloud/oauthRedirect.ts|packages/design/cloud/oauthRedirect.ts|3037913a229f": {
+ "copy|packages/design/cloud/oauthRedirect.ts|packages/design/cloud/oauthRedirect.ts|7183514b936d": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/oauthRedirect.ts:85-97 = packages/design/cloud/oauthRedirect.ts:40-52",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/oauthRedirect.ts|packages/design/cloud/oauthRedirect.ts|3037913a229f"
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|6140b48d31c3": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|23f2a68e8933": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/driveJson.ts:347-356 = packages/design/cloud/driveJson.ts:267-276",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|6140b48d31c3"
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|13703a7e646b": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|1ef22796bdac": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/driveJson.ts:368-382 = packages/design/cloud/driveJson.ts:288-301",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|13703a7e646b"
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|34d06adc85b0": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|c45d56861f6f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/driveJson.ts:431-443 = packages/design/cloud/driveJson.ts:288-299",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|34d06adc85b0"
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|4945b2a5a0ac": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|58a94c42d1bf": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/driveJson.ts:446-455 = packages/design/cloud/driveJson.ts:401-410",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|4945b2a5a0ac"
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|fd1114671e9f": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|ab128a10c412": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/driveJson.ts:455-491 = packages/design/cloud/driveJson.ts:410-446",
   "count": 1,
   "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|58b8eb5741c8"
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|c2662c45c185": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|380bd13d7f1e": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/driveJson.ts:513-523 = packages/design/cloud/driveJson.ts:492-502",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|c2662c45c185"
  },
- "copy|packages/design/cloud/docMigrate.ts|packages/design/cloud/docMigrate.ts|ec894b8773d6": {
+ "copy|packages/design/cloud/docMigrate.ts|packages/design/cloud/docMigrate.ts|a13f5e8276f7": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/cloud/docMigrate.ts:89-96 = packages/design/cloud/docMigrate.ts:73-80",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/cloud/docMigrate.ts|packages/design/cloud/docMigrate.ts|ec894b8773d6"
  },
- "copy|packages/design/chart/series.ts|packages/design/chart/series.ts|b8bc9c8f0375": {
+ "copy|packages/design/chart/series.ts|packages/design/chart/series.ts|2374c4cb5a8b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/chart/series.ts:272-279 = packages/design/chart/series.ts:259-266",
-  "count": 1
+  "count": 1,
+  "was": "copy|packages/design/chart/series.ts|packages/design/chart/series.ts|b8bc9c8f0375"
  },
  "sig|unit-factor|packages/design/chart/axis.ts|return f >= 1000 ? (f / 1000).toFixed(f < 10000 ? 2 : 1) + 'k' : f.toFixed(0);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -583,42 +643,74 @@
  "sig|air-compliance|packages/design/engine/boxes/AbcBox.ts|const rc2 = rho * c * c;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:24",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/AbcBox.ts|const Cabr = P.Vb / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:86",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/AbcBox.ts|const Cabf = (P.Vf ?? NaN) / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:87",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/Bandpass4Box.ts|const Cabr = P.Vb / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass4Box.ts:21",
-  "count": 2
+  "count": 2,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/Bandpass4Box.ts|const Cabf = (P.Vf ?? NaN) / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass4Box.ts:25",
-  "count": 2
+  "count": 2,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/Bandpass6Box.ts|const rc2 = rho * c * c;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass6Box.ts:22",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/Bandpass6Box.ts|const Cabr = P.Vb / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass6Box.ts:68",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/Bandpass6Box.ts|const Cabf = (P.Vf ?? NaN) / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass6Box.ts:69",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|driver-count-scaling|packages/design/engine/circuit.ts|const pg = P.eg * BlPush / (drv.Sd_m2 * n * Rac);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -683,7 +775,11 @@
  "sig|air-compliance|packages/design/engine/circuit.ts|const Cab = P.Vb / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/circuit.ts:174",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|bl-from-qes|packages/design/engine/driver/DriverEngine.ts|? Math.sqrt(Re_terminal_ohm / (2 * Math.PI * Fs_hz * Qes * Cms_m_per_N)) : null;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -921,7 +1017,11 @@
  "sig|air-compliance|packages/design/engine/pr/PrEngine.ts|const Cab = p.Vb / (air.rho() * air.c() * air.c());": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/pr/PrEngine.ts:115",
-  "count": 2
+  "count": 2,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|resonance-mass-compliance|packages/design/engine/pr/PrEngine.ts|return 1 / (2 * Math.PI * Math.sqrt(Map / p.prNum * Cpar));": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -1108,10 +1208,11 @@
   "where": "packages/design/engine/simulation/SimulationEngine.ts:644",
   "count": 1
  },
- "sig|unit-factor|packages/design/engine/simulation/SimulationEngine.ts|const xPeak = exc[i] / 1000; // exc is mm; Xmax is metres": {
+ "sig|unit-factor|packages/design/engine/simulation/SimulationEngine.ts|const xPeak = exc[i] / 1000;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/simulation/SimulationEngine.ts:666",
-  "count": 1
+  "where": "packages/design/engine/simulation/SimulationEngine.ts:678",
+  "count": 1,
+  "was": "sig|unit-factor|packages/design/engine/simulation/SimulationEngine.ts|const xPeak = exc[i] / 1000; // exc is mm; Xmax is metres"
  },
  "sig|decibel|packages/design/engine/simulation/SimulationEngine.ts|splXlimCurve.push(over ? spl[i] + 20 * Math.log10(Xmax / xPeak) : spl[i]);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -1186,7 +1287,11 @@
  "sig|air-compliance|packages/design/engine/vent/VentEngine.ts|const Cab = Vb / (air.rho() * air.c() * air.c());": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/vent/VentEngine.ts:65",
-  "count": 2
+  "count": 2,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/air.ts:airCompliance",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "sig|circle-area|packages/design/engine/vent/VentEngine.ts|const d = 2 * Math.sqrt(Sp / Math.PI);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",

@@ -8,6 +8,17 @@
 import {cAdd, cDiv, cMul, cScale, cTanh, cx} from '../complex.js';
 import type {Complex, SweepParams} from '../types.js';
 import {DEFAULT_NEW_PROJECT_QP} from '../../fields/defaults.js';
+import {airCompliance} from '../air.js';
+
+/** A chamber of `V_m3` vented to `f_Hz`, as the lossless band-pass models (`Bandpass6Box.ts`, `AbcBox.ts`) build each chamber:
+ *  its compliance Cab = V/(rho c^2), the tuning w0 = 2 pi f, the port mass Map = 1/(w0^2 Cab) that tunes it there, and the
+ *  port branch Rap + j w Map with Rap = w0 Map / Qp. */
+export function tunedChamber(V_m3: number, f_Hz: number, rho: number, c: number, w: number, Qp: number): {Cab: number; w0: number; Map: number; Zport: Complex} {
+  const Cab = airCompliance(V_m3, rho, c);
+  const w0 = 2 * Math.PI * f_Hz;
+  const Map = 1 / (w0 * w0 * Cab);
+  return {Cab, w0, Map, Zport: cAdd(cx(w0 * Map / Qp, 0), cx(0, w * Map))};
+}
 
 export function portLoss(w: number, Map: number, P: Pick<SweepParams, 'Qp'>): number {
   return w * Map / (P.Qp || DEFAULT_NEW_PROJECT_QP);

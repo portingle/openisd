@@ -3,7 +3,8 @@
  */
 import {cAdd, cDiv, cInv, cMul, cPar, cSub, cx} from '../complex.js';
 import type {SweepParams} from '../types.js';
-import {winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
+import {airCompliance} from '../air.js';
+import {winisdLinePortReactance, droppedEndCorrection_m, tunedChamber} from './port.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
 import {DEFAULT_NEW_PROJECT_QP} from '../../fields/defaults.js';
 
@@ -19,19 +20,12 @@ export class Bandpass6Box implements BoxModel {
         // OpenISD's own simple model (not WinISD-captured): each chamber an ordinary vented
         // compliance with the SHARED Ql/Qa/Qp, port mass from its own tuning target (no separate
         // geometry field for a second port) — no inter-chamber leak (Ricl dropped).
-        const rc2 = rho * c * c;
         const Qp = P.Qp || DEFAULT_NEW_PROJECT_QP;
 
-        const Cabr = P.Vb / rc2;
-        const wr = 2 * Math.PI * (P.Fr ?? NaN);
-        const Mapr = 1 / (wr * wr * Cabr);
-        const Zportr = cAdd(cx(wr * Mapr / Qp, 0), cx(0, w * Mapr));
+        const {Cab: Cabr, Zport: Zportr} = tunedChamber(P.Vb, P.Fr ?? NaN, rho, c, w, Qp);
         const Zr = cPar(cInv(cx(0, w * Cabr)), cx(Ql / (w * Cabr), 0), cx(Qa / (w * Cabr), 0), Zportr);
 
-        const Cabf = (P.Vf ?? NaN) / rc2;
-        const wf = 2 * Math.PI * (P.Ff ?? NaN);
-        const Mapf = 1 / (wf * wf * Cabf);
-        const Zportf = cAdd(cx(wf * Mapf / Qp, 0), cx(0, w * Mapf));
+        const {Cab: Cabf, Zport: Zportf} = tunedChamber(P.Vf ?? NaN, P.Ff ?? NaN, rho, c, w, Qp);
         const Zf = cPar(cInv(cx(0, w * Cabf)), cx(Ql / (w * Cabf), 0), cx(Qa / (w * Cabf), 0), Zportf);
 
         const Zbox = cAdd(Zr, Zf);
@@ -65,8 +59,8 @@ export class Bandpass6Box implements BoxModel {
         // Absent Qlr/Qar/Qpr/Qiclfr/Qlf/Qaf/Qpf/Fr/Ff poison every value below with NaN
         // (`?? NaN`), caught by `classifyFinite`, never a throw or a `!` — the same net the
         // vented/PR/bandpass4 `winisd-lossy` branches use for their own absent tuning fields.
-        const Cabr = P.Vb / (rho * c * c);
-        const Cabf = (P.Vf ?? NaN) / (rho * c * c);
+        const Cabr = airCompliance(P.Vb, rho, c);
+        const Cabf = airCompliance(P.Vf ?? NaN, rho, c);
 
         const Qlr = P.Qlr ?? NaN, Qar = P.Qar ?? NaN, Qpr = P.Qpr ?? NaN;
         const Qlf = P.Qlf ?? NaN, Qaf = P.Qaf ?? NaN, Qpf = P.Qpf ?? NaN;

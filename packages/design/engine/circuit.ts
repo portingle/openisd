@@ -29,6 +29,7 @@
 
 import {hotRe} from './solvers/driverQuantities.js';
 import {combinedOfN, eachOfN} from './array/driverWiring.js';
+import {airCompliance} from './air.js';
 import {cAdd, cDiv, cInv, cMul, cScale, cx} from './complex.js';
 import type {BoxType, Complex, Solution, SweepParams} from './types.js';
 import {boxModel} from './boxes/index.js';
@@ -89,7 +90,7 @@ function coilRdc(drv: CircuitQuantities, P: SweepParams): number {
  *  BUG_20260926_winisd-tf-reference). */
 export function hfAsymptotePressure_Pa(drv: CircuitQuantities, P: SweepParams, r_m: number): number {
   const n = P.nDrivers || 1;
-  const Rac = coilRdc(drv, P) / n + (P.rgAtDriverSide !== false ? 0 : (P.Rs || 0));
+  const Rac = eachOfN(coilRdc(drv, P), n) + (P.rgAtDriverSide !== false ? 0 : (P.Rs || 0));
   const BlPush = drv.BL_entered_Tm;
   const pg = P.eg * BlPush / (combinedOfN(drv.Sd_m2, n) * Rac);
   const Mas = eachOfN(drv.Mms_kg / (drv.Sd_m2 * drv.Sd_m2), n);
@@ -172,7 +173,7 @@ export function solve(f: number, drv: CircuitQuantities, box: BoxType, P: SweepP
   // Box acoustic compliance Cab = Vb/(ρc²)
   // Loss resistances in parallel with compliance: Ral (leakage) and Raa (absorption)
   // https://en.wikipedia.org/wiki/Helmholtz_resonance#Resonant_frequency
-  const Cab = P.Vb / (rho * c * c);
+  const Cab = airCompliance(P.Vb, rho, c);
   const Zc  = cInv(cx(0, w * Cab));
   const Ql  = P.Ql || DEFAULT_NEW_PROJECT_VENTED_QL;
   const Qa  = P.Qa || DEFAULT_NEW_PROJECT_QA;

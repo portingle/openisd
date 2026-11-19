@@ -108,5 +108,14 @@ if refused_gates "$r" && grep -q 'scripts/dupscan-allow.json' "$SCRATCH/out"; th
 setup $'gates_approved: QO1\n' scripts/dupscan-allow.json; r=$(land)
 [ "$r" = 0 ] && ok "12 dupscan-allow.json with a John-answered gates_approved lands" || fail "12 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-300)"
 
+# 13: the duplicate check's homes and the check itself are gate files too (T934 review, Codex 19 Nov 2026: a home declared in
+# the proposed change, or an edited scanner, would otherwise pass the check it is meant to tighten).
+for gf in scripts/dupscan-homes.json scripts/dupscan.mjs; do
+    setup "" "$gf"; r=$(land)
+    if refused_gates "$r" && grep -q "$gf" "$SCRATCH/out"; then ok "13 $gf without field refuses gates"; else fail "13 $gf (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-300)"; fi
+    setup $'gates_approved: QO1\n' "$gf"; r=$(land)
+    [ "$r" = 0 ] && ok "14 $gf with a John-answered gates_approved lands" || fail "14 $gf (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-300)"
+done
+
 [ $fails = 0 ] && { echo "land-gates: all passed"; exit 0; }
 echo "land-gates: $fails failed"; exit 1

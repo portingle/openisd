@@ -25,21 +25,32 @@
 //
 // T934 (John, 19 Nov 2026: "why wasn't the consolidation finished - our guard rail isn't working / remove the dupe and fix
 // the guardrail"):
-//   - Homes (--homes, scripts/dupscan-homes.json): each kind of sum names its home, the engine function (file:function) or
-//     engine file that owns it. A match inside its kind's home is the engine doing its job, not a copy; anywhere else it is a
-//     finding, and the refusal names the home to call. A declared home that does not exist, or lies outside
-//     packages/design/engine/, fails the run. A kind with no home behaves as before.
+//   - Homes (--homes, scripts/dupscan-homes.json): each kind of sum names its home, one engine function, const or class
+//     member (file:name; never a whole file), matched by its exact name with the TypeScript parser. A line whose every match
+//     lies inside that declaration's own text is the engine doing its job, not a copy; anywhere else (code after the closing
+//     brace on the same line included) it is a finding, and the refusal names the home to call. A declared home that is a
+//     whole file, does not exist, is declared more than once, or lies outside packages/design/engine/ fails the run. A kind
+//     with no home behaves as before. The homes file and this script are gate files (land.conf GATE_FILES).
 //   - Ratchet (--base <git ref>): the allow-list is compared with the one on the base commit and may only shrink. Refused:
-//     a new unresolved entry (except help text: a reason starting "help text, no code", QO950), a raised count, a deleted
-//     entry, and a resolved entry made unresolved. An entry re-keyed (the key's form changed) names its old key in "was";
-//     the old key must be on the base list and gone from this one.
-//   - A copy's key hashes its code with comments and whitespace removed, so rewording a comment keeps the key.
+//     a new unresolved entry, a raised count, a deleted entry, a resolved entry made unresolved, replaced or rewritten
+//     (resolved_to, resolved_by and ruling are history). One exception, help text (QO950): a new signature entry whose
+//     reason starts "help text, no code" is accepted only when every match on its line lies inside a string or a comment
+//     (prose), never when any of it is code; a copy (jscpd) is never help text. An entry re-keyed (the key's form changed)
+//     names its old key in "was": the old key must be an unresolved entry on the base, gone from this list, of the same
+//     rule and file (a copy: the same two files), claimed by this entry alone, with no higher count.
+//   - Keys leave comments out and keep literals exactly: the TypeScript parser marks every character of a file as code,
+//     string (string and template text), regular expression, comment or space (a .vue file: its <script> blocks; the rest
+//     is markup, where <!-- --> is a comment). A key keeps code, strings and regular expressions as written; each run of
+//     spaces and comments between them becomes one space, or one line break if the run held one (a copy's key; a formula
+//     line has none). So rewording or adding a comment keeps a key; a "//" inside a string, template or regular
+//     expression is not a comment.
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname, join, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import ts from 'typescript';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -70,36 +81,89 @@ function copies() {
   const report = JSON.parse(readFileSync(join(out, 'jscpd-report.json'), 'utf8'));
   return report.duplicates.map(d => {
     const a = d.firstFile.name, b = d.secondFile.name;
-    const norm = withoutComments(d.fragment ?? '').replace(/\s+/g, ' ').trim();
+    const norm = fragmentKeyText(a, d.fragment, d.firstFile.start);
     const hash = createHash('sha1').update(norm).digest('hex').slice(0, 12);
     const [f1, f2] = [a, b].sort();
     return {kind: 'copy', key: `copy|${f1}|${f2}|${hash}`, where: `${a}:${d.firstFile.start}-${d.firstFile.end} = ${b}:${d.secondFile.start}-${d.secondFile.end}`, lines: d.lines};
   });
 }
 
-/** `code` with its // and /* *\/ comments and <!-- --> blocks taken out; string and template literals are kept whole, so a
- *  "//" inside a string (a URL) is not taken for a comment. */
-function withoutComments(code) {
-  let out = '';
-  for (let i = 0; i < code.length;) {
-    const ch = code[i], two = code.slice(i, i + 2);
-    if (ch === '"' || ch === "'" || ch === '`') {
-      let j = i + 1;
-      while (j < code.length && code[j] !== ch) j += code[j] === '\\' ? 2 : 1;
-      out += code.slice(i, j + 1); i = j + 1;
-    } else if (two === '//') { const j = code.indexOf('\n', i); i = j < 0 ? code.length : j; }
-    else if (two === '/*') { const j = code.indexOf('*/', i + 2); i = j < 0 ? code.length : j + 2; out += ' '; }
-    else if (code.startsWith('<!--', i)) { const j = code.indexOf('-->', i + 4); i = j < 0 ? code.length : j + 3; out += ' '; }
-    else { out += ch; i += 1; }
+/** The key text of a jscpd fragment: the fragment is found in its file (the occurrence nearest the line jscpd names),
+ *  and that stretch of the file's own classified characters is keyed, so a fragment that starts inside a string or a
+ *  template is still read as the file reads. */
+function fragmentKeyText(rel, fragment, startLine) {
+  const src = source(rel);
+  const at = [];
+  for (let i = src.text.indexOf(fragment); i >= 0; i = src.text.indexOf(fragment, i + 1)) at.push(i);
+  if (at.length === 0) { console.error(`dupscan: jscpd's fragment is not in ${rel} (line ${startLine})`); process.exit(2); }
+  const lineOf = i => src.text.slice(0, i).split('\n').length;
+  const off = at.reduce((best, i) => Math.abs(lineOf(i) - startLine) < Math.abs(lineOf(best) - startLine) ? i : best, at[0]);
+  return keyText(src, off, off + fragment.length);
+}
+
+// ---- source classes ----------------------------------------------------------------------------------
+// Every character of a file is 'code', 'string' (string and template text, quotes and ${ } delimiters included), 'regex',
+// 'comment', 'space' (whitespace between tokens) or 'markup' (a .vue file outside its <script> blocks).
+const LITERAL = {[ts.SyntaxKind.StringLiteral]: 'string', [ts.SyntaxKind.NoSubstitutionTemplateLiteral]: 'string',
+  [ts.SyntaxKind.TemplateHead]: 'string', [ts.SyntaxKind.TemplateMiddle]: 'string', [ts.SyntaxKind.TemplateTail]: 'string',
+  [ts.SyntaxKind.RegularExpressionLiteral]: 'regex'};
+const sources = new Map();
+/** The file `rel` (relative to the repo): its text, the class of each character and, for a .ts file, its parsed tree. */
+function source(rel) {
+  if (sources.has(rel)) return sources.get(rel);
+  const text = readFileSync(join(repo, rel), 'utf8');
+  const cls = new Array(text.length);
+  let tree = null;
+  if (rel.endsWith('.vue')) {
+    cls.fill('markup');
+    for (const m of text.matchAll(/<!--[\s\S]*?-->/g)) cls.fill('comment', m.index, m.index + m[0].length);
+    for (const m of text.matchAll(/(<script\b[^>]*>)([\s\S]*?)<\/script>/g)) classifyTs(text, m.index + m[1].length, m[2].length, cls);
+  } else tree = classifyTs(text, 0, text.length, cls);
+  const src = {text, cls, tree};
+  sources.set(rel, src);
+  return src;
+}
+
+/** Classes the TypeScript text at text[from, from + length) into `cls`; returns its parsed tree. Characters no token covers
+ *  are trivia: whitespace is 'space', anything else is a comment. */
+function classifyTs(text, from, length, cls) {
+  const sf = ts.createSourceFile('x.ts', text.slice(from, from + length), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  for (let i = from; i < from + length; i++) cls[i] = /\s/.test(text[i]) ? 'space' : 'comment';
+  const visit = node => {
+    if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode) return;
+    const kids = node.getChildren(sf);
+    if (kids.length === 0) { cls.fill(LITERAL[node.kind] ?? 'code', from + node.getStart(sf), from + node.end); return; }
+    kids.forEach(visit);
+  };
+  visit(sf);
+  return sf;
+}
+
+/** The key text of src.text[from, to): code, strings and regular expressions as written; each run of space and comments
+ *  between them one space, or one line break when the run holds one; nothing before the first or after the last. */
+function keyText(src, from, to) {
+  let out = '', gap = null;
+  for (let i = from; i < to; i++) {
+    const ch = src.text[i], k = src.cls[i];
+    if (k === 'space' || k === 'comment' || (k === 'markup' && /\s/.test(ch))) { if (ch === '\n') gap = '\n'; else if (gap === null) gap = ' '; continue; }
+    if (gap !== null && out !== '') out += gap;
+    gap = null;
+    out += ch;
   }
   return out;
+}
+
+/** Whether every non-space character of src.text[from, to) lies in a string or a comment: prose, not code. */
+function isProse(src, from, to) {
+  for (let i = from; i < to; i++) if (!/\s/.test(src.text[i]) && src.cls[i] !== 'string' && src.cls[i] !== 'comment') return false;
+  return true;
 }
 
 // ---- 2. formula signatures -------------------------------------------------------------------------
 // Each rule: id, what it means in plain words, regex, and (optional) the directories it applies to.
 const RULES = [
   {id: 'driver-count-scaling', what: 'N drivers scaled into one (n x Sd, Mms/n, Vb/n, x nDrivers)',
-    re: /\b(nDrivers|numDrivers|driverCount)\b(\(\))?\s*\|*\s*\d*\)?\s*[*\/][^>]|[*\/]\s*\(?\s*(P\.|this\.#|p\.)?(nDrivers|numDrivers)\b|Sd_m2\s*\*\s*n\b|[^<]\/\s*n\s*[,;)]|\bVb\s*\/\s*n\b/},
+    re: /\b(nDrivers|numDrivers|driverCount)\b(\(\))?\s*\|*\s*\d*\)?\s*[*\/][^>]|[*\/]\s*\(?\s*(P\.|this\.#|p\.)?(nDrivers|numDrivers)\b|Sd_m2\s*\*\s*n\b|[^<]\/\s*n\s*[,;)+\-]|\bVb\s*\/\s*n\b/},
   {id: 'coil-wiring-scaling', what: 'voice-coil wiring scaling of Re/BL/Znom (numVC, series/parallel factor)',
     re: /\bnumVC\b\s*[*\/]|[*\/]\s*numVC\b|wiring(\.value)?\s*===\s*["'](series|parallel)["']\s*\?\s*[A-Za-z]+\s*:\s*1\s*\//},
   {id: 'sealed-box-ratio', what: 'sealed resonance factor sqrt(1 + Vas/Vb) or its inverse (Qtc/Qts)^2 - 1',
@@ -134,10 +198,10 @@ const RULES = [
 ];
 
 // ---- homes: where each kind of sum lives -------------------------------------------------------------
-// homes.json: {"<rule id>": ["<engine file>" | "<engine file>:<function or const>", ...]}. A whole file is a home when the
-// file itself is the kind's one place (engine/array/driverWiring.ts: N identical drivers); a function when only it is.
+// homes.json: {"<rule id>": ["<engine file>:<function, const or class member>", ...]}. A home is one declaration, never a
+// whole file (T934 review: a whole file hides any second copy written in it).
 const homeErrors = [];
-const homeSpans = loadHomes();   // [{rule, file, from, to, home}] with 0-based inclusive line numbers
+const homeSpans = loadHomes();   // [{rule, file, from, to, home}]: from, to are character offsets of the declaration's text
 
 function loadHomes() {
   const declared = JSON.parse(readFileSync(homesPath, 'utf8'));
@@ -145,54 +209,43 @@ function loadHomes() {
   for (const [rule, homes] of Object.entries(declared)) {
     if (!RULES.some(r => r.id === rule)) { homeErrors.push(`${rule}: no such kind of sum`); continue; }
     for (const home of homes) {
-      const [file, fn] = home.split(':');
-      if (!file.startsWith('packages/design/engine/')) { homeErrors.push(`${rule}: home ${home} is not in packages/design/engine/`); continue; }
-      const path = join(repo, file);
-      if (!existsSync(path)) { homeErrors.push(`${rule}: home ${home}: no such file`); continue; }
-      const lines = readFileSync(path, 'utf8').split('\n');
-      if (fn === undefined) { spans.push({rule, file, from: 0, to: lines.length - 1, home}); continue; }
-      const span = declarationSpan(lines, fn);
-      if (typeof span === 'string') { homeErrors.push(`${rule}: home ${home}: ${span}`); continue; }
-      spans.push({rule, file, ...span, home});
+      const colon = home.indexOf(':');
+      if (colon < 0) { homeErrors.push(`${rule}: home ${home} names no function (a home is one engine declaration, file:name)`); continue; }
+      const file = home.slice(0, colon), name = home.slice(colon + 1);
+      if (!file.startsWith('packages/design/engine/') || !file.endsWith('.ts')) { homeErrors.push(`${rule}: home ${home} is not a .ts file in packages/design/engine/`); continue; }
+      if (!existsSync(join(repo, file))) { homeErrors.push(`${rule}: home ${home}: no such file`); continue; }
+      const found = declarations(source(file).tree).filter(d => d.name === name);
+      if (found.length !== 1) { homeErrors.push(`${rule}: home ${home}: ${found.length === 0 ? 'not declared there' : `declared ${found.length} times there`}`); continue; }
+      spans.push({rule, file, from: found[0].from, to: found[0].to, home});
     }
   }
   return spans;
 }
 
-/** The lines of the one declaration of `name` in `lines` (a function, a const or a class method), or why not. */
-function declarationSpan(lines, name) {
-  const decl = new RegExp(`^\\s*(export\\s+)?(async\\s+)?(function\\s+${name}\\b|(const|let)\\s+${name}\\b)`);
-  const method = new RegExp(`^\\s*((static|readonly|private|public|protected|async)\\s+)*${name}\\s*[(<]`);
-  const starts = lines.map((l, i) => ({l, i})).filter(({l}) => decl.test(l) || (method.test(l) && !l.trim().endsWith(';')));
-  if (starts.length !== 1) return starts.length === 0 ? 'not declared there' : `declared ${starts.length} times there`;
-  const from = starts[0].i, isConst = /\b(const|let)\s/.test(lines[from].split(name)[0]);
-  // Count brackets, skipping strings and comments. A const ends at its ";" at depth 0; a function or method at the "}"
-  // closing the first "{" opened at depth 0 after its parameters.
-  let depth = 0, paramsDone = false, body = false, block = false;
-  for (let i = from; i < lines.length; i++) {
-    const t = lines[i];
-    for (let j = 0; j < t.length; j++) {
-      const ch = t[j];
-      if (block) { if (t.startsWith('*/', j)) { block = false; j++; } continue; }
-      if (t.startsWith('//', j)) break;
-      if (t.startsWith('/*', j)) { block = true; j++; continue; }
-      if (ch === '"' || ch === "'" || ch === '`') { let k = j + 1; while (k < t.length && t[k] !== ch) k += t[k] === '\\' ? 2 : 1; j = k; continue; }
-      if (isConst && ch === ';' && depth === 0) return {from, to: i};
-      if ('([{'.includes(ch)) {
-        if (!isConst && ch === '{' && depth === 0 && paramsDone) body = true;
-        depth++;
-      } else if (')]}'.includes(ch)) {
-        depth--;
-        if (depth === 0 && ch === ')') paramsDone = true;
-        if (depth === 0 && body) return {from, to: i};
+/** The named declarations at the top of a parsed file, by their exact names: functions with a body, consts and lets, and the
+ *  members of its classes. Each spans its own text, from its first token to its last. */
+function declarations(sf) {
+  const out = [];
+  const add = (name, node) => out.push({name, from: node.getStart(sf), to: node.end});
+  for (const st of sf.statements) {
+    if (ts.isFunctionDeclaration(st) && st.name && st.body) add(st.name.text, st);
+    else if (ts.isVariableStatement(st)) {
+      const decls = st.declarationList.declarations;
+      for (const d of decls) if (ts.isIdentifier(d.name)) add(d.name.text, decls.length === 1 ? st : d);
+    } else if (ts.isClassDeclaration(st)) {
+      for (const m of st.members) {
+        if (!m.name || !(ts.isIdentifier(m.name) || ts.isPrivateIdentifier(m.name))) continue;
+        if ((ts.isMethodDeclaration(m) || ts.isGetAccessor(m) || ts.isSetAccessor(m)) && !m.body) continue;
+        add(m.name.text, m);
       }
     }
   }
-  return 'its end was not found';
+  return out;
 }
 
-function homeOf(rule, rel, line) {
-  return homeSpans.find(h => h.rule === rule && h.file === rel && line >= h.from && line <= h.to)?.home ?? null;
+/** The home of a line's sum: the declared home of `rule` in `rel` holding every one of `matches` ([from, to) offsets). */
+function homeOf(rule, rel, matches) {
+  return homeSpans.find(h => h.rule === rule && h.file === rel && matches.every(([a, b]) => a >= h.from && b <= h.to))?.home ?? null;
 }
 
 function walk(dir, files = []) {
@@ -210,16 +263,21 @@ function signatures() {
   const hits = [];
   for (const file of walk(join(repo, 'packages'))) {
     const rel = relative(repo, file);
-    const lines = readFileSync(file, 'utf8').split('\n');
-    lines.forEach((line, i) => {
+    const src = source(rel);
+    let lineStart = 0;
+    for (const [i, line] of src.text.split('\n').entries()) {
+      const at = lineStart;
+      lineStart += line.length + 1;
       const t = line.trim();
-      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('<!--') || t.startsWith('import ')) return;
+      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('<!--') || t.startsWith('import ')) continue;
       for (const r of RULES) {
         if (r.dirs && !r.dirs.some(d => rel.startsWith(d))) continue;
         if (!r.re.test(line) || (r.skip && r.skip.test(line))) continue;
-        hits.push({kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${t.replace(/\s+/g, ' ')}`, where: `${rel}:${i + 1}`, layer: layerOf(rel), home: homeOf(r.id, rel, i)});
+        const matches = [...line.matchAll(new RegExp(r.re.source, 'g'))].map(m => [at + m.index, at + m.index + m[0].length]);
+        hits.push({kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${keyText(src, at, at + line.length)}`, where: `${rel}:${i + 1}`,
+          layer: layerOf(rel), home: homeOf(r.id, rel, matches), prose: matches.every(([a, b]) => isProse(src, a, b))});
       }
-    });
+    }
   }
   return hits;
 }
@@ -275,23 +333,41 @@ function ratchetAgainstBase() {
   try { base = JSON.parse(execFileSync('git', ['-C', repo, 'show', `${baseRef}:${rel}`], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']})); }
   catch (e) { return [`cannot read ${rel} at the base ${baseRef}: ${String(e.stderr ?? e.message).trim()}`]; }
   const out = [];
-  const renamedFrom = new Map(Object.entries(allowFile).filter(([, e]) => typeof e.was === 'string' && !(e.was in allowFile)).map(([k, e]) => [e.was, k]));
+  // A key's scope: its kind, rule and file (sig|rule|file), or for a copy its two files (copy|a|b).
+  const scope = k => k.split('|').slice(0, 3).join('|');
+  const claims = new Map();
+  for (const [k, e] of Object.entries(allowFile)) if (!(k in base) && typeof e.was === 'string') claims.set(e.was, [...(claims.get(e.was) ?? []), k]);
+  /** Why entry k's "was" is not one finding moving to its new key, or null when it is. */
+  const wasProblem = (k, e) => {
+    const b = base[e.was];
+    if (b === undefined || b.resolved === true || e.was in allowFile) return `new entry (its "was" ${e.was} is not an unresolved base entry this one replaces): ${k}`;
+    if (scope(e.was) !== scope(k)) return `new entry (its "was" is another rule or another file, not this finding's old key): ${k}`;
+    if (claims.get(e.was).length !== 1) return `new entry (its "was" is claimed by ${claims.get(e.was).length} entries; one old key moves to one new key): ${k}`;
+    if ((e.count ?? 1) > (b.count ?? 1)) return `count raised from ${b.count ?? 1} to ${e.count} (through "was"): ${k}`;
+    return null;
+  };
+  const movedTo = new Map([...claims].filter(([, ks]) => ks.length === 1 && wasProblem(ks[0], allowFile[ks[0]]) === null).map(([was, ks]) => [was, ks[0]]));
   for (const [k, b] of Object.entries(base)) {
     const e = allowFile[k];
-    if (e === undefined && !renamedFrom.has(k)) out.push(`deleted (never delete an entry: mark it resolved): ${k.slice(0, 140)}`);
-    else if (e !== undefined && b.resolved === true && e.resolved !== true) out.push(`resolved on the base, unresolved here: ${k.slice(0, 140)}`);
-    else if (e !== undefined && e.resolved !== true && (e.count ?? 1) > (b.count ?? 1)) out.push(`count raised from ${b.count ?? 1} to ${e.count}: ${k.slice(0, 140)}`);
+    if (b.resolved === true) {
+      if (e === undefined) out.push(claims.has(k) ? `resolved entry replaced (a resolved entry's history is never replaced): ${k}` : `deleted (never delete an entry: mark it resolved): ${k}`);
+      else if (e.resolved !== true) out.push(`resolved on the base, unresolved here: ${k}`);
+      else for (const f of ['resolved_to', 'resolved_by', 'ruling']) if (e[f] !== b[f]) out.push(`resolved entry rewritten (${f} changed): ${k}`);
+    } else if (e === undefined) {
+      if (!movedTo.has(k)) out.push(`deleted (never delete an entry: mark it resolved): ${k}`);
+    } else if (e.resolved !== true && (e.count ?? 1) > (b.count ?? 1)) out.push(`count raised from ${b.count ?? 1} to ${e.count}: ${k}`);
   }
   for (const [k, e] of Object.entries(allowFile)) {
-    if (k in base || e.resolved === true) continue;
-    if (typeof e.was === 'string') {
-      const b = base[e.was];
-      if (b !== undefined && b.resolved !== true && !(e.was in allowFile) && renamedFrom.get(e.was) === k && (e.count ?? 1) <= (b.count ?? 1)) continue;
-      out.push(`new entry (its "was" ${e.was.slice(0, 60)} is not an unresolved base entry this one replaces): ${k.slice(0, 140)}`);
+    if (k in base) continue;
+    if (typeof e.was === 'string') { const why = wasProblem(k, e); if (why !== null) out.push(why); continue; }
+    if (e.resolved === true) continue;   // a new resolved entry allows nothing
+    if (typeof e.reason === 'string' && e.reason.startsWith('help text, no code')) {
+      const matched = findings.filter(f => f.key === k);
+      if (matched.length > 0 && matched.every(f => f.kind === 'signature' && f.prose)) continue;
+      out.push(`new entry (its reason says help text, but the match is code, not inside a string or comment): ${k}`);
       continue;
     }
-    if (typeof e.reason === 'string' && e.reason.startsWith('help text, no code')) continue;
-    out.push(`new entry: ${k.slice(0, 140)}`);
+    out.push(`new entry: ${k}`);
   }
   return out;
 }
@@ -305,7 +381,7 @@ const where = f => {
   return `${f.rule} (${f.layer}) ${f.where}: ${f.what}${homes.length ? `\n    the engine's home for this sum: call ${homes.join(' or ')}` : ''}`;
 };
 if (homeErrors.length) {
-  console.log(`\nFAIL: ${homeErrors.length} declared homes are wrong (${homesPath}); a home is an engine file or file:function that exists:`);
+  console.log(`\nFAIL: ${homeErrors.length} declared homes are wrong (${homesPath}); a home is one engine declaration, file:name, that exists once:`);
   for (const e of homeErrors) console.log(`  ${e}`);
 }
 if (ratchet.length) {

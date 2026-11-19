@@ -1,6 +1,9 @@
 {
  "driver-count-scaling": [
-  "packages/design/engine/array/driverWiring.ts",
+  "packages/design/engine/array/driverWiring.ts:driverDrive",
+  "packages/design/engine/array/driverWiring.ts:combinedOfN",
+  "packages/design/engine/array/driverWiring.ts:eachOfN",
+  "packages/design/engine/array/driverWiring.ts:oneBoxOfN",
   "packages/design/engine/sealedResonance.ts:arrayVas"
  ],
  "coil-wiring-scaling": [

@@ -5,6 +5,7 @@
  * tuning/added-mass the project has not entered.
  */
 import type {Air, AirWorkingName} from '../air.js';
+import {airCompliance} from '../air.js';
 import type {ConsistencyCheck, RouteFormulas, RouteGroup, RouteQuantity} from '../driver/routes/index.js';
 import {RADIATOR_ROUTE_FORMULAS} from '../driver/routes/index.js';
 import type {DriverWorkingSet} from '../solvers/driverQuantities.js';
@@ -140,7 +141,7 @@ export class PrEngineImpl implements PrEngine {
   ) {}
 
   tuning(p: PrParams, air: Air): number {
-    const Cab  = p.Vb / (air.rho() * air.c() * air.c());
+    const Cab  = airCompliance(p.Vb, air.rho(), air.c());
     const Map  = (p.prMmd + p.prMadd) / (p.prSd * p.prSd);
     const Cap  = p.prNum * p.prCms * p.prSd * p.prSd;
     const Cpar = (Cab * Cap) / (Cab + Cap);
@@ -150,7 +151,7 @@ export class PrEngineImpl implements PrEngine {
   readonly isPositiveGeometry = isPositiveGeometry;
 
   massForFp(p: PrParams, fp: number, air: Air): number {
-    const Cab  = p.Vb / (air.rho() * air.c() * air.c());
+    const Cab  = airCompliance(p.Vb, air.rho(), air.c());
     const Cap  = p.prNum * p.prCms * p.prSd * p.prSd;
     const Cpar = (Cab * Cap) / (Cab + Cap);
     const Map  = p.prNum / ((2 * Math.PI * fp) ** 2 * Cpar);

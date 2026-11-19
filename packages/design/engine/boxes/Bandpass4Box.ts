@@ -4,6 +4,7 @@
 import {cAdd, cDiv, cInv, cMul, cPar, cSub, cx} from '../complex.js';
 import {portImpedance, winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
 import type {SweepParams} from '../types.js';
+import {airCompliance} from '../air.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
 
 export class Bandpass4Box implements BoxModel {
@@ -18,11 +19,11 @@ export class Bandpass4Box implements BoxModel {
         // Shared per-frequency Ql/Qa/(ω·Cab) for BOTH chambers (the rear chamber's own, never
         // the front's).
         // Output is the front port's own current alone.
-        const Cabr   = P.Vb / (rho * c * c);
+        const Cabr   = airCompliance(P.Vb, rho, c);
         const Zr     = cPar(cInv(cx(0, w * Cabr)), cx(Ql / (w * Cabr), 0), cx(Qa / (w * Cabr), 0));
         // The domain guarantees Vf present before a sweep (engine/params.ts `solveBoxParams`);
         // `?? NaN` narrows without a throw, matching the vented box's `P.Fb` treatment.
-        const Cabf   = (P.Vf ?? NaN) / (rho * c * c);
+        const Cabf   = airCompliance(P.Vf ?? NaN, rho, c);
         const Zportf = portImpedance(w, P);
         const Zf     = cPar(cInv(cx(0, w * Cabf)), cx(Ql / (w * Cabf), 0), cx(Qa / (w * Cabf), 0), Zportf);
         const Zbox = cAdd(Zr, Zf);
@@ -51,8 +52,8 @@ export class Bandpass4Box implements BoxModel {
         // Absent Qlr/Qar/Qiclfr/Qlf/Qaf/Qpf/Ff poison every value below with NaN (`?? NaN`),
         // caught by `classifyFinite`, never a throw or a `!` — the same net the vented/PR
         // winisd-lossy branches use for their own absent Fb/Fr.
-        const Cabr = P.Vb / (rho * c * c);
-        const Cabf = (P.Vf ?? NaN) / (rho * c * c);
+        const Cabr = airCompliance(P.Vb, rho, c);
+        const Cabf = airCompliance(P.Vf ?? NaN, rho, c);
 
         const Qlr = P.Qlr ?? NaN, Qar = P.Qar ?? NaN, Qiclfr = P.Qiclfr ?? NaN;
         const Qlf = P.Qlf ?? NaN, Qaf = P.Qaf ?? NaN, Qpf = P.Qpf ?? NaN;

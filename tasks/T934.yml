@@ -3,7 +3,7 @@ release_note: internal
 repo: openisd
 owner: dupscan-guardrail
 status: done
-goal: 'The duplicate-logic check knows each kind of sum''s one home in the engine, so the home is never flagged; the known-copies list can only shrink; every driver-count and coil-wiring copy calls the engine''s home function.'
+goal: 'The duplicate-logic check knows each kind of sum''s home, one named engine declaration, so the home is never flagged; the known-copies list can only shrink; 25 listed copies now call an engine function (driver-count scaling, coil wiring, air compliance) and 16 are recorded as already in their home, taking the open entries from 248 to 207.'
 why: 'John, 19 Nov 2026: ''remove the dupe and fix the guardrail'''
 done_test: bash scripts/test/dupscan.test.sh
 gates_approved: QO956
@@ -15,8 +15,15 @@ files:
   - scripts/dupscan-allow.json
   - scripts/dupscan-homes.json
   - scripts/test/dupscan.test.sh
+  - land.conf
+  - scripts/land/test/land-gates.test.sh
   - packages/design/domain/driverRecordConverter.ts
   - packages/design/engine/air.ts
+  - packages/design/engine/boxes/AbcBox.ts
+  - packages/design/engine/boxes/Bandpass4Box.ts
+  - packages/design/engine/boxes/Bandpass6Box.ts
+  - packages/design/engine/boxes/port.ts
+  - packages/design/engine/vent/VentEngine.ts
   - packages/design/engine/array/driverWiring.ts
   - packages/design/engine/circuit.ts
   - packages/design/engine/driver/DriverEngine.ts
