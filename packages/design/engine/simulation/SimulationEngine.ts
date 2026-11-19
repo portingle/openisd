@@ -215,9 +215,10 @@ function winisdCountsDrivers(P: SweepParams): boolean {
   return (P.nDrivers || 1) > 1;
 }
 
-/** One of `n` drivers' share of the box: Vb/n and, where they exist, Vf/n, every port area /n and prNum/n. */
+/** One of `n` drivers' share of the box: Vb/n and, where they exist, Vf/n, every port area /n; and its
+ *  share of the radiators, prNum/n, an absent count being the box's one radiator (`PassiveRadiatorBox`). */
 function oneBoxOfN(P: SweepParams, n: number): SweepParams {
-  return { ...P, nDrivers: 1, Vb: P.Vb / n, ...(P.Vf !== undefined ? { Vf: P.Vf / n } : {}), ...(P.Sp !== undefined ? { Sp: P.Sp / n } : {}), ...(P.prNum !== undefined ? { prNum: P.prNum / n } : {}),
+  return { ...P, nDrivers: 1, Vb: P.Vb / n, ...(P.Vf !== undefined ? { Vf: P.Vf / n } : {}), ...(P.Sp !== undefined ? { Sp: P.Sp / n } : {}), prNum: (P.prNum || 1) / n,
     ...(P.Spr !== undefined ? { Spr: P.Spr / n } : {}), ...(P.SpIntra !== undefined ? { SpIntra: P.SpIntra / n } : {}) };
 }
 
@@ -231,7 +232,9 @@ function oneDriverOfArray(P: SweepParams, n: number, drive: DriverDrive): SweepP
   return {...oneBoxOfN(P, n), eg: drive.eg_V, Rs: drive.Rg_ohm};
 }
 
-function circuitQuantities(q: ReturnType<typeof withAddedMass>, Le_H: number | undefined, BL_typed_Tm: number | null): { value: CircuitQuantities | null; issues: DriverIssue[] } {
+/** `q` is the driver the circuit runs on (the pair under Iso-Barik loading); `one` is one driver of
+ *  it, whose BL is the motor's push when no BL is typed. */
+function circuitQuantities(q: ReturnType<typeof withAddedMass>, one: ReturnType<typeof withAddedMass>, Le_H: number | undefined, BL_typed_Tm: number | null): { value: CircuitQuantities | null; issues: DriverIssue[] } {
   const issues: DriverIssue[] = [];
   for (const field of CIRCUIT_REQUIRED_FIELDS) {
     const v = q[field];
@@ -245,7 +248,7 @@ function circuitQuantities(q: ReturnType<typeof withAddedMass>, Le_H: number | u
       Sd_m2: q.Sd_m2!, Re_terminal_ohm: q.Re_terminal_ohm!, BL_terminal_Tm: q.BL_terminal_Tm!,
       Cms_m_per_N: q.Cms_m_per_N!, Mms_kg: q.Mms_kg!, Rms_kg_per_s: q.Rms_kg_per_s!, Le_H,
       BL_Qes_Tm: blFromQes(q.Re_terminal_ohm!, q.Cms_m_per_N!, q.Fs_hz, q.Qes),
-      BL_entered_Tm: enteredTerminalBL_Tm(q, BL_typed_Tm),
+      BL_entered_Tm: enteredTerminalBL_Tm(one, BL_typed_Tm),
     },
     issues: [],
   };
@@ -254,10 +257,11 @@ function circuitQuantities(q: ReturnType<typeof withAddedMass>, Le_H: number | u
 /** The BL the driver STATES (typed, not calculated), as published. `BL_terminal_Tm` is the BL
  *  the circuit's damping runs on, which "Two-BL driver" replaces with the
  *  Qes-derived one; WinISD keeps reading the typed figure for the motor's push and in `CLe`.
- *  Falls back to `BL_terminal_Tm` where no BL is typed: WinISD's own calculated BL is the
- *  Qes-derived one, so there is no second BL to disagree with. */
-function enteredTerminalBL_Tm(q: ReturnType<typeof withAddedMass>, BL_typed_Tm: number | null): number {
-  if (BL_typed_Tm === null || !(BL_typed_Tm > 0)) return q.BL_terminal_Tm!;
+ *  Falls back to `one`'s `BL_terminal_Tm` where no BL is typed: WinISD's own calculated BL is the
+ *  Qes-derived one, so there is no second BL to disagree with. `one` is ONE driver, before an
+ *  Iso-Barik pair's √2 (`isobarikPair`): the push is one driver's, typed or not (T928). */
+function enteredTerminalBL_Tm(one: ReturnType<typeof withAddedMass>, BL_typed_Tm: number | null): number {
+  if (BL_typed_Tm === null || !(BL_typed_Tm > 0)) return one.BL_terminal_Tm!;
   return BL_typed_Tm;
 }
 
@@ -496,8 +500,11 @@ export class SimulationEngineImpl implements SimulationEngine {
       // The chart is the amplifier's load, one driver's x loadScale, unless "Impedance of one driver" is ticked (absent: unticked).
       const zScale = P.winisdOneDriverImpedance === true ? 1 : drive.loadScale;
       const gain = 20 * Math.log10(n);
+      // The gain is the array's pressure, N in phase: SPL, the Xmax-limited SPL and the complex pressure H alike (T928).
       return { ...one, values: { ...one.values,
+        H: one.values.H.map((h) => cScale(h, n)),
         spl: one.values.spl.map((v) => isSilence(v) ? v : v + gain),
+        splXlimCurve: one.values.splXlimCurve.map((v) => isSilence(v) ? v : v + gain),
         va: one.values.va.map((v) => v * n),
         zmag: one.values.zmag.map((v) => v * zScale) } };
     }
@@ -506,7 +513,7 @@ export class SimulationEngineImpl implements SimulationEngine {
     // The circuit runs on Fs, Vas, Qes, Qms, Re, Sd, BL and Le as WinISD's does; the stated Cms, Mms and Rms are not read.
     const single = withAddedMass(driverValues(this.driver.circuitValues(drv.values, P.air)), P.driverAddedMass ?? 0);
     const d = P.loading === 'isobaric' ? isobarikPair(single) : single;
-    const circuit = circuitQuantities(d, Le_H, drv.winisdBL_Tm);
+    const circuit = circuitQuantities(d, single, Le_H, drv.winisdBL_Tm);
     if (circuit.value === null) return { values: null, issues: circuit.issues };
     const cq = circuit.value;
     const rho = P.air.rho();
