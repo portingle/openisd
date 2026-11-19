@@ -1,10 +1,11 @@
 id: T929
-release_note: internal
+release_note: 'Boxes opened from old "lossless" projects (or .wpr files with huge Q values) now draw the same as WinISD: a 6th-order bandpass was up to 36 dB wrong, bandpass and ABC front-chamber losses were ignored, and the closed-box Qtc ignored absorption.'
 repo: openisd
 owner: agent
-status: open
-goal: Engine: lossless shortcuts only when every loss the box uses is lossless - 6th-order bandpass lossless output sign, bandpass4/6/ABC lossless test on every chamber Q, sealed resonance lossless only when Ql and Qa are both lossless, vented lossless only with Qp at the limit too; sealed handle solve Qtc to Vb uses the lossy inverse when Fs is stated; volumeForQtc gives no volume without a usable Qts and Vas
-why: lead 19 Nov 2026: ultra review 1 findings 2, 4, 5, 6 and 9, verified by probe (_agent_files/reference/ULTRA_REVIEW_20261119_engine_findings.md); WinISD always computes losses (spec S04 6c)
+status: done
+goal: 'Engine: lossless shortcuts only when every loss the box uses is lossless - 6th-order bandpass lossless output sign, bandpass4/6/ABC lossless test on every chamber Q, sealed resonance lossless only when Ql and Qa are both lossless, vented lossless only with Qp at the limit too; sealed handle solve Qtc to Vb uses the lossy inverse when Fs is stated; volumeForQtc gives no volume without a usable Qts and Vas'
+why: 'John, 3 Nov 2026: "I approve uncontroversial fixes." Ultra review 1 findings 2, 4, 5, 6 and 9 (lead, 19 Nov 2026), each proved by a probe; _agent_files/reference/ULTRA_REVIEW_20261119_engine_findings.md'
+tests_changed: 'Lead-approved 19 Nov 2026 after reading old and new side by side: sealed-resonance.test.ts "short-circuits to the lossless closed form" asserted the defect (lossless figure with Qa 10000), so its input became Qa 1e6 and the title says "no leakage and no absorption"; expected values unchanged (John, 1 Nov 2026: a test never pins a defect). boxModel.test.ts vented fixture gains Qp 1e6 so it stays lossless as its own comment says; assertions unchanged.'
 done_test: bash scripts/test.sh packages/design/test/engine/lossless-limit-agreement.test.ts
 files:
   - tasks/T929.yml
