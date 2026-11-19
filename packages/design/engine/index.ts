@@ -24,6 +24,7 @@ export {
 } from './air.js';
 export type { Air, AppAir, AirWorkingName, AirValues, AirEnvironment, EnvironmentQuantityName, EnvironmentIssue } from './air.js';
 export { FixedAir } from './air.js';
+export { isPositiveGeometry } from './consistency.js';
 export type { CalculationIssue, SolveRoute, DqIssue, TargetUnreachableIssue, OutOfRangeIssue, WiringIssue } from './consistency.js';
 // APPLICATION SETTINGS reach a calculation through the collaborator `createEngine(settings)`
 // takes, never a module constant read behind the caller's back. The factory band crosses as a

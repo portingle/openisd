@@ -1,4 +1,4 @@
-import {type Engine} from '../../engine/index.js';
+import {isPositiveGeometry, type Engine} from '../../engine/index.js';
 import type { Air, BoxType, DqIssue, DriveLoad, VentedAlignment } from '../../engine/index.js';
 import { CalculatedFieldImpl, DerivableFieldImpl, DualWriteFieldImpl, absentCell, enteredCell, calculatedCell, defaultedField, entryField, focus, nullableField, pairedField, settlingNullableField, simpleField } from '../cell.js';
 import type { Clearable, Entered, Precise, Readable, SimpleField, Writable } from '../cell.js';
@@ -477,7 +477,7 @@ export class OpenISDBox implements Box {
                 const prCms = r.spec.Cms_m_per_N.value;
                 const prNum = this.passiveRadiator.count.value || 1;
                 const nowAir = air();
-                if (!(Vb != null && Vb > 0 && prMmd != null && prSd != null && prCms != null && fp_hz > 0)) {
+                if (!(isPositiveGeometry(Vb) && isPositiveGeometry(prMmd) && isPositiveGeometry(prSd) && isPositiveGeometry(prCms) && fp_hz > 0)) {
                     return absentCell<number>('addedMassForTuning_kg');
                 }
                 const totalMass = this.#engine.pr.massForFp({ Vb, prMmd, prMadd: 0, prSd, prCms, prNum }, fp_hz, nowAir);
