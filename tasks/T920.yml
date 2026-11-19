@@ -10,8 +10,10 @@ goal: >-
   already do. The spec counts the message inside the field's popup only and also checks the chart shows the same reason, on
   desktop and on the phone's Graph tab, for the ABC rear port, the ABC front port and the vented box. No app behaviour changes.
 why: >-
-  John, 19 Nov 2026, board item QO955.c3: "if a chart cannot be drawn then the chart should show the reason message, and the
-  related fields also, this is particularly important on the mobile where we can't see the chart and fields at the same time".
+  John, 19 Nov 2026, board item QO955.c3 (voice-typed; "chat"/"chest" = chart): "if a chat cannot be drawn then the chest
+  should show the reason message, and the related fields also, this is particularly important on the mobile where we can't
+  see the chart and fields at the same time"; he then tapped C (QO955.c4): "chart shows the reason AND each field causing it
+  shows it too (desktop and phone)".
   So the message on both the chart and the field is intended; the spec's page-wide "once" count was the stale part.
   Options A (the rear port draws again) and B (the chart only points to the box) are rejected.
 done_test: bash scripts/test-browser.sh packages/ui/test/ui/abc-vent-message.browser.spec.ts
