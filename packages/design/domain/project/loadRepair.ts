@@ -11,12 +11,13 @@
  */
 import type {NumberField} from '../../fields/field.js';
 
-/** One repair the load made: the field, what the file held, what it holds now, and the line the
- *  opening message shows ("Driver input voltage (each) -6 V in the file: set to the 10 mV minimum"). */
+/** One repair the load made: the field, what the file held, what it holds now (null where the box
+ *  was emptied and the app recalculates it, or leaves it empty), and the line the opening message
+ *  shows ("Driver input voltage (each) -6 V in the file: set to the 10 mV minimum"). */
 export interface LoadRepairNote {
   readonly field: NumberField;
   readonly loaded: number;
-  readonly repaired: number;
+  readonly repaired: number | null;
   readonly text: string;
 }
 

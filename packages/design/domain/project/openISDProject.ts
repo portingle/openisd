@@ -35,6 +35,7 @@ import { resolveProject, usableRe } from './projectResolve.js';
 import { PROJECT_DEFAULT_DRIVER_WIRING } from './driverWiringDefault.js';
 import { ProjectSignal } from './projectSignal.js';
 import { repairLoaded } from './loadRepair.js';
+import { emptyBrokenRadiatorFigures } from './radiatorLoadRepair.js';
 import { enteredEntry } from '../specEntry.js';
 import type { LoadRepairNote } from './loadRepair.js';
 import { TuneLimits } from './tuneLimits.js';
@@ -116,7 +117,11 @@ export class OpenISDProject {
      *  repairs made, for the opening message only: a repaired value is a good value, with no mark on
      *  its box (QO953.c26, c30, c31). Every door a record enters by runs it. */
     #repairOnLoad(): readonly LoadRepairNote[] {
-        const notes = repairLoaded(this.#signalOver(this.#directRoot()).loadRepairRules());
+        const root = this.#directRoot();
+        const notes = [
+            ...repairLoaded(this.#signalOver(root).loadRepairRules()),
+            ...emptyBrokenRadiatorFigures(this.#boxOver(root).passiveRadiator.radiator.spec),
+        ];
         if (notes.length > 0) this.#resolve();
         return notes;
     }
