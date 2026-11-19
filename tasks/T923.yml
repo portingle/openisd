@@ -14,3 +14,13 @@ files:
   - packages/ui/src/hooks/GraphPanel-hooks.ts
   - packages/ui/src/ui/components/GraphPanel.vue
   - packages/ui/test/ui/blocked-chart-names-field.browser.spec.ts
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-passive-radiator-data-quality.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-tuning-unreachable-warning.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-graph-blocked-message.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-graph-blocked-message.png
+visual:
+  - desktop-dialog-enclosure-passive-radiator-data-quality
+  - desktop-dialog-enclosure-tuning-unreachable-warning
+  - desktop-dialog-shared-graph-blocked-message
+  - mobile-dialog-shared-graph-blocked-message
+visual_note: "A chart that can't be drawn now ends with 'Fix:' and the fields to change (desktop 'Fix: Vent length'; phone adds the tab, 'Fix: Sd (Driver tab)'), instead of 'Fix the listed inputs to restore this chart.'; nothing else moves."
