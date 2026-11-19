@@ -1,0 +1,10 @@
+id: T923
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Name the causing field(s) in the can't-plot chart panel instead of saying 'listed inputs'
+why: QO955.c3/c4: panel said 'Fix the listed inputs' with no inputs listed; John chose chart shows reason AND the field
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T923.yml
