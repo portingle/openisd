@@ -31,16 +31,17 @@ TASK="tasks/$ID.yml"
 fail() { printf 'REFUSE\t%s\t%s\n' "$1" "$2"; exit 1; }
 [ -f "$TASK" ] || fail task-id "no task file $TASK"
 
-if [ -z "${GATE_FILES:-}" ]; then
-  # shellcheck source=/dev/null
-  [ -f "$ROOT/scripts/paths.sh" ] && . "$ROOT/scripts/paths.sh"; set +u
-  # shellcheck source=/dev/null
-  [ -f "$ROOT/land.conf" ] && . "$ROOT/land.conf"
-fi
+# land.conf is read as data, never sourced (T934 review 3, Codex 19 Nov 2026): the proposed land.conf is the change's own
+# file, and sourcing it would run the change's shell in the check that polices it. conf_value <rev> <NAME>: NAME="..." there.
+conf_value() { git show "$1:land.conf" 2> /dev/null | sed -n "s/^$2=\"\(.*\)\"\$/\1/p" | head -n 1; }
+# GATE_FILES and QUESTIONS_FILE from the environment win (land.sh and ship.sh read their own land.conf); else the proposed
+# land.conf's GATE_FILES and the BASE land.conf's QUESTIONS_FILE (a change cannot point the check at a board file of its own).
+[ -n "${GATE_FILES:-}" ] || GATE_FILES="$(conf_value "$HEAD_REF" GATE_FILES)"
+[ -n "${QUESTIONS_FILE:-}" ] || QUESTIONS_FILE="$(conf_value "$BASE" QUESTIONS_FILE)"
 # The protected list is the BASE revision's (T934 review 2, Codex 19 Nov 2026): a change cannot unprotect a file by editing
 # its own land.conf. The proposed list is added to it, so a change that protects more is held to more.
 head_gate_files="${GATE_FILES:-}"
-base_gate_files="$(git show "$BASE:land.conf" 2> /dev/null | sed -n 's/^GATE_FILES="\(.*\)"$/\1/p' | head -n 1)"
+base_gate_files="$(conf_value "$BASE" GATE_FILES)"
 GATE_FILES="$(printf '%s %s' "$base_gate_files" "${GATE_FILES:-}" | xargs)"
 
 if [ -n "$PR_MODE" ]; then

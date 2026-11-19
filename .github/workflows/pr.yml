@@ -42,17 +42,17 @@ jobs:
           python-version: '3.12'
       - run: python3 -m pip install pyyaml==6.0.2
       - run: bash scripts/ci/pr-setup.sh "$EVENT" "$GROUP_BASE"
-      - name: task contract (locked hashes, files allowlist, task id and owner, status, gate files approved)
-        # PR_TASK is every task the pull request carries (T762); each is checked with the others named, so a file
-        # in any carried task's allowlist passes.
+      - name: task contract (locked hashes, files allowlist, task id and owner, status, gate files approved), from the base's scripts
+        # T934 review 3: the base commit's scripts/ci/contract-from-base.sh runs the base commit's scripts/land/ (pr-task.sh,
+        # check-task-contract.sh) on this change, reading its land.conf and task files as data, so a change cannot edit the
+        # checker that polices it. PR_TASK (pr-setup.sh) is not used here: the base's pr-task.sh says which tasks the change carries.
+        # The pull request that adds the runner has none on its base, and only that one run uses its own copy.
         run: |
-          rc=0
-          for t in $PR_TASK; do
-            others=(); for o in $PR_TASK; do [ "$o" = "$t" ] || others+=("$o"); done
-            out="$(bash scripts/land/check-task-contract.sh "$t" origin/main HEAD --pr "${others[@]}")" && { printf '%s\n' "$out" | awk -F'\t' '$1 == "WARN" { printf "::warning title=task contract (%s)::%s\n", $2, $3 }'; continue; }
-            printf '%s\n' "$out" | awk -F'\t' '$1 == "REFUSE" { printf "::error title=task contract (%s)::%s\n", $2, $3 }'; printf '%s\n' "$out"; rc=1
-          done
-          exit "$rc"
+          case "$EVENT" in pull_request) base="$(git rev-parse HEAD^1)" ;; merge_group) base="$GROUP_BASE" ;; *) exit 1 ;; esac
+          runner="$RUNNER_TEMP/contract-from-base.sh"
+          if git cat-file -e "$base:scripts/ci/contract-from-base.sh" 2> /dev/null; then git show "$base:scripts/ci/contract-from-base.sh" > "$runner"
+          else cp scripts/ci/contract-from-base.sh "$runner"; fi
+          bash "$runner" "$base"
       - name: task files say the truth (status, landed sha, release_note a sentence) on every pull request
         # T891: the shell job below runs task-status.test.sh only when scripts/ or workflows change, so a pull request that
         # changed only its task file was never checked (main went red on T886's release_note with no full stop, 18 Nov 2026).
@@ -139,8 +139,9 @@ jobs:
       - name: no new copy of a formula (duplicate-logic scan against the allow-list; QO946.c256)
         # jscpd (pinned devDependency) plus the formula rules; exit 1 on any finding not in scripts/dupscan-allow.json. Runs in the merge queue like the job's other steps.
         # T934: a match inside its kind's home (scripts/dupscan-homes.json) is not a copy; the allow-list may only shrink against
-        # origin/main (pr-setup.sh points it at the base of the pull request or merge group).
-        run: node scripts/dupscan.mjs . --jscpd node_modules/.bin/jscpd --allow scripts/dupscan-allow.json --homes scripts/dupscan-homes.json --base origin/main
+        # origin/main (pr-setup.sh points it at the base of the pull request or merge group); a re-key only as the reviewed mapping
+        # scripts/dupscan-rekey-T934.json says (T934 review 3).
+        run: node scripts/dupscan.mjs . --jscpd node_modules/.bin/jscpd --allow scripts/dupscan-allow.json --homes scripts/dupscan-homes.json --rekey scripts/dupscan-rekey-T934.json --base origin/main
 
   done-test:
     runs-on: ubuntu-latest

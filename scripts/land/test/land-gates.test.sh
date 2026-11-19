@@ -21,6 +21,7 @@ setup() {
     git config user.email t@t; git config user.name t
     mkdir -p scripts tasks/fixes gates
     cp "$REPO/scripts/land.sh" "$REPO/scripts/paths.sh" scripts/; cp -r "$REPO/scripts/land" scripts/; cp -r "$REPO/scripts/lib" scripts/
+    mkdir -p scripts/ci; cp "$REPO/scripts/ci/contract-from-base.sh" scripts/ci/ 2> /dev/null   # the pull request check's runner (17-19)
     printf '#!/usr/bin/env bash\nexit 0\n' > gates/ok.sh; chmod +x gates/ok.sh
     cat > "$SCRATCH/questions.yml" <<'Q'
 questions:
@@ -126,6 +127,28 @@ if refused_gates "$r" && grep -q '.github/workflows/pr.yml' "$SCRATCH/out"; then
 setup "" scripts/dupscan-homes.json
 sed -i 's# scripts/dupscan-homes.json##' land.conf; git add -A; git commit -qm drop-gate; r=$(land)
 if refused_gates "$r" && grep -q 'gate files changed: [^;]*scripts/dupscan-homes.json' "$SCRATCH/out"; then ok "16 a gate file dropped from the proposed land.conf is still a gate file (the base list counts)"; else fail "16 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+
+# 17-19: the pull request check runs the gate-approval check from the BASE revision's own scripts (T934 review 3, Codex
+# 19 Nov 2026: "CI invokes the proposed checker"): pr.yml takes scripts/ci/contract-from-base.sh from the base commit, and it
+# runs the base commit's scripts/land/, reading the proposed land.conf, task file and file list as data, never as shell.
+# A change that edits the checker to always pass, and changes a gate file, is still refused; its land.conf is never run.
+ci_contract() {   # what pr.yml's task-contract step does, with the base commit origin/main
+    git show origin/main:scripts/ci/contract-from-base.sh > "$SCRATCH/runner.sh" 2> /dev/null || { echo "no scripts/ci/contract-from-base.sh on the base" > "$SCRATCH/out"; echo 2; return; }
+    (unset GATE_FILES QUESTIONS_FILE; timeout 120 bash "$SCRATCH/runner.sh" origin/main) > "$SCRATCH/out" 2>&1; echo $?
+}
+ci_setup() {   # setup (the runner is on the base), then the change: <task extra lines>
+    setup "$(printf '  - tsconfig.json\n  - land.conf\n  - scripts/land/check-task-contract.sh\nwhy: John asked for this change (John, 10 Nov 2026)\n%s' "$1")" f.txt
+    printf '#!/usr/bin/env bash\nexit 0\n' > scripts/land/check-task-contract.sh
+    printf 'touch "%s/sourced"\n' "$SCRATCH" >> land.conf
+    echo 2 > tsconfig.json; echo 2 > f.txt; rm -f "$SCRATCH/sourced"
+    printf '\n# the change\n' >> tasks/T9.yml
+    git add -A; git commit -qm 'checker always passes'
+}
+ci_setup ""; r=$(ci_contract)
+if [ "$r" = 1 ] && grep -q $'REFUSE\tgates' "$SCRATCH/out" && grep -q 'tsconfig.json' "$SCRATCH/out"; then ok "17 the checker edited to always pass: the base's checker still refuses the gate change"; else fail "17 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+[ "$r" != 2 ] && [ ! -e "$SCRATCH/sourced" ] && ok "18 the proposed land.conf is read as data, never run" || fail "18 the proposed land.conf was run as shell"
+ci_setup $'gates_approved: QO1\n'; r=$(ci_contract)
+[ "$r" = 0 ] && ok "19 the same change with a John-answered gates_approved passes the base's checker" || fail "19 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"
 
 [ $fails = 0 ] && { echo "land-gates: all passed"; exit 0; }
 echo "land-gates: $fails failed"; exit 1

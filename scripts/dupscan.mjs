@@ -11,10 +11,12 @@
 // Every finding must be listed in the allow-list (dupscan-allow.json) with a reason; anything else
 // fails the run (exit 1). The first run writes the current state as the baseline:
 //   node dupscan.mjs <repo> --homes <homes.json> --write-baseline           # record today's findings, reason "baseline"
-//   node dupscan.mjs <repo> --homes <homes.json> --base origin/main         # gate: exit 1 on any finding not in the allow-list
-//   node dupscan.mjs <repo> --homes <homes.json> --base origin/main --report out.json   # also write every finding to a file
+//   node dupscan.mjs <repo> --homes <homes.json> --rekey <rekey.json> --base origin/main   # gate: exit 1 on any finding not in the allow-list
+//   node dupscan.mjs <repo> --homes <homes.json> --rekey <rekey.json> --base origin/main --report out.json   # also write every finding to a file
+//   node dupscan.mjs <base checkout> --allow <its allow-list> --homes <homes.json> --write-rekey out.json   # the re-key mapping
 // Options: --allow <file> (default: dupscan-allow.json next to this script), --jscpd <path to jscpd bin>.
-// CI (.github/workflows/pr.yml): --allow scripts/dupscan-allow.json --homes scripts/dupscan-homes.json --base origin/main.
+// CI (.github/workflows/pr.yml): --allow scripts/dupscan-allow.json --homes scripts/dupscan-homes.json
+//   --rekey scripts/dupscan-rekey-T934.json --base origin/main.
 //
 // A copy that has been consolidated into the engine is never deleted from the allow-list: its entry stays, marked
 //   "resolved": true, "resolved_to": "<engine file>:<function>", "resolved_by": "<task id>", "ruling": "<questions.yml id>"
@@ -37,16 +39,19 @@
 //     reason starts "help text, no code" is accepted only when every match on its line lies inside a string or a comment
 //     (prose), never when any of it is code; a copy (jscpd) is never help text. An entry re-keyed (the key's form changed)
 //     names its old key in "was": the old key must be an unresolved entry on the base, gone from this list, of the same
-//     rule and file (a copy: the same two files), claimed by this entry alone, with no higher count, and it must be this
-//     finding's own key in the previous key form (legacySignatureKey, legacyCopyKeys), so an allowance never passes to a
-//     different line or copy (T934 review 2). A resolved entry is found under either form, so a copy recorded resolved
-//     under the previous form that comes back is still reported as consolidated.
+//     rule and file (a copy: the same two files), claimed by this entry alone, with no higher count, and the pair (old key,
+//     new key) must be in the reviewed re-key mapping (--rekey, scripts/dupscan-rekey-T934.json, a gate file; T934 review 3).
+//     The mapping is made once from the BASE source (--write-rekey, run on the base checkout): each entry's old key to the
+//     same finding's new key on that unchanged code, so a line or copy changed since the base (a string's spaces, a copy
+//     grown over more shared code) is a different finding and never takes an allowance. A "was" with no pair is refused.
+//     A resolved entry is found under either form (legacySignatureKey, legacyCopyKeys: used to refuse, never to allow), and
+//     before the allowances, so a copy recorded resolved under one form that comes back is reported as consolidated.
 //   - Keys leave comments out and keep literals exactly: the TypeScript parser marks every character of a file as code,
 //     string (string and template text), regular expression, comment or space (a .vue file: its <script> blocks; the rest
 //     is markup, where <!-- --> is a comment). A key keeps code, strings and regular expressions as written; each run of
 //     spaces and comments between them becomes one space, or one line break if the run held one (a copy's key; a formula
-//     line has none). So rewording or adding a comment keeps a key; a "//" inside a string, template or regular
-//     expression is not a comment.
+//     line has none); a comment with no space around it counts as nothing, or as one space between two word characters.
+//     So rewording or adding a comment keeps a key; a "//" inside a string, template or regular expression is not a comment.
 //   - jscpd runs comment-insensitive (--mode weak), so a comment changed in one copy does not hide or split the copy.
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
@@ -59,9 +64,9 @@ import ts from 'typescript';
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const repo = args.find(a => !a.startsWith('--') && !isOptionValue(a));
-function isOptionValue(a) { const i = args.indexOf(a); return i > 0 && ['--allow', '--jscpd', '--report', '--homes', '--base'].includes(args[i - 1]); }
+function isOptionValue(a) { const i = args.indexOf(a); return i > 0 && ['--allow', '--jscpd', '--report', '--homes', '--base', '--rekey', '--write-rekey'].includes(args[i - 1]); }
 const opt = name => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
-const USAGE = 'usage: node dupscan.mjs <openisd checkout> --homes <homes.json> (--base <git ref> | --write-baseline) [--allow file] [--report file] [--jscpd bin]';
+const USAGE = 'usage: node dupscan.mjs <openisd checkout> --homes <homes.json> (--base <git ref> --rekey <rekey.json> | --write-baseline | --write-rekey <out.json>) [--allow file] [--report file] [--jscpd bin]';
 if (!repo) { console.error(USAGE); process.exit(2); }
 const allowPath = opt('--allow') ?? join(here, 'dupscan-allow.json');
 // No default for the homes or the base: a run that forgot them would quietly check less.
@@ -69,7 +74,9 @@ const homesPath = opt('--homes');
 const baseRef = opt('--base');
 const jscpdBin = opt('--jscpd') ?? join(repo, 'node_modules/.bin/jscpd');
 const writeBaseline = args.includes('--write-baseline');
-if (homesPath === null || (baseRef === null && !writeBaseline)) { console.error(USAGE); process.exit(2); }
+const rekeyPath = opt('--rekey');
+const writeRekeyPath = opt('--write-rekey');
+if (homesPath === null || (!writeBaseline && writeRekeyPath === null && (baseRef === null || rekeyPath === null))) { console.error(USAGE); process.exit(2); }
 
 const IGNORE = ['**/node_modules/**', '**/test/**', '**/*.test.ts', '**/*.spec.ts', '**/generated/**', '**/*.generated.ts',
   '**/dist/**', '**/coverage/**', '**/ui-proposals/**', '**/*.config.ts'];
@@ -160,10 +167,11 @@ function source(rel) {
 }
 
 /** Classes the TypeScript text at text[from, from + length) into `cls`; returns its parsed tree. Characters no token covers
- *  are trivia: whitespace is 'space', anything else is a comment. */
+ *  are trivia: a comment ("//" to the line's end, or "/*" to its close, its own spaces included) is 'comment', other
+ *  whitespace 'space', anything else 'comment'. */
 function classifyTs(text, from, length, cls) {
   const sf = ts.createSourceFile('x.ts', text.slice(from, from + length), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  for (let i = from; i < from + length; i++) cls[i] = /\s/.test(text[i]) ? 'space' : 'comment';
+  cls.fill('trivia', from, from + length);
   const visit = node => {
     if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode) return;
     const kids = node.getChildren(sf);
@@ -171,18 +179,30 @@ function classifyTs(text, from, length, cls) {
     kids.forEach(visit);
   };
   visit(sf);
+  for (let i = from; i < from + length;) {
+    if (cls[i] !== 'trivia') { i++; continue; }
+    const end = text.startsWith('//', i) ? text.indexOf('\n', i) : text.startsWith('/*', i) ? text.indexOf('*/', i + 2) + 2 : -2;
+    if (end === -2) { cls[i] = /\s/.test(text[i]) ? 'space' : 'comment'; i++; continue; }
+    const stop = Math.min(end <= 1 ? from + length : end, from + length);   // an unclosed comment runs to the end
+    cls.fill('comment', i, stop);
+    i = stop;
+  }
   return sf;
 }
 
-/** The key text of src.text[from, to): code, strings and regular expressions as written; each run of space and comments
- *  between them one space, or one line break when the run holds one; nothing before the first or after the last. */
+/** The key text of src.text[from, to): code, strings and regular expressions as written, comments left out; each run of
+ *  whitespace between them one space, or one line break when the run holds one; nothing before the first or after the last.
+ *  A comment counts as nothing (T934 review 3: f(/* note *\/x) keys as f(x)), except between two word characters, where it
+ *  separates two tokens as a space would (a/* c *\/b keys as a b, never ab). */
 function keyText(src, from, to) {
-  let out = '', gap = null;
+  let out = '', gap = null, commented = false;
   for (let i = from; i < to; i++) {
     const ch = src.text[i], k = src.cls[i];
-    if (k === 'space' || k === 'comment' || (k === 'markup' && /\s/.test(ch))) { if (ch === '\n') gap = '\n'; else if (gap === null) gap = ' '; continue; }
+    if (k === 'comment') { commented = true; continue; }
+    if (k === 'space' || (k === 'markup' && /\s/.test(ch))) { if (ch === '\n') gap = '\n'; else if (gap === null) gap = ' '; continue; }
+    if (gap === null && commented && /\w$/.test(out) && /\w/.test(ch)) gap = ' ';
     if (gap !== null && out !== '') out += gap;
-    gap = null;
+    gap = null; commented = false;
     out += ch;
   }
   return out;
@@ -344,21 +364,56 @@ if (writeBaseline) {
   process.exit(0);
 }
 
+if (writeRekeyPath !== null) {
+  // The re-key mapping (T934 review 3), made from THIS tree, so run it on the base checkout: each unresolved allow-list
+  // entry's key, in the previous key form, to the same finding's key now. An old key two findings would take is left out.
+  const listed = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
+  const pairs = {}, clash = new Set();
+  for (const f of findings) {
+    if (f.oldKey === null || f.oldKey === f.key || !(f.oldKey in listed) || listed[f.oldKey].resolved === true) continue;
+    if (f.oldKey in pairs && pairs[f.oldKey] !== f.key) clash.add(f.oldKey); else pairs[f.oldKey] = f.key;
+  }
+  for (const k of clash) delete pairs[k];
+  let commit;
+  try { commit = execFileSync('git', ['-C', repo, 'rev-parse', 'HEAD'], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore']}).trim(); }
+  catch { commit = 'not a git checkout'; }
+  writeFileSync(writeRekeyPath, JSON.stringify({base: commit, made_by: 'node scripts/dupscan.mjs <base checkout> --allow <its allow-list> --homes <homes> --write-rekey <this file>',
+    pairs: Object.fromEntries(Object.entries(pairs).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0))}, null, 1) + '\n');
+  console.log(`wrote ${Object.keys(pairs).length} re-key pairs to ${writeRekeyPath}${clash.size ? `; left out ${clash.size} old keys two findings would take:\n  ${[...clash].join('\n  ')}` : ''}`);
+  process.exit(0);
+}
+
+// The reviewed re-key mapping (--rekey): an entry's "was" is accepted only as one of its pairs (T934 review 3). "pairs" are
+// made by --write-rekey from the base source; "hand_pairs" ({old: {to, why}}) are pairs a person reviewed where the base
+// source cannot pair them (one comment-insensitive copy holding two previous-form copies), each saying why.
+const rekeyFile = JSON.parse(readFileSync(rekeyPath, 'utf8'));
+const isMap = o => typeof o === 'object' && o !== null && !Array.isArray(o);
+if (!isMap(rekeyFile.pairs)) { console.error(`dupscan: ${rekeyPath} has no "pairs" object`); process.exit(2); }
+const hand = rekeyFile.hand_pairs ?? {};
+if (!isMap(hand) || !Object.values(hand).every(h => isMap(h) && typeof h.to === 'string' && typeof h.why === 'string' && h.why.trim() !== '')) {
+  console.error(`dupscan: ${rekeyPath}: each of "hand_pairs" is {"to": <new key>, "why": <the reason, reviewed>}`); process.exit(2);
+}
+const rekey = {...rekeyFile.pairs, ...Object.fromEntries(Object.entries(hand).map(([o, h]) => [o, h.to]))};
 const allowFile = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
 const resolved = Object.fromEntries(Object.entries(allowFile).filter(([, e]) => e.resolved === true));
-const allow = Object.fromEntries(Object.entries(allowFile).filter(([, e]) => e.resolved !== true));
+// A previous-form key the mapping moves to another key allows nothing: read as a key of the new form it would name a
+// different line (a string's spaces folded) or copy (T934 review 3). Its entry must move to the mapped key.
+const movedAway = k => k in rekey && rekey[k] !== k;
+const allow = Object.fromEntries(Object.entries(allowFile).filter(([k, e]) => e.resolved !== true && !movedAway(k)));
 const incomplete = Object.keys(resolved).filter(k => !['resolved_to', 'resolved_by', 'ruling'].every(f => typeof resolved[k][f] === 'string' && resolved[k][f] !== ''));
 // A match inside its kind's home is not a copy (T934).
 const inHome = findings.filter(f => f.home);
 const active = findings.filter(f => !f.home);
 const homeOfKey = Object.fromEntries(inHome.map(f => [f.key, f.home]));
 const seen = new Set(active.map(f => f.key));
-const counts = {};
-const fresh = active.filter(f => { counts[f.key] = (counts[f.key] ?? 0) + 1; return !(f.key in allow) || counts[f.key] > (allow[f.key].count ?? 1); });
 // A resolved entry keeps its key as recorded, in either key form: a copy coming back is found under both (T934 review 2).
+// The previous form is used only to refuse, never to allow. Recurrence is checked before the allowances (T934 review 3): an
+// allowed entry under one key form never hides a consolidated copy recorded under the other.
 const resolvedEntryOf = f => resolved[f.key] ?? (f.oldKey !== null && f.oldKey in resolved ? resolved[f.oldKey] : undefined);
-const back = fresh.filter(f => resolvedEntryOf(f) !== undefined);
-const unlisted = fresh.filter(f => resolvedEntryOf(f) === undefined);
+const back = active.filter(f => resolvedEntryOf(f) !== undefined);
+const counts = {};
+const unlisted = active.filter(f => resolvedEntryOf(f) === undefined)
+  .filter(f => { counts[f.key] = (counts[f.key] ?? 0) + 1; return !(f.key in allow) || counts[f.key] > (allow[f.key].count ?? 1); });
 const stale = Object.keys(allow).filter(k => !seen.has(k));
 const ratchet = ratchetAgainstBase();
 
@@ -380,7 +435,7 @@ function ratchetAgainstBase() {
     if (b === undefined || b.resolved === true || e.was in allowFile) return `new entry (its "was" ${e.was} is not an unresolved base entry this one replaces): ${k}`;
     if (scope(e.was) !== scope(k)) return `new entry (its "was" is another rule or another file, not this finding's old key): ${k}`;
     if (claims.get(e.was).length !== 1) return `new entry (its "was" is claimed by ${claims.get(e.was).length} entries; one old key moves to one new key): ${k}`;
-    if (!findings.some(f => f.key === k && f.oldKey === e.was)) return `new entry (its "was" is not this finding's key in the previous key form; a re-key moves the same finding): ${k}`;
+    if (rekey[e.was] !== k) return `new entry (its "was" and this key are not a pair in the reviewed re-key mapping; a re-key moves the same finding, unchanged since the base): ${k}`;
     if ((e.count ?? 1) > (b.count ?? 1)) return `count raised from ${b.count ?? 1} to ${e.count} (through "was"): ${k}`;
     return null;
   };
@@ -396,6 +451,7 @@ function ratchetAgainstBase() {
     } else if (e.resolved !== true && (e.count ?? 1) > (b.count ?? 1)) out.push(`count raised from ${b.count ?? 1} to ${e.count}: ${k}`);
   }
   for (const [k, e] of Object.entries(allowFile)) {
+    if (e.resolved !== true && movedAway(k)) out.push(`listed under a previous-form key the reviewed re-key mapping moves to ${rekey[k]} (list the entry under that key, "was": this one): ${k}`);
     if (k in base) continue;
     if (typeof e.was === 'string') { const why = wasProblem(k, e); if (why !== null) out.push(why); continue; }
     if (e.resolved === true) continue;   // a new resolved entry allows nothing

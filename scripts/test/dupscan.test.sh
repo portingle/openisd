@@ -23,12 +23,17 @@ printf 'export const area = (w: number, h: number): number => w + h;\n' > "$SCRA
 printf 'export function eachOfN(whole: number, n: number): number {\n  return whole / n;\n}\n' > "$SCRATCH/packages/design/engine/array/home.ts" || setup_failed "home.ts"
 echo '{"driver-count-scaling": ["packages/design/engine/array/home.ts:eachOfN"]}' > "$SCRATCH/homes.json" || setup_failed "homes.json"
 echo '{}' > "$SCRATCH/allow.json" || setup_failed "allow.json"
+# T934 review 3: a "was" re-key is allowed only when the pair is in the reviewed re-key mapping, generated from the base source.
+echo '{"pairs": {}}' > "$SCRATCH/rekey.json" || setup_failed "rekey.json"
 g init -q -b main || setup_failed "git init"
 [ "$(g rev-parse --show-toplevel)" = "$(cd "$SCRATCH" && pwd -P)" ] || setup_failed "the scratch git repository is not $SCRATCH"
 # base: the allow-list as it is on the base commit (tag base); the check compares the working allow-list with it
 set_base() { g add -A > /dev/null && g commit -q --allow-empty -m base && g tag -f base > /dev/null; }
 set_base || setup_failed "first base commit"
-run() { node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --base base 2>&1; }
+run() { node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --rekey "$SCRATCH/rekey.json" --base base 2>&1; }
+# make_rekey: the re-key mapping (old key -> new key) generated from the tree as it is now (call it on the base state)
+make_rekey() { node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --write-rekey "$SCRATCH/rekey.json" > /dev/null 2>&1 \
+  || { echo "dupscan.test: --write-rekey failed" >&2; echo '{"pairs": {}}' > "$SCRATCH/rekey.json"; }; }
 
 out="$(run)"; rc=$?
 [ "$rc" = 0 ] && ok "a scratch tree without the formula passes, its home's own line included (exit 0)" || bad "clean tree should pass, got exit $rc: $out"
@@ -89,7 +94,7 @@ rm "$SCRATCH/packages/design/engine/plus.ts"
 
 # T934 review (finding 3): a formula line's key drops its comments and keeps its literals exactly: a "//" inside a string,
 # a regular expression or a nested template is not a comment, and spaces inside a string are not folded.
-sig_keys() { node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --base base --report "$SCRATCH/r.json" > /dev/null 2>&1
+sig_keys() { node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --rekey "$SCRATCH/rekey.json" --base base --report "$SCRATCH/r.json" > /dev/null 2>&1
   node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).findings.filter(f => f.kind === "signature").map(f => f.key).sort().join("\n"))' "$SCRATCH/r.json"; }
 cat > "$SCRATCH/packages/design/engine/keys.ts" << 'EOF'
 export const a = (Vb: number, n: number): number => Vb / n; // one driver's share
@@ -207,7 +212,7 @@ EOF
 }
 # jscpd itself matches comments, so a comment reworded inside a known copy is reworded in both places
 block 'one comment' > "$SCRATCH/packages/design/engine/a.ts"; block 'one comment' > "$SCRATCH/packages/design/engine/b.ts"
-copy_keys() { node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --base base --report "$SCRATCH/r.json" > /dev/null 2>&1
+copy_keys() { node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --rekey "$SCRATCH/rekey.json" --base base --report "$SCRATCH/r.json" > /dev/null 2>&1
   node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).findings.filter(f => f.kind === "copy").map(f => f.key).sort().join("\n"))' "$SCRATCH/r.json"; }
 before="$(copy_keys)"
 block 'the comment, reworded at length' > "$SCRATCH/packages/design/engine/a.ts"; block 'the comment, reworded at length' > "$SCRATCH/packages/design/engine/b.ts"
@@ -251,44 +256,45 @@ echo '{}' > "$SCRATCH/allow.json"; set_base
 block 'one comment' > "$SCRATCH/packages/design/engine/a.ts"; block 'one comment' > "$SCRATCH/packages/design/engine/b.ts"
 copy_field() { node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).findings.filter(f => f.kind === "copy").map(f => f[process.argv[2]]).join("\n"))' "$SCRATCH/r.json" "$1"; }
 copy_keys > /dev/null; A_NEW="$(copy_field key)"; A_OLD="$(copy_field oldKey)"
-node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$A_OLD" > "$SCRATCH/allow.json"; set_base
+node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$A_OLD" > "$SCRATCH/allow.json"; set_base; make_rekey
 node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$A_NEW" "$A_OLD" > "$SCRATCH/allow.json"
 out="$(run)"; rc=$?
-{ [ -n "$A_OLD" ] && [ "$A_OLD" != "$A_NEW" ] && [ "$rc" = 0 ]; } && ok "a copy re-keyed with \"was\" naming its own previous key passes (exit 0)" || bad "copy re-key should pass (old [$A_OLD] new [$A_NEW]), got exit $rc: $out"
+{ [ -n "$A_OLD" ] && [ "$A_OLD" != "$A_NEW" ] && [ "$rc" = 0 ]; } && ok "a copy re-keyed with \"was\" as the reviewed mapping (made from the base source) says passes (exit 0)" || bad "copy re-key should pass (old [$A_OLD] new [$A_NEW]), got exit $rc: $out"
 rx_block count > "$SCRATCH/packages/design/engine/a.ts"; rx_block count > "$SCRATCH/packages/design/engine/b.ts"
 copy_keys > /dev/null; B_NEW="$(copy_field key)"
 node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$B_NEW" "$A_OLD" > "$SCRATCH/allow.json"
 out="$(run)"; rc=$?
-{ [ -n "$B_NEW" ] && [ "$rc" = 1 ] && grep -qF "  new entry (its \"was\" is not this finding's key in the previous key form; a re-key moves the same finding): $B_NEW" <<< "$out"; } \
+{ [ -n "$B_NEW" ] && [ "$rc" = 1 ] && grep -qF "  new entry (its \"was\" and this key are not a pair in the reviewed re-key mapping; a re-key moves the same finding, unchanged since the base): $B_NEW" <<< "$out"; } \
   && ok "a different copy between the same two files cannot take over a removed copy's entry through \"was\" (exit 1)" || bad "different copy via was should exit 1 naming its key, got exit $rc: $out"
 rm "$SCRATCH/packages/design/engine/a.ts" "$SCRATCH/packages/design/engine/b.ts"
 echo '{}' > "$SCRATCH/allow.json"; set_base
 
 OLD='sig|driver-count-scaling|packages/design/engine/newcopy.ts|old form of the key'
-node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$OLD" > "$SCRATCH/allow.json"; set_base
+node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$OLD" > "$SCRATCH/allow.json"; set_base; make_rekey
 printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
 node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$KEY" "$OLD" > "$SCRATCH/allow.json"
 out="$(run)"; rc=$?
 # T934 review 2 (finding: "was" identity): an old key nobody can derive from this finding is not a re-key of it. Was
 # "an entry re-keyed with was naming its old key on the base passes (exit 0)"; the fabricated old key now fails.
-{ [ "$rc" = 1 ] && grep -q 'grew against base' <<< "$out" && grep -qF "  new entry (its \"was\" is not this finding's key in the previous key form; a re-key moves the same finding): $KEY" <<< "$out"; } \
+{ [ "$rc" = 1 ] && grep -q 'grew against base' <<< "$out" && grep -qF "  new entry (its \"was\" and this key are not a pair in the reviewed re-key mapping; a re-key moves the same finding, unchanged since the base): $KEY" <<< "$out"; } \
   && ok "an entry re-keyed with \"was\" naming an old key that is not this finding's previous key is refused (exit 1), naming the key" || bad "fabricated was should exit 1 naming the key, got exit $rc: $out"
 # The real re-key: the base entry is the line's key in the previous form (trailing comment included); the new key drops
 # the comment and names that old key in "was".
 COMMENT_LINE='export const perDriver = (Vb: number, n: number): number => Vb / n;   // one driver'"'"'s share'
 OLD_FORM="sig|driver-count-scaling|packages/design/engine/newcopy.ts|export const perDriver = (Vb: number, n: number): number => Vb / n; // one driver's share"
 printf '%s\n' "$COMMENT_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
-node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$OLD_FORM" > "$SCRATCH/allow.json"; set_base
+node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$OLD_FORM" > "$SCRATCH/allow.json"; set_base; make_rekey
 node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$KEY" "$OLD_FORM" > "$SCRATCH/allow.json"
 out="$(run)"; rc=$?
-[ "$rc" = 0 ] && ok "an entry re-keyed with \"was\" naming this line's key in the previous form passes (exit 0)" || bad "real re-key should pass, got exit $rc: $out"
+[ "$rc" = 0 ] && ok "an entry re-keyed with \"was\" as the reviewed mapping (made from the base source) says passes (exit 0)" || bad "real re-key should pass, got exit $rc: $out"
 # A different line in the same file cannot take over the old line's allowance.
 printf '%s\n' 'export const other = (Vb: number, n: number): number => Vb / n + 0;' > "$SCRATCH/packages/design/engine/newcopy.ts"
 OTHER_KEY='sig|driver-count-scaling|packages/design/engine/newcopy.ts|export const other = (Vb: number, n: number): number => Vb / n + 0;'
 node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$OTHER_KEY" "$OLD_FORM" > "$SCRATCH/allow.json"
 out="$(run)"; rc=$?
-{ [ "$rc" = 1 ] && grep -qF "  new entry (its \"was\" is not this finding's key in the previous key form; a re-key moves the same finding): $OTHER_KEY" <<< "$out"; } \
+{ [ "$rc" = 1 ] && grep -qF "  new entry (its \"was\" and this key are not a pair in the reviewed re-key mapping; a re-key moves the same finding, unchanged since the base): $OTHER_KEY" <<< "$out"; } \
   && ok "a different line in the same file cannot take over a removed line's entry through \"was\" (exit 1)" || bad "different line via was should exit 1 naming its key, got exit $rc: $out"
+echo '{"pairs": {}}' > "$SCRATCH/rekey.json"
 printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
 node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$OLD" > "$SCRATCH/allow.json"; set_base
 node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}, [k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$KEY" "$OLD" > "$SCRATCH/allow.json"
@@ -329,7 +335,96 @@ out="$(run)"; rc=$?
   && ok "a copy resolved under its previous key form that comes back is reported as consolidated, naming the function (exit 1)" || bad "returning copy with a previous-form resolved key should exit 1 naming arrayVas, got exit $rc: $out"
 rm "$SCRATCH/packages/design/engine/newcopy.ts"
 
-out="$(node "$REPO/scripts/dupscan.mjs" "$REPO" --jscpd "$JSCPD" --allow "$REPO/scripts/dupscan-allow.json" --homes "$REPO/scripts/dupscan-homes.json" --base origin/main 2>&1)"; rc=$?
+# T934 review 3 (Codex, finding 1): the previous key form folds the spaces inside a string, so a line changed since the base
+# ('a  b' to 'a b') has the same previous-form key, and that key, read as a key of the new form, names the changed line. The
+# reviewed mapping (made from the BASE source) moves the base entry to the base line's own new key, so the old key allows
+# nothing: the changed line is refused, whether the entry is kept as it was or claimed through "was".
+STR2="export const s = (Vb: number, n: number): string => 'a  b' + (Vb / n);"
+STR1="export const s = (Vb: number, n: number): string => 'a b' + (Vb / n);"
+STR_OLD="sig|driver-count-scaling|packages/design/engine/str.ts|$STR1"
+STR2_KEY="sig|driver-count-scaling|packages/design/engine/str.ts|$STR2"
+printf '%s\n' "$STR2" > "$SCRATCH/packages/design/engine/str.ts"
+node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$STR_OLD" > "$SCRATCH/allow.json"; set_base; make_rekey
+printf '%s\n' "$STR1" > "$SCRATCH/packages/design/engine/str.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -qF "  listed under a previous-form key the reviewed re-key mapping moves to $STR2_KEY (list the entry under that key, \"was\": this one): $STR_OLD" <<< "$out" \
+  && grep -q 'new duplicated logic' <<< "$out"; } \
+  && ok "a line changed since the base ('a  b' to 'a b', one previous-form key) is not allowed by the base entry (exit 1)" || bad "changed string kept under the base entry should exit 1 naming the key, got exit $rc: $out"
+node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$STR_OLD" "$STR_OLD" > "$SCRATCH/allow.json"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -qF "moves to $STR2_KEY" <<< "$out"; } \
+  && ok "the same changed line claimed through \"was\" is refused (exit 1)" || bad "changed string via was should exit 1, got exit $rc: $out"
+printf '%s\n' "$STR2" > "$SCRATCH/packages/design/engine/str.ts"
+node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$STR2_KEY" "$STR_OLD" > "$SCRATCH/allow.json"
+out="$(run)"; rc=$?
+[ "$rc" = 0 ] && ok "the unchanged line ('a  b') re-keyed as the mapping says passes (exit 0)" || bad "unchanged string re-keyed per mapping should pass, got exit $rc: $out"
+rm "$SCRATCH/packages/design/engine/str.ts"; echo '{}' > "$SCRATCH/allow.json"; echo '{"pairs": {}}' > "$SCRATCH/rekey.json"; set_base
+
+# T934 review 3 (finding 1, copies): a copy that grew since the base (comment-insensitive matching joins more shared code
+# to it) still contains the base's smaller copy on both sides, but it is not the same finding unless the mapping says so.
+# Base: the shared block, then a comment that differs and a short tail that differs. Head: the tails are made the same, so
+# the comment-insensitive copy grows over them while the previous form's copy (stopped by the comment) is unchanged.
+grow_block() { block 'one comment'; printf '// note on side %s\nexport const tail = (volume: number, area: number): number => volume * area - %s;\n' "$1" "$2"; }
+grow_block a 'area / volume' > "$SCRATCH/packages/design/engine/a.ts"; grow_block b 'volume / area' > "$SCRATCH/packages/design/engine/b.ts"
+copy_keys > /dev/null; G_OLD="$(copy_field oldKey)"
+node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$G_OLD" > "$SCRATCH/allow.json"; set_base; make_rekey
+grow_block a 'area / volume + volume * volume - area * area' > "$SCRATCH/packages/design/engine/a.ts"; grow_block b 'area / volume + volume * volume - area * area' > "$SCRATCH/packages/design/engine/b.ts"
+copy_keys > /dev/null; G_NEW="$(copy_field key)"; G_NEW_OLD="$(copy_field oldKey)"
+node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$G_NEW" "$G_OLD" > "$SCRATCH/allow.json"
+out="$(run)"; rc=$?
+{ [ -n "$G_OLD" ] && [ "$G_NEW_OLD" = "$G_OLD" ] && [ "$rc" = 1 ] && grep -qF "  new entry (its \"was\" and this key are not a pair in the reviewed re-key mapping; a re-key moves the same finding, unchanged since the base): $G_NEW" <<< "$out"; } \
+  && ok "a copy grown since the base, containing the base's copy on both sides, cannot take its allowance through \"was\" (exit 1)" || bad "grown copy via was should exit 1 naming its key (old [$G_OLD], grown copy's previous form [$G_NEW_OLD]), got exit $rc: $out"
+rm "$SCRATCH/packages/design/engine/a.ts" "$SCRATCH/packages/design/engine/b.ts"; echo '{}' > "$SCRATCH/allow.json"; echo '{"pairs": {}}' > "$SCRATCH/rekey.json"; set_base
+
+# T934 review 3 (finding 3): a comment inserted where there was no space (f(/* note */x) for f(x)) keeps the key, of a formula
+# line and of a copy, whichever side of the copy it is on.
+printf '%s\n' 'export const m = (Vb: number, n: number): number => Math.max(Vb / n, 0);' > "$SCRATCH/packages/design/engine/m.ts"
+k_plain="$(sig_keys)"
+printf '%s\n' 'export const m = (Vb: number, n: number): number => Math.max(/* note */Vb / n, 0);' > "$SCRATCH/packages/design/engine/m.ts"
+k_note="$(sig_keys)"
+{ [ -n "$k_plain" ] && [ "$k_plain" = "$k_note" ]; } && ok "a comment inserted with no space around it keeps a formula line's key" || bad "inline comment should keep the key: [$k_plain] vs [$k_note]"
+rm "$SCRATCH/packages/design/engine/m.ts"
+note_block() { cat << EOF
+export function mix(volume: number, area: number, length: number, count: number): number {
+  const total = volume * area + length * count - volume / area + length / count;
+  const other = total * volume + area * length - count / total + volume / length;
+  const third = other * total + volume * area - length / other + count / volume;
+  const fourth = third * other + total * volume - area / third + length / count;
+  return Math.abs($1fourth) + third + other + total + volume + area + length + count;
+}
+EOF
+}
+note_block '' > "$SCRATCH/packages/design/engine/a.ts"; note_block '' > "$SCRATCH/packages/design/engine/b.ts"
+before="$(copy_keys)"
+note_block '/* note */' > "$SCRATCH/packages/design/engine/a.ts"
+after_a="$(copy_keys)"
+note_block '' > "$SCRATCH/packages/design/engine/a.ts"; note_block '/* note */' > "$SCRATCH/packages/design/engine/b.ts"
+after_b="$(copy_keys)"
+{ [ -n "$before" ] && [ "$before" = "$after_a" ] && [ "$before" = "$after_b" ]; } \
+  && ok "a comment inserted with no space around it, in one copy, keeps the copy's key (either side)" || bad "inline comment in one copy should keep the key: before [$before] a [$after_a] b [$after_b]"
+rm "$SCRATCH/packages/design/engine/a.ts" "$SCRATCH/packages/design/engine/b.ts"
+
+# T934 review 3 (finding 3): a consolidated copy that comes back is reported even when an active entry under its other key
+# form would allow it: recurrence is checked before the allowances.
+printf '%s\n' "$COMMENT_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+node -e 'const [o, k] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1,
+  resolved: true, resolved_to: "packages/design/engine/sealedResonance.ts:arrayVas", resolved_by: "T902", ruling: "QO949"}, [k]: {reason: "baseline", where: "x:1", count: 1}}));' "$OLD_FORM" "$KEY" > "$SCRATCH/allow.json"; set_base
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'consolidated into packages/design/engine/sealedResonance.ts:arrayVas by T902' <<< "$out"; } \
+  && ok "a copy resolved under its previous key form is reported back even when its new key is allowed (exit 1)" || bad "resolved-under-old-form copy with its new key allowed should exit 1 naming arrayVas, got exit $rc: $out"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"; echo '{}' > "$SCRATCH/allow.json"; set_base
+
+# T934 review 3: a hand-reviewed pair says why; one without a reason stops the run (exit 2).
+echo '{"pairs": {}, "hand_pairs": {"copy|a|b|1": {"to": "copy|a|b|2", "why": ""}}}' > "$SCRATCH/rekey.json"
+out="$(run)"; rc=$?
+{ [ "$rc" = 2 ] && grep -q 'hand_pairs' <<< "$out"; } && ok "a hand-reviewed re-key pair with no reason is refused (exit 2)" || bad "hand pair without why should exit 2, got exit $rc: $out"
+echo '{"pairs": {}}' > "$SCRATCH/rekey.json"
+
+# T934 review 3: every pair in the shipped mapping was made from the base source, so a gate run without --rekey refuses (exit 2).
+out="$(node "$REPO/scripts/dupscan.mjs" "$SCRATCH" --jscpd "$JSCPD" --allow "$SCRATCH/allow.json" --homes "$SCRATCH/homes.json" --base base 2>&1)"; rc=$?
+[ "$rc" = 2 ] && ok "a gate run without --rekey is refused (exit 2)" || bad "no --rekey should exit 2, got exit $rc: $out"
+
+out="$(node "$REPO/scripts/dupscan.mjs" "$REPO" --jscpd "$JSCPD" --allow "$REPO/scripts/dupscan-allow.json" --homes "$REPO/scripts/dupscan-homes.json" --rekey "$REPO/scripts/dupscan-rekey-T934.json" --base origin/main 2>&1)"; rc=$?
 [ "$rc" = 0 ] && ok "this repo passes with the shipped allow-list and homes, against origin/main" || bad "repo should pass with its allow-list, got exit $rc: $out"
 
 [ "$fails" = 0 ] || { echo "dupscan.test: $fails failed"; exit 1; }
