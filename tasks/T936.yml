@@ -1,0 +1,10 @@
+id: T936
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Fix three engine bugs found by the Gemini review: force-flat in max curves, wide-magnet MagDepth refusal, air fill order
+why: agy review verified 19 Nov 2026, card agy-bugs-4
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T936.yml
