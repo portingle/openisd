@@ -3,6 +3,7 @@ release_note: The vented alignment picker now counts the number of drivers and I
 repo: openisd
 owner: t921
 status: in_progress
+gates_approved: QO954
 label: fixes
 goal: The vented alignment picker (Box tab, phone sheet, New Project) uses all the project's drivers (N times Vas, halved for an isobaric pair) through the engine's arrayVas rule, so its proposed volume scales with the driver count as WinISD's does and its tuning does not change
 why: 'WinISD 0.7.0 proposes N times the volume and the same Fb (winisd_research/runs/vented-picker-ndrivers-20261118/RESULT.md, bugs/BUG_20261118_vented-picker-ignores-driver-count.md). Same family as T907, the sealed picker fix.'
