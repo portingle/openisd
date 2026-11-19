@@ -1,0 +1,10 @@
+id: T937
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Vented box with Ql = Qa at 1e6 or above uses WinISD's one fixed-loss form (the lossless branch is removed for the TL port model off, as it was for on)
+why: WinISD capture 19 Nov 2026, winisd_research 780edb1; card agy-bugs-4
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T937.yml
