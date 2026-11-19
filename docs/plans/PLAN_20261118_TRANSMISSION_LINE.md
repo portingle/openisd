@@ -258,6 +258,9 @@ John has seen the pictures.
   by run H0 and by comparing the driver part and mouth part on their own; a remaining unexplained difference goes to John.
 - Schema version 7: every project saved by the new app (TL or not) is refused by an older app with the "newer OpenISD"
   message, as happened at version 6. The installed app updates itself, so this lasts only until a device updates.
+  The same version number is stamped on saved drivers (`.owdr`) and `openisd.json` records
+  (`packages/design/domain/schemaVersion.ts`), so a driver saved by the new app is also refused by an older one; phase 2
+  checks whether the drivers repo's records need anything (they should upgrade on load like any version 6 record).
 - Unstuffed lines show strong peaks and dips at 3x and 5x the line resonance. That is the physics, but a user may read it
   as a fault; the Box tab note says so, and stuffing is question Q4.
 - The Struve function needs care to be right to the last digits; test F5 guards it.
