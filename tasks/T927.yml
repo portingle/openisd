@@ -1,0 +1,10 @@
+id: T927
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Iso-Barik power handling = Pe x Nd x 2, and OpenISD's Iso-Barik charts (Nd 1 and 2) checked against WinISD's own values
+why: lead 19 Nov 2026: WinISD probe winisd_research runs/isobarik-more-20261119 (c4274802) shows max power Pe x Nd x (Iso ? 2 : 1); OpenISD SimulationEngine.ts:747 uses Pe x Nd; card isobaric-built (QO953.c49 'is it implemented everywhere?')
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T927.yml
