@@ -8,3 +8,5 @@ why: John, 19 Nov 2026: 'your notes make it clear we have inadequate testing and
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T933.yml
+  - docs/plans/PLAN_20261119_TEST_STRATEGY.md
+  - DOCUMENTATION.md
