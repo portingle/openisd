@@ -16,3 +16,7 @@ files:
   - packages/design/test/engine/pr-zero-geometry.test.ts
   - packages/design/test/engine/air-solver-failed-step.test.ts
   - packages/design/test/domain/radiator-zero-load-repair.test.ts
+  - packages/design/engine/consistency.ts
+  - packages/design/engine/vent/VentEngine.ts
+  - packages/design/test/engine/consistency.test.ts
+  - scripts/dupscan-allow.json
