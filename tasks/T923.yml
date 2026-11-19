@@ -2,9 +2,15 @@ id: T923
 release_note: internal
 repo: openisd
 owner: agent
-status: open
+status: done
 goal: Name the causing field(s) in the can't-plot chart panel instead of saying 'listed inputs'
 why: QO955.c3/c4: panel said 'Fix the listed inputs' with no inputs listed; John chose chart shows reason AND the field
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: npx vitest run packages/design/test/fields/chart-block-text.test.ts
 files:
   - tasks/T923.yml
+  - packages/design/fields/chartBlockText.ts
+  - packages/design/fields/index.ts
+  - packages/design/test/fields/chart-block-text.test.ts
+  - packages/ui/src/hooks/GraphPanel-hooks.ts
+  - packages/ui/src/ui/components/GraphPanel.vue
+  - packages/ui/test/ui/blocked-chart-names-field.browser.spec.ts
