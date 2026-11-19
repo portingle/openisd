@@ -13,7 +13,4 @@ files:
   - packages/design/test/engine/xmax-limited-spl.test.ts
   - packages/design/test/engine/multi-driver-passive-radiator.test.ts
   - packages/design/test/domain/pr-count-load-repair.test.ts
-  - packages/design/fields/field.ts
-  - packages/design/domain/project/loadRepair.ts
-  - packages/design/domain/project/openISDProject.ts
   - packages/design/domain/winIsdProjectConverter.ts

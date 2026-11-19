@@ -1,8 +1,8 @@
 /**
  * A passive-radiator count below 1 in a file (an OpenISD project, a WinISD `.wpr`) is repaired on
  * opening to the minimum of 1: the box shows 1, the opening message names the repair once, and the
- * charts draw. Before T928 the count stayed 0 and every chart was refused with "Num. of PRs must be
- * at least 1". Rule: AGENTS.md "Number inputs" (John, 18 Nov 2026, QO953.c26: "a repair is ok but
+ * charts draw. T924 added the repair (`projectLoadRepairRules.ts`); a WinISD `.wpr` with Npr=0 was still
+ * repaired silently, inside the project builder, so its opening message did not name it (T928). Rule: AGENTS.md "Number inputs" (John, 18 Nov 2026, QO953.c26: "a repair is ok but
  * it has to be automatic"; c30-c31: no data-quality mark, only the opening message).
  */
 import {describe, expect, it} from 'vitest';
@@ -40,8 +40,8 @@ function wprWithNpr(n: string): OpenedProject {
 }
 
 describe('a passive-radiator count below 1 in a file is repaired to 1 on opening (T928)', () => {
-  it('the Num. of PRs field states its own load repair: below its minimum of 1, set to 1', () => {
-    expect(NumberField.PR_NUM.loadRepair).toEqual({breaks: 'min', to: 1, described: 'the minimum of 1'});
+  it('the Num. of PRs field states its own load repair: below its minimum of 1, set to 1, the fewest', () => {
+    expect(NumberField.PR_NUM.loadRepair).toEqual({breaks: 'min', to: 1, described: '1, the fewest'});
     expect(NumberField.PR_NUM.limits.min).toBe(1);
   });
 
@@ -49,7 +49,7 @@ describe('a passive-radiator count below 1 in a file is repaired to 1 on opening
     it(`a project file with ${count} radiators opens with 1, the repair named once, and the charts draw`, () => {
       const {project, loadRepairs} = opened(owprWithCount(count));
       expect(project.box.passiveRadiator.count.value).toBe(1);
-      expect(loadRepairs.map(r => r.text)).toEqual([`${PRS} ${count} in the file: set to the minimum of 1`]);
+      expect(loadRepairs.map(r => r.text)).toEqual([`${PRS} ${count} in the file: set to 1, the fewest`]);
       const result = projectFindings(project, DEFAULT_GRID);
       expect(result.findings).toEqual([]);
       expect(result.refused).toBe(false);
@@ -59,7 +59,7 @@ describe('a passive-radiator count below 1 in a file is repaired to 1 on opening
   it('a WinISD file with Npr=0 opens with 1 radiator, the repair named once, and the charts draw', () => {
     const {project, loadRepairs} = wprWithNpr('0');
     expect(project.box.passiveRadiator.count.value).toBe(1);
-    expect(loadRepairs.map(r => r.text)).toEqual([`${PRS} 0 in the file: set to the minimum of 1`]);
+    expect(loadRepairs.map(r => r.text)).toEqual([`${PRS} 0 in the file: set to 1, the fewest`]);
     const result = projectFindings(project, DEFAULT_GRID);
     expect(result.findings).toEqual([]);
     expect(result.refused).toBe(false);
