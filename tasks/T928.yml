@@ -1,0 +1,10 @@
+id: T928
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Engine: Iso-Barik push BL taken from one driver (default SPL was 3.01 dB high), and the multi-driver gain applied to the Xmax-limited SPL curve and complex pressure H
+why: lead 19 Nov 2026: ultra review 1 findings 1 and 3, verified by probe (_agent_files/reference/ULTRA_REVIEW_20261119_engine_findings.md); clipping/bugs are fixed without asking (John 18 Oct, 3 Nov)
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T928.yml
