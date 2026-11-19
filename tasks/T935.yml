@@ -8,3 +8,6 @@ why: 'John, 3 Nov 2026: "I approve uncontroversial fixes."; John 18 Nov 2026 QO9
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T935.yml
+  - packages/design/domain/box/openISDBox.ts
+  - packages/design/engine/index.ts
+  - packages/design/test/domain/box-passive-radiator.test.ts
