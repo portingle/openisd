@@ -1,0 +1,10 @@
+id: T925
+release_note: internal
+repo: openisd
+owner: agent
+status: open
+goal: Fix phone clipping: filter note cut off, alignment picker label truncated
+why: Clipping is always a bug
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T925.yml
