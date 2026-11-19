@@ -3,9 +3,8 @@
  */
 import {cAdd, cDiv, cInv, cMul, cPar, cSub, cx} from '../complex.js';
 import type {SweepParams} from '../types.js';
-import {winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
+import {losslessTunedChambers, winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
-import {DEFAULT_NEW_PROJECT_QP} from '../../fields/defaults.js';
 
 export class Bandpass6Box implements BoxModel {
   constructor(private readonly P: SweepParams) {}
@@ -20,21 +19,11 @@ export class Bandpass6Box implements BoxModel {
         // lossless limit (circuit.ts `boxLoss`): each chamber an ordinary vented compliance with the
         // SHARED Ql/Qa and its own port's Qpr/Qpf, port mass from its own tuning target (no separate
         // geometry field for a second port) — no inter-chamber leak (Ricl dropped).
-        const rc2 = rho * c * c;
-        // Each port's own Qpr/Qpf; the shared Qp only where a caller states neither.
-        const Qpr = P.Qpr ?? (P.Qp || DEFAULT_NEW_PROJECT_QP), Qpf = P.Qpf ?? (P.Qp || DEFAULT_NEW_PROJECT_QP);
-
-        const Cabr = P.Vb / rc2;
-        const wr = 2 * Math.PI * (P.Fr ?? NaN);
-        const Mapr = 1 / (wr * wr * Cabr);
-        const Zportr = cAdd(cx(wr * Mapr / Qpr, 0), cx(0, w * Mapr));
-        const Zr = cPar(cInv(cx(0, w * Cabr)), cx(Ql / (w * Cabr), 0), cx(Qa / (w * Cabr), 0), Zportr);
-
-        const Cabf = (P.Vf ?? NaN) / rc2;
-        const wf = 2 * Math.PI * (P.Ff ?? NaN);
-        const Mapf = 1 / (wf * wf * Cabf);
-        const Zportf = cAdd(cx(wf * Mapf / Qpf, 0), cx(0, w * Mapf));
-        const Zf = cPar(cInv(cx(0, w * Cabf)), cx(Ql / (w * Cabf), 0), cx(Qa / (w * Cabf), 0), Zportf);
+        const {rear, front} = losslessTunedChambers(w, P, rho, c);
+        const Zportr = rear.portBranch, Zportf = front.portBranch;
+        // Each chamber's compliance with the shared per-frequency Ql/Qa/(ω·Cab), its port in parallel.
+        const Zr = cPar(cInv(cx(0, w * rear.Cab)), cx(Ql / (w * rear.Cab), 0), cx(Qa / (w * rear.Cab), 0), Zportr);
+        const Zf = cPar(cInv(cx(0, w * front.Cab)), cx(Ql / (w * front.Cab), 0), cx(Qa / (w * front.Cab), 0), Zportf);
 
         const Zbox = cAdd(Zr, Zf);
         const UD = cDiv(pg, cAdd(cAdd(ZaE, ZaD), Zbox));

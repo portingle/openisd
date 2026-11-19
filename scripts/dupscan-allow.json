@@ -207,7 +207,11 @@
  "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|7acee83b8e5f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass4Box.ts:26-31 = packages/design/engine/boxes/Bandpass6Box.ts:34-40",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:losslessTunedChambers",
+  "resolved_by": "T929",
+  "ruling": "QO949"
  },
  "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|3147922a3c08": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -227,7 +231,11 @@
  "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|280c236f6777": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:24-30 = packages/design/engine/boxes/Bandpass6Box.ts:22-28",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:losslessTunedChambers",
+  "resolved_by": "T929",
+  "ruling": "QO949"
  },
  "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|bbc9e5c2bd5f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -553,7 +561,11 @@
  "sig|air-compliance|packages/design/engine/boxes/AbcBox.ts|const rc2 = rho * c * c;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/AbcBox.ts:24",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:losslessTunedChambers",
+  "resolved_by": "T929",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/AbcBox.ts|const Cabr = P.Vb / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -578,7 +590,11 @@
  "sig|air-compliance|packages/design/engine/boxes/Bandpass6Box.ts|const rc2 = rho * c * c;": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
   "where": "packages/design/engine/boxes/Bandpass6Box.ts:22",
-  "count": 1
+  "count": 1,
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:losslessTunedChambers",
+  "resolved_by": "T929",
+  "ruling": "QO949"
  },
  "sig|air-compliance|packages/design/engine/boxes/Bandpass6Box.ts|const Cabr = P.Vb / (rho * c * c);": {
   "reason": "baseline 2026-11-18 (QO946.c256)",

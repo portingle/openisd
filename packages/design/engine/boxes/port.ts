@@ -1,6 +1,7 @@
 /**
  * Port acoustic loss/impedance — shared by the vented and 4th-order-bandpass box models
- * (`VentedBox.ts`, `Bandpass4Box.ts`). Lives here rather than in `../circuit.ts` so those box
+ * (`VentedBox.ts`, `Bandpass4Box.ts`), and the tuned chamber port of the 6th-order bandpass and
+ * ABC lossless model (`Bandpass6Box.ts`, `AbcBox.ts`). Lives here rather than in `../circuit.ts` so those box
  * classes can import it without `circuit.ts` depending on `./boxes/` (`circuit.ts` re-exports
  * both names unchanged, so an existing import of `portImpedance`/`portLoss` from `circuit.js`
  * still resolves).
@@ -51,6 +52,34 @@ export function portImpedance(w: number, P: SweepParams): Complex {
   const num  = cAdd(Zrad, cScale(th, Z0));
   const den  = cAdd(cx(Z0, 0), cMul(Zrad, th));
   return cScale(cDiv(num, den), Z0);
+}
+
+/** One chamber of the 6th-order bandpass and ABC lossless model (OpenISD's own simple model, not
+ *  WinISD-captured), the port mass tuned to the chamber's own frequency (no separate port geometry):
+ *    Cab = V/(ρc²)   ω₀ = 2π·F   Map = 1/(ω₀²·Cab)   portBranch = ω₀·Map/Qp + jω·Map */
+export interface LosslessTunedChamber {
+  readonly Cab: number;
+  readonly w0: number;
+  readonly Map: number;
+  readonly portBranch: Complex;
+}
+
+function losslessTunedChamber(w: number, V_m3: number, F_hz: number, Qp: number, rho: number, c: number): LosslessTunedChamber {
+  const Cab = V_m3 / (rho * c * c);
+  const w0 = 2 * Math.PI * F_hz;
+  const Map = 1 / (w0 * w0 * Cab);
+  return {Cab, w0, Map, portBranch: cAdd(cx(w0 * Map / Qp, 0), cx(0, w * Map))};
+}
+
+/** Both chambers of the 6th-order bandpass and ABC lossless model: the rear (Vb, tuned to Fr, port Qpr)
+ *  and the front (Vf, tuned to Ff, port Qpf), each port's own loss Q, the shared Qp only where the caller
+ *  states none (T929). An absent Vf/Fr/Ff poisons the chamber with NaN, caught by `classifyFinite`.
+ *  Shared by `Bandpass6Box` and `AbcBox` so their lossless branches keep one copy of it. */
+export function losslessTunedChambers(w: number, P: SweepParams, rho: number, c: number): {readonly rear: LosslessTunedChamber; readonly front: LosslessTunedChamber} {
+  return {
+    rear: losslessTunedChamber(w, P.Vb, P.Fr ?? NaN, P.Qpr ?? (P.Qp || DEFAULT_NEW_PROJECT_QP), rho, c),
+    front: losslessTunedChamber(w, P.Vf ?? NaN, P.Ff ?? NaN, P.Qpf ?? (P.Qp || DEFAULT_NEW_PROJECT_QP), rho, c),
+  };
 }
 
 /**

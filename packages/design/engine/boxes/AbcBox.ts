@@ -4,9 +4,8 @@
  */
 import {cAdd, cDiv, cInv, cMul, cPar, cx} from '../complex.js';
 import type {SweepParams} from '../types.js';
-import {winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
+import {losslessTunedChambers, winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
-import {DEFAULT_NEW_PROJECT_QP} from '../../fields/defaults.js';
 
 export class AbcBox implements BoxModel {
   constructor(private readonly P: SweepParams) {}
@@ -22,23 +21,13 @@ export class AbcBox implements BoxModel {
         // SHARED Ql/Qa and its own port's Qpr/Qpf, port mass from its own tuning target. The intra port itself
         // stays (Rai = 0 is a physical fact of this topology, not a loss-Q setting to drop) but
         // without Ricl, the same "no inter-chamber leak" simplification.
-        const rc2 = rho * c * c;
-        // Each port's own Qpr/Qpf; the shared Qp only where a caller states neither.
-        const Qpr = P.Qpr ?? (P.Qp || DEFAULT_NEW_PROJECT_QP), Qpf = P.Qpf ?? (P.Qp || DEFAULT_NEW_PROJECT_QP);
-
-        const Cabr = P.Vb / rc2;
-        const wr = 2 * Math.PI * (P.Fr ?? NaN);
-        const Mapr = 1 / (wr * wr * Cabr);
-        const RapBranchR = cAdd(cx(wr * Mapr / Qpr, 0), cx(0, w * Mapr));
-        const Zcr = cAdd(cx(wr * Mapr / Qa, 0), cInv(cx(0, w * Cabr)));
-        const Zr = cPar(cx(wr * Mapr * Ql, 0), Zcr, RapBranchR);
-
-        const Cabf = (P.Vf ?? NaN) / rc2;
-        const wf = 2 * Math.PI * (P.Ff ?? NaN);
-        const Mapf = 1 / (wf * wf * Cabf);
-        const RapBranchF = cAdd(cx(wf * Mapf / Qpf, 0), cx(0, w * Mapf));
-        const Zcf = cAdd(cx(wf * Mapf / Qa, 0), cInv(cx(0, w * Cabf)));
-        const Zf = cPar(cx(wf * Mapf * Ql, 0), Zcf, RapBranchF);
+        const {rear, front} = losslessTunedChambers(w, P, rho, c);
+        const RapBranchR = rear.portBranch, RapBranchF = front.portBranch;
+        // Each chamber's losses at its own tuning: leak Ql·ω₀·Map in parallel, absorption ω₀·Map/Qa in series with Cab.
+        const Zcr = cAdd(cx(rear.w0 * rear.Map / Qa, 0), cInv(cx(0, w * rear.Cab)));
+        const Zr = cPar(cx(rear.w0 * rear.Map * Ql, 0), Zcr, RapBranchR);
+        const Zcf = cAdd(cx(front.w0 * front.Map / Qa, 0), cInv(cx(0, w * front.Cab)));
+        const Zf = cPar(cx(front.w0 * front.Map * Ql, 0), Zcf, RapBranchF);
 
         const Mai = rho * (P.LeffIntra ?? NaN) / (P.SpIntra ?? NaN);
         const jwMai = cx(0, w * Mai);
