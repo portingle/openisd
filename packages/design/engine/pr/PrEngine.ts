@@ -114,7 +114,8 @@ export class PrEngineImpl implements PrEngine {
 
   twiceDriverDisplacement(driverVd_m3: number | null, nDrivers: number): number | null {
     if (driverVd_m3 === null || !(driverVd_m3 > 0) || !(nDrivers > 0)) return null;
-    return 2 * combinedOfN(driverVd_m3, nDrivers);
+    // Two driver displacements per driver, N drivers: 2 × N first, then × Vd, the order main used (T934 review 2).
+    return combinedOfN(driverVd_m3, combinedOfN(2, nDrivers));
   }
 
   routeFormulas(): RouteFormulas {
@@ -131,7 +132,7 @@ export class PrEngineImpl implements PrEngine {
   countForTwiceDisplacement(prVd_m3: number | null, driverVd_m3: number | null, nDrivers: number): number | null {
     if (prVd_m3 === null || driverVd_m3 === null || !(prVd_m3 > 0) || !(driverVd_m3 > 0) || !(nDrivers > 0)) return null;
     // A relative tolerance keeps an exact fit (200 against 2 × 100) from rounding up on floating-point noise.
-    const needed_m3 = 2 * combinedOfN(driverVd_m3, nDrivers);
+    const needed_m3 = combinedOfN(driverVd_m3, combinedOfN(2, nDrivers));
     return Math.max(1, Math.ceil(needed_m3 / prVd_m3 - 1e-9));
   }
 

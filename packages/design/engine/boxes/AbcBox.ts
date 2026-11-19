@@ -4,10 +4,9 @@
  */
 import {cAdd, cDiv, cInv, cMul, cPar, cx} from '../complex.js';
 import type {SweepParams} from '../types.js';
-import {winisdLinePortReactance, droppedEndCorrection_m, tunedChamber} from './port.js';
+import {tunedChamber, winisdLossyChambers} from './port.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
 import {DEFAULT_NEW_PROJECT_QP} from '../../fields/defaults.js';
-import {airCompliance} from '../air.js';
 
 export class AbcBox implements BoxModel {
   constructor(private readonly P: SweepParams) {}
@@ -77,32 +76,7 @@ export class AbcBox implements BoxModel {
         //
         // Absent Qlr/Qar/Qpr/Qiclfr/Qlf/Qaf/Qpf/Fr/Ff/LeffIntra/SpIntra poison every value below
         // with NaN (`?? NaN`), caught by `classifyFinite`, never a throw or a `!`.
-        const Cabr = airCompliance(P.Vb, rho, c);
-        const Cabf = airCompliance(P.Vf ?? NaN, rho, c);
-
-        const Qlr = P.Qlr ?? NaN, Qar = P.Qar ?? NaN, Qpr = P.Qpr ?? NaN;
-        const Qlf = P.Qlf ?? NaN, Qaf = P.Qaf ?? NaN, Qpf = P.Qpf ?? NaN;
-        const Qiclfr = P.Qiclfr ?? NaN;
-        const Fr = P.Fr ?? NaN, Ff = P.Ff ?? NaN;
-
-        const wr = 2 * Math.PI * Fr;
-        const Mapr = 1 / (wr * wr * Cabr);
-        const Ralr = cx(Qlr * wr * Mapr, 0);
-        const Raar = cx(wr * Mapr / Qar, 0);
-        const Zcr = cAdd(Raar, cInv(cx(0, w * Cabr)));
-        const RapBranchR = cAdd(cx(wr * Mapr / Qpr, 0), cx(0, P.tlPortModel ? winisdLinePortReactance(w, Mapr, P.Spr ?? NaN, droppedEndCorrection_m(P.rearPortEndCorrection_m, P.winisdTlPortNoEndCorrection), rho, c) : w * Mapr));
-        const Zr = cPar(Ralr, Zcr, RapBranchR);
-
-        const wf = 2 * Math.PI * Ff;
-        const Mapf = 1 / (wf * wf * Cabf);
-        const Ralf = cx(Qlf * wf * Mapf, 0);
-        const Raaf = cx(wf * Mapf / Qaf, 0);
-        const Zcf = cAdd(Raaf, cInv(cx(0, w * Cabf)));
-        const RapBranchF = cAdd(cx(wf * Mapf / Qpf, 0), cx(0, P.tlPortModel ? winisdLinePortReactance(w, Mapf, P.Sp ?? NaN, droppedEndCorrection_m(P.portEndCorrection_m, P.winisdTlPortNoEndCorrection), rho, c) : w * Mapf));
-        const Zf = cPar(Ralf, Zcf, RapBranchF);
-
-        const ws = 1 / Math.sqrt(Mas * Cas);
-        const Ricl = cx(Qiclfr * ws * Mas, 0);
+        const {Zr, Zcr, RapBranchR, Zf, Zcf, RapBranchF, Ricl} = winisdLossyChambers(P, w, Cas, Mas, rho, c);
 
         const Mai = rho * (P.LeffIntra ?? NaN) / (P.SpIntra ?? NaN);
         const jwMai = cx(0, w * Mai);

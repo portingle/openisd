@@ -3,7 +3,7 @@ release_note: internal
 repo: openisd
 owner: dupscan-guardrail
 status: done
-goal: 'The duplicate-logic check knows each kind of sum''s home, one named engine declaration, so the home is never flagged; the known-copies list can only shrink; 25 listed copies now call an engine function (driver-count scaling, coil wiring, air compliance) and 16 are recorded as already in their home, taking the open entries from 248 to 207.'
+goal: 'The duplicate-logic check knows each kind of sum''s home, one named engine declaration, so the home is never flagged; the known-copies list can only shrink and a re-key must be the same finding; 28 listed copies now call an engine or shared function and 16 are recorded as already in their home, taking the open entries from 248 to 204.'
 why: 'John, 19 Nov 2026: ''remove the dupe and fix the guardrail'''
 done_test: bash scripts/test/dupscan.test.sh
 gates_approved: QO956
@@ -34,3 +34,16 @@ files:
   - packages/design/test/engine/air.test.ts
   - packages/design/test/engine/driver-quantities.test.ts
   - packages/design/test/engine/driver-wiring.test.ts
+  - scripts/land/check-task-contract.sh
+  - packages/design/cloud/syncRules.ts
+  - packages/design/domain/box/passiveRadiatorBox.ts
+  - packages/design/domain/box/ventedChamberWindow.ts
+  - packages/design/test/engine/pr-displacement.test.ts
+  - packages/persistence/src/repos/myDriverRepo.ts
+  - packages/persistence/src/repos/myPassiveRadiatorRepo.ts
+  - packages/persistence/src/repos/savedEntries.ts
+  - packages/ui/src/fileFormat.ts
+  - packages/ui/src/hooks/MobileAdvancedTab-hooks.ts
+  - packages/ui/src/hooks/WinisdDifferencesModal-hooks.ts
+  - packages/ui/src/ui/components/DesktopHelpPanel.vue
+  - packages/ui/src/ui/shells/mobile/PhoneHelpSheet.vue

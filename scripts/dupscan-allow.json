@@ -47,9 +47,9 @@
   "count": 1,
   "was": "copy|packages/ui/src/ui/components/StorageHistory.vue|packages/ui/src/ui/components/StorageHistory.vue|efd771347a2e"
  },
- "copy|packages/ui/src/ui/components/CloudSyncBadge.vue|packages/ui/src/ui/components/CloudSyncDialog.vue|a1f00d562b42": {
+ "copy|packages/ui/src/ui/components/CloudSyncBadge.vue|packages/ui/src/ui/components/CloudSyncDialog.vue|1f2b2f64a4f5": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/ui/components/CloudSyncBadge.vue:16-25 = packages/ui/src/ui/components/CloudSyncDialog.vue:26-35",
+  "where": "packages/ui/src/ui/components/CloudSyncBadge.vue:13-25 = packages/ui/src/ui/components/CloudSyncDialog.vue:24-35",
   "count": 1,
   "was": "copy|packages/ui/src/ui/components/CloudSyncBadge.vue|packages/ui/src/ui/components/CloudSyncDialog.vue|ace67f6cb311"
  },
@@ -77,9 +77,9 @@
   "count": 1,
   "was": "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/auth/implicitSession.ts|5315b4741065"
  },
- "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|58f54c823ec8": {
+ "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|c862347700db": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/logic/driverBrowsingState.ts:52-64 = packages/ui/src/logic/driverDisplay.ts:122-125",
+  "where": "packages/ui/src/logic/driverBrowsingState.ts:52-65 = packages/ui/src/logic/driverDisplay.ts:122-125",
   "count": 1,
   "was": "copy|packages/ui/src/logic/driverBrowsingState.ts|packages/ui/src/logic/driverDisplay.ts|ae2196a8435d"
  },
@@ -101,9 +101,9 @@
   "count": 1,
   "was": "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|494037c4ef0f"
  },
- "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|d1c3f795107d": {
+ "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|406df8228d5b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/hooks/SealedAlignment-hooks.ts:71-82 = packages/ui/src/hooks/VentedAlignment-hooks.ts:65-76",
+  "where": "packages/ui/src/hooks/SealedAlignment-hooks.ts:71-83 = packages/ui/src/hooks/VentedAlignment-hooks.ts:65-76",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/SealedAlignment-hooks.ts|packages/ui/src/hooks/VentedAlignment-hooks.ts|c576fa1fa226"
  },
@@ -113,9 +113,9 @@
   "count": 1,
   "was": "copy|packages/ui/src/hooks/OriginalNewProject-hooks.ts|packages/ui/src/hooks/passiveRadiatorEditor.ts|6c0d55eb3d29"
  },
- "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|4792346f472c": {
+ "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|9655b515ac9b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/hooks/MobileShell-hooks.ts:151-157 = packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue:20-26",
+  "where": "packages/ui/src/hooks/MobileShell-hooks.ts:149-162 = packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue:19-28",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/ui/shells/mobile/MobileProjectsPane.vue|079b9f77411a"
  },
@@ -131,9 +131,9 @@
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileShell-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|fc4755c48b24"
  },
- "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|5b085c7459dc": {
+ "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|58a43c1f82f3": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/hooks/MobileBoxTab-hooks.ts:32-42 = packages/ui/src/hooks/OriginalShell-hooks.ts:213-223",
+  "where": "packages/ui/src/hooks/MobileBoxTab-hooks.ts:32-44 = packages/ui/src/hooks/OriginalShell-hooks.ts:213-225",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileBoxTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|00493df6a98f"
  },
@@ -155,9 +155,9 @@
   "count": 1,
   "was": "copy|packages/ui/src/hooks/MobileAdvancedTab-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|e8430a26876f"
  },
- "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|caa6a1acef57": {
+ "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|bdfd434e5dbb": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/ui/src/hooks/GraphPanel-hooks.ts:76-82 = packages/ui/src/hooks/OriginalShell-hooks.ts:535-537",
+  "where": "packages/ui/src/hooks/GraphPanel-hooks.ts:76-84 = packages/ui/src/hooks/OriginalShell-hooks.ts:535-537",
   "count": 1,
   "was": "copy|packages/ui/src/hooks/GraphPanel-hooks.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|a1bbf327291b"
  },
@@ -221,9 +221,9 @@
   "count": 1,
   "was": "copy|packages/persistence/src/cloud/auth/implicitSession.ts|packages/persistence/src/cloud/cloudStore.ts|efc1ac3b719a"
  },
- "copy|packages/design/engine/simulation/SimulationEngine.ts|packages/design/engine/simulation/SimulationEngine.ts|a8424ae7b99b": {
+ "copy|packages/design/engine/simulation/SimulationEngine.ts|packages/design/engine/simulation/SimulationEngine.ts|58c819b67c59": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/simulation/SimulationEngine.ts:792-802 = packages/design/engine/simulation/SimulationEngine.ts:777-787",
+  "where": "packages/design/engine/simulation/SimulationEngine.ts:796-807 = packages/design/engine/simulation/SimulationEngine.ts:779-792",
   "count": 1,
   "was": "copy|packages/design/engine/simulation/SimulationEngine.ts|packages/design/engine/simulation/SimulationEngine.ts|e7f08c10820d"
  },
@@ -242,9 +242,9 @@
   "count": 1,
   "was": "copy|packages/design/engine/filters/FilterEngine.ts|packages/design/engine/filters/FilterEngine.ts|bcc3251bc511"
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|4ba8bccf82ae": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|c17cd1c95d5b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/Bandpass4Box.ts:10-19 = packages/design/engine/boxes/Bandpass6Box.ts:11-20",
+  "where": "packages/design/engine/boxes/Bandpass4Box.ts:10-22 = packages/design/engine/boxes/Bandpass6Box.ts:11-23",
   "count": 1,
   "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|45bb464dbb2f"
  },
@@ -254,21 +254,27 @@
   "count": 1,
   "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|7acee83b8e5f"
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|1e3331b87e56": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|3147922a3c08": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/Bandpass4Box.ts:65-71 = packages/design/engine/boxes/Bandpass6Box.ts:82-88",
+  "where": "packages/design/engine/boxes/Bandpass4Box.ts:64-70 = packages/design/engine/boxes/Bandpass6Box.ts:82-88",
   "count": 1,
-  "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|3147922a3c08"
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:winisdLossyVentedChamber",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
- "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|93bcb2b95cc8": {
+ "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|6581f308092f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/Bandpass4Box.ts:72-81 = packages/design/engine/boxes/Bandpass6Box.ts:90-99",
+  "where": "packages/design/engine/boxes/Bandpass4Box.ts:71-80 = packages/design/engine/boxes/Bandpass6Box.ts:90-99",
   "count": 1,
-  "was": "copy|packages/design/engine/boxes/Bandpass4Box.ts|packages/design/engine/boxes/Bandpass6Box.ts|6581f308092f"
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:seriesChambersWithLeak",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
- "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|4ba8bccf82ae": {
+ "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|806f78704f8b": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/AbcBox.ts:12-22 = packages/design/engine/boxes/Bandpass6Box.ts:11-21",
+  "where": "packages/design/engine/boxes/AbcBox.ts:12-27 = packages/design/engine/boxes/Bandpass6Box.ts:11-25",
   "count": 1,
   "was": "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|56c314107af0"
  },
@@ -281,11 +287,14 @@
   "resolved_by": "T934",
   "ruling": "QO949"
  },
- "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|466144eb39da": {
+ "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|bbc9e5c2bd5f": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/engine/boxes/AbcBox.ts:80-107 = packages/design/engine/boxes/Bandpass6Box.ts:62-89",
+  "where": "packages/design/engine/boxes/AbcBox.ts:86-113 = packages/design/engine/boxes/Bandpass6Box.ts:68-95",
   "count": 1,
-  "was": "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/Bandpass6Box.ts|bbc9e5c2bd5f"
+  "resolved": true,
+  "resolved_to": "packages/design/engine/boxes/port.ts:winisdLossyChambers",
+  "resolved_by": "T934",
+  "ruling": "QO949"
  },
  "copy|packages/design/engine/boxes/AbcBox.ts|packages/design/engine/boxes/AbcBox.ts|05f7cfecf7d2": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
@@ -350,9 +359,9 @@
   "count": 1,
   "was": "copy|packages/design/domain/winIsdProjectConverter.ts|packages/design/domain/winIsdProjectConverter.ts|0b2155558645"
  },
- "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|726fae744d09": {
+ "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|7e588092aaec": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/vent.ts:6-13 = packages/design/domain/box/ventWindow.ts:27-33",
+  "where": "packages/design/domain/vent.ts:6-15 = packages/design/domain/box/ventWindow.ts:27-34",
   "count": 1,
   "was": "copy|packages/design/domain/box/ventWindow.ts|packages/design/domain/vent.ts|e1162a0d14d9"
  },
@@ -374,9 +383,9 @@
   "count": 1,
   "was": "copy|packages/design/domain/openisdSchema.ts|packages/design/domain/openisdSchema.ts|df108bcc2ad2"
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|7468ff7e6445": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|ce54e846212d": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/cell.ts:181-187 = packages/design/domain/cell.ts:151-155",
+  "where": "packages/design/domain/cell.ts:181-188 = packages/design/domain/cell.ts:151-155",
   "count": 1,
   "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|98d0bb9526a7"
  },
@@ -386,9 +395,9 @@
   "count": 1,
   "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|36a8d20f2952"
  },
- "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|cab70f1ad38d": {
+ "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|f9aa0b678bd5": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/cell.ts:222-235 = packages/design/domain/cell.ts:194-208",
+  "where": "packages/design/domain/cell.ts:222-236 = packages/design/domain/cell.ts:194-209",
   "count": 1,
   "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|1a2e0b92f5f6"
  },
@@ -398,9 +407,9 @@
   "count": 1,
   "was": "copy|packages/design/domain/cell.ts|packages/design/domain/cell.ts|f9086c68dc3f"
  },
- "copy|packages/design/domain/appContext.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|36f96d9c25aa": {
+ "copy|packages/design/domain/appContext.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|71ce93a97212": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/domain/appContext.ts:37-42 = packages/ui/src/hooks/OriginalShell-hooks.ts:60-65",
+  "where": "packages/design/domain/appContext.ts:33-42 = packages/ui/src/hooks/OriginalShell-hooks.ts:56-65",
   "count": 1,
   "was": "copy|packages/design/domain/appContext.ts|packages/ui/src/hooks/OriginalShell-hooks.ts|77595a33b15a"
  },
@@ -434,9 +443,9 @@
   "count": 1,
   "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|4945b2a5a0ac"
  },
- "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|ab128a10c412": {
+ "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|3738d34b7fac": {
   "reason": "baseline 2026-11-18 (QO946.c256)",
-  "where": "packages/design/cloud/driveJson.ts:455-491 = packages/design/cloud/driveJson.ts:410-446",
+  "where": "packages/design/cloud/driveJson.ts:455-492 = packages/design/cloud/driveJson.ts:410-446",
   "count": 1,
   "was": "copy|packages/design/cloud/driveJson.ts|packages/design/cloud/driveJson.ts|58b8eb5741c8"
  },

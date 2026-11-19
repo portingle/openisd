@@ -2,7 +2,7 @@
  * 4th-order bandpass: rear sealed chamber + front vented chamber.
  */
 import {cAdd, cDiv, cInv, cMul, cPar, cSub, cx} from '../complex.js';
-import {portImpedance, winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
+import {portImpedance, winisdLossyVentedChamber, interChamberLeak, seriesChambersWithLeak} from './port.js';
 import type {SweepParams} from '../types.js';
 import {airCompliance} from '../air.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
@@ -64,20 +64,10 @@ export class Bandpass4Box implements BoxModel {
         const Raar = cx(wsc * Mas / Qar, 0);
         const Zr = cPar(Ralr, cAdd(Raar, cInv(cx(0, w * Cabr))));
 
-        const wf = 2 * Math.PI * Ff;
-        const Mapf = 1 / (wf * wf * Cabf);
-        const Ralf = cx(Qlf * wf * Mapf, 0);
-        const Raaf = cx(wf * Mapf / Qaf, 0);
-        const PortBranch = cAdd(cx(wf * Mapf / Qpf, 0), cx(0, P.tlPortModel ? winisdLinePortReactance(w, Mapf, P.Sp ?? NaN, droppedEndCorrection_m(P.portEndCorrection_m, P.winisdTlPortNoEndCorrection), rho, c) : w * Mapf));
-        const Zf = cPar(Ralf, cAdd(Raaf, cInv(cx(0, w * Cabf))), PortBranch);
+        const {Z: Zf, Ral: Ralf, RapBranch: PortBranch} = winisdLossyVentedChamber(Cabf, Ff, Qlf, Qaf, Qpf, P.Sp ?? NaN, P.portEndCorrection_m, P, w, rho, c);
+        const Ricl = interChamberLeak(Qiclfr, Mas, Cas);
 
-        const ws = 1 / Math.sqrt(Mas * Cas);
-        const Ricl = cx(Qiclfr * ws * Mas, 0);
-
-        const ZrPlusZf = cAdd(Zr, Zf);
-        const Zbox = cPar(Ricl, ZrPlusZf);
-        const UD = cDiv(pg, cAdd(cAdd(ZaE, ZaD), Zbox));
-        const Ul = cMul(UD, cDiv(Zbox, ZrPlusZf));
+        const {Zbox, UD, Ul} = seriesChambersWithLeak(Zr, Zf, Ricl, pg, ZaE, ZaD);
         const UP = cMul(Ul, cDiv(Zf, PortBranch));
         const frontLeak = cMul(Ul, cDiv(Zf, Ralf));
         const rearLeak = cMul(Ul, cDiv(Zr, Ralr));

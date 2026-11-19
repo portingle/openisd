@@ -37,6 +37,11 @@ if [ -z "${GATE_FILES:-}" ]; then
   # shellcheck source=/dev/null
   [ -f "$ROOT/land.conf" ] && . "$ROOT/land.conf"
 fi
+# The protected list is the BASE revision's (T934 review 2, Codex 19 Nov 2026): a change cannot unprotect a file by editing
+# its own land.conf. The proposed list is added to it, so a change that protects more is held to more.
+head_gate_files="${GATE_FILES:-}"
+base_gate_files="$(git show "$BASE:land.conf" 2> /dev/null | sed -n 's/^GATE_FILES="\(.*\)"$/\1/p' | head -n 1)"
+GATE_FILES="$(printf '%s %s' "$base_gate_files" "${GATE_FILES:-}" | xargs)"
 
 if [ -n "$PR_MODE" ]; then
   # `why:` is asked of a task file this pull request adds or really changes; a hash-only or status-only edit of an old one is exempt (T767)
@@ -108,7 +113,7 @@ for other in tasks/*.yml; do
 done
 
 # gate files: John approves changes to them (30 Oct 2026). An unset or empty GATE_FILES refuses: deleting the list must not switch the check off.
-[ -n "${GATE_FILES:-}" ] || fail gates "GATE_FILES is not set in land.conf"
+[ -n "$head_gate_files" ] || fail gates "GATE_FILES is not set in land.conf"
 gate_hits="$(printf '%s\n' "$changed" | python3 -c '
 import fnmatch, sys
 globs = sys.argv[1:]

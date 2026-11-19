@@ -117,5 +117,15 @@ for gf in scripts/dupscan-homes.json scripts/dupscan.mjs; do
     [ "$r" = 0 ] && ok "14 $gf with a John-answered gates_approved lands" || fail "14 $gf (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-300)"
 done
 
+# 15: the pull request workflow runs the duplicate check and the other gates, so it is a gate file (T934 review 2).
+setup "" .github/workflows/pr.yml; r=$(land)
+if refused_gates "$r" && grep -q '.github/workflows/pr.yml' "$SCRATCH/out"; then ok "15 .github/workflows/pr.yml without field refuses gates"; else fail "15 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-300)"; fi
+
+# 16: the protected list is the BASE revision's (T934 review 2): a change that drops dupscan-homes.json from GATE_FILES in
+# its own land.conf still has its change to dupscan-homes.json named as a gate change.
+setup "" scripts/dupscan-homes.json
+sed -i 's# scripts/dupscan-homes.json##' land.conf; git add -A; git commit -qm drop-gate; r=$(land)
+if refused_gates "$r" && grep -q 'gate files changed: [^;]*scripts/dupscan-homes.json' "$SCRATCH/out"; then ok "16 a gate file dropped from the proposed land.conf is still a gate file (the base list counts)"; else fail "16 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+
 [ $fails = 0 ] && { echo "land-gates: all passed"; exit 0; }
 echo "land-gates: $fails failed"; exit 1

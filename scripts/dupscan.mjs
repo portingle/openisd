@@ -37,13 +37,17 @@
 //     reason starts "help text, no code" is accepted only when every match on its line lies inside a string or a comment
 //     (prose), never when any of it is code; a copy (jscpd) is never help text. An entry re-keyed (the key's form changed)
 //     names its old key in "was": the old key must be an unresolved entry on the base, gone from this list, of the same
-//     rule and file (a copy: the same two files), claimed by this entry alone, with no higher count.
+//     rule and file (a copy: the same two files), claimed by this entry alone, with no higher count, and it must be this
+//     finding's own key in the previous key form (legacySignatureKey, legacyCopyKeys), so an allowance never passes to a
+//     different line or copy (T934 review 2). A resolved entry is found under either form, so a copy recorded resolved
+//     under the previous form that comes back is still reported as consolidated.
 //   - Keys leave comments out and keep literals exactly: the TypeScript parser marks every character of a file as code,
 //     string (string and template text), regular expression, comment or space (a .vue file: its <script> blocks; the rest
 //     is markup, where <!-- --> is a comment). A key keeps code, strings and regular expressions as written; each run of
 //     spaces and comments between them becomes one space, or one line break if the run held one (a copy's key; a formula
 //     line has none). So rewording or adding a comment keeps a key; a "//" inside a string, template or regular
 //     expression is not a comment.
+//   - jscpd runs comment-insensitive (--mode weak), so a comment changed in one copy does not hide or split the copy.
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync} from 'node:fs';
@@ -71,21 +75,52 @@ const IGNORE = ['**/node_modules/**', '**/test/**', '**/*.test.ts', '**/*.spec.t
   '**/dist/**', '**/coverage/**', '**/ui-proposals/**', '**/*.config.ts'];
 
 // ---- 1. copy detector ------------------------------------------------------------------------------
-function copies() {
+// jscpd runs comment-insensitive (--mode weak, T934 review 2): a comment reworded in one of two copies neither hides the
+// copy nor splits it. Each copy also carries `oldKey`, its key in the previous key form (legacyCopyKeys), so a "was" claim
+// is checked against the same copy and a resolved copy that comes back is recognised under either form.
+function jscpd(mode) {
   if (!existsSync(jscpdBin)) { console.error(`jscpd not found at ${jscpdBin} (it is a devDependency: npm ci)`); process.exit(2); }
   const out = mkdtempSync(join(tmpdir(), 'dupscan-'));
-  execFileSync(jscpdBin, ['packages', '--format', 'typescript,vue', '--min-tokens', '50', '--ignore', IGNORE.join(','),
+  execFileSync(jscpdBin, ['packages', '--format', 'typescript,vue', '--min-tokens', '50', '--mode', mode, '--ignore', IGNORE.join(','),
     '--reporters', 'json', '--output', out, '--silent'], {cwd: repo, stdio: ['ignore', 'ignore', 'inherit']});
   // jscpd exits 0 and writes no report when it finds no clone at all (a tree with nothing to compare); a crash exits non-zero above
   if (!existsSync(join(out, 'jscpd-report.json'))) return [];
-  const report = JSON.parse(readFileSync(join(out, 'jscpd-report.json'), 'utf8'));
-  return report.duplicates.map(d => {
+  return JSON.parse(readFileSync(join(out, 'jscpd-report.json'), 'utf8')).duplicates;
+}
+
+/** A jscpd duplicate's two sides, in key order (by file name, then start line). */
+const sidesOf = d => [d.firstFile, d.secondFile].sort((x, y) => x.name < y.name ? -1 : x.name > y.name ? 1 : x.start - y.start);
+
+function copies() {
+  const legacy = legacyCopyKeys();
+  return jscpd('weak').map(d => {
     const a = d.firstFile.name, b = d.secondFile.name;
     const norm = fragmentKeyText(a, d.fragment, d.firstFile.start);
     const hash = createHash('sha1').update(norm).digest('hex').slice(0, 12);
     const [f1, f2] = [a, b].sort();
-    return {kind: 'copy', key: `copy|${f1}|${f2}|${hash}`, where: `${a}:${d.firstFile.start}-${d.firstFile.end} = ${b}:${d.secondFile.start}-${d.secondFile.end}`, lines: d.lines};
+    // The previous form's copy is the same copy when it lies within this one on both sides; exactly one, or none at all.
+    const [s1, s2] = sidesOf(d);
+    const within = legacy.filter(l => l.sides[0].name === s1.name && l.sides[1].name === s2.name
+      && l.sides[0].start >= s1.start && l.sides[0].end <= s1.end && l.sides[1].start >= s2.start && l.sides[1].end <= s2.end);
+    return {kind: 'copy', key: `copy|${f1}|${f2}|${hash}`, oldKey: within.length === 1 ? within[0].key : null,
+      where: `${a}:${d.firstFile.start}-${d.firstFile.end} = ${b}:${d.secondFile.start}-${d.secondFile.end}`, lines: d.lines};
   });
+}
+
+/** The copies as the previous key form found and keyed them (before T934): jscpd in its default mode (comments count as
+ *  code), the key hashing the fragment with whitespace folded. Used only to prove a re-key and to recognise a resolved
+ *  copy recorded under that form; never to allow anything. */
+function legacyCopyKeys() {
+  return jscpd('mild').map(d => {
+    const [f1, f2] = [d.firstFile.name, d.secondFile.name].sort();
+    const hash = createHash('sha1').update((d.fragment ?? '').replace(/\s+/g, ' ').trim()).digest('hex').slice(0, 12);
+    return {key: `copy|${f1}|${f2}|${hash}`, sides: sidesOf(d)};
+  });
+}
+
+/** A formula line's key in the previous key form (before T934): the trimmed line, comments included, whitespace folded. */
+function legacySignatureKey(rule, rel, line) {
+  return `sig|${rule}|${rel}|${line.trim().replace(/\s+/g, ' ')}`;
 }
 
 /** The key text of a jscpd fragment: the fragment is found in its file (the occurrence nearest the line jscpd names),
@@ -274,7 +309,7 @@ function signatures() {
         if (r.dirs && !r.dirs.some(d => rel.startsWith(d))) continue;
         if (!r.re.test(line) || (r.skip && r.skip.test(line))) continue;
         const matches = [...line.matchAll(new RegExp(r.re.source, 'g'))].map(m => [at + m.index, at + m.index + m[0].length]);
-        hits.push({kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${keyText(src, at, at + line.length)}`, where: `${rel}:${i + 1}`,
+        hits.push({kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${keyText(src, at, at + line.length)}`, oldKey: legacySignatureKey(r.id, rel, line), where: `${rel}:${i + 1}`,
           layer: layerOf(rel), home: homeOf(r.id, rel, matches), prose: matches.every(([a, b]) => isProse(src, a, b))});
       }
     }
@@ -320,8 +355,10 @@ const homeOfKey = Object.fromEntries(inHome.map(f => [f.key, f.home]));
 const seen = new Set(active.map(f => f.key));
 const counts = {};
 const fresh = active.filter(f => { counts[f.key] = (counts[f.key] ?? 0) + 1; return !(f.key in allow) || counts[f.key] > (allow[f.key].count ?? 1); });
-const back = fresh.filter(f => f.key in resolved);
-const unlisted = fresh.filter(f => !(f.key in resolved));
+// A resolved entry keeps its key as recorded, in either key form: a copy coming back is found under both (T934 review 2).
+const resolvedEntryOf = f => resolved[f.key] ?? (f.oldKey !== null && f.oldKey in resolved ? resolved[f.oldKey] : undefined);
+const back = fresh.filter(f => resolvedEntryOf(f) !== undefined);
+const unlisted = fresh.filter(f => resolvedEntryOf(f) === undefined);
 const stale = Object.keys(allow).filter(k => !seen.has(k));
 const ratchet = ratchetAgainstBase();
 
@@ -343,6 +380,7 @@ function ratchetAgainstBase() {
     if (b === undefined || b.resolved === true || e.was in allowFile) return `new entry (its "was" ${e.was} is not an unresolved base entry this one replaces): ${k}`;
     if (scope(e.was) !== scope(k)) return `new entry (its "was" is another rule or another file, not this finding's old key): ${k}`;
     if (claims.get(e.was).length !== 1) return `new entry (its "was" is claimed by ${claims.get(e.was).length} entries; one old key moves to one new key): ${k}`;
+    if (!findings.some(f => f.key === k && f.oldKey === e.was)) return `new entry (its "was" is not this finding's key in the previous key form; a re-key moves the same finding): ${k}`;
     if ((e.count ?? 1) > (b.count ?? 1)) return `count raised from ${b.count ?? 1} to ${e.count} (through "was"): ${k}`;
     return null;
   };
@@ -398,7 +436,7 @@ if (stale.length) {
 }
 if (back.length) {
   console.log(`\nFAIL: ${back.length} consolidated copies are back:`);
-  for (const f of back) { const e = resolved[f.key]; console.log(`  ${where(f)}\n    this copy was consolidated into ${e.resolved_to} by ${e.resolved_by}; call ${e.resolved_to}`); }
+  for (const f of back) { const e = resolvedEntryOf(f); console.log(`  ${where(f)}\n    this copy was consolidated into ${e.resolved_to} by ${e.resolved_by}; call ${e.resolved_to}`); }
 }
 if (unlisted.length) {
   console.log(`\nFAIL: ${unlisted.length} new duplicated logic not in the allow-list (${allowPath}):`);
