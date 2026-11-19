@@ -16,11 +16,16 @@ keeps in the browser's storage (`openisd_my_drivers`) and which the worker's sha
 app is right to keep it; the reset left it.
 
 ## Fix
-`resetApp` now calls `emptyMyDrivers`: it opens Manage Drivers and presses the "Remove from My Drivers" cross on each
-saved row, as a user does, until none is left (and fails the reset if one stays). It does not depend on a spec
-registering what it made, and no test is changed. Not covered, no user path to empty them from the library: My Passive
-Radiators and favourite stars (a spec that stars a driver or saves a radiator still carries that over).
+`resetApp` now calls `emptyLibraries` (packages/ui/test/fixtures.ts). It reads what the browser's storage holds in the four
+user libraries (saved drivers, saved passive radiators, starred drivers, starred radiators) and opens a library only when
+one holds something. Then, as a user does: in Manage Drivers it un-stars each starred driver (Favorites filter, then each
+star) and presses the "Remove from My Drivers" cross on each saved row; in the New Project wizard's passive radiator step
+it opens the passive radiator library, un-stars each star and presses "Remove this passive radiator from your library"
+(the cross) on each saved radiator. It fails the reset if anything is still held afterwards. It does not depend on a spec
+registering what it made, and no test is changed. The app does have a user path to remove a saved radiator, so there is
+no app bug to report there.
 
 ## Proof
-`packages/ui/test/ui/reset-between-tests.browser.spec.ts`: one test imports a driver through the wizard, the next test on
-the same worker checks My Drivers holds no row. It failed before the fix (1 row left) and passes after.
+`packages/ui/test/ui/reset-between-tests.browser.spec.ts`: the first test imports a driver, stars a catalogue driver,
+copies a passive radiator to My PRs and stars it; the next test on the same worker checks none of the four is there.
+It fails on the old fixtures (1 saved driver left) and on a reset that does drivers only (1 star left); it passes now.
