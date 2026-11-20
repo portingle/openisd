@@ -61,10 +61,10 @@ describe('R4, Iso-Barik pair in half the box at the same amplifier voltage', () 
     expect(pair.powerDrive_W.value! / single.powerDrive_W.value!).toBeCloseTo(power, 8);
   });
 
-  it.each<{wiring: DriverWiring; arrayGain: number; excursion: number; power: number}>([
-    {wiring: 'parallel', arrayGain: 6.0206, excursion: 1, power: 2},
-    {wiring: 'series', arrayGain: 0, excursion: 0.5, power: 0.5},
-  ])('wires two pairs in $wiring and charts the load of one pair', ({wiring, arrayGain, excursion, power}) => {
+  it.each<{wiring: DriverWiring; arrayGain: number; loadScale: number; excursion: number; power: number}>([
+    {wiring: 'parallel', arrayGain: 6.0206, loadScale: 0.5, excursion: 1, power: 2},
+    {wiring: 'series', arrayGain: 0, loadScale: 2, excursion: 0.5, power: 0.5},
+  ])("wires two pairs in $wiring and charts the array's load", ({wiring, arrayGain, loadScale, excursion, power}) => {
     const onePair = atSameVoltage(imported(wpr).project);
     onePair.driverWiring.set(wiring);
     const twoPairs = atSameVoltage(imported(wpr).project);
@@ -77,10 +77,29 @@ describe('R4, Iso-Barik pair in half the box at the same amplifier voltage', () 
     const two = sweep(twoPairs);
     two.fs.forEach((_, i) => {
       expect(two.spl[i] - one.spl[i]).toBeCloseTo(arrayGain, 4);
-      expect(two.zmag[i]).toBeCloseTo(one.zmag[i], 8);
+      expect(two.zmag[i]).toBeCloseTo(one.zmag[i] * loadScale, 8);
       expect(two.exc[i] / one.exc[i]).toBeCloseTo(excursion, 8);
     });
     expect(twoPairs.powerDrive_W.value! / onePair.powerDrive_W.value!).toBeCloseTo(power, 8);
+  });
+
+  it.each([
+    {pairs: 4, oneDriverImpedance: false, impedanceRatio: 0.25},
+    {pairs: 2, oneDriverImpedance: true, impedanceRatio: 1},
+  ])('charts $pairs parallel pairs with "Impedance of one driver" $oneDriverImpedance', ({
+    pairs, oneDriverImpedance, impedanceRatio,
+  }) => {
+    const project = atSameVoltage(imported(wpr).project);
+    project.winisdIsobarik.set(false);
+    project.driverWiring.set('parallel');
+    project.winisdOneDriverImpedance.set(oneDriverImpedance);
+    const volume = project.box.sealed.volume_m3.value;
+    assert.ok(volume);
+    const one = sweep(project);
+    project.nDrivers.set(pairs);
+    project.box.sealed.volume_m3.set(volume * pairs);
+    const array = sweep(project);
+    expect(array.zmag[0] / one.zmag[0]).toBeCloseTo(impedanceRatio, 8);
   });
 });
 

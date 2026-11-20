@@ -493,7 +493,8 @@ export class SimulationEngineImpl implements SimulationEngine {
       // computes Nd·BL²/(Nd·Sd)²/(Za+Zload) + Re + jωLe, so Re is never scaled by Nd). The array's
       // impedance is ticket Johnlon/openisd#519; it replaced the "Per-driver impedance" switch (QO941).
       // The chart is the amplifier's load, one driver's x loadScale, unless "Impedance of one driver" is ticked (absent: unticked).
-      const zScale = P.winisdOneDriverImpedance === true || physicalPairWiring(P) !== null ? 1 : drive.loadScale;
+      // For Iso-Barik loading, the one-position sweep already includes the wiring within the pair.
+      const zScale = P.winisdOneDriverImpedance === true ? 1 : drive.loadScale;
       const gain = 20 * Math.log10(n);
       // The gain is the array's pressure, N in phase: SPL, the Xmax-limited SPL and the complex pressure H alike (T928).
       return { ...one, values: { ...one.values,

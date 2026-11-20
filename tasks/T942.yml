@@ -63,6 +63,7 @@ files:
   - packages/ui/test/fixtures/branchMap/shared.ts
   - tasks/T942.yml
 note: A saved project with no flag uses the legacy calculation. The project builder writes the unticked state explicitly.
+review_note: "The lead approved correcting the two-pair impedance expectation under John's 1 Nov 2026 ruling, 'A test never pins a defect'. With 'Impedance of one driver' unticked, the chart shows the array load."
 visual:
   - desktop-dialog-driver-current-info
   - desktop-dialog-driver-disagreement-list
