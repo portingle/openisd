@@ -28,6 +28,7 @@
 # that task's worktree, a commit, scripts/ship.sh (RELEASE_LAND), which opens a pull request that merges
 # itself when its checks pass. Before that the worktree must have its dependencies (RELEASE_INSTALL, default npm ci,
 # runs when one is missing: ship.sh typechecks there). The starting folder is never written.
+# The two newest ledger rows also give the commits for a comparison page served at VISUAL_PAGES_URL.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
@@ -299,8 +300,9 @@ GOAL="Record OpenISD $PUBLIC in the release ledger"
 NEW_TASK_OUT="$(${RELEASE_NEW_TASK:-bash scripts/new-task.sh} release "$GOAL" | tail -1)"
 TASK_ID="${NEW_TASK_OUT%% *}"; TASK_DIR="${NEW_TASK_OUT#* }"
 [[ "$TASK_ID" =~ ^T[0-9]+$ ]] && [ -d "$TASK_DIR" ] || refuse "new-task gave no task and worktree ('$NEW_TASK_OUT'); the release is out, record $PUBLIC in RELEASES.md by hand"
+ledger_status=0
 (
-  cd "$TASK_DIR"
+  cd "$TASK_DIR" || exit 1
   # ship.sh typechecks in this worktree. new-task.sh hardlinks node_modules from the main checkout, which can be older than
   # the lockfile (7.0.960: "Cannot find module 'lz-string'"), so check that every dependency named by a package.json here
   # resolves, and install from the lockfile (RELEASE_INSTALL, default npm ci) when one does not. Never skip the typecheck.
@@ -324,13 +326,19 @@ console.log([...new Set(gone)].join(" "));
   if [ ! -f RELEASES.md ]; then
     printf '# Releases\n\nNewest first. `scripts/release.sh` adds a row when it promotes a snapshot. Dates are UTC.\n\n| Version | Stamp | Date | Commit | Hosted | GitHub | Notes |\n|---|---|---|---|---|---|---|\n' > RELEASES.md
   fi
-  awk -v row="$ROW" '{print} /^\|---/ && !done {print row; done=1}' RELEASES.md > RELEASES.md.new && mv RELEASES.md.new RELEASES.md
+  awk -v row="$ROW" '{print} /^\|---/ && !done {print row; done=1}' RELEASES.md > RELEASES.md.new && mv RELEASES.md.new RELEASES.md || exit 1
   # why: the pull request's task check asks every new task file who decided and when (T767)
   printf 'id: %s\nrelease_note: internal\nrepo: openisd\nowner: release\nstatus: open\ngoal: %s\nwhy: "John, %s: release OpenISD %s"\ndone_test: grep -Fq "| %s | %s |" RELEASES.md\nfiles:\n  - RELEASES.md\n  - tasks/%s.yml\n' \
-    "$TASK_ID" "$GOAL" "$DAY" "$PUBLIC" "$PUBLIC" "$STAMP" "$TASK_ID" > "tasks/$TASK_ID.yml"
-  git add RELEASES.md "tasks/$TASK_ID.yml"
-  git commit --quiet -m "(auto) $TASK_ID: $GOAL"
-  ${RELEASE_LAND:-bash scripts/ship.sh} "$TASK_ID"
-) || refuse "landing the ledger row ($TASK_ID in $TASK_DIR) failed; the release is out, finish that landing by hand"
+    "$TASK_ID" "$GOAL" "$DAY" "$PUBLIC" "$PUBLIC" "$STAMP" "$TASK_ID" > "tasks/$TASK_ID.yml" || exit 1
+  git add RELEASES.md "tasks/$TASK_ID.yml" || exit 1
+  git commit --quiet -m "(auto) $TASK_ID: $GOAL" || exit 1
+  compare_status=0
+  bash "$START_DIR/scripts/visual/compare-releases.sh" --latest-pair "$PWD/RELEASES.md" || compare_status=2
+  ${RELEASE_LAND:-bash scripts/ship.sh} "$TASK_ID" || exit 1
+  exit "$compare_status"
+) || ledger_status=$?
+[ "$ledger_status" != 1 ] || refuse "landing the ledger row ($TASK_ID in $TASK_DIR) failed; the release is out, finish that landing by hand"
 echo "release: $REL is Latest at $SHA; ledger row shipped as $TASK_ID (a pull request that merges itself)"
+[ "$ledger_status" != 2 ] || echo "release: the release comparison page failed to build" >&2
 [ -z "$ANNOUNCE_FAILED" ] || { echo "release: $REL is out, but $ANNOUNCE_FAILED; rerun: $ANNOUNCE_CMD (from a checkout of $SHA, ANNOUNCE_DIR set to it)" >&2; exit 1; }
+[ "$ledger_status" = 0 ] || exit 1
