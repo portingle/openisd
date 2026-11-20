@@ -32,7 +32,7 @@ defineExpose({ setAutoY: graph.setAutoY });
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 const readEl   = ref<HTMLElement | null>(null);
 const meta = graph.meta;
-const blockErrors = graph.blockErrors;
+const blockText = graph.blockText;
 const blocked = graph.blocked;
 const warnings = graph.warnings;
 const warningsDismissed = graph.warningsDismissed;
@@ -384,8 +384,9 @@ watch([viewPlot, effectiveF, localDragRange, blocked, canvasStyles], redraw, { f
     <div ref="readEl" class="gread"></div>
     <div v-if="blocked" class="gmsg">
       <div class="gmsg-title">Can’t plot {{ meta.name }}</div>
-      <div v-for="e in blockErrors" :key="e.field" class="gmsg-line">{{ e.message }}</div>
-       <div class="gmsg-foot">{{ graph.blockFixLine(classic === true) }}</div>
+      <div class="gmsg-foot">{{ blockText.fix }}</div>
+      <div v-if="blockText.summary" class="gmsg-summary">{{ blockText.summary }}</div>
+      <div v-for="e in blockText.details" :key="e.field" class="gmsg-line">{{ e.text }}</div>
     </div>
   </div>
 
@@ -473,17 +474,18 @@ canvas { touch-action: none; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: 4px;
   padding: 12px;
+  overflow-y: auto;
   text-align: center;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 6px;
 }
 .gmsg-title { font-size: 13px; font-weight: 600; color: var(--fg); }
-.gmsg-line  { font-size: 11px; color: var(--mut); line-height: 1.4; max-width: 90%; }
-.gmsg-foot  { font-size: 11px; color: var(--mut); margin-top: 4px; font-style: italic; }
+.gmsg-line, .gmsg-summary { font-size: 11px; color: var(--mut); line-height: 1.4; max-width: 90%; }
+.gmsg-foot  { font-size: 15px; font-weight: 700; color: var(--fg); margin-bottom: 6px; max-width: 90%; }
 
 /* Non-blocking warning pill in the chart header: sits cleanly beside the title
    without obscuring graph curves, axis tick labels, or cursor readouts.
