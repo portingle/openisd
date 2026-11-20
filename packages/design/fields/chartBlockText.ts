@@ -20,6 +20,8 @@ interface Place {
 }
 
 const PLACES: ReadonlyMap<string, Place> = new Map<string, Place>([
+  ['Re_terminal_ohm', {field: NumberField.RE_OHM, place: 'Driver'}],
+  ['BL_terminal_Tm', {field: NumberField.BL_TM, place: 'Driver'}],
   ['Vb_m3', {field: NumberField.BOX_VB_L, place: 'Box'}],
   ['volume_m3', {field: NumberField.BOX_VB_L, place: 'Box'}],
   ['Vb', {field: NumberField.BOX_VB_L, place: 'Box'}],
