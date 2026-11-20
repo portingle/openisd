@@ -1,0 +1,36 @@
+id: T942
+release_note: Physics-based Iso-Barik pairs for new designs, with an option for WinISD's numbers.
+repo: openisd
+owner: t942-agent
+status: open
+goal: Use the selected driver wiring for each physical Iso-Barik pair, with WinISD compatibility for pre-flag saves and an import note for WinISD projects.
+why: "John, QO964, 20 Nov 2026: 'A: real physics by default (box unticked)'"
+ruling: QO964
+done_test: bash scripts/test.sh packages/design/test/engine/driver-array-physics-rules.test.ts packages/design/test/engine/isobarik-loading-winisd.test.ts packages/design/test/engine/isobarik-power-winisd.test.ts
+files:
+  - packages/design/domain/openisdSchema.ts
+  - packages/design/domain/openisdTransforms.ts
+  - packages/design/domain/project/openISDProject.ts
+  - packages/design/domain/project/projectResolve.ts
+  - packages/design/domain/project/projectSweep.ts
+  - packages/design/domain/winIsdProjectConverter.ts
+  - packages/design/engine/circuit.ts
+  - packages/design/engine/signal/SignalEngine.ts
+  - packages/design/engine/simulation/SimulationEngine.ts
+  - packages/design/engine/solvers/isobarikWiring.ts
+  - packages/design/engine/types.ts
+  - packages/design/fields/field.ts
+  - packages/design/test/domain/every-input-recalculates.test.ts
+  - packages/design/test/engine/driver-array-physics-rules.test.ts
+  - packages/design/test/engine/isobarik-loading-winisd.test.ts
+  - packages/design/test/engine/isobarik-power-winisd.test.ts
+  - packages/design/test/engine/isobarik-push-bl.test.ts
+  - packages/ui/src/hooks/DriverWiring-hooks.ts
+  - packages/ui/src/hooks/OriginalShell-hooks.ts
+  - packages/ui/src/logic/applicationIO.ts
+  - packages/ui/src/logic/fileImportExport.ts
+  - packages/ui/src/ui/components/DriverWiring.vue
+  - packages/ui/src/ui/shells/original/OriginalShell.vue
+  - packages/ui/test/fixtures/branchMap/shared.ts
+  - tasks/T942.yml
+note: A saved project with no flag uses the legacy calculation. The project builder writes the unticked state explicitly.
