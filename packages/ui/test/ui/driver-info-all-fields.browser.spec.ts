@@ -19,7 +19,7 @@ const STATED: ReadonlyArray<readonly [string, RegExp]> = [
   ['Hc', /^19(\.0+)?$/],
   ['Hg', /^6(\.0+)?$/],
   ['Voice Coil Dia (Vcd)', /^45\.5/],
-  ['Driver Weight (Weight)', /^2\.74/],
+  ['Driver Weight', /^2\.74/],
 ];
 
 /** Labels of fields the record holds as calculated. */
@@ -97,7 +97,7 @@ test('phone: the driver library fits the weight, basket and wrapped model alongs
   await page.evaluate(() => document.fonts.ready);
   await expect(footer.getByRole('button', {name: 'Cancel', exact: true})).toBeInViewport({ratio: 1});
   await expect(footer.getByRole('button', {name: 'Use', exact: true})).toBeInViewport({ratio: 1});
-  for (const name of [/^Driver Weight \(Weight\)$/, /^Basket Diameter$/]) {
+  for (const name of [/^Driver Weight$/, /^Basket Diameter$/]) {
     const label = preview.locator('.spec-lbl').filter({hasText: name});
     await expect(label).toHaveCount(1);
     const lines = await label.evaluate(element => {

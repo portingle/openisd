@@ -27,14 +27,6 @@ const RANGE_FIELDS: Readonly<Partial<Record<NumericDriverSpecFieldName, RangeLab
     freq_high_hz: Object.freeze({label: 'Range to', title: 'Frequency range, high end\nThe highest frequency the maker states the driver is for.'}),
 });
 
-/** Summary labels read as plain text. The field registry keeps the editor's aliases. */
-const SUMMARY_LABELS: Readonly<Partial<Record<NumericDriverSpecFieldName, string>>> = Object.freeze({
-    Basket_m: 'Basket Diameter',
-    Depth_m: 'Driver Depth',
-    Magnet_m: 'Magnet Diameter',
-    Outer_m: 'Outer Diameter',
-});
-
 const SUMMARY_NUMBER = Object.freeze(new Intl.NumberFormat('en-US', {
     maximumSignificantDigits: NumberField.MIN_SIGNIFICANT,
     useGrouping: false,
@@ -77,7 +69,7 @@ export function driverInfoRows(driver: OpenISDDriver): DriverInfoRow[] {
         }
         rows.push({
             key,
-            label: SUMMARY_LABELS[key] ?? range?.label ?? display.label,
+            label: range?.label ?? display.label,
             title: range?.title ?? display.description,
             value: summaryValue(display, v, cell.precision),
             unit: display.unitLabel(),
