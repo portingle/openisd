@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Writes a before/after page for John: one item per picture, each with its own comment box.
-//   node scripts/visual/diff-page.mjs <outdir> <title> <entries.json> [note]
+//   node scripts/visual/diff-page.mjs <outdir> <title> <entries.json> [note] [--ranked]
 // entries.json: [{"name": "mobile-wizard-sealed-step4", "before": "/path/a.png", "after": "/path/b.png", "diff": "/path/d.png"}]
 // note: one or two plain sentences on what the user sees change (the task file's visual_note); shown under the title
 // and in the first picture's Look at line.
@@ -17,18 +17,19 @@ import {fileURLToPath} from 'node:url';
 import {groupLeaders} from './groups.mjs';
 import {plainScreenName} from './screen-names.mjs';
 
-const [outDir, title, entriesFile, note = ''] = process.argv.slice(2);
+const [outDir, title, entriesFile, note = '', mode] = process.argv.slice(2);
 if (!outDir || !title || !entriesFile) {
-  console.error('usage: diff-page.mjs <outdir> <title> <entries.json> [note]');
+  console.error('usage: diff-page.mjs <outdir> <title> <entries.json> [note] [--ranked]');
   process.exit(2);
 }
 const galleryBin = process.env.VISUAL_GALLERY_BIN ?? resolve(dirname(fileURLToPath(import.meta.url)), '../feedback');
 const item = process.env.VISUAL_FEEDBACK_ITEM ?? 'QO284';
-const entries = JSON.parse(readFileSync(entriesFile, 'utf8'));
+const ranked = mode === '--ranked';
 mkdirSync(outDir, {recursive: true});
 
 const cell = text => String(text).replace(/\|/g, '/').replace(/\n/g, ' ');
-const run = (script, args) => spawnSync('python3', [join(galleryBin, script), ...args], {encoding: 'utf8'});
+const run = (script, args) => spawnSync(process.env.VISUAL_PYTHON ?? 'python3', [join(galleryBin, script), ...args],
+  {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
 
 function copy(name, kind, source) {
   if (source === null || source === undefined) return null;
@@ -73,14 +74,25 @@ function look(screen, before, after, diff, isLeader) {
   return `${screen}, ${what}${diff ? ' (the third picture shows where they differ)' : ''}`;
 }
 
-const prepared = entries.map(entry => {
+function prepare(entry) {
   const before = copy(entry.name, 'before', entry.before);
   const after = copy(entry.name, 'after', entry.after);
   const diff = copy(entry.name, 'diff', entry.diff);
   const box = mark(before, after, diff);
   return {entry, before, after, diff, box};
-});
-const leaders = groupLeaders(prepared.map(p => ({name: p.entry.name, box: p.box})));
+}
+
+function rankedScreens() {
+  const marks = run('mark-diff.py', ['--ranked', outDir, entriesFile]);
+  if (marks.status !== 0 || marks.error) {
+    console.error(`mark-diff failed: ${marks.error ?? marks.stderr}`);
+    process.exit(1);
+  }
+  return JSON.parse(marks.stdout).map(({name, before, after}) => ({entry: {name}, before, after}));
+}
+
+const prepared = ranked ? rankedScreens() : JSON.parse(readFileSync(entriesFile, 'utf8')).map(prepare);
+const leaders = ranked ? prepared.map((_, i) => i) : groupLeaders(prepared.map(p => ({name: p.entry.name, box: p.box})));
 const followers = leaders.map((_, i) => leaders.filter((x, k) => x === i && k !== i).length);  // pictures folded under entry i
 
 // index.md row: Fix | Task | State | Pictures | Look at | Same as. Fix is the screen in words; Task and State stay empty
@@ -88,16 +100,28 @@ const followers = leaders.map((_, i) => leaders.filter((x, k) => x === i && k !=
 // feedback-page.template.html folds every row that names a leader under that leader, with its own comment box.
 const names = prepared.map(p => plainScreenName(p.entry.name));
 const rows = prepared.map(({before, after, diff}, i) => {
-  const links = [['before', before], ['after', after], ['difference', diff]].filter(([, f]) => f).map(([label, f]) => `[${label}](${f})`);
+  const links = [['before', before], ['after', after], ['difference', diff]].filter(([, f]) => f).map(([label, f]) => {
+    const url = ranked ? f.split('/').map(part => encodeURIComponent(part).replace(/\(/g, '%28').replace(/\)/g, '%29')).join('/') : f;
+    return `[${label}](${url})`;
+  });
   const more = followers[i];
   const lookText = look(names[i], before, after, diff, leaders[i] === i);
   const text = more ? `${lookText.replace(/\.$/, '')}. The same change shows in ${more} more picture${more === 1 ? '' : 's'}, folded below.` : lookText;
   const leader = leaders[i] === i ? '' : names[leaders[i]];
-  return `| ${cell(names[i])} |  |  | ${links.join(' ')} | ${cell(text)} | ${cell(leader)} |`;
+  return [cell(names[i]), '', '', links.join(' '), cell(text), cell(leader)];
 });
 
-writeFileSync(join(outDir, 'index.md'), `# ${cell(title)}\n| Fix | Task | State | Pictures | Look at | Same as |\n|---|---|---|---|---|---|\n${rows.join('\n')}\n`);
-const todo = 'Look at the red boxes and type under each picture whether the new look is right or wrong. Nothing else to do.';
-const page = spawnSync('python3', [join(galleryBin, 'feedback-page.py'), outDir, '--item', item, '--todo', todo, '--note', note], {encoding: 'utf8'});
-if (page.status !== 0) { console.error(`feedback-page.py failed: ${page.stderr}`); process.exit(1); }
-console.log(`${entries.length} screen(s) in ${leaders.filter((l, i) => l === i).length} group(s): ${join(outDir, 'index.html')}`);
+const table = rows.map(row => `| ${row.join(' | ')} |`).join('\n');
+writeFileSync(join(outDir, 'index.md'), `# ${cell(title)}\n| Fix | Task | State | Pictures | Look at | Same as |\n|---|---|---|---|---|---|\n${table}\n`);
+const todo = ranked
+  ? (rows.length ? 'Compare the screens in order of how much changed. Add a comment under any screen.' : 'No screens changed.')
+  : 'Look at the red boxes and type under each picture whether the new look is right or wrong. Nothing else to do.';
+const args = [outDir, '--item', item, '--todo', todo, '--note', note];
+if (ranked) {
+  const renderedRows = join(dirname(entriesFile), 'rows.json');
+  writeFileSync(renderedRows, JSON.stringify(rows));
+  args.push('--standalone-rows', renderedRows);
+}
+const page = run('feedback-page.py', args);
+if (page.status !== 0 || page.error) { console.error(`feedback-page.py failed: ${page.error ?? page.stderr}`); process.exit(1); }
+console.log(`${prepared.length} screen(s) in ${leaders.filter((l, i) => l === i).length} group(s): ${join(outDir, 'index.html')}`);
