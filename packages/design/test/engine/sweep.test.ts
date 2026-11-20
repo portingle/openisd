@@ -1,4 +1,5 @@
 import {sweepDriver, solveConsistencyGroup} from './testSolver.js';
+import type {TestSolverQuantities} from './testSolver.js';
 import {describe, it} from 'vitest';
 import assert from 'node:assert/strict';
 import type {SweepParams} from '../../engine/types.js';
@@ -159,7 +160,7 @@ describe('sweep', () => {
         assert.match(issue.text, /^Type .* if you know it, otherwise enter .*\.$/);
         assert.equal(issue.chartFix.desktop, 'Enter Fs, Qes, Qms, Vas, Re and Sd (or Dd) in Driver > Edit > Parameters.');
       }
-      const stated = {Fs_hz: 37, Qes: 0.4, Qms: 7, Vas_m3: 0.03, Re_ohm: 5.6, Dd_m: 0.13};
+      const stated: TestSolverQuantities = {Fs_hz: 37, Qes: 0.4, Qms: 7, Vas_m3: 0.03, Re_ohm: 5.6, Dd_m: 0.13};
       assert.ok(sealedSweep(sweepDriver(solveConsistencyGroup(stated))).values, 'these six inputs allow the sweep');
     });
 
