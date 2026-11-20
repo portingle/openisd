@@ -15,3 +15,44 @@ files:
   - packages/ui/test/ui/blocked-chart-names-field.browser.spec.ts
   - packages/ui/test/ui/driver-info-all-fields.browser.spec.ts
   - packages/ui/test/ui/mobile-filters-tab.browser.spec.ts
+  - packages/design/domain/driver/openISDDriver.ts
+  - packages/design/engine/consistency.ts
+  - packages/design/engine/driver/DriverEngine.ts
+  - packages/design/engine/driver/circuitDiagnostics.ts
+  - packages/design/engine/index.ts
+  - packages/design/engine/params.ts
+  - packages/design/engine/simulation/SimulationEngine.ts
+  - packages/design/engine/types.ts
+  - packages/design/fields/field.ts
+  - packages/design/fields/index.ts
+  - packages/design/test/engine/sweep.test.ts
+  - packages/design/test/fields/chart-block-text.test.ts
+  - packages/ui/src/hooks/GraphPanel-hooks.ts
+  - packages/ui/src/logic/sweepIssueMessage.ts
+  - packages/ui/src/ui/components/DriverEditorModal.vue
+  - packages/ui/src/ui/components/GraphPanel.vue
+  - packages/ui/test/architecture/driver-editor-template.test.ts
+  - packages/ui/test/fixtures.ts
+  - packages/ui/test/fixtures/branchMap/shared.ts
+  - packages/ui/test/logic/appState-issues.test.ts
+  - packages/ui/test/logic/sweepIssueMessage.test.ts
+  - packages/ui/test/ui/driver-editor-units.browser.spec.ts
+  - packages/ui/test/ui/driver-editor-weight-frame-size.browser.spec.ts
+  - packages/ui/test/ui/graph-panel-edit-driver.browser.spec.ts
+visual:
+  - desktop-dialog-driver-current-info
+  - desktop-dialog-driver-editor-dimensions
+  - desktop-dialog-driver-editor-help-dimensions
+  - desktop-dialog-driver-rename
+  - desktop-dialog-enclosure-passive-radiator-data-quality
+  - desktop-dialog-enclosure-tuning-unreachable-warning
+  - desktop-dialog-shared-driver-editor-incomplete-warning
+  - desktop-dialog-shared-graph-blocked-message
+  - mobile-dialog-driver-info
+  - mobile-dialog-driver-rename
+  - mobile-dialog-driver-summary-manage
+  - mobile-dialog-driver-summary-pick
+  - mobile-dialog-phone-filter-card-body
+  - mobile-dialog-shared-graph-blocked-message
+  - mobile-tab-filters
+visual_note: "Driver info and summary popups show at most 4 significant figures; labels no longer repeat their word; a blocked chart says first, in bold, which figures to enter, has an Edit driver parameters button and left-aligned lines; the Driver Editor marks each empty box the chart needs with a note saying what to enter."
