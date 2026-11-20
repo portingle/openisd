@@ -28,7 +28,7 @@ import {hotRe, isobarikPair, withAddedMass} from '../solvers/driverQuantities.js
 import {applyFilters} from '../filters.js';
 import {driveFromVoltage} from '../signal/SignalEngine.js';
 import type {DriverDrive} from '../array/driverWiring.js';
-import {DEFAULT_DRIVER_WIRING, combinedOfN, driverDrive, oneBoxOfN} from '../array/driverWiring.js';
+import {DEFAULT_DRIVER_WIRING, combinedOfN, driverDrive, oneBoxOfN, withStatedRadiatorCount} from '../array/driverWiring.js';
 import type {BoxType, DriverError, EnclosureParams, MaxCurvesResult, SweepParams, SweepPeaks, SweepResult, WinisdFilterErrors} from '../types.js';
 import type {DriverValues, SweepDriver} from '../solverTypes.js';
 import type {BoxParamsIssue, BoxParamsQuantityName, BoxParamsSolveResult, SweepSettingIssue, SweepSettingsSolveResult} from '../params.js';
@@ -220,9 +220,10 @@ function arrayDrive(P: SweepParams, n: number): DriverDrive {
   return driverDrive(n, P.driverWiring ?? DEFAULT_DRIVER_WIRING, P.eg, P.Rs || 0, P.rgAtDriverSide !== false);
 }
 
-/** One driver's share of the array, driven as the wiring says: its share of the box, the voltage and the series resistance it sees. */
-function oneDriverOfArray(P: SweepParams, n: number, drive: DriverDrive): SweepParams {
-  return {...oneBoxOfN(P, n), eg: drive.eg_V, Rs: drive.Rg_ohm};
+/** One driver's share of the array, driven as the wiring says: its share of the box (a passive-radiator box's unstated
+ *  radiator count first made its one radiator, T928), the voltage and the series resistance it sees. */
+function oneDriverOfArray(P: SweepParams, box: BoxType, n: number, drive: DriverDrive): SweepParams {
+  return {...oneBoxOfN(withStatedRadiatorCount(P, box), n), eg: drive.eg_V, Rs: drive.Rg_ohm};
 }
 
 /** `q` is the driver the circuit runs on (the pair under Iso-Barik loading); `one` is one driver of
@@ -485,7 +486,7 @@ export class SimulationEngineImpl implements SimulationEngine {
       // WinISD: one driver in Vb/N at eg, the voltage each driver gets (P/N each); N of them sum to +20·log10(N) on its SPL and
       // N times its VA (WinISD's VA chart is the array's: 0.968 VA at 1 and 4 drivers, W5 sealed 1 W).
       const drive = arrayDrive(P, n);
-      const one = this.sweep(drv, Le_H, box, oneDriverOfArray(P, n, drive));
+      const one = this.sweep(drv, Le_H, box, oneDriverOfArray(P, box, n, drive));
       if (one.values === null) return one;
       // The impedance chart is one driver's, as WinISD's (winisd_research FINDING_20261115: the routine
       // computes Nd·BL²/(Nd·Sd)²/(Za+Zload) + Re + jωLe, so Re is never scaled by Nd). The array's
@@ -737,7 +738,7 @@ export class SimulationEngineImpl implements SimulationEngine {
     const n = P.nDrivers || 1;
     if (winisdCountsDrivers(P)) {
       // WinISD: N times one driver's limits in Vb/N — max power ×N; max SPL +20·log10(N) (⚠ unverified).
-      const one = this.maxCurves(drv, Le_H, box, oneDriverOfArray(P, n, arrayDrive(P, n)));
+      const one = this.maxCurves(drv, Le_H, box, oneDriverOfArray(P, box, n, arrayDrive(P, n)));
       if (one.values === null) return one;
       const gain = 20 * Math.log10(n);
       return { ...one, values: { ...one.values, maxpwr: one.values.maxpwr.map((v) => v * n), maxspl: one.values.maxspl.map((v) => v + gain) } };
