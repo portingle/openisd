@@ -27,11 +27,11 @@ import {NumberField} from '../../fields/field.js';
 import type {ValueFloor} from '../../fields/field.js';
 import {GAMMA, soundSpeedAt, temperatureIssues} from '../air.js';
 import type {AppAir} from '../air.js';
-import {inconsistentInputs, missingDependencies} from '../consistency.js';
-import type {CalculationIssue} from '../consistency.js';
+import {inconsistentInputs, missingDependencies, outsideNormalBand} from '../consistency.js';
+import type {CalculationIssue, NormalBandIssue} from '../consistency.js';
 
 export type AirQuantityName = 'tempK' | 'humidityPct' | 'pressurePa' | 'c' | 'rho';
-export type AirIssue = CalculationIssue<AirQuantityName>;
+export type AirIssue = CalculationIssue<AirQuantityName> | NormalBandIssue<AirQuantityName>;
 
 /** One air quantity as the caller states it: typed, with the half-width (SI) that typing states,
  *  or open to be calculated. */
@@ -297,6 +297,29 @@ export function airFloorIssues(name: AirQuantityName, value: number): readonly A
   return [{...base, fields: [name], text: `${said} must be greater than 0: air with no ${SAYS[name]} carries no sound, so the charts are not drawn.`}];
 }
 
+/** The Advanced-pane field of each air quantity. */
+const AIR_FIELDS: Readonly<Record<AirQuantityName, NumberField>> = Object.freeze<Record<AirQuantityName, NumberField>>({
+  tempK: NumberField.ADV_TEMP_K,
+  humidityPct: NumberField.ADV_HUMIDITY_PCT,
+  pressurePa: NumberField.ADV_PRESSURE_KPA,
+  c: NumberField.ADV_SOUNDVELOCITY_M_PER_S,
+  rho: NumberField.ADV_AIRDENSITY_KG_PER_M3,
+});
+
+/** A stated air quantity inside its field's limits but outside its normal band
+ *  (`NumberField.plausible`): kept and used, with a warning that names the band (QO953.c14, "refuse
+ *  impossible, warn odd"). Empty inside the band, and outside the limits, where the solver's own
+ *  range issue or the temperature issue already speaks. */
+export function airBandIssues(name: AirQuantityName, value: number): readonly AirIssue[] {
+  const field = AIR_FIELDS[name];
+  const {min, max} = field.plausible;
+  if (!Number.isFinite(value) || (value >= min && value <= max)) return [];
+  if (value < field.limits.min || value > field.limits.max || airFloorIssues(name, value).length > 0) return [];
+  const unit = field.unitLabel();
+  const said = (v: number): string => `${field.format(v)} ${unit}`;
+  return [outsideNormalBand(name, `${field.label} ${said(value)} is outside the sane range for air (${said(min)} to ${said(max)}). It is kept and used; check it.`)];
+}
+
 /** The app's value of one of the three conditions the app holds. */
 function appValue(appAir: AppAir, name: AppQuantityName): number {
   switch (name) {
@@ -306,9 +329,11 @@ function appValue(appAir: AppAir, name: AppQuantityName): number {
   }
 }
 
-/** The three the app holds, in the order they are filled: T last, so a typed c can solve it. */
+/** The three the app holds, in the order they are filled: T last, so a typed c can solve it;
+ *  humidity before pressure, so a typed T and ρ reach the coupled solve for p and c
+ *  (BUG_20261119_air-fill-order-gives-false-conflict). */
 type AppQuantityName = 'pressurePa' | 'humidityPct' | 'tempK';
-const APP_FILL_ORDER: readonly AppQuantityName[] = Object.freeze<AppQuantityName[]>(['pressurePa', 'humidityPct', 'tempK']);
+const APP_FILL_ORDER: readonly AppQuantityName[] = Object.freeze<AppQuantityName[]>(['humidityPct', 'pressurePa', 'tempK']);
 
 export function solveAir(inputs: AirInputs, appAir: AppAir): AirSolution {
   const known = new Map<AirQuantityName, Quantity>();
@@ -335,6 +360,8 @@ export function solveAir(inputs: AirInputs, appAir: AppAir): AirSolution {
         if (outcome.kind === 'failed' || !withinLimits(target, outcome.value)) {
           gaveUp.add(target);
           issues.push(unavailable(target, rel, outcome.kind === 'failed' ? outcome.why : 'the answer is outside its limits', known));
+          // A failed step does not stop the pass: the next relation may still solve another quantity (T930).
+          continue;
         } else {
           const others = rel.fields.filter(f => f !== target);
           record(target, outcome.value, propagatedWidth(others, snapshotOf(known), k => {
