@@ -8,11 +8,17 @@ import {useDriverWiring} from '../../hooks/DriverWiring-hooks.js';
 
 const help = EnumField.PROJECT_DRIVERWIRING.description;
 defineProps<{phone?: boolean}>();
-const {shown, mine, options, onSelect, loading, winisdIsobarik, selectLoading, selectWinisdIsobarik, loadingField} = useDriverWiring();
+const {shown, mine, options, onSelect, loading, winisdIsobarik, selectLoading, onSelectLoading, selectWinisdIsobarik, loadingField} = useDriverWiring();
 </script>
 
 <template>
-  <div :class="phone ? 'mob-crow' : 'radio-group field-row'" :title="loadingField.description">
+  <div v-if="phone" class="mob-crow" :title="loadingField.description">
+    <label class="mob-crow-label" for="mob-driver-placement">{{ loadingField.label }}</label>
+    <select id="mob-driver-placement" class="mob-cselect" :value="loading" @change="onSelectLoading">
+      <option v-for="option in loadingField.options" :key="option.value" :value="option.value">{{ option.label }}</option>
+    </select>
+  </div>
+  <div v-else class="radio-group field-row" :title="loadingField.description">
     <label v-for="option in loadingField.options" :key="option.value">
       <input type="radio" name="driver-placement" :value="option.value" :checked="loading === option.value" @change="selectLoading(option.value)">
       {{ option.label }}

@@ -41,7 +41,8 @@ test('page order matches the mock: name, buttons, User options band, count, Key 
     cls: e.className,
     text: (e instanceof HTMLElement ? e.innerText : '').replace(/\s+/g, ' ').trim(),
   })));
-  expect(kids.map(k => k.text.split(' ')[0])).toEqual(['Tang', 'Select', 'USER', 'Drivers', 'KEY', 'Fs', 'Qts', 'Vas', 'Re', 'Xmax', '⚠']);
+  // John's OK on the t919d phone Driver tab pictures; QO953.c38
+  expect(kids.map(k => k.text.split(' ')[0])).toEqual(['Tang', 'Select', 'USER', 'Drivers', 'Placement', 'KEY', 'Fs', 'Qts', 'Vas', 'Re', 'Xmax', '⚠']);
   expect(kids.filter(k => k.cls.includes('mob-band')).map(k => k.text)).toEqual(['USER OPTIONS ?', 'KEY FIGURES ?']);
 });
 

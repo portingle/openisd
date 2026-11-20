@@ -8,7 +8,7 @@ import type {DriverWiring} from '@openisd/design/engine';
 import {DRIVER_WIRING_OPTIONS, EnumField} from '@openisd/design/fields';
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {useApp} from '../logic/app.js';
-import {inputChecked, selectedOption} from '../logic/domEvents.js';
+import {inputChecked, selectedOption, selectValue} from '../logic/domEvents.js';
 import {useFeatureUse} from './telemetryContext.js';
 
 export function useDriverWiring() {
@@ -33,9 +33,13 @@ export function useDriverWiring() {
     if (value === 'standard' || value === 'isobaric') project.value.loading.set(value);
   }
 
+  function onSelectLoading(e: Event): void {
+    selectLoading(selectValue(e));
+  }
+
   function selectWinisdIsobarik(e: Event): void {
     project.value.winisdIsobarik.set(inputChecked(e));
   }
 
-  return {shown, mine, options, choose, onSelect, loading, winisdIsobarik, selectLoading, selectWinisdIsobarik, loadingField: EnumField.PROJECT_LOADING};
+  return {shown, mine, options, choose, onSelect, loading, winisdIsobarik, selectLoading, onSelectLoading, selectWinisdIsobarik, loadingField: EnumField.PROJECT_LOADING};
 }
