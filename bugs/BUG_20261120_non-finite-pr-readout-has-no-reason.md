@@ -4,4 +4,4 @@ Opening [the passive-radiator project fixture](../packages/ui/test/fixtures/pr-r
 
 The import should open the project and keep its entered data. The resonance should be unavailable with a reason from the engine. The import regression checks this through the app's file handler and the readout's warning button.
 
-T943, the non-finite result guard, is blocked on the existing maximum-power contract. Two coil-wiring specs require a project to return maximum-power values for unbounded drivers. The guard removes the infinite values from the project result, so those specs fail before they can compare the wiring results.
+T943, the non-finite result guard, preserves unbounded maximum SPL and power samples when that curve's advisory names both missing limits. This follows John's ruling QO143, “state Pe or Xmax to bound this curve”. Other non-finite samples produce a structured failure.

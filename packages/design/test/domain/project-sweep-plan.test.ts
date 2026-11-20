@@ -4,7 +4,7 @@
  * Worker boundary (structured clone) and running it gives exactly what `sweep()`/`maxCurves()` give.
  */
 import {describe, expect, it, vi} from 'vitest';
-import {type Engine, createEngine} from '@openisd/design/engine';
+import {type DriverPrerequisite, type Engine, createEngine} from '@openisd/design/engine';
 import type {FrequencyGrid} from '../../domain/box/frequencyGrid.js';
 import {ProjectBuilder} from '../../domain/openisdTransforms.js';
 import {runMaxCurvesJob, runSweepJob} from '../../domain/project/projectSweep.js';
@@ -58,10 +58,62 @@ describe('OpenISDProject.sweepPlan', () => {
     });
     const result = runSweepJob(engine.simulation, plan.job);
 
+    const text: unknown = expect.stringMatching(/impedance magnitude/i);
     expect(result.issues).toEqual([
-      expect.objectContaining({kind: 'result-refused', target: 'zmag', cause, text: expect.stringMatching(/impedance magnitude/i)}),
+      expect.objectContaining({kind: 'result-refused', target: 'zmag', cause, text}),
     ]);
     expect(result.values).toBeNull();
+  });
+
+  it('publishes unbounded maximum SPL and power with their driver prerequisites', () => {
+    const engine = createEngine();
+    const project = sealed(engine);
+    project.driver.specs.Pe_W.clear();
+    project.driver.specs.Xmax_m.clear();
+    const result = project.maxCurves(GRID);
+
+    expect(result.issues).toEqual([]);
+    expect(result.driverPrerequisites).toEqual([
+      {output: 'maxspl', missing: ['Pe_W', 'Xmax_m']},
+      {output: 'maxpwr', missing: ['Pe_W', 'Xmax_m']},
+    ]);
+    const values = result.values;
+    if (values === null) throw new Error('expected the unbounded curves to be published');
+    expect(values.fs.length).toBeGreaterThan(0);
+    expect(values.maxspl).toEqual(values.fs.map(() => Infinity));
+    expect(values.maxpwr).toEqual(values.fs.map(() => Infinity));
+  });
+
+  const splPrerequisite: DriverPrerequisite = {output: 'maxspl', missing: ['Pe_W', 'Xmax_m']};
+  it.each([
+    {output: 'maxspl', sample: Number.NaN, advisory: 'both limits missing', prerequisites: [splPrerequisite], cause: 'not-a-number'},
+    {output: 'maxspl', sample: -Infinity, advisory: 'both limits missing', prerequisites: [splPrerequisite], cause: 'infinite'},
+    {output: 'maxspl', sample: Infinity, advisory: 'no advisory', prerequisites: [], cause: 'infinite'},
+    {output: 'maxspl', sample: Infinity, advisory: 'only Pe missing', prerequisites: [{output: 'maxspl', missing: ['Pe_W']}], cause: 'infinite'},
+    {output: 'maxpwr', sample: Infinity, advisory: 'advisory for maximum SPL', prerequisites: [splPrerequisite], cause: 'infinite'},
+    {output: 'fs', sample: Infinity, advisory: 'advisory for maximum SPL', prerequisites: [splPrerequisite], cause: 'infinite'},
+  ] satisfies readonly {
+    output: 'maxspl' | 'maxpwr' | 'fs';
+    sample: number;
+    advisory: string;
+    prerequisites: readonly DriverPrerequisite[];
+    cause: string;
+  }[])('refuses $sample in max curves $output with $advisory', ({output, sample, prerequisites, cause}) => {
+    const engine = createEngine();
+    const project = sealed(engine);
+    const solved = project.maxCurves(GRID).values;
+    if (solved === null) throw new Error('expected finite reference max curves');
+    vi.spyOn(engine.simulation, 'maxCurves').mockReturnValue({
+      values: {...solved, [output]: [sample, ...solved[output].slice(1)]},
+      issues: [],
+      driverPrerequisites: prerequisites,
+    });
+
+    const result = project.maxCurves(GRID);
+    expect(result.values).toBeNull();
+    expect(result.issues).toEqual([
+      expect.objectContaining({kind: 'result-refused', target: `maxCurves:${output}`, cause}),
+    ]);
   });
 
   it('max curves run at the 2.83 V reference, the sweep at the project drive', () => {

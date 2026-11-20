@@ -53,7 +53,8 @@ import {nonFiniteResult, type NonFiniteResultIssue} from '../../calculatedResult
  *  instead), or a calculated output refused at publication. */
 export type SweepIssue =
   | DriverIssue | AirIssue | BoxParamsIssue | SweepSettingIssue
-  | VentIssue | PrIssue | SignalIssue | NonFiniteResultIssue<string>;
+  | VentIssue | PrIssue | SignalIssue
+  | NonFiniteResultIssue<keyof SweepResult | `maxCurves:${keyof MaxCurvesResult}`>;
 
 /** The unified sweep result: the curves (or null if nothing could be derived), and why. */
 export interface SweepSolveResult {
@@ -83,12 +84,12 @@ const SWEEP_OUTPUT_LABELS: Readonly<Record<keyof SweepResult, string>> = Object.
   fltPhase: 'Filter phase', fltGd: 'Filter group delay', va: 'Amplifier apparent load power',
 });
 
-function resultIssues<T extends string>(
-  labels: Readonly<Record<T, string>>, values: Readonly<Record<T, unknown>>, prefix: string,
-): NonFiniteResultIssue<string>[] {
-  const issues: NonFiniteResultIssue<string>[] = [];
+function resultIssues<T extends string, Prefix extends string>(
+  labels: Readonly<Record<T, string>>, values: Readonly<Record<T, unknown>>, prefix: Prefix,
+): NonFiniteResultIssue<`${Prefix}${T}`>[] {
+  const issues: NonFiniteResultIssue<`${Prefix}${T}`>[] = [];
   for (const key in labels) {
-    const issue = nonFiniteResult(prefix + key, labels[key], values[key]);
+    const issue = nonFiniteResult(`${prefix}${key}`, labels[key], values[key]);
     if (issue !== null) issues.push(issue);
   }
   return issues;
@@ -435,16 +436,17 @@ export class SimulationEngineImpl implements SimulationEngine {
   publishMaxCurves(result: MaxCurvesSolveResult): MaxCurvesSolveResult {
     const values = result.values;
     if (values === null) return result;
-    // An absent thermal and excursion bound has its own advisory. Only its +Infinity
-    // sentinel is expected in the internal result.
-    const unbounded = result.driverPrerequisites.length > 0;
-    const output = unbounded ? {
-      ...values,
-      maxspl: values.maxspl.filter(value => value !== Infinity),
-      maxpwr: values.maxpwr.filter(value => value !== Infinity),
-    } : values;
-    const issues = resultIssues(MAX_OUTPUT_LABELS, output, 'maxCurves:');
-    return !unbounded && issues.length === 0 ? result : {...result, values: null, issues: [...result.issues, ...issues]};
+    const checked = {...values};
+    // QO143 (2026-09-15): +Infinity is unbounded when the advisory for this curve
+    // says "state Pe or Xmax to bound this curve". Keep those samples in the published result.
+    for (const output of ['maxspl', 'maxpwr'] as const) {
+      const unbounded = result.driverPrerequisites.some(prerequisite =>
+        prerequisite.output === output && prerequisite.missing.includes('Pe_W') && prerequisite.missing.includes('Xmax_m'),
+      );
+      if (unbounded) checked[output] = values[output].filter(sample => sample !== Infinity);
+    }
+    const issues = resultIssues(MAX_OUTPUT_LABELS, checked, 'maxCurves:');
+    return issues.length === 0 ? result : {...result, values: null, issues: [...result.issues, ...issues]};
   }
 
   /**
