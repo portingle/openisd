@@ -97,6 +97,7 @@ export function blockedChartText(errors: readonly DriverError[], onPhone: boolea
   return {
     fix: driver === undefined ? fieldFix :
       [onPhone ? driver.phone : driver.desktop, ...(other.length === 0 ? [] : [fieldFix])].join(' '),
+    canEditDriverParameters: driver !== undefined,
     summary: driver?.summary,
     details: errors.map(error => ({field: error.field, text: error.message})),
   };

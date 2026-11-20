@@ -131,11 +131,15 @@ for (const [skin, , step] of blockedSteps) {
     await expect(details.first()).toHaveCSS('font-size', '11px');
     await expect.poll(() => message.evaluate(el => el.scrollHeight - el.clientHeight)).toBe(0);
     await expect(message).toContainText('Missing driver figures are cone area (Sd), coil resistance (Re), force factor (BL), compliance (Cms), moving mass (Mms) and mechanical resistance (Rms).');
-    await expect(details.first()).toHaveText('Type Sd (cone area) in Parameters, or enter Dd (cone diameter) to calculate it.');
+    const rows = message.locator('.gmsg-title, .gmsg-foot, .gmsg-edit, .gmsg-summary, .gmsg-line');
+    await expect.poll(() => rows.evaluateAll(elements => new Set(elements.map(el => el.getBoundingClientRect().left)).size)).toBe(1);
+    await expect(fix).toHaveCSS('text-align', 'left');
+    await expect(details.first()).toHaveText('Type Sd (cone area) if you know it, otherwise enter Dd (cone diameter).');
+    await expect(details.nth(1)).toHaveText('Type Re (coil resistance) if you know it, otherwise enter USPL (voltage sensitivity) and SPL (1 W sensitivity).');
     await expect(message).not.toContainText(/needs|directly entered or derived|cannot be calculated yet/);
     const fields = ['Sd_m2', 'Re_ohm', 'BL_Tm', 'Cms_m_per_N', 'Mms_kg', 'Rms_kg_per_s'];
     for (const [i, label] of ['Sd', 'Re', 'BL', 'Cms', 'Mms', 'Rms'].entries()) {
-      await expect(details.nth(i)).toHaveText(new RegExp('^Type ' + label + ' .* in Parameters'));
+      await expect(details.nth(i)).toHaveText(new RegExp('^Type ' + label + ' .* if you know it, otherwise enter '));
     }
     await capture(page, `blocktext-${skin}.after`);
 

@@ -114,9 +114,9 @@ function fieldIssues(
       .filter(inputs => inputs.length > 0 && inputs.every(editable));
     const inputs = alternatives.reduce<readonly RouteQuantity[] | undefined>((best, next) =>
       best === undefined || next.length < best.length ? next : best, undefined);
-    const type = `Type ${named(field)} in ${tabOf(field)}`;
+    const type = `Type ${named(field)}`;
     const text = inputs === undefined ? `${type}.` :
-      `${type}, or enter ${list(inputs.map(input => tabOf(input) === tabOf(field) ? named(input) : `${named(input)} in ${tabOf(input)}`))} to calculate it.`;
+      `${type} if you know it, otherwise enter ${list(inputs.map(input => tabOf(input) === tabOf(field) ? named(input) : `${named(input)} in ${tabOf(input)}`))}.`;
     return {kind: 'required-value', field, text};
   });
 }

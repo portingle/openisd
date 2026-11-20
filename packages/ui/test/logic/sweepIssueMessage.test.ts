@@ -18,7 +18,7 @@ describe('sweepIssueMessage — SweepIssue projected to a DriverError for the ex
     const issue: SweepIssue = {
       kind: 'required-value',
       field: 'Sd_m2',
-      text: 'Type Sd (cone area) in Parameters, or enter Dd (cone diameter) to calculate it.',
+      text: 'Type Sd (cone area) if you know it, otherwise enter Dd (cone diameter).',
       chartFix: {
         desktop: 'Enter Sd (or Dd) in Driver > Edit > Parameters.',
         phone: 'Enter Sd (or Dd) in Driver tab > Edit > Parameters.',

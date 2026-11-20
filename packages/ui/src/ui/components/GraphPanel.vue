@@ -385,6 +385,7 @@ watch([viewPlot, effectiveF, localDragRange, blocked, canvasStyles], redraw, { f
     <div v-if="blocked" class="gmsg">
       <div class="gmsg-title">Can’t plot {{ meta.name }}</div>
       <div class="gmsg-foot">{{ blockText.fix }}</div>
+      <button v-if="blockText.canEditDriverParameters" type="button" class="gmsg-edit" @click="graph.editDriverParameters()">Edit driver parameters</button>
       <div v-if="blockText.summary" class="gmsg-summary">{{ blockText.summary }}</div>
       <div v-for="e in blockText.details" :key="e.field" class="gmsg-line">{{ e.text }}</div>
     </div>
@@ -471,21 +472,24 @@ canvas { touch-action: none; }
 .gmsg {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: safe center;
+  display: grid;
+  grid-template-columns: minmax(0, max-content);
+  justify-content: center;
+  align-content: safe center;
   gap: 4px;
   padding: 12px;
   overflow-y: auto;
-  text-align: center;
+  text-align: left;
+  overflow-wrap: anywhere;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 6px;
 }
 .gmsg-title { font-size: 13px; font-weight: 600; color: var(--fg); }
-.gmsg-line, .gmsg-summary { font-size: 11px; color: var(--mut); line-height: 1.4; max-width: 90%; }
-.gmsg-foot  { font-size: 15px; font-weight: 700; color: var(--fg); margin-bottom: 6px; max-width: 90%; }
+.gmsg-line, .gmsg-summary { font-size: 11px; color: var(--mut); line-height: 1.4; }
+.gmsg-foot  { font-size: 15px; font-weight: 700; color: var(--fg); margin-bottom: 6px; }
+.gmsg-edit { justify-self: start; max-width: 100%; margin-bottom: 4px; font-size: 14px; text-align: inherit; }
+.classic .gmsg-edit { min-height: var(--mob-touch-min); }
 
 /* Non-blocking warning pill in the chart header: sits cleanly beside the title
    without obscuring graph curves, axis tick labels, or cursor readouts.
