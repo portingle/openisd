@@ -12,7 +12,8 @@ body { margin:0; padding:16px; background:var(--bg); color:var(--fg); font:16px/
 h1 { font-size:20px; margin:0 0 4px; }
 .sub { color:var(--muted); margin:0 0 16px; font-size:14px; }
 .fix { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px; margin:0 0 16px; }
-.fix h2 { font-size:17px; margin:0 0 4px; }
+.fix h2, .fix h3 { font-size:17px; margin:0 0 4px; }
+.screen-family > h2 { font-size:18px; margin:18px 0 8px; }
 .meta { font-size:13px; color:var(--muted); margin:0 0 8px; }
 .meta .state.done { color:var(--done); font-weight:600; }
 .meta .state.wait { color:var(--wait); font-weight:600; }
@@ -32,6 +33,7 @@ a { color:inherit; }
 .permalink { float:right; font-size:13px; line-height:1; color:var(--muted); text-decoration:none; padding:2px 4px; }
 .side { min-width:0; }
 .lbl { display:block; font-size:12px; color:var(--muted); margin:0 0 2px; }
+.local-comment { display:block; width:100%; box-sizing:border-box; margin:8px 0; font:inherit; }
 
 figure.here { outline:3px solid #c62828; outline-offset:3px; border-radius:4px; }
 details.same { margin:0 0 16px; }
@@ -46,6 +48,7 @@ details.ruled summary { font-size:15px; color:var(--muted); padding:8px 0; curso
 <h1>__TITLE__</h1>
 __NOTE__
 <main id="out"><p class="note">Loading…</p></main>
+__STANDALONE_ROWS__
 <script>
 // Reads index.md (the table agents keep) and shows each fix with its pictures inline.
 const out = document.getElementById('out');
@@ -94,8 +97,12 @@ function cellText(td) {
 function render(html) {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   const rows = [...doc.querySelectorAll('table tbody tr')].map((tr) => [...tr.cells].map(cellText));
+  renderRows(rows, true);
+}
+
+function renderRows(rows, newestFirst) {
   // Optional 6th cell "Same as": the Fix name of the row this one repeats. Such a row is folded under that row.
-  if (!rows.length) { out.innerHTML = '<p class="note">No fixes listed.</p>'; return; }
+  if (!rows.length) { out.innerHTML = newestFirst ? '<p class="note">No fixes listed.</p>' : ''; return; }
   // "Look at" cell: "group: text · group: text", or plain text for a fix with one group.
 function lookFor(cell, group) {
   const parts = (cell || '').split(' · ');
@@ -112,7 +119,7 @@ function lookLine(text) {
 
   const sameAs = (r) => (r[5] || '').trim();
   const foldedUnder = (leader) => rows.filter((r) => sameAs(r) === leader[0]);
-  const section = ([fix, task, state, cell, look]) => {
+  const section = ([fix, task, state, cell, look, , family]) => {
     const name = (label, group, url) => url ? FOLDER + '/' + url : FOLDER + '/' + task;
     const cls = /^landed/.test(state) ? 'done' : 'wait';
     const groups = pictures(cell || '');
@@ -138,22 +145,42 @@ function lookLine(text) {
         : textItem(name('', '', g.live), lk, g.live);
       return `<div class="group">${g.name ? `<h3>${esc(g.name)}</h3>` : ''}<div class="${g.items.some((i) => i.lone) && !g.items.some((i) => i.before) ? 'pair' : 'items'}">${figs}</div></div>`;
     }).join('');
-    return `<section class="fix"><h2>${esc(fix)}</h2>${task || state ? `<p class="meta">${esc(task)} · <span class="state ${cls}">${esc(state)}</span></p>` : ''}${body}</section>`;
+    const heading = family ? 'h3' : 'h2';
+    return `<section class="fix"><${heading}>${esc(fix)}</${heading}>${task || state ? `<p class="meta">${esc(task)} · <span class="state ${cls}">${esc(state)}</span></p>` : ''}${body}</section>`;
   };
   // A group shows its first picture, then every other picture of the same change in a closed fold; each keeps its own comment box.
   const withFold = (r) => {
     const rest = foldedUnder(r);
     return section(r) + (rest.length ? `<details class="same"><summary>Same change in ${rest.length} more picture${rest.length === 1 ? '' : 's'} (show)</summary>${rest.map(section).join('')}</details>` : '');
   };
-  out.innerHTML = rows.filter((r) => !sameAs(r)).reverse().map(withFold).join('');
+  const leaders = rows.filter((r) => !sameAs(r));
+  if (newestFirst) leaders.reverse();
+  const families = new Map();
+  for (const row of leaders) {
+    const family = row[6] || '';
+    if (!families.has(family)) families.set(family, []);
+    families.get(family).push(withFold(row));
+  }
+  out.innerHTML = [...families].map(([family, sections]) => family
+    ? `<section class="screen-family"><h2>${esc(family)}</h2>${sections.join('')}</section>`
+    : sections.join('')).join('');
 }
 
 // Every comment box, every entry under a picture, the polling and the "is answering" line come from the one thread module.
-const store = BoardThread.store(ITEM);
+const standalone = document.getElementById('standalone-rows');
+const store = standalone && typeof BoardThread === 'undefined' ? null : BoardThread.store(ITEM);
 
 function commentBoxes() {
   for (const fig of document.querySelectorAll('figure[data-item]')) {
     const n = fig.dataset.name, also = fig.dataset.also;  // a pair holds two pictures: comments on either belong to it
+    if (!store) {
+      const comment = document.createElement('textarea');
+      comment.className = 'local-comment';
+      comment.placeholder = 'Your comment';
+      comment.setAttribute('aria-label', 'Comment on ' + n);
+      fig.append(comment);
+      continue;
+    }
     const topic = { kind: fig.dataset.kind, name: n, also };
     let first = true;
     const list = store.list({ topic, order: 'newest', replies: true, onSync: (entries) => {
@@ -195,10 +222,12 @@ function goToHash() {
 }
 addEventListener('hashchange', goToHash);
 
-fetch('index.md?html', { cache: 'no-store' })
-  .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
-  .then(render)
-  .then(() => store.ready).then(commentBoxes).then(foldRuled).then(goToHash)
+const gallery = standalone
+  ? Promise.resolve().then(() => renderRows(JSON.parse(standalone.textContent), false))
+  : fetch('index.md?html', { cache: 'no-store' })
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(render);
+gallery.then(() => store?.ready).then(commentBoxes).then(foldRuled).then(goToHash)
   .catch((e) => { out.innerHTML = `<p class="note">Could not read index.md (${esc(String(e))}).</p>`; });
 
 // Stamp line under every picture: read from the PNG text chunk "stamp" (before-after-shoot.mjs writes it, mark-diff.py keeps it).
@@ -216,6 +245,7 @@ function pngText(buf, key) {
   return null;
 }
 async function addStamp(img) {
+  if (standalone) return;  // the release versions and commits are at the top of the page
   if (img.dataset.stamped) return;
   img.dataset.stamped = '1';
   let text = null;
