@@ -71,6 +71,7 @@ import {closeSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, r
 import {tmpdir} from 'node:os';
 import {dirname, join, relative, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {NodeTypes, parse as parseVue} from '@vue/compiler-dom';
 import ts from 'typescript';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -185,7 +186,7 @@ function fragmentKeyText(rel, fragment, startLine) {
 
 // ---- source classes ----------------------------------------------------------------------------------
 // Every character of a file is 'code', 'string' (string and template text, quotes and ${ } delimiters included), 'regex',
-// 'comment', 'space' (whitespace between tokens), 'continuation' (a line comment break after a binary operator)
+// 'comment', 'space' (whitespace between tokens), 'joined' (whitespace introduced by a line comment)
 // or 'markup' (a .vue file outside its <script> blocks).
 const LITERAL = {[ts.SyntaxKind.StringLiteral]: 'string', [ts.SyntaxKind.NoSubstitutionTemplateLiteral]: 'string',
   [ts.SyntaxKind.TemplateHead]: 'string', [ts.SyntaxKind.TemplateMiddle]: 'string', [ts.SyntaxKind.TemplateTail]: 'string',
@@ -200,23 +201,36 @@ function source(rel) {
   let tree = null;
   if (rel.endsWith('.vue')) {
     cls.fill('markup');
-    for (const m of text.matchAll(/<!--[\s\S]*?-->/g)) cls.fill('comment', m.index, m.index + m[0].length);
-    for (const m of text.matchAll(/(<script\b[^>]*>)([\s\S]*?)<\/script>/g)) classifyTs(text, m.index + m[1].length, m[2].length, cls, siblingBreaks);
+    const vue = parseVue(text, {parseMode: 'sfc', onError: () => {}});
+    const markComments = node => {
+      if (node.type === NodeTypes.COMMENT) cls.fill('comment', node.loc.start.offset, node.loc.end.offset);
+      if (Array.isArray(node.children)) node.children.forEach(markComments);
+    };
+    markComments(vue);
+    for (const block of vue.children) {
+      if (block.type !== NodeTypes.ELEMENT || block.tag !== 'script' || !block.innerLoc) continue;
+      const {start, source} = block.innerLoc;
+      classifyTs(text, start.offset, source.length, cls, siblingBreaks);
+    }
   } else tree = classifyTs(text, 0, text.length, cls, siblingBreaks);
   const src = {text, cls, tree, siblingBreaks};
   sources.set(rel, src);
   return src;
 }
 
-/** Classes the TypeScript text at text[from, from + length) into `cls`; returns its parsed tree. Characters no token covers
- *  are trivia: a comment ("//" to the line's end, or "/*" to its close, its own spaces included) is 'comment', other
- *  whitespace 'space', anything else 'comment'. */
+/** The parser locates tokens so the scanner only reads trivia, even beside a regexp or inside a template substitution. */
 function classifyTs(text, from, length, cls, siblingBreaks) {
   const sf = ts.createSourceFile('x.ts', text.slice(from, from + length), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const binaryBreaks = new Set();
-  cls.fill('trivia', from, from + length);
+  const scanner = ts.createScanner(ts.ScriptTarget.Latest, false, ts.LanguageVariant.Standard, sf.text);
+  const tokens = [];
+  const boundaries = new Set();
   const visit = node => {
     if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode) return;
+    const start = node.getStart(sf);
+    if (ts.isStatement(node) || ts.isClassElement(node)) {
+      boundaries.add(start);
+      boundaries.add(node.end);
+    }
     const siblings = node.statements ?? node.members;
     if (siblings) {
       for (let i = 1; i < siblings.length; i++) {
@@ -224,26 +238,37 @@ function classifyTs(text, from, length, cls, siblingBreaks) {
         if (newline !== -1 && newline < from + siblings[i].getStart(sf)) siblingBreaks.add(newline);
       }
     }
-    if (ts.isBinaryExpression(node)) {
-      const right = from + node.right.getStart(sf);
-      for (let i = text.indexOf('\n', from + node.operatorToken.end); i !== -1 && i < right; i = text.indexOf('\n', i + 1)) {
-        binaryBreaks.add(i);
-      }
-    }
     const kids = node.getChildren(sf);
-    if (kids.length === 0) { cls.fill(LITERAL[node.kind] ?? 'code', from + node.getStart(sf), from + node.end); return; }
-    kids.forEach(visit);
+    if (kids.length > 0) kids.forEach(visit);
+    else {
+      cls.fill(LITERAL[node.kind] ?? 'code', from + start, from + node.end);
+      if (start < node.end) tokens.push({start, end: node.end, kind: node.kind});
+    }
   };
   visit(sf);
-  for (let i = from; i < from + length;) {
-    if (cls[i] !== 'trivia') { i++; continue; }
-    const lineComment = text.startsWith('//', i);
-    const end = lineComment ? text.indexOf('\n', i) : text.startsWith('/*', i) ? text.indexOf('*/', i + 2) + 2 : -2;
-    if (lineComment && binaryBreaks.has(end)) cls[end] = 'continuation';
-    if (end === -2) { cls[i] = /\s/.test(text[i]) ? 'space' : 'comment'; i++; continue; }
-    const stop = Math.min(end <= 1 ? from + length : end, from + length);   // an unclosed comment runs to the end
-    cls.fill('comment', i, stop);
-    i = stop;
+
+  let left = null;
+  for (const right of [...tokens, {start: length}]) {
+    const gapStart = left === null ? 0 : left.end;
+    scanner.setTextPos(gapStart);
+    let afterLineComment = false;
+    // Keep statement boundaries (including ASI) and all ordinary line breaks. Inside a statement,
+    // omit the newline and indentation needed to continue after a line comment.
+    const join = left !== null && right.start < length && !boundaries.has(gapStart) && !boundaries.has(right.start);
+    while (scanner.getTextPos() < right.start) {
+      const kind = scanner.scan();
+      const whitespace = kind === ts.SyntaxKind.WhitespaceTrivia || kind === ts.SyntaxKind.NewLineTrivia;
+      const classification = whitespace ? (afterLineComment ? 'joined' : 'space') : 'comment';
+      cls.fill(classification, from + scanner.getTokenPos(), from + Math.min(scanner.getTextPos(), right.start));
+      if (join && kind === ts.SyntaxKind.SingleLineCommentTrivia) {
+        afterLineComment = true;
+        // A space used to separate the comment from a property-access dot is also comment layout.
+        const tight = left.kind === ts.SyntaxKind.DotToken || right.kind === ts.SyntaxKind.DotToken;
+        const before = sf.text.slice(gapStart, scanner.getTokenPos());
+        if (tight && /^[^\S\r\n\u2028\u2029]*$/.test(before)) cls.fill('joined', from + gapStart, from + scanner.getTokenPos());
+      }
+    }
+    left = right;
   }
   return sf;
 }
@@ -257,8 +282,9 @@ function keyText(src, from, to, signature) {
   for (let i = from; i < to; i++) {
     const ch = src.text[i], k = src.cls[i];
     if (k === 'comment') { commented = true; continue; }
-    if (k === 'space' || k === 'continuation' || (k === 'markup' && /\s/.test(ch))) {
-      if (ch === '\n' && !(signature && k === 'continuation')) gap = '\n';
+    if (signature && k === 'joined') continue;
+    if (k === 'space' || k === 'joined' || (k === 'markup' && /\s/.test(ch))) {
+      if (ch === '\n') gap = '\n';
       else if (gap === null) gap = ' ';
       continue;
     }
@@ -398,13 +424,16 @@ function checkCopySources(files) {
 function signatureLine(src, from, to) {
   const offsets = [];
   let text = '';
+  let commented = false;
   for (let i = from; i < to; i++) {
-    if (src.cls[i] === 'comment') continue;
+    if (src.cls[i] === 'comment') { commented = true; continue; }
+    if (src.cls[i] === 'joined') continue;
     const ch = src.text[i];
-    if (src.cls[i - 1] === 'comment' && /\w$/.test(text) && /\w/.test(ch)) {
+    if (commented && /\w$/.test(text) && /\w/.test(ch)) {
       text += ' ';
       offsets.push(i - 1);
     }
+    commented = false;
     text += ch;
     offsets.push(i);
   }
@@ -435,7 +464,7 @@ function signatures(files, recorded) {
         if (src.siblingBreaks.has(end)) breaks.push(end);
         continue;
       }
-      if (src.cls[end] === 'continuation') continue;
+      if (src.cls[end] === 'joined') continue;
       const at = signatureStart;
       signatureStart = lineStart;
       const spans = [...breaks, end].map((to, j) => {

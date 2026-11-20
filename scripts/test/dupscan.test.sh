@@ -560,6 +560,37 @@ out="$(run)"; rc=$?
   && ok "a new conversion split by a line comment is refused" || bad "new split conversion should be refused (exit $rc): $out"
 rm "$UNIT_FILE"
 
+# Comments within a formula must leave its key identical to the comment-free form.
+DB_FILE="$SCRATCH/packages/design/engine/decibels.ts"
+DB_LINE='export const db = (ratio: number): number => 20 * Math.log10(ratio);'
+printf '%s\n' "$DB_LINE" > "$DB_FILE"
+db_keys="$(sig_keys)"
+grep -qxF "sig|decibel|packages/design/engine/decibels.ts|$DB_LINE" <<< "$db_keys" || setup_failed "comment-free decibel signature"
+check_db_comment() {
+  printf '%s\n' "$2" > "$DB_FILE"
+  keys="$(sig_keys)"
+  [ "$keys" = "$db_keys" ] && ok "$1" || bad "$1: $keys"
+}
+check_db_comment "a line comment before multiplication keeps the decibel signature" \
+  "${DB_LINE/20 /20 // scale$'\n  '}"
+check_db_comment "a line comment after Math. keeps the decibel signature" \
+  "${DB_LINE/Math./Math. // scale$'\n  '}"
+check_db_comment "a line comment before the property-access dot keeps the decibel signature" \
+  "${DB_LINE/Math./Math // scale$'\n  .'}"
+check_db_comment "a block comment inside the argument list keeps the decibel signature" \
+  "${DB_LINE/log10(ratio)/log10(\/* ratio$'\n  '*\/ratio)}"
+rm "$DB_FILE"
+
+VUE_FILE="$SCRATCH/packages/design/engine/Decibels.vue"
+printf '<script setup lang="ts">\n%s\n</script>\n' "$DB_LINE" > "$VUE_FILE"
+vue_keys="$(sig_keys)"
+grep -qxF "sig|decibel|packages/design/engine/Decibels.vue|$DB_LINE" <<< "$vue_keys" || setup_failed "decibel signature in a Vue script"
+printf '<!-- <script> /* -->\n<script setup lang="ts">\n%s\n</script>\n' "$DB_LINE" > "$VUE_FILE"
+keys="$(sig_keys)"
+[ "$keys" = "$vue_keys" ] && ok "an HTML comment containing a fake script tag leaves the Vue formula visible" \
+  || bad "an HTML comment containing a fake script tag leaves the Vue formula visible: $keys"
+rm "$VUE_FILE"
+
 # The export policy for a tracked file does not change what is present on the base.
 allowed_allow
 printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
