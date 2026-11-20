@@ -14,3 +14,4 @@ files:
   - packages/design/test/engine/multi-driver-passive-radiator.test.ts
   - packages/design/test/domain/pr-count-load-repair.test.ts
   - packages/design/domain/winIsdProjectConverter.ts
+  - packages/design/engine/array/driverWiring.ts
