@@ -2,6 +2,7 @@
 // "Desktop, New project wizard, ABC box, step 3". Names come from packages/ui/test/visual/screens.ts
 // (skin, then the screen name). A name that matches no pattern comes back unchanged, with a warning.
 const SKINS = {desktop: 'Desktop', mobile: 'Phone'};
+const SKIN_AND_SCREEN = /^(desktop|mobile)-(.+)$/;
 const BOX_TYPES = {
   sealed: 'sealed',
   vented: 'vented',
@@ -11,6 +12,20 @@ const BOX_TYPES = {
   abc: 'ABC',
 };
 const upper = word => word.charAt(0).toUpperCase() + word.slice(1);
+
+export function screenFamily(name) {
+  const match = SKIN_AND_SCREEN.exec(name);
+  if (!match) return 'Other screens';
+  const [, skin, rest] = match;
+  const tab = /^tab-([^-]+)/.exec(rest);
+  let family = 'Project workspace';
+  if (tab) family = `${upper(tab[1] === 'enclosure' ? 'box' : tab[1])} tab`;
+  else if (rest.startsWith('dialog-')) family = 'Dialogs';
+  else if (rest.startsWith('wizard-')) family = 'New project wizard';
+  else if (rest.startsWith('box-')) family = 'Box projects';
+  else if (rest === 'menu') family = 'Menu';
+  return `${SKINS[skin]} · ${family}`;
+}
 
 // The screen after the skin, in words; null when the pattern is unknown.
 function screenWords(skin, rest) {
@@ -37,7 +52,7 @@ function screenWords(skin, rest) {
 
 /** Plain words for a baseline name. `warn` is called with a message when the name is not understood. */
 export function plainScreenName(name, warn = message => console.error(message)) {
-  const m = /^(desktop|mobile)-(.+)$/.exec(name);
+  const m = SKIN_AND_SCREEN.exec(name);
   const words = m ? screenWords(m[1], m[2]) : null;
   if (words === null) {
     warn(`screen-names: no plain name for "${name}"; showing it as it is`);

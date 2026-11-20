@@ -138,6 +138,14 @@ git init -q --bare "$GH_REMOTE"
 W="$S/work"; git init -q "$W"; cd "$W" || exit 1
 mkdir -p scripts tasks/fixes
 cp "$REPO/scripts/snap.sh" "$REPO/scripts/snap-prune.sh" "$REPO/scripts/release.sh" "$REPO/scripts/version-info.mjs" scripts/
+cp -r "$REPO/scripts/visual" "$REPO/scripts/feedback" scripts/
+export VISUAL_PAGES_DIR="$S/visual-pages" VISUAL_PAGES_URL="http://example.test/visual-pages/"
+release_screen=packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-empty.png
+mkdir -p "$(dirname "$release_screen")"
+write_release_screen() {
+  python3 -c 'from PIL import Image; import sys; Image.new("RGB", (4, 4), sys.argv[1]).save(sys.argv[2])' "$1" "$release_screen"
+}
+write_release_screen white || exit 1
 mkdir -p scripts/hosting; cp "$REPO/scripts/hosting/releaseNotes.mjs" scripts/hosting/
 # The two browser runs release.sh starts are stand-ins that record how they were called.
 mkdir -p scripts/hosting/test scripts/ui-gallery
@@ -443,7 +451,9 @@ echo 'echo "$(pwd) $*" >> "$GH_STATE/land-sh.log"; exit 1' > "$d/scripts/land.sh
 echo "$out" > "$GH_STATE/ship-task.txt"
 echo "$out"
 NT
-add_snap 20260111T0000Z "$FF_SHA" 2026-01-11T00:00:00Z
+write_release_screen blue || exit 1
+git add "$release_screen" && git commit -qm 'Change the desktop release screen' || exit 1
+add_snap 20260111T0000Z "$(git rev-parse HEAD)" 2026-01-11T00:00:00Z
 out=$(env -u RELEASE_LAND RELEASE_NEW_TASK="bash $S/new-task-ship" bash scripts/release.sh --public 7.0.2004 20260111T0000Z 2>&1); r=$?
 [ $r = 0 ] && ok "a release with the default ledger landing exits 0" || fail "default landing: $r $out"
 ship_id="$(cut -d' ' -f1 "$GH_STATE/ship-task.txt")"; ship_wt="$(cut -d' ' -f2- "$GH_STATE/ship-task.txt")"
@@ -451,6 +461,15 @@ grep -q "^$ship_wt $ship_id (auto) $ship_id: Record OpenISD 7.0.2004 in the rele
   && ok "by default the ledger row is shipped with ship.sh in its task worktree, on a committed row" || fail "ship.sh call: $(cat "$GH_STATE/ship.log" 2>&1) want $ship_wt $ship_id"
 [ ! -s "$GH_STATE/land-sh.log" ] && ok "by default land.sh (a direct push to main) is never run" || fail "land.sh ran: $(cat "$GH_STATE/land-sh.log")"
 grep -q '^| 7.0.2004 ' "$LEDGER_STORE/RELEASES.md" && ok "the shipped ledger carries the 7.0.2004 row" || fail "ledger after ship: $(cat "$LEDGER_STORE/RELEASES.md")"
+page_url="$(sed -n 's|^release: visual comparison: http://example.test/visual-pages/||p' <<< "$out")"
+[[ "$page_url" == releases-7.0.2003-to-7.0.2004-*/index.html ]] \
+  && grep -Fq 'OpenISD 7.0.2003 → 7.0.2004' "$VISUAL_PAGES_DIR/$page_url" \
+  && grep -Fq "Before $(git rev-parse v20260110T0000Z^{commit}) · After $(git rev-parse v20260111T0000Z^{commit})" "$VISUAL_PAGES_DIR/$page_url" \
+  && [ -s "$VISUAL_PAGES_DIR/${page_url%/*}/desktop-empty.before.png" ] \
+  && [ -s "$VISUAL_PAGES_DIR/${page_url%/*}/desktop-empty.after.png" ] \
+  && ok "the release prints the served comparison from the previous and current Git commits" || fail "release comparison: $out"
+[ ! -e "$ship_wt/docs/releases/screens" ] && [ ! -e docs/releases/screens ] \
+  && ok "the release comparison stays outside both checkouts" || fail "release screens were copied into a checkout"
 # the task contract ship.sh checks before it pushes (scripts/land/check-task-contract.sh --pr) accepts the generated task
 grep -Fq 'why: "John, 11 Jan 2026: release OpenISD 7.0.2004"' "$ship_wt/tasks/$ship_id.yml" \
   && ok "the generated task file says why" || fail "task file why: $(cat "$ship_wt/tasks/$ship_id.yml")"
