@@ -2,7 +2,7 @@ id: T942
 release_note: Physics-based Iso-Barik pairs for new designs, with an option for WinISD's numbers.
 repo: openisd
 owner: t942-agent
-status: open
+status: done
 goal: Use the selected driver wiring for each physical Iso-Barik pair, with WinISD compatibility for pre-flag saves and an import note for WinISD projects.
 why: "John, QO964, 20 Nov 2026: 'A: real physics by default (box unticked)'"
 ruling: QO964
