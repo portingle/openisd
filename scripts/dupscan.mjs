@@ -22,8 +22,19 @@
 //   "resolved": true, "resolved_to": "<engine file>:<function>", "resolved_by": "<task id>", "ruling": "<questions.yml id>"
 // (John, QO949, 18 Nov 2026: "old entries stay, marked 'resolved, resolved to <engine function> by T902'; a resolved copy
 // that reappears fails"). A resolved entry never allows its key: the copy reappearing fails, naming the function to call.
-// An allowed (unresolved) entry whose key no longer matches anything is stale and fails the run (exit 1) until it is
-// marked resolved, so every consolidation is recorded.
+// An allowed (unresolved) entry whose key no longer matches anything is reported as gone and passes (T941, below); marking it
+// resolved is still welcome but never required.
+//
+// A copy that has gone (T941; John, QO963, 20 Nov 2026: "accept it, and let the check accept removed copies by itself from now
+// on", after "isn't the whole point of consolidation to remove duplicate code - why do you need to ask me to approve
+// consolidation"): an allowed entry whose copy no longer matches never fails the run and never needs an edit to the allow-list
+// (a gate file). Each run finds the same keys on the BASE tree (git archive of packages/ at --base, scanned by this script) and
+// an unresolved entry listed on the base allows at most as many matches as the base tree had: an entry the head no longer
+// matches but the base did is reported "gone with this change"; one the base did not match either is reported "already gone"; a
+// copy that was gone on the base and is found again fails, naming the key (QO949: a gone copy that returns fails). So the "gone"
+// state is the base tree itself, nothing a person records. Adding an entry or un-resolving one stays refused by the ratchet
+// below (a gate-file edit that needs gates_approved). A copy reworded so it still duplicates logic is a different key: it is a
+// new finding and fails as before, while its old entry is reported gone.
 //
 // T934 (John, 19 Nov 2026: "why wasn't the consolidation finished - our guard rail isn't working / remove the dupe and fix
 // the guardrail"):
@@ -55,7 +66,7 @@
 //   - jscpd runs comment-insensitive (--mode weak), so a comment changed in one copy does not hide or split the copy.
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname, join, relative, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -64,7 +75,7 @@ import ts from 'typescript';
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const repo = args.find(a => !a.startsWith('--') && !isOptionValue(a));
-function isOptionValue(a) { const i = args.indexOf(a); return i > 0 && ['--allow', '--jscpd', '--report', '--homes', '--base', '--rekey', '--write-rekey'].includes(args[i - 1]); }
+function isOptionValue(a) { const i = args.indexOf(a); return i > 0 && ['--allow', '--jscpd', '--report', '--homes', '--base', '--rekey', '--write-rekey', '--list-findings'].includes(args[i - 1]); }
 const opt = name => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
 const USAGE = 'usage: node dupscan.mjs <openisd checkout> --homes <homes.json> (--base <git ref> --rekey <rekey.json> | --write-baseline | --write-rekey <out.json>) [--allow file] [--report file] [--jscpd bin]';
 if (!repo) { console.error(USAGE); process.exit(2); }
@@ -76,7 +87,8 @@ const jscpdBin = resolve(opt('--jscpd') ?? join(repo, 'node_modules/.bin/jscpd')
 const writeBaseline = args.includes('--write-baseline');
 const rekeyPath = opt('--rekey');
 const writeRekeyPath = opt('--write-rekey');
-if (homesPath === null || (!writeBaseline && writeRekeyPath === null && (baseRef === null || rekeyPath === null))) { console.error(USAGE); process.exit(2); }
+const listFindingsPath = opt('--list-findings');   // internal: the run on the base tree (see "A copy that has gone" above)
+if (homesPath === null || (!writeBaseline && writeRekeyPath === null && listFindingsPath === null && (baseRef === null || rekeyPath === null))) { console.error(USAGE); process.exit(2); }
 
 const IGNORE = ['**/node_modules/**', '**/test/**', '**/*.test.ts', '**/*.spec.ts', '**/generated/**', '**/*.generated.ts',
   '**/dist/**', '**/coverage/**', '**/ui-proposals/**', '**/*.config.ts'];
@@ -109,8 +121,8 @@ function jscpd(mode) {
 /** A jscpd duplicate's two sides, in key order (by file name, then start line). */
 const sidesOf = d => [d.firstFile, d.secondFile].sort((x, y) => x.name < y.name ? -1 : x.name > y.name ? 1 : x.start - y.start);
 
-function copies() {
-  const legacy = legacyCopyKeys();
+function copies(withLegacy) {
+  const legacy = withLegacy ? legacyCopyKeys() : [];
   return jscpd('weak').map(d => {
     const a = d.firstFile.name, b = d.secondFile.name;
     const norm = fragmentKeyText(a, d.fragment, d.firstFile.start);
@@ -356,11 +368,19 @@ function layerOf(rel) {
 }
 
 // ---- gate ------------------------------------------------------------------------------------------
-const findings = [...copies(), ...signatures()];
+const findings = [...copies(listFindingsPath === null), ...signatures()];
 const groups = {};
 for (const f of findings.filter(f => f.kind === 'signature')) (groups[f.rule] ??= new Set()).add(f.layer);
 
 if (opt('--report')) writeFileSync(opt('--report'), JSON.stringify({findings, layersPerRule: Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, [...v]]))}, null, 2));
+
+if (listFindingsPath !== null) {
+  // The run on the base tree: how many times each key is found outside its home (the head's run counts the same way).
+  const found = {};
+  for (const f of findings.filter(f => !f.home)) found[f.key] = (found[f.key] ?? 0) + 1;
+  writeFileSync(listFindingsPath, JSON.stringify(found));
+  process.exit(0);
+}
 
 if (writeBaseline) {
   // Resolved entries are the record of consolidations (QO949): a new baseline keeps them.
@@ -422,19 +442,46 @@ const seen = new Set(active.map(f => f.key));
 // allowed entry under one key form never hides a consolidated copy recorded under the other.
 const resolvedEntryOf = f => resolved[f.key] ?? (f.oldKey !== null && f.oldKey in resolved ? resolved[f.oldKey] : undefined);
 const back = active.filter(f => resolvedEntryOf(f) !== undefined);
+const baseAllow = readBaseAllow();
+// What the base tree matched (T941). Unreadable base allow-list: the ratchet fails the run, and no allowance is cut down.
+const onBase = baseAllow.list === undefined ? null : baseCounts();
+// An entry already on the base allow-list allows at most what the base tree matched: a copy gone on the base is not allowed back.
+const allowedCount = k => Math.min(allow[k].count ?? 1, onBase !== null && k in baseAllow.list ? (onBase[k] ?? 0) : Infinity);
 const counts = {};
 const unlisted = active.filter(f => resolvedEntryOf(f) === undefined)
-  .filter(f => { counts[f.key] = (counts[f.key] ?? 0) + 1; return !(f.key in allow) || counts[f.key] > (allow[f.key].count ?? 1); });
-const stale = Object.keys(allow).filter(k => !seen.has(k));
+  .filter(f => { counts[f.key] = (counts[f.key] ?? 0) + 1; return !(f.key in allow) || counts[f.key] > allowedCount(f.key); });
+const returned = unlisted.filter(f => f.key in allow && onBase !== null && (onBase[f.key] ?? 0) === 0);
+const newOnes = unlisted.filter(f => !returned.includes(f));
+const gone = Object.keys(allow).filter(k => !seen.has(k));
+const goneNow = gone.filter(k => onBase !== null && (onBase[k] ?? 0) > 0);
+const goneAlready = gone.filter(k => !goneNow.includes(k));
 const ratchet = ratchetAgainstBase();
+
+/** The allow-list on the base commit, or why it cannot be read. */
+function readBaseAllow() {
+  const rel = relative(repo, allowPath);
+  if (rel.startsWith('..')) return {error: `the allow-list ${allowPath} is not inside ${repo}, so it cannot be compared with the base`};
+  try { return {list: JSON.parse(execFileSync('git', ['-C', repo, 'show', `${baseRef}:${rel}`], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}))}; }
+  catch (e) { return {error: `cannot read ${rel} at the base ${baseRef}: ${String(e.stderr ?? e.message).trim()}`}; }
+}
+
+/** How many times each key is found on the base tree (outside its home): this script run on `git archive` of packages/ at the base. */
+function baseCounts() {
+  const dir = mkdtempSync(join(tmpdir(), 'dupscan-base-'));
+  const tar = join(dir, 'packages.tar'), tree = join(dir, 'tree'), found = join(dir, 'found.json');
+  mkdirSync(tree);
+  execFileSync('git', ['-C', repo, 'archive', '--format=tar', '-o', tar, baseRef, 'packages'], {stdio: ['ignore', 'ignore', 'inherit']});
+  execFileSync('tar', ['-xf', tar, '-C', tree], {stdio: ['ignore', 'ignore', 'inherit']});
+  execFileSync(process.execPath, [fileURLToPath(import.meta.url), tree, '--jscpd', jscpdBin, '--homes', resolve(homesPath), '--list-findings', found], {stdio: ['ignore', 'ignore', 'inherit']});
+  const counts = JSON.parse(readFileSync(found, 'utf8'));
+  rmSync(dir, {recursive: true, force: true});
+  return counts;
+}
 
 /** Why the allow-list grew against the one on the base commit (T934: it may only shrink). */
 function ratchetAgainstBase() {
-  const rel = relative(repo, allowPath);
-  if (rel.startsWith('..')) return [`the allow-list ${allowPath} is not inside ${repo}, so it cannot be compared with the base`];
-  let base;
-  try { base = JSON.parse(execFileSync('git', ['-C', repo, 'show', `${baseRef}:${rel}`], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']})); }
-  catch (e) { return [`cannot read ${rel} at the base ${baseRef}: ${String(e.stderr ?? e.message).trim()}`]; }
+  if (baseAllow.list === undefined) return [baseAllow.error];
+  const base = baseAllow.list;
   const out = [];
   // A key's scope: its kind, rule and file (sig|rule|file), or for a copy its two files (copy|a|b).
   const scope = k => k.split('|').slice(0, 3).join('|');
@@ -477,7 +524,7 @@ function ratchetAgainstBase() {
   return out;
 }
 
-console.log(`dupscan: ${findings.length} findings (${findings.filter(f => f.kind === 'copy').length} copies, ${findings.filter(f => f.kind === 'signature').length} formula signatures, ${inHome.length} of them in their kind's home), ${Object.keys(allow).length} allowed, ${Object.keys(resolved).length} resolved`);
+console.log(`dupscan: ${findings.length} findings (${findings.filter(f => f.kind === 'copy').length} copies, ${findings.filter(f => f.kind === 'signature').length} formula signatures, ${inHome.length} of them in their kind's home), ${Object.keys(allow).length} allowed, ${Object.keys(resolved).length} resolved, ${gone.length} gone`);
 for (const [rule, layers] of Object.entries(groups)) console.log(`  ${rule.padEnd(26)} in: ${[...layers].join(', ')}`);
 const homesOf = rule => homeSpans.filter(h => h.rule === rule).map(h => h.home).filter((h, i, all) => all.indexOf(h) === i);
 const where = f => {
@@ -497,18 +544,28 @@ if (incomplete.length) {
   console.log(`\nFAIL: ${incomplete.length} resolved allow-list entries lack resolved_to, resolved_by or ruling (${allowPath}):`);
   for (const k of incomplete) console.log(`  ${resolved[k].where}  ${k.slice(0, 140)}`);
 }
-if (stale.length) {
-  console.log(`\nFAIL: ${stale.length} allowed entries no longer match (copy removed or line edited). Never delete one: mark it resolved, with resolved_to (the engine function now used), resolved_by (the task) and ruling (QO949):`);
-  for (const k of stale) console.log(`  ${allow[k].where}  ${k.slice(0, 140)}${k in homeOfKey ? `\n    this line is inside its kind's home: mark it resolved with resolved_to ${homeOfKey[k]}` : ''}`);
+// Gone copies pass (T941, QO963): they are reported so the consolidation is visible, and need no edit to the allow-list.
+const note = k => `  ${allow[k].where}  ${k.slice(0, 140)}${k in homeOfKey ? `\n    this line is inside its kind's home (${homeOfKey[k]})` : ''}`;
+if (goneNow.length) {
+  console.log(`\nnote: ${goneNow.length} allowed copies are gone with this change (resolved by this change; the allow-list needs no edit, and the copy coming back would fail):`);
+  for (const k of goneNow) console.log(note(k));
+}
+if (goneAlready.length) {
+  console.log(`\nnote: ${goneAlready.length} allowed entries match nothing, and matched nothing on the base either (copy removed earlier or line edited; nothing to do, and the copy coming back would fail):`);
+  for (const k of goneAlready) console.log(note(k));
+}
+if (returned.length) {
+  console.log(`\nFAIL: ${returned.length} copies that were gone on the base (${baseRef}) are back; an allowed entry is not a licence once its copy has gone (QO949):`);
+  for (const f of returned) console.log(`  ${where(f)}`);
 }
 if (back.length) {
   console.log(`\nFAIL: ${back.length} consolidated copies are back:`);
   for (const f of back) { const e = resolvedEntryOf(f); console.log(`  ${where(f)}\n    this copy was consolidated into ${e.resolved_to} by ${e.resolved_by}; call ${e.resolved_to}`); }
 }
-if (unlisted.length) {
-  console.log(`\nFAIL: ${unlisted.length} new duplicated logic not in the allow-list (${allowPath}):`);
-  for (const f of unlisted) console.log(`  ${where(f)}`);
+if (newOnes.length) {
+  console.log(`\nFAIL: ${newOnes.length} new duplicated logic not in the allow-list (${allowPath}):`);
+  for (const f of newOnes) console.log(`  ${where(f)}`);
   console.log('\nCall the engine function that owns the sum (move the calculation into the engine first if it has none). The allow-list only shrinks: a new entry is refused.');
 }
-if (homeErrors.length || ratchet.length || incomplete.length || stale.length || back.length || unlisted.length) process.exit(1);
+if (homeErrors.length || ratchet.length || incomplete.length || back.length || unlisted.length) process.exit(1);
 console.log('\nOK: no new duplicated logic.');

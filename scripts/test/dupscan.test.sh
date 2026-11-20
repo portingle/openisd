@@ -114,7 +114,7 @@ grep -qxF 'sig|driver-count-scaling|packages/design/engine/keys.ts|export const 
 rm "$SCRATCH/packages/design/engine/keys.ts"
 
 # T911 (QO949): a consolidated copy stays in the allow-list, marked resolved and resolved to the engine function; it
-# never allows its key again, and an allowed entry whose copy is gone fails until it is marked resolved.
+# never allows its key again, and an allowed entry whose copy is gone is reported and passes (T941).
 COPY_LINE='export const perDriver = (Vb: number, n: number): number => Vb / n;'
 KEY="sig|driver-count-scaling|packages/design/engine/newcopy.ts|$COPY_LINE"
 resolved_allow() { node -e 'const [k] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "packages/design/engine/newcopy.ts:1", count: 1,
@@ -160,7 +160,7 @@ allowed_allow
 rm "$SCRATCH/packages/design/engine/newcopy.ts"
 out="$(run)"; rc=$?
 echo "$out" | sed 's/^/  | /'
-{ [ "$rc" = 1 ] && grep -q 'mark it resolved' <<< "$out"; } && ok "an allowed entry whose copy is gone fails until it is marked resolved (exit 1)" || bad "stale unresolved entry should exit 1 saying mark it resolved, got exit $rc"
+{ [ "$rc" = 0 ] && grep -q 'gone with this change' <<< "$out"; } && ok "an allowed entry whose copy is gone passes (exit 0), reported gone with this change (T941, QO963: replaces the old 'fails until it is marked resolved')" || bad "gone allowed entry should exit 0 reporting it gone, got exit $rc: $out"
 
 resolved_allow
 out="$(run)"; rc=$?
@@ -412,6 +412,46 @@ node -e 'const [o, k] = process.argv.slice(1); console.log(JSON.stringify({[o]: 
 out="$(run)"; rc=$?
 { [ "$rc" = 1 ] && grep -q 'consolidated into packages/design/engine/sealedResonance.ts:arrayVas by T902' <<< "$out"; } \
   && ok "a copy resolved under its previous key form is reported back even when its new key is allowed (exit 1)" || bad "resolved-under-old-form copy with its new key allowed should exit 1 naming arrayVas, got exit $rc: $out"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"; echo '{}' > "$SCRATCH/allow.json"; set_base
+
+# T941 (John, QO963, 20 Nov 2026: "accept it, and let the check accept removed copies by itself from now on"): an allowed copy
+# that has gone is resolved by itself. The removal passes with the allow-list untouched; the gone state is the base tree, so a
+# copy that was gone on the base and returns fails (QO949); adding an entry still fails; a copy reworded but still duplicating
+# the sum is a new finding and fails while its old entry is reported gone.
+echo '{}' > "$SCRATCH/allow.json"; set_base
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+allowed_allow; cp "$SCRATCH/allow.json" "$SCRATCH/allow.before"
+g add -A > /dev/null; g commit -q -m "copy and its entry" && g tag -f base > /dev/null     # base: the copy and its entry
+out="$(run)"; rc=$?
+[ "$rc" = 0 ] && ok "T941: an allowed copy that is still there passes (exit 0)" || bad "T941: still-there copy should pass, got exit $rc: $out"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q 'gone with this change' <<< "$out" && grep -qF "$KEY" <<< "$out" && cmp -s "$SCRATCH/allow.json" "$SCRATCH/allow.before"; } \
+  && ok "T941: removing an allowed copy passes (exit 0) with no edit to the allow-list, reported as gone with this change" || bad "T941: removal should pass and be reported gone, got exit $rc: $out"
+set_base      # the removal is merged: the base tree no longer has the copy, the entry is still listed, unresolved
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q 'matched nothing on the base either' <<< "$out"; } \
+  && ok "T941: an entry already gone on the base is reported stale and passes (exit 0)" || bad "T941: already-gone entry should pass with a note, got exit $rc: $out"
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'were gone on the base' <<< "$out" && grep -q 'packages/design/engine/newcopy.ts' <<< "$out"; } \
+  && ok "T941: a copy that was gone on the base and comes back fails (exit 1), though its entry is still listed" || bad "T941: returning copy should exit 1, got exit $rc: $out"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"
+OTHER_KEY="sig|driver-count-scaling|packages/design/engine/other.ts|export const share = (Vb: number, n: number): number => Vb / n;"
+node -e 'const [a, k] = process.argv.slice(1); console.log(JSON.stringify({...JSON.parse(require("fs").readFileSync(a, "utf8")), [k]: {reason: "baseline", where: "packages/design/engine/other.ts:1", count: 1}}, null, 1));' "$SCRATCH/allow.json" "$OTHER_KEY" > "$SCRATCH/allow.new" && mv "$SCRATCH/allow.new" "$SCRATCH/allow.json"
+printf 'export const share = (Vb: number, n: number): number => Vb / n;\n' > "$SCRATCH/packages/design/engine/other.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -qF "  new entry: $OTHER_KEY" <<< "$out"; } \
+  && ok "T941: adding a new allow-list entry is still refused (exit 1), whatever is gone" || bad "T941: a new entry should exit 1, got exit $rc: $out"
+rm "$SCRATCH/packages/design/engine/other.ts"; cp "$SCRATCH/allow.before" "$SCRATCH/allow.json"
+
+# Edited but still duplicated: the base has the copy listed; the head rewords the line (a renamed function), so the sum is
+# still written out beside the engine. The old entry is gone; the reworded line is a new finding and fails.
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"; set_base
+printf 'export const eachShare = (Vb: number, n: number): number => Vb / n;\n' > "$SCRATCH/packages/design/engine/newcopy.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'new duplicated logic' <<< "$out" && grep -q 'packages/design/engine/newcopy.ts:1' <<< "$out" && grep -q 'gone with this change' <<< "$out"; } \
+  && ok "T941: a reworded copy that still duplicates the sum fails (exit 1) as a new finding, its old entry reported gone" || bad "T941: reworded copy should exit 1 as new, got exit $rc: $out"
 rm "$SCRATCH/packages/design/engine/newcopy.ts"; echo '{}' > "$SCRATCH/allow.json"; set_base
 
 # T934 review 7: jscpd reads no configuration from the checkout. A .jscpd.json, a "jscpd" section in package.json and a
