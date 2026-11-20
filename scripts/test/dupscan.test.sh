@@ -502,6 +502,64 @@ out="$(run)"; rc=$?
   && ok "a comment carrying an exclusion keeps an allowed formula active" || bad "a comment carrying an exclusion keeps an allowed formula active (exit $rc): $out"
 rm "$SCRATCH/packages/design/engine/units.ts" "$SCRATCH/packages/design/engine/newcopy.ts"
 
+# Comment line breaks can separate class fields or appear inside a formula or an existing line.
+UNIT_FILE="$SCRATCH/packages/design/engine/units.ts"
+FIELD_LINE='litres = this.volume / 1000;'
+SAME_LINE='const volume = 1; const litres = volume / 1000;'
+node -e 'const [file, ...lines] = process.argv.slice(1); console.log(JSON.stringify(Object.fromEntries(lines.map(line => [
+  `sig|unit-factor|${file}|${line}`, {reason: "baseline", where: "x:1", count: 1}
+]))));' packages/design/engine/units.ts "$FIELD_LINE" "$UNIT_LINE" "$SAME_LINE" > "$SCRATCH/allow.json"
+printf 'class Volume {
+  volume = 1;
+  delay = 0;
+  %s
+}
+%s
+%s
+' "$FIELD_LINE" "$UNIT_LINE" "$SAME_LINE" > "$UNIT_FILE"
+set_base || setup_failed "base with allowed unit conversions in three layouts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '4 formula signatures.*3 allowed.*0 gone' <<< "$out"; } || setup_failed "unit conversions are active on fixture base (exit $rc): $out"
+
+check_unit_comment() {
+  printf '%s
+' "$2" > "$UNIT_FILE"
+  out="$(run)"; rc=$?
+  { [ "$rc" = 0 ] && grep -q '4 formula signatures.*3 allowed.*0 gone' <<< "$out"; } \
+    && ok "$1" || bad "$1 (exit $rc): $out"
+}
+UNIT_FIXTURE="$(cat "$UNIT_FILE")"
+check_unit_comment "a block comment between class fields keeps the conversion active" \
+  "${UNIT_FIXTURE/  delay = 0;$'
+'/  delay = 0;\/\*$'
+'\*\/}"
+check_unit_comment "a line comment after division keeps the conversion active" \
+  "${UNIT_FIXTURE/"$UNIT_LINE"/"${UNIT_LINE%1000;}// conversion"$'
+  1000;'}"
+check_unit_comment "a multiline comment between same-line statements keeps the original key" \
+  "${UNIT_FIXTURE/"$SAME_LINE"/'const volume = 1; /* note'$'
+continued */ const litres = volume / 1000;'}"
+
+echo '{}' > "$SCRATCH/allow.json"
+rm "$UNIT_FILE"
+set_base || setup_failed "base without the unit conversions"
+printf 'class Volume {
+  volume = 1;
+  delay = 0;/*
+  */ litres = this.volume / 1000;
+}
+' > "$UNIT_FILE"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'new duplicated logic' <<< "$out" && grep -q 'unit-factor .*units.ts:4' <<< "$out"; } \
+  && ok "a new conversion after a block comment between fields is refused" || bad "new class conversion should be refused (exit $rc): $out"
+printf '%s// conversion
+  1000;
+' "${UNIT_LINE%1000;}" > "$UNIT_FILE"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'new duplicated logic' <<< "$out" && grep -q 'unit-factor .*units.ts:1' <<< "$out"; } \
+  && ok "a new conversion split by a line comment is refused" || bad "new split conversion should be refused (exit $rc): $out"
+rm "$UNIT_FILE"
+
 # The export policy for a tracked file does not change what is present on the base.
 allowed_allow
 printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"

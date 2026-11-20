@@ -180,12 +180,13 @@ function fragmentKeyText(rel, fragment, startLine) {
   if (at.length === 0) { console.error(`dupscan: jscpd's fragment is not in ${rel} (line ${startLine})`); process.exit(2); }
   const lineOf = i => src.text.slice(0, i).split('\n').length;
   const off = at.reduce((best, i) => Math.abs(lineOf(i) - startLine) < Math.abs(lineOf(best) - startLine) ? i : best, at[0]);
-  return keyText(src, off, off + fragment.length);
+  return keyText(src, off, off + fragment.length, false);
 }
 
 // ---- source classes ----------------------------------------------------------------------------------
 // Every character of a file is 'code', 'string' (string and template text, quotes and ${ } delimiters included), 'regex',
-// 'comment', 'space' (whitespace between tokens) or 'markup' (a .vue file outside its <script> blocks).
+// 'comment', 'space' (whitespace between tokens), 'continuation' (a line comment break after a binary operator)
+// or 'markup' (a .vue file outside its <script> blocks).
 const LITERAL = {[ts.SyntaxKind.StringLiteral]: 'string', [ts.SyntaxKind.NoSubstitutionTemplateLiteral]: 'string',
   [ts.SyntaxKind.TemplateHead]: 'string', [ts.SyntaxKind.TemplateMiddle]: 'string', [ts.SyntaxKind.TemplateTail]: 'string',
   [ts.SyntaxKind.RegularExpressionLiteral]: 'regex'};
@@ -195,14 +196,14 @@ function source(rel) {
   if (sources.has(rel)) return sources.get(rel);
   const text = readFileSync(join(repo, rel), 'utf8');
   const cls = new Array(text.length);
-  const statementBreaks = new Set();
+  const siblingBreaks = new Set();
   let tree = null;
   if (rel.endsWith('.vue')) {
     cls.fill('markup');
     for (const m of text.matchAll(/<!--[\s\S]*?-->/g)) cls.fill('comment', m.index, m.index + m[0].length);
-    for (const m of text.matchAll(/(<script\b[^>]*>)([\s\S]*?)<\/script>/g)) classifyTs(text, m.index + m[1].length, m[2].length, cls, statementBreaks);
-  } else tree = classifyTs(text, 0, text.length, cls, statementBreaks);
-  const src = {text, cls, tree, statementBreaks};
+    for (const m of text.matchAll(/(<script\b[^>]*>)([\s\S]*?)<\/script>/g)) classifyTs(text, m.index + m[1].length, m[2].length, cls, siblingBreaks);
+  } else tree = classifyTs(text, 0, text.length, cls, siblingBreaks);
+  const src = {text, cls, tree, siblingBreaks};
   sources.set(rel, src);
   return src;
 }
@@ -210,15 +211,23 @@ function source(rel) {
 /** Classes the TypeScript text at text[from, from + length) into `cls`; returns its parsed tree. Characters no token covers
  *  are trivia: a comment ("//" to the line's end, or "/*" to its close, its own spaces included) is 'comment', other
  *  whitespace 'space', anything else 'comment'. */
-function classifyTs(text, from, length, cls, statementBreaks) {
+function classifyTs(text, from, length, cls, siblingBreaks) {
   const sf = ts.createSourceFile('x.ts', text.slice(from, from + length), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const binaryBreaks = new Set();
   cls.fill('trivia', from, from + length);
   const visit = node => {
     if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode) return;
-    if (node.statements) {
-      for (let i = 1; i < node.statements.length; i++) {
-        const newline = text.indexOf('\n', from + node.statements[i - 1].end);
-        if (newline !== -1 && newline < from + node.statements[i].getStart(sf)) statementBreaks.add(newline);
+    const siblings = node.statements ?? node.members;
+    if (siblings) {
+      for (let i = 1; i < siblings.length; i++) {
+        const newline = text.indexOf('\n', from + siblings[i - 1].end);
+        if (newline !== -1 && newline < from + siblings[i].getStart(sf)) siblingBreaks.add(newline);
+      }
+    }
+    if (ts.isBinaryExpression(node)) {
+      const right = from + node.right.getStart(sf);
+      for (let i = text.indexOf('\n', from + node.operatorToken.end); i !== -1 && i < right; i = text.indexOf('\n', i + 1)) {
+        binaryBreaks.add(i);
       }
     }
     const kids = node.getChildren(sf);
@@ -228,7 +237,9 @@ function classifyTs(text, from, length, cls, statementBreaks) {
   visit(sf);
   for (let i = from; i < from + length;) {
     if (cls[i] !== 'trivia') { i++; continue; }
-    const end = text.startsWith('//', i) ? text.indexOf('\n', i) : text.startsWith('/*', i) ? text.indexOf('*/', i + 2) + 2 : -2;
+    const lineComment = text.startsWith('//', i);
+    const end = lineComment ? text.indexOf('\n', i) : text.startsWith('/*', i) ? text.indexOf('*/', i + 2) + 2 : -2;
+    if (lineComment && binaryBreaks.has(end)) cls[end] = 'continuation';
     if (end === -2) { cls[i] = /\s/.test(text[i]) ? 'space' : 'comment'; i++; continue; }
     const stop = Math.min(end <= 1 ? from + length : end, from + length);   // an unclosed comment runs to the end
     cls.fill('comment', i, stop);
@@ -241,12 +252,16 @@ function classifyTs(text, from, length, cls, statementBreaks) {
  *  whitespace between them one space, or one line break when the run holds one; nothing before the first or after the last.
  *  A comment counts as nothing (T934 review 3: f(/* note *\/x) keys as f(x)), except between two word characters, where it
  *  separates two tokens as a space would (a/* c *\/b keys as a b, never ab). */
-function keyText(src, from, to) {
+function keyText(src, from, to, signature) {
   let out = '', gap = null, commented = false;
   for (let i = from; i < to; i++) {
     const ch = src.text[i], k = src.cls[i];
     if (k === 'comment') { commented = true; continue; }
-    if (k === 'space' || (k === 'markup' && /\s/.test(ch))) { if (ch === '\n') gap = '\n'; else if (gap === null) gap = ' '; continue; }
+    if (k === 'space' || k === 'continuation' || (k === 'markup' && /\s/.test(ch))) {
+      if (ch === '\n' && !(signature && k === 'continuation')) gap = '\n';
+      else if (gap === null) gap = ' ';
+      continue;
+    }
     if (gap === null && commented && /\w$/.test(out) && /\w/.test(ch)) gap = ' ';
     if (gap !== null && out !== '') out += gap;
     gap = null; commented = false;
@@ -396,7 +411,15 @@ function signatureLine(src, from, to) {
   return {text, offsets};
 }
 
-function signatures(files) {
+function sameMatches(first, second) {
+  return first.length === second.length && first.every(([from, to], i) => from === second[i][0] && to === second[i][1]);
+}
+
+function isRecordedResolution(finding, recorded) {
+  return recorded[finding.key]?.resolved === true || recorded[finding.oldKey]?.resolved === true;
+}
+
+function signatures(files, recorded) {
   const hits = [];
   for (const file of files) {
     if (!/\.(ts|vue)$/.test(file) || file.endsWith('.d.ts')) continue;
@@ -404,26 +427,48 @@ function signatures(files) {
     const src = source(rel);
     let lineStart = 0;
     let signatureStart = 0;
+    let breaks = [];
     for (const [i, line] of src.text.split('\n').entries()) {
       const end = lineStart + line.length;
       lineStart = end + 1;
-      // Join across block comments within a statement. Between statements, keep the break so a preceding import
-      // or another statement's exclusion cannot hide the formula on the next line.
-      if (src.cls[end] === 'comment' && !src.statementBreaks.has(end)) continue;
+      if (src.cls[end] === 'comment') {
+        if (src.siblingBreaks.has(end)) breaks.push(end);
+        continue;
+      }
+      if (src.cls[end] === 'continuation') continue;
       const at = signatureStart;
       signatureStart = lineStart;
-      const code = signatureLine(src, at, end);
-      const t = code.text.trim();
-      if (t.startsWith('*') || t.startsWith('import ')) continue;
+      const spans = [...breaks, end].map((to, j) => {
+        const from = j === 0 ? at : breaks[j - 1] + 1;
+        return {from, to, ...signatureLine(src, from, to)};
+      });
+      const joined = breaks.length ? signatureLine(src, at, end) : null;
+      breaks = [];
       for (const r of RULES) {
         if (r.dirs && !r.dirs.some(d => rel.startsWith(d))) continue;
-        if (!r.re.test(code.text) || (r.skip && r.skip.test(code.text))) continue;
-        const matches = [...code.text.matchAll(new RegExp(r.re.source, 'g'))]
-          .map(m => [code.offsets[m.index], code.offsets[m.index + m[0].length - 1] + 1]);
-        const lineNumber = i + 1 - (src.text.slice(matches[0][0], end).match(/\n/g)?.length ?? 0);
-        hits.push({kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${keyText(src, at, end)}`,
-          oldKey: legacySignatureKey(r.id, rel, src.text.slice(at, end)), where: `${rel}:${lineNumber}`,
-          layer: layerOf(rel), home: homeOf(r.id, rel, matches), prose: matches.every(([a, b]) => isProse(src, a, b))});
+        const find = (code, from, to) => {
+          const t = code.text.trim();
+          if (t.startsWith('*') || t.startsWith('import ') || !r.re.test(code.text) || (r.skip && r.skip.test(code.text))) return null;
+          const matches = [...code.text.matchAll(new RegExp(r.re.source, 'g'))]
+            .map(m => [code.offsets[m.index], code.offsets[m.index + m[0].length - 1] + 1]);
+          const lineNumber = i + 1 - (src.text.slice(matches[0][0], end).match(/\n/g)?.length ?? 0);
+          return {matches, finding: {kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${keyText(src, from, to, true)}`,
+            oldKey: legacySignatureKey(r.id, rel, src.text.slice(from, to)), where: `${rel}:${lineNumber}`,
+            layer: layerOf(rel), home: homeOf(r.id, rel, matches), prose: matches.every(([a, b]) => isProse(src, a, b))}};
+        };
+        const split = spans.map(span => find(span, span.from, span.to)).filter(Boolean);
+        const whole = joined === null || split.length === 0 ? null : find(joined, at, end);
+        // A newline inside a comment can replace a real line break or be inserted on a single line. Scan siblings
+        // independently so their exclusions cannot leak. Keep a recorded whole-line key when it covers the same matches.
+        if (whole !== null && (whole.finding.key in recorded || isRecordedResolution(whole.finding, recorded))
+          && !split.some(({finding}) => isRecordedResolution(finding, recorded))
+          && (isRecordedResolution(whole.finding, recorded) || !split.some(({finding}) => finding.key in recorded))
+          && split.every(({finding}) => finding.home === whole.finding.home)
+          && sameMatches(split.flatMap(hit => hit.matches), whole.matches)) {
+          hits.push(whole.finding);
+        } else {
+          hits.push(...split.map(hit => hit.finding));
+        }
       }
     }
   }
@@ -445,7 +490,9 @@ const withLegacy = listFindingsPath === null;
 // The expanded scan supplies the pairs the earlier one could not see because of a file's size.
 const copies = copyFindings(withLegacy, false, oversized);
 if (oversized.size > 0) copies.push(...copyFindings(withLegacy, true, oversized));
-const findings = [...copies, ...signatures(files)];
+const allowFile = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
+validateAllowCounts(allowFile, allowPath);
+const findings = [...copies, ...signatures(files, allowFile)];
 const groups = {};
 for (const f of findings.filter(f => f.kind === 'signature')) (groups[f.rule] ??= new Set()).add(f.layer);
 
@@ -464,8 +511,7 @@ if (listFindingsPath !== null) {
 
 if (writeBaseline) {
   // Resolved entries are the record of consolidations (QO949): a new baseline keeps them.
-  const previous = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
-  const entries = Object.fromEntries(Object.entries(previous).filter(([, e]) => e.resolved === true));
+  const entries = Object.fromEntries(Object.entries(allowFile).filter(([, e]) => e.resolved === true));
   for (const f of findings) {
     const e = entries[f.key] ??= {reason: 'baseline 2026-11-18 (QO946.c256)', where: f.where, count: 0};
     e.count += 1;
@@ -478,10 +524,9 @@ if (writeBaseline) {
 if (writeRekeyPath !== null) {
   // The re-key mapping (T934 review 3), made from THIS tree, so run it on the base checkout: each unresolved allow-list
   // entry's key, in the previous key form, to the same finding's key now. An old key two findings would take is left out.
-  const listed = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
   const pairs = {}, clash = new Set();
   for (const f of findings) {
-    if (f.oldKey === null || f.oldKey === f.key || !(f.oldKey in listed) || listed[f.oldKey].resolved === true) continue;
+    if (f.oldKey === null || f.oldKey === f.key || !(f.oldKey in allowFile) || allowFile[f.oldKey].resolved === true) continue;
     if (f.oldKey in pairs && pairs[f.oldKey] !== f.key) clash.add(f.oldKey); else pairs[f.oldKey] = f.key;
   }
   for (const k of clash) delete pairs[k];
@@ -498,15 +543,15 @@ if (writeRekeyPath !== null) {
 // made by --write-rekey from the base source; "hand_pairs" ({old: {to, why}}) are pairs a person reviewed where the base
 // source cannot pair them (one comment-insensitive copy holding two previous-form copies), each saying why.
 const rekeyFile = JSON.parse(readFileSync(rekeyPath, 'utf8'));
-const isMap = o => typeof o === 'object' && o !== null && !Array.isArray(o);
+function isMap(o) {
+  return typeof o === 'object' && o !== null && !Array.isArray(o);
+}
 if (!isMap(rekeyFile.pairs)) { console.error(`dupscan: ${rekeyPath} has no "pairs" object`); process.exit(2); }
 const hand = rekeyFile.hand_pairs ?? {};
 if (!isMap(hand) || !Object.values(hand).every(h => isMap(h) && typeof h.to === 'string' && typeof h.why === 'string' && h.why.trim() !== '')) {
   console.error(`dupscan: ${rekeyPath}: each of "hand_pairs" is {"to": <new key>, "why": <the reason, reviewed>}`); process.exit(2);
 }
 const rekey = {...rekeyFile.pairs, ...Object.fromEntries(Object.entries(hand).map(([o, h]) => [o, h.to]))};
-const allowFile = existsSync(allowPath) ? JSON.parse(readFileSync(allowPath, 'utf8')) : {};
-validateAllowCounts(allowFile, allowPath);
 const baseAllow = readBaseAllow();
 if (baseAllow.list !== undefined) validateAllowCounts(baseAllow.list, `${allowPath} at the base ${baseRef}`);
 const resolved = Object.fromEntries(Object.entries(allowFile).filter(([, e]) => e.resolved === true));
@@ -603,7 +648,9 @@ function scanBase() {
     const rel = relative(repo, resolve(homesPath));
     writeFileSync(homes, execFileSync('git', ['-C', repo, 'show', `${baseRef}:${rel}`], {stdio: ['ignore', 'pipe', 'inherit']}));
     try {
-      execFileSync(process.execPath, [fileURLToPath(import.meta.url), tree, '--jscpd', jscpdBin, '--homes', homes, '--list-findings', found], {stdio: ['ignore', 'ignore', 'inherit']});
+      // Use the same recorded keys to group comment-spanning lines on both revisions. Homes still come from the base.
+      execFileSync(process.execPath, [fileURLToPath(import.meta.url), tree, '--jscpd', jscpdBin, '--homes', homes,
+        '--allow', resolve(allowPath), '--list-findings', found], {stdio: ['ignore', 'ignore', 'inherit']});
     } catch (error) {
       if (error.status !== 1) throw error;
       console.error(`dupscan: the source scan failed on the base ${baseRef}`);
