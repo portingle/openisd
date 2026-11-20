@@ -3,8 +3,15 @@ release_note: internal
 repo: openisd
 owner: lead
 status: open
-goal: Driver info and summary popups show readable figures (no 5-decimal dumps, no doubled labels, no rho/c/gamma/Gloss), the blocked-chart Fix list names Re and BL, the phone filter strip shows '+ PEQ' in full
+goal: Driver info and summary popups retain every figure and shorten displays above four significant figures, phone summary labels and model fit, the blocked-chart Fix list names Re and BL, and the phone filter strip shows '+ PEQ' in full
 why: Page 1 review 20 Nov (prod 7.0.960 vs main): lead and Codex found these screen defects
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T945.yml
+  - packages/design/domain/driver/driverInfoRows.ts
+  - packages/design/fields/chartBlockText.ts
+  - packages/ui/src/ui/components/DriverLibrary.vue
+  - packages/ui/src/ui/shells/mobile/MobileFiltersTab.vue
+  - packages/ui/test/ui/blocked-chart-names-field.browser.spec.ts
+  - packages/ui/test/ui/driver-info-all-fields.browser.spec.ts
+  - packages/ui/test/ui/mobile-filters-tab.browser.spec.ts

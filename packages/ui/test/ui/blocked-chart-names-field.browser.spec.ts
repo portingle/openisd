@@ -12,6 +12,8 @@ import {forceMobileSkin, mobileFieldRow} from '../fixtures/mobileSkin.js';
 import {fillAndCommit, PageOps, setNumField} from '../fixtures/numField.js';
 import type {Locator, Page} from '@playwright/test';
 import {PIXEL_9} from '../fixtures/phoneSizes.js';
+import {SHARED_STEPS} from '../fixtures/viewOpenShared.js';
+import {WalkSkin, WALK_VIEWPORT} from '../fixtures/viewOpenTypes.js';
 
 const shotDir = process.env['SHOT_DIR'];
 
@@ -90,3 +92,26 @@ test.describe('Mobile skin', () => {
     await expect(await fixLine(page, 'phone-abc-front')).toHaveText('Fix: Vent length (Box tab)');
   });
 });
+
+const hosts = {
+  [WalkSkin.Phone]: {viewport: PIXEL_9, prepare: forceMobileSkin, open: openAMobileProject, suffix: ' (Driver tab)'},
+  [WalkSkin.Desktop]: {viewport: WALK_VIEWPORT.desktop, prepare: async () => {}, open: openAProject, suffix: ''},
+};
+
+for (const [skin, , step] of SHARED_STEPS.filter(([, id]) => id === 'shared/graph-blocked-message')) {
+  const {viewport, prepare, open, suffix} = hosts[skin];
+
+  test(`the blocked chart names Re and BL in the Fix list on ${skin}`, async ({page}) => {
+    await page.setViewportSize(viewport);
+    await prepare(page);
+    await page.goto('/');
+    await open(page);
+    await step.open(page);
+    const message = panel(page);
+    await expect(message).toContainText('(Re)');
+    await expect(message).toContainText('(BL)');
+    await expect(await fixLine(page, `${skin}-missing-driver`)).toHaveText(
+      `Fix: ${['Sd', 'Re', 'BL', 'Cms', 'Mms', 'Rms'].map(label => label + suffix).join(', ')}`,
+    );
+  });
+}
