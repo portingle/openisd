@@ -39,6 +39,21 @@ files:
   - packages/ui/test/ui/driver-editor-units.browser.spec.ts
   - packages/ui/test/ui/driver-editor-weight-frame-size.browser.spec.ts
   - packages/ui/test/ui/graph-panel-edit-driver.browser.spec.ts
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-current-info.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-editor-dimensions.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-editor-help-dimensions.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-rename.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-passive-radiator-data-quality.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-enclosure-tuning-unreachable-warning.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-driver-editor-incomplete-warning.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-shared-graph-blocked-message.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-info.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-rename.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-summary-manage.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-driver-summary-pick.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-phone-filter-card-body.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-shared-graph-blocked-message.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-tab-filters.png
 visual:
   - desktop-dialog-driver-current-info
   - desktop-dialog-driver-editor-dimensions
