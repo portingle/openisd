@@ -55,6 +55,17 @@ grep -q "mobile-c" "$page/index.md" && [ ! -e "$page/mobile-c.before.png" ] && [
 [ -e "$page/desktop-b.before.png" ] && [ ! -e "$page/desktop-b.after.png" ] && ok "a removed screen shows no after" || fail "removed screen wrong"
 bash scripts/visual/publish-changes.sh T1 "$head" "$head" > out.txt 2>&1; [ ! -s out.txt ] && ok "no change publishes nothing" || fail "published for no change"
 
+out="$(bash scripts/visual/publish-changes.sh T404 "$base" "$head" 2>&1)"
+[ "$?" = 0 ] && [[ "$out" == *'tasks/T404.yml has no visual_note'* && "$out" == *'visual changes: http://example.test/pages/'* ]] \
+  && [ -s "$VISUAL_PAGES_DIR/T404-$(git rev-parse --short=10 "$head")/index.html" ] \
+  && ok "a missing task file publishes with a warning" || fail "missing task file: $out"
+out="$(env -u VISUAL_PAGES_URL bash scripts/visual/publish-changes.sh T405 "$base" "$head" 2>&1)"
+[ "$?" != 0 ] && [[ "$out" == *'Set VISUAL_PAGES_URL'* ]] && [ ! -e "$VISUAL_PAGES_DIR/T405-$(git rev-parse --short=10 "$head")" ] \
+  && ok "an unset URL gives a configuration error before publishing" || fail "unset URL: $out"
+out="$(env -u VISUAL_PAGES_DIR bash scripts/visual/publish-changes.sh T1 "$base" "$head" 2>&1)"
+[ "$?" = 0 ] && [ -s "$SCRATCH/visual-pages/T1-$(git rev-parse --short=10 "$head")/index.html" ] \
+  && ok "the default pages folder is next to the repository" || fail "default pages folder: $out"
+
 # a red run: Playwright's test-results
 copy="$SCRATCH/copy"; mkdir -p "$copy/test-results/visual-mobile-a" "$copy/test-results/other-test"
 png was "$copy/test-results/visual-mobile-a/mobile-a-expected.png"; png now "$copy/test-results/visual-mobile-a/mobile-a-actual.png"; png dif "$copy/test-results/visual-mobile-a/mobile-a-diff.png"
@@ -62,6 +73,10 @@ echo trace > "$copy/test-results/other-test/error-context.md"
 bash scripts/visual/failures-page.sh "$copy" abcdef0123456789 > out.txt 2>&1
 grep -q "^visual screens: mobile-a$" out.txt && grep -q "^visual page: http://example.test/pages/red-abcdef0123/index.html$" out.txt && ok "a red run names the differing screen and links its page" || fail "red output: $(cat out.txt)"
 [ -e "$VISUAL_PAGES_DIR/red-abcdef0123/mobile-a.diff.png" ] && ok "the red page holds the difference picture" || fail "no diff picture"
+out="$(env -u VISUAL_PAGES_URL bash scripts/visual/failures-page.sh "$copy" abcdef9876543210 2>&1)"
+[ "$?" != 0 ] && [[ "$out" == *'visual screens: mobile-a'* && "$out" == *'Set VISUAL_PAGES_URL'* ]] \
+  && [ ! -e "$VISUAL_PAGES_DIR/red-abcdef9876" ] \
+  && ok "a red run still names its screens when the URL is unset" || fail "red run with unset URL: $out"
 rm -rf "$copy/test-results/visual-mobile-a"
 bash scripts/visual/failures-page.sh "$copy" abcdef0123456789 > out.txt 2>&1; [ ! -s out.txt ] && ok "a red run with no screenshot failure prints nothing" || fail "printed for no screenshot failure: $(cat out.txt)"
 
