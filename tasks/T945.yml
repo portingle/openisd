@@ -2,7 +2,7 @@ id: T945
 release_note: internal
 repo: openisd
 owner: lead
-status: open
+status: done
 goal: Driver info and summary popups retain every figure and shorten displays above four significant figures, phone summary labels and model fit, the blocked-chart Fix list names Re and BL, and the phone filter strip shows '+ PEQ' in full
 why: Page 1 review 20 Nov (prod 7.0.960 vs main): lead and Codex found these screen defects
 done_test: bash scripts/quiet-test.sh npm run typecheck
