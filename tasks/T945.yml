@@ -1,0 +1,10 @@
+id: T945
+release_note: internal
+repo: openisd
+owner: lead
+status: open
+goal: Driver info and summary popups show readable figures (no 5-decimal dumps, no doubled labels, no rho/c/gamma/Gloss), the blocked-chart Fix list names Re and BL, the phone filter strip shows '+ PEQ' in full
+why: Page 1 review 20 Nov (prod 7.0.960 vs main): lead and Codex found these screen defects
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T945.yml
