@@ -3,7 +3,7 @@
  * (a `SweepJob` the engine runs as given) or blocked (the issues that stop it). A job crosses a
  * Worker boundary (structured clone) and running it gives exactly what `sweep()`/`maxCurves()` give.
  */
-import {describe, expect, it} from 'vitest';
+import {describe, expect, it, vi} from 'vitest';
 import {type Engine, createEngine} from '@openisd/design/engine';
 import type {FrequencyGrid} from '../../domain/box/frequencyGrid.js';
 import {ProjectBuilder} from '../../domain/openisdTransforms.js';
@@ -40,6 +40,28 @@ describe('OpenISDProject.sweepPlan', () => {
     const other = createEngine();
     expect(runSweepJob(other.simulation, job)).toEqual(project.sweep(GRID));
     expect(runMaxCurvesJob(other.simulation, job)).toEqual(project.maxCurves(GRID));
+  });
+
+  it.each([
+    {sample: Number.NaN, cause: 'not-a-number'},
+    {sample: Infinity, cause: 'infinite'},
+  ])('refuses an impedance sample with cause $cause before returning the sweep', ({sample, cause}) => {
+    const engine = createEngine();
+    const project = sealed(engine);
+    const plan = project.sweepPlan(GRID);
+    const solved = project.sweep(GRID).values;
+    if (plan.kind !== 'ready' || solved === null) throw new Error('expected a finite reference sweep');
+
+    vi.spyOn(engine.simulation, 'sweep').mockReturnValue({
+      values: {...solved, zmag: [sample, ...solved.zmag.slice(1)]},
+      issues: [],
+    });
+    const result = runSweepJob(engine.simulation, plan.job);
+
+    expect(result.issues).toEqual([
+      expect.objectContaining({kind: 'result-refused', target: 'zmag', cause, text: expect.stringMatching(/impedance magnitude/i)}),
+    ]);
+    expect(result.values).toBeNull();
   });
 
   it('max curves run at the 2.83 V reference, the sweep at the project drive', () => {

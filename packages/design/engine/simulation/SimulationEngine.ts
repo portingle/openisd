@@ -37,6 +37,7 @@ import type {SolveRoute} from '../consistency.js';
 import type {SignalIssue} from '../signal/SignalEngine.js';
 import {DEFAULT_SWEEP_POINTS} from '../../fields/defaults.js';
 import {NumberField} from '../../fields/field.js';
+import {nonFiniteResult, type NonFiniteResultIssue} from '../../calculatedResult.js';
 
 /** Every issue channel a sweep can surface: the driver's own missing circuit fields (a
  *  `missing-dependencies` issue per absent field, never a combined message or a cross-field
@@ -49,11 +50,10 @@ import {NumberField} from '../../fields/field.js';
  *  has neither a tuning nor a port length, or a passive-radiator project whose radiator has
  *  neither an added mass nor a tuning, would otherwise sweep silently to NaN because
  *  `SweepParams.Leff`/`prMadd` come back undefined; the domain guard names the missing target
- *  instead). Never a sweep-own quantity: `sweep()` computes nothing a caller enters, so it has
- *  no target of its own to report an issue about. */
+ *  instead), or a calculated output refused at publication. */
 export type SweepIssue =
   | DriverIssue | AirIssue | BoxParamsIssue | SweepSettingIssue
-  | VentIssue | PrIssue | SignalIssue;
+  | VentIssue | PrIssue | SignalIssue | NonFiniteResultIssue<string>;
 
 /** The unified sweep result: the curves (or null if nothing could be derived), and why. */
 export interface SweepSolveResult {
@@ -71,6 +71,33 @@ export interface MaxCurvesSolveResult {
   readonly issues: readonly SweepIssue[];
   readonly driverPrerequisites: readonly DriverPrerequisite[];
 }
+
+const SWEEP_OUTPUT_LABELS: Readonly<Record<keyof SweepResult, string>> = Object.freeze({
+  fs: 'Frequency grid', H: 'Complex pressure', spl: 'SPL', phase: 'Phase',
+  exc: 'Cone excursion', excPR: 'Passive radiator excursion', pv: 'Port velocity',
+  pvRear: 'Rear port velocity', pvIntra: 'Inter-chamber port velocity',
+  zmag: 'Impedance magnitude', zph: 'Impedance phase', gd: 'Group delay',
+  tfMag: 'Transfer magnitude', prTfMag: 'Passive radiator transfer magnitude', prTfPhase: 'Passive radiator transfer phase',
+  rearPortGain: 'Rear port gain', frontPortGain: 'Front port gain', splXlimCurve: 'Excursion-limited SPL',
+  xlimited: 'Excursion limit', flatClamped: 'Force-flat clamp frequency', fltMag: 'Filter magnitude',
+  fltPhase: 'Filter phase', fltGd: 'Filter group delay', va: 'Amplifier apparent load power',
+});
+
+function resultIssues<T extends string>(
+  labels: Readonly<Record<T, string>>, values: Readonly<Record<T, unknown>>, prefix: string,
+): NonFiniteResultIssue<string>[] {
+  const issues: NonFiniteResultIssue<string>[] = [];
+  for (const key in labels) {
+    const issue = nonFiniteResult(prefix + key, labels[key], values[key]);
+    if (issue !== null) issues.push(issue);
+  }
+  return issues;
+}
+
+const MAX_OUTPUT_LABELS: Readonly<Record<keyof MaxCurvesResult, string>> = Object.freeze({
+  fs: 'Maximum curves frequency grid', maxspl: 'Maximum SPL', maxpwr: 'Maximum power',
+  xlim: 'Excursion limit', peAbsent: 'Power limit',
+});
 
 /** The "no output" sentinel sweep() writes where |p| = 0 exactly. A real level can sit below it
  *  (a steep filter), so silence is this exact value, never a threshold. */
@@ -346,6 +373,9 @@ export interface SimulationEngine {
   sweep(drv: SweepDriver, Le_H: number | undefined, box: BoxType, P: SweepParams): SweepSolveResult;
   /** The limit curves — how loud before excursion or port velocity gives out. */
   maxCurves(drv: SweepDriver, Le_H: number | undefined, box: BoxType, P: SweepParams): MaxCurvesSolveResult;
+  /** Results that can leave the calculation engine for the project and sweep worker. */
+  publishSweep(result: SweepSolveResult): SweepSolveResult;
+  publishMaxCurves(result: MaxCurvesSolveResult): MaxCurvesSolveResult;
   /** The enclosure-parameter precondition (T9): `values` is `P` unchanged when every field the
    *  circuit divides by is present for `box`'s topology, else `null`, with `issues` naming what
    *  is missing. */
@@ -395,6 +425,27 @@ export function createSimulationEngine(): SimulationEngine {
 export class SimulationEngineImpl implements SimulationEngine {
   /** `driver` turns the stated T/S values into the ones the circuit runs on (`circuitValues`). */
   constructor(private readonly driver: DriverEngine) {}
+
+  publishSweep(result: SweepSolveResult): SweepSolveResult {
+    if (result.values === null) return result;
+    const issues = resultIssues(SWEEP_OUTPUT_LABELS, result.values, '');
+    return issues.length === 0 ? result : {values: null, issues: [...result.issues, ...issues]};
+  }
+
+  publishMaxCurves(result: MaxCurvesSolveResult): MaxCurvesSolveResult {
+    const values = result.values;
+    if (values === null) return result;
+    // An absent thermal and excursion bound has its own advisory. Only its +Infinity
+    // sentinel is expected in the internal result.
+    const unbounded = result.driverPrerequisites.length > 0;
+    const output = unbounded ? {
+      ...values,
+      maxspl: values.maxspl.filter(value => value !== Infinity),
+      maxpwr: values.maxpwr.filter(value => value !== Infinity),
+    } : values;
+    const issues = resultIssues(MAX_OUTPUT_LABELS, output, 'maxCurves:');
+    return !unbounded && issues.length === 0 ? result : {...result, values: null, issues: [...result.issues, ...issues]};
+  }
 
   /**
    * The passband reference level of an SPL curve, in dB — the peak of the real curve,
