@@ -52,7 +52,7 @@ head_gate_files="${GATE_FILES:-}"
 # Read from land.conf, the base's list fails closed: unreadable or empty, the check refuses rather than trust the proposed list alone.
 if [ -z "$gate_files_from_env" ]; then
   base_gate_files="$(conf_value "$BASE" GATE_FILES)" || fail gates "cannot read land.conf at the base $BASE"
-  [ -n "$base_gate_files" ] || fail gates "the base's land.conf ($BASE) sets no GATE_FILES"
+  [ -n "${base_gate_files//[[:space:]]/}" ] || fail gates "the base's land.conf ($BASE) sets no GATE_FILES"   # empty or only spaces: no pattern
 else
   base_gate_files="$(conf_value "$BASE" GATE_FILES 2> /dev/null)" || base_gate_files=""
 fi

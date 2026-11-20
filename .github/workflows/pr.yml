@@ -59,7 +59,7 @@ jobs:
           BOOTSTRAP_SHA256: |
             09f2ec4155654d3dd4ed20905c9122b0f0c58fbd8e0daf42be938791dfc6edab  scripts/ci/contract-from-base.sh
             bd74afc8a1e0462c139f7b0a1a76fb301ea7b644b54bb4e5d08aba6b5deed0a1  scripts/land/pr-task.sh
-            56f73cadd94184549924939a90fa6561b6aa7a78e7eebf46f6cc3a793c334304  scripts/land/check-task-contract.sh
+            feb0ec11624163e253c91cbf0080a0c0fab7fa7d9df0e404faf23c2369c6f573  scripts/land/check-task-contract.sh
             c88c1e927597717479befd32ad56832818cf2374f317df0ca853552df1dc1c24  scripts/land/core/task.sh
             2cfb2f891b0b779fa07f83d9166cab0315374b254f91075fb2d0e83b616e714c  scripts/land/task-gates/check-commit.sh
         run: |

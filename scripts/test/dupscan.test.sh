@@ -414,6 +414,17 @@ out="$(run)"; rc=$?
   && ok "a copy resolved under its previous key form is reported back even when its new key is allowed (exit 1)" || bad "resolved-under-old-form copy with its new key allowed should exit 1 naming arrayVas, got exit $rc: $out"
 rm "$SCRATCH/packages/design/engine/newcopy.ts"; echo '{}' > "$SCRATCH/allow.json"; set_base
 
+# T934 review 7: jscpd reads no configuration from the checkout. A .jscpd.json, a "jscpd" section in package.json and a
+# .gitignore that would raise the minimum or leave packages/ out do not hide a copy: every option is the scanner's own.
+block 'one comment' > "$SCRATCH/packages/design/engine/a.ts"; block 'one comment' > "$SCRATCH/packages/design/engine/b.ts"
+before="$(copy_keys)"
+echo '{"minLines": 1000, "minTokens": 100000, "ignore": ["**/engine/**"]}' > "$SCRATCH/.jscpd.json"
+echo '{"name": "x", "jscpd": {"minLines": 1000, "minTokens": 100000, "ignore": ["**/engine/**"]}}' > "$SCRATCH/package.json"
+printf 'packages/\n' > "$SCRATCH/.gitignore"
+after="$(copy_keys)"
+{ [ -n "$before" ] && [ "$before" = "$after" ]; } && ok "a checkout's .jscpd.json, package.json jscpd section and .gitignore do not hide a copy" || bad "planted jscpd config should not change the copies: before [$before] after [$after]"
+rm -f "$SCRATCH/.jscpd.json" "$SCRATCH/package.json" "$SCRATCH/.gitignore" "$SCRATCH/packages/design/engine/a.ts" "$SCRATCH/packages/design/engine/b.ts"
+
 # T934 review 3: a hand-reviewed pair says why; one without a reason stops the run (exit 2).
 echo '{"pairs": {}, "hand_pairs": {"copy|a|b|1": {"to": "copy|a|b|2", "why": ""}}}' > "$SCRATCH/rekey.json"
 out="$(run)"; rc=$?

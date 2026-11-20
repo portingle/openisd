@@ -66,6 +66,7 @@ POST_LAND_LOCK="$SCRATCH/post.lock"
 POST_LAND_RECORD="$SCRATCH/post.lock"
 QUESTIONS_FILE=$SCRATCH/questions.yml
 $([ "${NO_BASE_GATE_FILES:-0}" = 1 ] || printf '%s' "$gate_files")
+${BASE_CONF_EXTRA:-}
 CONF
     printf 'id: T9\nowner: t\nstatus: claimed\nrelease_note: internal\ngoal: Do the thing.\ndone_test: true\nfiles:\n  - f.txt\n%s' "${1:-}" > tasks/T9.yml
     git add -A; git commit -qm base; git push -q origin main
@@ -264,6 +265,9 @@ if [ "$r" = 0 ] && grep -q '^dupscan: [0-9]* findings' "$SCRATCH/out" && grep -q
 # 31 (T934 review 6): the base's GATE_FILES is read fail-closed: a base land.conf without it refuses, never trusting the change's list alone.
 NO_BASE_GATE_FILES=1 ci_setup "" 0; printf 'GATE_FILES="nothing.txt"\n' >> land.conf; git commit -qam list; r=$(ci_contract "$NOT_BASE")
 if [ "$r" = 1 ] && grep -q "the base's land.conf .* sets no GATE_FILES" "$SCRATCH/out"; then ok "31 a base land.conf without GATE_FILES refuses"; else fail "31 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
+# 31 (T934 review 7): a base GATE_FILES of whitespace only names no pattern and refuses the same way.
+NO_BASE_GATE_FILES=1 BASE_CONF_EXTRA='GATE_FILES="   "' ci_setup "" 0; sed -i 's/^GATE_FILES="   "$/GATE_FILES="nothing.txt"/' land.conf; git commit -qam list; r=$(ci_contract "$NOT_BASE")
+if [ "$r" = 1 ] && grep -q "the base's land.conf .* sets no GATE_FILES" "$SCRATCH/out"; then ok "31 a base land.conf whose GATE_FILES is only spaces refuses"; else fail "31 spaces (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
 # 32 (T934 review 6): the checker's Python runs isolated (-I): a fnmatch.py in the checkout that matches nothing is not imported.
 ci_setup "" 0; printf 'def fnmatchcase(name, pat):\n    return False\n' > fnmatch.py; git add -A; git commit -qm planted; r=$(ci_contract "$NOT_BASE")
 if [ "$r" = 1 ] && grep -q $'REFUSE\tgates\tgate files changed: [^;]*tsconfig.json' "$SCRATCH/out"; then ok "32 a checkout-local fnmatch.py is not imported by the checker"; else fail "32 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi

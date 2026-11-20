@@ -55,9 +55,9 @@
 //   - jscpd runs comment-insensitive (--mode weak), so a comment changed in one copy does not hide or split the copy.
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {dirname, join, relative} from 'node:path';
+import {dirname, join, relative, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import ts from 'typescript';
 
@@ -72,7 +72,7 @@ const allowPath = opt('--allow') ?? join(here, 'dupscan-allow.json');
 // No default for the homes or the base: a run that forgot them would quietly check less.
 const homesPath = opt('--homes');
 const baseRef = opt('--base');
-const jscpdBin = opt('--jscpd') ?? join(repo, 'node_modules/.bin/jscpd');
+const jscpdBin = resolve(opt('--jscpd') ?? join(repo, 'node_modules/.bin/jscpd'));   // absolute: jscpd runs in a temporary folder
 const writeBaseline = args.includes('--write-baseline');
 const rekeyPath = opt('--rekey');
 const writeRekeyPath = opt('--write-rekey');
@@ -85,14 +85,25 @@ const IGNORE = ['**/node_modules/**', '**/test/**', '**/*.test.ts', '**/*.spec.t
 // jscpd runs comment-insensitive (--mode weak, T934 review 2): a comment reworded in one of two copies neither hides the
 // copy nor splits it. Each copy also carries `oldKey`, its key in the previous key form (legacyCopyKeys), so a "was" claim
 // is checked against the same copy and a resolved copy that comes back is recognised under either form.
+// jscpd reads no configuration from the checkout (T934 review 7): it runs in an empty temporary folder (it reads package.json's
+// "jscpd" section and .gitignore from its working folder), with an empty --config file (else .jscpd.json there), --no-gitignore,
+// and every option it uses set here: jscpd 4's own defaults for the line and size limits. Its file names come back absolute
+// (--absolute) and are made relative to the checkout again; the ignore globs are anchored at the checkout.
 function jscpd(mode) {
   if (!existsSync(jscpdBin)) { console.error(`jscpd not found at ${jscpdBin} (it is a devDependency: npm ci)`); process.exit(2); }
+  const root = realpathSync(repo);
   const out = mkdtempSync(join(tmpdir(), 'dupscan-'));
-  execFileSync(jscpdBin, ['packages', '--format', 'typescript,vue', '--min-tokens', '50', '--mode', mode, '--ignore', IGNORE.join(','),
-    '--reporters', 'json', '--output', out, '--silent'], {cwd: repo, stdio: ['ignore', 'ignore', 'inherit']});
+  const cwd = mkdtempSync(join(tmpdir(), 'dupscan-cwd-'));
+  writeFileSync(join(cwd, 'jscpd-config.json'), '{}\n');
+  execFileSync(jscpdBin, [join(root, 'packages'), '--config', join(cwd, 'jscpd-config.json'), '--no-gitignore', '--format', 'typescript,vue',
+    '--min-tokens', '50', '--min-lines', '5', '--max-lines', '1000', '--max-size', '100kb', '--mode', mode,
+    '--ignore', IGNORE.map(g => `${root}/${g}`).join(','), '--absolute', '--reporters', 'json', '--output', out, '--silent'],
+  {cwd, stdio: ['ignore', 'ignore', 'inherit']});
   // jscpd exits 0 and writes no report when it finds no clone at all (a tree with nothing to compare); a crash exits non-zero above
   if (!existsSync(join(out, 'jscpd-report.json'))) return [];
-  return JSON.parse(readFileSync(join(out, 'jscpd-report.json'), 'utf8')).duplicates;
+  const dups = JSON.parse(readFileSync(join(out, 'jscpd-report.json'), 'utf8')).duplicates;
+  for (const d of dups) for (const f of [d.firstFile, d.secondFile]) f.name = relative(root, f.name);
+  return dups;
 }
 
 /** A jscpd duplicate's two sides, in key order (by file name, then start line). */
