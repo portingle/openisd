@@ -524,6 +524,92 @@ after="$(copy_keys)"
 { [ -n "$before" ] && [ "$before" = "$after" ]; } && ok "a checkout's .jscpd.json, package.json jscpd section and .gitignore do not hide a copy" || bad "planted jscpd config should not change the copies: before [$before] after [$after]"
 rm -f "$SCRATCH/.jscpd.json" "$SCRATCH/package.json" "$SCRATCH/.gitignore" "$SCRATCH/packages/design/engine/a.ts" "$SCRATCH/packages/design/engine/b.ts"
 
+# A block comment spanning the end of an import and the next line cannot hide the next statement.
+allowed_allow
+IMPORT_LINE="import { area } from './clean';"
+printf '%s\n%s\n' "$IMPORT_LINE" "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+set_base || setup_failed "base with an allowed formula after an import"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '0 gone' <<< "$out"; } || setup_failed "fixture formula after import is active (exit $rc): $out"
+printf '%s /* comment\ncontinues here */%s\n' "$IMPORT_LINE" "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '0 gone' <<< "$out"; } \
+  && ok "a block comment after an import keeps the next formula active" || bad "a block comment after an import keeps the next formula active (exit $rc): $out"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"
+echo '{}' > "$SCRATCH/allow.json"; set_base || setup_failed "clean base for copy fixtures"
+
+# Use a clone with no formula signatures so only jscpd can detect it.
+block 'one comment' > "$SCRATCH/packages/design/engine/a.ts"
+block 'one comment' > "$SCRATCH/packages/design/engine/b.ts"
+CLONE_KEY="$(copy_keys)"
+[ -n "$CLONE_KEY" ] || setup_failed "jscpd clone fixture"
+node -e 'const [k] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "a.ts:1 = b.ts:1", count: 1}}));' "$CLONE_KEY" > "$SCRATCH/allow.json"
+set_base || setup_failed "base with an allowed clone"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '1 copies' <<< "$out" && grep -q '0 gone' <<< "$out"; } || setup_failed "fixture clone is active (exit $rc): $out"
+
+{ echo '// jscpd:ignore-start'; block 'one comment'; echo '// jscpd:ignore-end'; } > "$SCRATCH/packages/design/engine/b.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -qF 'packages/design/engine/b.ts:1: jscpd:ignore-start' <<< "$out" && ! grep -q 'gone with this change' <<< "$out"; } \
+  && ok "jscpd ignore directives fail the scan and name the source file" || bad "jscpd ignore directives fail the scan and name the source file (exit $rc): $out"
+set_base || setup_failed "base with jscpd ignore directives"
+block 'one comment' > "$SCRATCH/packages/design/engine/b.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" != 0 ] && grep -qF 'packages/design/engine/b.ts:1: jscpd:ignore-start' <<< "$out" && ! grep -q 'were gone on the base' <<< "$out"; } \
+  && ok "jscpd ignore directives on the base fail the scan" || bad "jscpd ignore directives on the base fail the scan (exit $rc): $out"
+set_base || setup_failed "restore base with an allowed clone"
+
+for growth in lines bytes; do
+  block 'one comment' > "$SCRATCH/packages/design/engine/b.ts"
+  if [ "$growth" = lines ]; then
+    printf '\n%.0s' {1..1000} >> "$SCRATCH/packages/design/engine/b.ts"
+  else
+    printf '//%102400s\n' '' >> "$SCRATCH/packages/design/engine/b.ts"
+  fi
+  out="$(run)"; rc=$?
+  { [ "$rc" = 0 ] && grep -q '1 copies' <<< "$out" && grep -q '0 gone' <<< "$out"; } \
+    && ok "growing a clone's file past jscpd's default $growth limit keeps it active" || bad "growing a clone's file past jscpd's default $growth limit keeps it active (exit $rc): $out"
+done
+
+# The wider scan includes large files on both revisions, so it can reject new clones without requiring entries for older ones.
+mv "$SCRATCH/packages/design/engine/b.ts" "$SCRATCH/large.ts"
+echo '{}' > "$SCRATCH/allow.json"; set_base || setup_failed "base without the large clone file"
+cp "$SCRATCH/large.ts" "$SCRATCH/packages/design/engine/b.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'new duplicated logic' <<< "$out" && grep -q 'packages/design/engine/b.ts:' <<< "$out"; } \
+  && ok "a new clone in a large file is refused and named" || bad "a new clone in a large file is refused and named (exit $rc): $out"
+rm "$SCRATCH/large.ts"
+set_base || setup_failed "base with an unlisted clone in a large file"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '1 copies' <<< "$out"; } \
+  && ok "a clone in a large file already on the base is counted" || bad "a clone in a large file already on the base is counted (exit $rc): $out"
+rm "$SCRATCH/packages/design/engine/a.ts" "$SCRATCH/packages/design/engine/b.ts"
+
+# A reviewed re-key whose copy was absent on the base cannot use a malformed count to evade the zero cap.
+node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 0}}));' "$OLD_FORM" > "$SCRATCH/allow.json"
+node -e 'const [o, k] = process.argv.slice(1); console.log(JSON.stringify({pairs: {[o]: k}}));' "$OLD_FORM" "$KEY" > "$SCRATCH/rekey.json"
+set_base || setup_failed "base with a zero-count entry and a reviewed re-key"
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+for count in '"invalid"' '"0"' -1 0.5 null missing; do
+  node -e 'const [k, o, raw] = process.argv.slice(1); const count = raw === "missing" ? undefined : JSON.parse(raw);
+    console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", was: o, count}}));' "$KEY" "$OLD_FORM" "$count" > "$SCRATCH/allow.json"
+  out="$(run)"; rc=$?
+  { [ "$rc" = 1 ] && grep -qF "count must be a non-negative integer: $KEY" <<< "$out"; } \
+    && ok "a reviewed re-key rejects malformed count $count" || bad "a reviewed re-key rejects malformed count $count (exit $rc): $out"
+done
+
+# Validate even resolved base entries whose counts would otherwise never be compared.
+resolved_allow
+sed -i 's/"count": 1/"count": "invalid"/' "$SCRATCH/allow.json"
+set_base || setup_failed "base with a malformed resolved count"
+resolved_allow
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -qF "allow.json at the base base: count must be a non-negative integer: $KEY" <<< "$out"; } \
+  && ok "a malformed count on a resolved base entry is rejected" || bad "a malformed count on a resolved base entry is rejected (exit $rc): $out"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"
+echo '{}' > "$SCRATCH/allow.json"; echo '{"pairs": {}}' > "$SCRATCH/rekey.json"
+set_base || setup_failed "clean base after second review regressions"
+
 # T934 review 3: a hand-reviewed pair says why; one without a reason stops the run (exit 2).
 echo '{"pairs": {}, "hand_pairs": {"copy|a|b|1": {"to": "copy|a|b|2", "why": ""}}}' > "$SCRATCH/rekey.json"
 out="$(run)"; rc=$?
