@@ -1,0 +1,10 @@
+id: T947
+release_note: internal
+repo: openisd
+owner: lead
+status: open
+goal: 'Phone Driver tab shows the Placement dropdown John approved, not the Standard/Iso-Barik radios'
+why: 'John approved the dropdown (QO953.c38) and tapped Yes: ship it on the phone-placement card, 20 Nov 2026 20:37'
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T947.yml
