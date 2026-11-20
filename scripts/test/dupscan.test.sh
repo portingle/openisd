@@ -454,6 +454,65 @@ out="$(run)"; rc=$?
   && ok "T941: a reworded copy that still duplicates the sum fails (exit 1) as a new finding, its old entry reported gone" || bad "T941: reworded copy should exit 1 as new, got exit $rc: $out"
 rm "$SCRATCH/packages/design/engine/newcopy.ts"; echo '{}' > "$SCRATCH/allow.json"; set_base
 
+# A reviewed migration keeps the identity of its destination, even after that copy has gone.
+node -e 'const [o] = process.argv.slice(1); console.log(JSON.stringify({[o]: {reason: "baseline", where: "x:1", count: 1}}));' "$OLD_FORM" > "$SCRATCH/allow.json"
+node -e 'const [o, k] = process.argv.slice(1); console.log(JSON.stringify({pairs: {[o]: k}}));' "$OLD_FORM" "$KEY" > "$SCRATCH/rekey.json"
+set_base || setup_failed "base after the copy was removed"
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+node -e 'const [k, o] = process.argv.slice(1); console.log(JSON.stringify({[k]: {reason: "baseline", where: "x:1", count: 1, was: o}}));' "$KEY" "$OLD_FORM" > "$SCRATCH/allow.json"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'were gone on the base' <<< "$out" && grep -q 'newcopy.ts:1' <<< "$out"; } \
+  && ok "a reviewed re-key cannot restore a copy absent from the base" || bad "a reviewed re-key cannot restore a copy absent from the base (exit $rc): $out"
+echo '{"pairs": {}}' > "$SCRATCH/rekey.json"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"
+
+# A formula in its home on the base does not become an allowed base copy when the head drops that home.
+allowed_allow
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+cp "$SCRATCH/homes.json" "$SCRATCH/homes.before"
+echo '{"driver-count-scaling": ["packages/design/engine/newcopy.ts:perDriver"]}' > "$SCRATCH/homes.json"
+set_base || setup_failed "base with the formula in its home"
+cp "$SCRATCH/homes.before" "$SCRATCH/homes.json"
+out="$(run)"; rc=$?
+{ [ "$rc" = 1 ] && grep -q 'newcopy.ts:1' <<< "$out" && grep -q 'were gone on the base' <<< "$out"; } \
+  && ok "base counts use the homes declared on the base" || bad "base counts use the homes declared on the base (exit $rc): $out"
+rm "$SCRATCH/homes.before"
+rm "$SCRATCH/packages/design/engine/newcopy.ts"
+
+# Comment-only edits leave existing formula findings active.
+allowed_allow
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+UNIT_LINE='export const litres = (volume: number): number => volume / 1000;'
+UNIT_KEY="sig|unit-factor|packages/design/engine/units.ts|$UNIT_LINE"
+node -e 'const [a, k] = process.argv.slice(1); console.log(JSON.stringify({...JSON.parse(require("fs").readFileSync(a, "utf8")), [k]: {reason: "baseline", where: "x:1", count: 1}}));' "$SCRATCH/allow.json" "$UNIT_KEY" > "$SCRATCH/allow.new" && mv "$SCRATCH/allow.new" "$SCRATCH/allow.json"
+printf '%s\n' "$UNIT_LINE" > "$SCRATCH/packages/design/engine/units.ts"
+set_base || setup_failed "base with allowed driver-count and unit formulas"
+printf '/* driver share */%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '0 gone' <<< "$out"; } \
+  && ok "a leading block comment keeps an allowed formula active" || bad "a leading block comment keeps an allowed formula active (exit $rc): $out"
+printf '%s /* driver share\ncontinues here *// n;\n' "${COPY_LINE% / n;}" > "$SCRATCH/packages/design/engine/newcopy.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '0 gone' <<< "$out"; } \
+  && ok "a multiline block comment keeps an allowed formula active" || bad "a multiline block comment keeps an allowed formula active (exit $rc): $out"
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+printf '%s // delay is documented elsewhere\n' "$UNIT_LINE" > "$SCRATCH/packages/design/engine/units.ts"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '0 gone' <<< "$out"; } \
+  && ok "a comment carrying an exclusion keeps an allowed formula active" || bad "a comment carrying an exclusion keeps an allowed formula active (exit $rc): $out"
+rm "$SCRATCH/packages/design/engine/units.ts" "$SCRATCH/packages/design/engine/newcopy.ts"
+
+# The export policy for a tracked file does not change what is present on the base.
+allowed_allow
+printf '%s\n' "$COPY_LINE" > "$SCRATCH/packages/design/engine/newcopy.ts"
+echo 'packages/design/engine/newcopy.ts export-ignore' > "$SCRATCH/.gitattributes"
+set_base || setup_failed "base with an export-ignored formula"
+out="$(run)"; rc=$?
+{ [ "$rc" = 0 ] && grep -q '0 gone' <<< "$out"; } \
+  && ok "base counts include tracked files marked export-ignore" || bad "base counts include tracked files marked export-ignore (exit $rc): $out"
+rm "$SCRATCH/.gitattributes" "$SCRATCH/packages/design/engine/newcopy.ts"
+echo '{}' > "$SCRATCH/allow.json"; set_base || setup_failed "clean base after review regressions"
+
 # T934 review 7: jscpd reads no configuration from the checkout. A .jscpd.json, a "jscpd" section in package.json and a
 # .gitignore that would raise the minimum or leave packages/ out do not hide a copy: every option is the scanner's own.
 block 'one comment' > "$SCRATCH/packages/design/engine/a.ts"; block 'one comment' > "$SCRATCH/packages/design/engine/b.ts"

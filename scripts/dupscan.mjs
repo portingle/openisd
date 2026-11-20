@@ -28,7 +28,7 @@
 // A copy that has gone (T941; John, QO963, 20 Nov 2026: "accept it, and let the check accept removed copies by itself from now
 // on", after "isn't the whole point of consolidation to remove duplicate code - why do you need to ask me to approve
 // consolidation"): an allowed entry whose copy no longer matches never fails the run and never needs an edit to the allow-list
-// (a gate file). Each run finds the same keys on the BASE tree (git archive of packages/ at --base, scanned by this script) and
+// (a gate file). Each run finds the same keys on the BASE tree (tracked sources and homes at --base, scanned by this script) and
 // an unresolved entry listed on the base allows at most as many matches as the base tree had: an entry the head no longer
 // matches but the base did is reported "gone with this change"; one the base did not match either is reported "already gone"; a
 // copy that was gone on the base and is found again fails, naming the key (QO949: a gone copy that returns fails). So the "gone"
@@ -66,7 +66,7 @@
 //   - jscpd runs comment-insensitive (--mode weak), so a comment changed in one copy does not hide or split the copy.
 import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync} from 'node:fs';
+import {closeSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname, join, relative, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -337,22 +337,48 @@ function walk(dir, files = []) {
   return files;
 }
 
+/** Comment-free text for signature matching, with each character mapped back to its source offset. */
+function signatureLine(src, from, to) {
+  const offsets = [];
+  let text = '';
+  for (let i = from; i < to; i++) {
+    if (src.cls[i] === 'comment') continue;
+    const ch = src.text[i];
+    if (src.cls[i - 1] === 'comment' && /\w$/.test(text) && /\w/.test(ch)) {
+      text += ' ';
+      offsets.push(i - 1);
+    }
+    text += ch;
+    offsets.push(i);
+  }
+  return {text, offsets};
+}
+
 function signatures() {
   const hits = [];
   for (const file of walk(join(repo, 'packages'))) {
     const rel = relative(repo, file);
     const src = source(rel);
     let lineStart = 0;
+    let signatureStart = 0;
     for (const [i, line] of src.text.split('\n').entries()) {
-      const at = lineStart;
-      lineStart += line.length + 1;
-      const t = line.trim();
-      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*') || t.startsWith('<!--') || t.startsWith('import ')) continue;
+      const end = lineStart + line.length;
+      lineStart = end + 1;
+      // A line break inside a block comment does not split the formula or change its key.
+      if (src.cls[end] === 'comment') continue;
+      const at = signatureStart;
+      signatureStart = lineStart;
+      const code = signatureLine(src, at, end);
+      const t = code.text.trim();
+      if (t.startsWith('*') || t.startsWith('import ')) continue;
       for (const r of RULES) {
         if (r.dirs && !r.dirs.some(d => rel.startsWith(d))) continue;
-        if (!r.re.test(line) || (r.skip && r.skip.test(line))) continue;
-        const matches = [...line.matchAll(new RegExp(r.re.source, 'g'))].map(m => [at + m.index, at + m.index + m[0].length]);
-        hits.push({kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${keyText(src, at, at + line.length)}`, oldKey: legacySignatureKey(r.id, rel, line), where: `${rel}:${i + 1}`,
+        if (!r.re.test(code.text) || (r.skip && r.skip.test(code.text))) continue;
+        const matches = [...code.text.matchAll(new RegExp(r.re.source, 'g'))]
+          .map(m => [code.offsets[m.index], code.offsets[m.index + m[0].length - 1] + 1]);
+        const lineNumber = i + 1 - (src.text.slice(matches[0][0], end).match(/\n/g)?.length ?? 0);
+        hits.push({kind: 'signature', rule: r.id, what: r.what, key: `sig|${r.id}|${rel}|${keyText(src, at, end)}`,
+          oldKey: legacySignatureKey(r.id, rel, src.text.slice(at, end)), where: `${rel}:${lineNumber}`,
           layer: layerOf(rel), home: homeOf(r.id, rel, matches), prose: matches.every(([a, b]) => isProse(src, a, b))});
       }
     }
@@ -445,8 +471,11 @@ const back = active.filter(f => resolvedEntryOf(f) !== undefined);
 const baseAllow = readBaseAllow();
 // What the base tree matched (T941). Unreadable base allow-list: the ratchet fails the run, and no allowance is cut down.
 const onBase = baseAllow.list === undefined ? null : baseCounts();
-// An entry already on the base allow-list allows at most what the base tree matched: a copy gone on the base is not allowed back.
-const allowedCount = k => Math.min(allow[k].count ?? 1, onBase !== null && k in baseAllow.list ? (onBase[k] ?? 0) : Infinity);
+// Existing and migrated allowances are capped by the current key's count on the base tree.
+const allowedCount = k => {
+  const fromBase = onBase !== null && (k in baseAllow.list || typeof allow[k].was === 'string');
+  return Math.min(allow[k].count ?? 1, fromBase ? (onBase[k] ?? 0) : Infinity);
+};
 const counts = {};
 const unlisted = active.filter(f => resolvedEntryOf(f) === undefined)
   .filter(f => { counts[f.key] = (counts[f.key] ?? 0) + 1; return !(f.key in allow) || counts[f.key] > allowedCount(f.key); });
@@ -465,17 +494,40 @@ function readBaseAllow() {
   catch (e) { return {error: `cannot read ${rel} at the base ${baseRef}: ${String(e.stderr ?? e.message).trim()}`}; }
 }
 
-/** How many times each key is found on the base tree (outside its home): this script run on `git archive` of packages/ at the base. */
+/** Materialise the tracked source blobs directly so export attributes cannot hide or rewrite them. */
+function writeBaseSources(tree) {
+  mkdirSync(join(tree, 'packages'), {recursive: true});
+  const entries = execFileSync('git', ['-C', repo, 'ls-tree', '-rz', baseRef, '--', 'packages'],
+    {encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit']});
+  for (const entry of entries.split('\0')) {
+    const tab = entry.indexOf('\t');
+    const path = entry.slice(tab + 1);
+    const [mode, , blob] = entry.slice(0, tab).split(' ');
+    if (!/^100[0-7]{3}$/.test(mode) || !/\.(ts|vue)$/.test(path)) continue;
+    const dest = join(tree, path);
+    mkdirSync(dirname(dest), {recursive: true});
+    const fd = openSync(dest, 'w');
+    try {
+      execFileSync('git', ['-C', repo, 'cat-file', 'blob', blob], {stdio: ['ignore', fd, 'inherit']});
+    } finally {
+      closeSync(fd);
+    }
+  }
+}
+
+/** How many times each key is found on the base tree, outside the homes declared on that tree. */
 function baseCounts() {
   const dir = mkdtempSync(join(tmpdir(), 'dupscan-base-'));
-  const tar = join(dir, 'packages.tar'), tree = join(dir, 'tree'), found = join(dir, 'found.json');
-  mkdirSync(tree);
-  execFileSync('git', ['-C', repo, 'archive', '--format=tar', '-o', tar, baseRef, 'packages'], {stdio: ['ignore', 'ignore', 'inherit']});
-  execFileSync('tar', ['-xf', tar, '-C', tree], {stdio: ['ignore', 'ignore', 'inherit']});
-  execFileSync(process.execPath, [fileURLToPath(import.meta.url), tree, '--jscpd', jscpdBin, '--homes', resolve(homesPath), '--list-findings', found], {stdio: ['ignore', 'ignore', 'inherit']});
-  const counts = JSON.parse(readFileSync(found, 'utf8'));
-  rmSync(dir, {recursive: true, force: true});
-  return counts;
+  const tree = join(dir, 'tree'), homes = join(dir, 'homes.json'), found = join(dir, 'found.json');
+  try {
+    writeBaseSources(tree);
+    const rel = relative(repo, resolve(homesPath));
+    writeFileSync(homes, execFileSync('git', ['-C', repo, 'show', `${baseRef}:${rel}`], {stdio: ['ignore', 'pipe', 'inherit']}));
+    execFileSync(process.execPath, [fileURLToPath(import.meta.url), tree, '--jscpd', jscpdBin, '--homes', homes, '--list-findings', found], {stdio: ['ignore', 'ignore', 'inherit']});
+    return JSON.parse(readFileSync(found, 'utf8'));
+  } finally {
+    rmSync(dir, {recursive: true, force: true});
+  }
 }
 
 /** Why the allow-list grew against the one on the base commit (T934: it may only shrink). */
