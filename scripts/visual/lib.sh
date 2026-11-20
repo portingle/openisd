@@ -1,12 +1,42 @@
 #!/usr/bin/env bash
 # Shared by the visual-baseline scripts. Source it.
 #   VISUAL_SNAPSHOT_DIR  where the baselines live, relative to the repo root
-#   VISUAL_PAGES_DIR     where before/after pages are written; it is served by the httpd on lap:8000
-#   VISUAL_PAGES_URL     the URL of VISUAL_PAGES_DIR
+#   VISUAL_PAGES_DIR     where before/after pages are written (defaults to a sibling of the checkout)
+#   VISUAL_PAGES_URL     the machine's URL for VISUAL_PAGES_DIR, required when publishing a link
 VISUAL_SNAPSHOT_DIR="${VISUAL_SNAPSHOT_DIR:-packages/ui/test/visual/visual.browser.spec.ts-snapshots}"
-VISUAL_PAGES_DIR="${VISUAL_PAGES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)/visual-pages}"
-VISUAL_PAGES_URL="${VISUAL_PAGES_URL:-http://lap:8000/winisd/visual-pages}"
 VISUAL_SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VISUAL_CHECKOUT_DIR="$(cd "$VISUAL_SCRIPTS/../.." && pwd)"
+VISUAL_PAGES_DIR="${VISUAL_PAGES_DIR:-$(dirname "$VISUAL_CHECKOUT_DIR")/visual-pages}"
+
+visual_require_pages_url() {
+  [ -n "${VISUAL_PAGES_URL:-}" ] && return 0
+  printf 'visual: Set VISUAL_PAGES_URL to the URL serving %s on this machine.\n' "$VISUAL_PAGES_DIR" >&2
+  return 1
+}
+
+# Use the active Python environment or one of the workspace environments. An override is a Python executable.
+visual_python() {
+  local mode="$1" candidate workspace
+  workspace="$(dirname "$VISUAL_CHECKOUT_DIR")"
+  local -a candidates=(python3 "$workspace/.venv/bin/python3" "$workspace/winisd/.venv/bin/python3")
+  if [ -n "${VISUAL_PYTHON:-}" ]; then candidates=("$VISUAL_PYTHON"); fi
+  for candidate in "${candidates[@]}"; do
+    if "$candidate" -c '
+import sys
+from PIL import features
+if sys.argv[1] == "compare":
+    import numpy
+sys.exit(not features.check("webp"))
+' "$mode" 2>/dev/null; then
+      command -v "$candidate"
+      return
+    fi
+  done
+  local packages='Pillow with WebP support'
+  if [ "$mode" = compare ]; then packages+=' and NumPy'; fi
+  echo "visual: Set VISUAL_PYTHON to a Python with $packages." >&2
+  return 1
+}
 
 # visual_screen_ids <task.yml>: the screens a task lists under `visual:`, one per line, sorted.
 visual_screen_ids() {
@@ -14,7 +44,10 @@ visual_screen_ids() {
 }
 
 # visual_note <task.yml>: the plain sentence(s) on what the user sees change; empty when the task has none.
-visual_note() { sed -n 's/^visual_note: *//p' "$1" 2> /dev/null | head -n 1; }
+visual_note() {
+  [ -e "$1" ] || return 0
+  awk '/^visual_note:/ {sub(/^visual_note: */, ""); print; exit}' "$1"
+}
 
 # visual_changed_ids <base> <head>: the screens whose baseline picture differs between the commits.
 visual_changed_ids() {

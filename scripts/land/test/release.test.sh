@@ -138,6 +138,10 @@ git init -q --bare "$GH_REMOTE"
 W="$S/work"; git init -q "$W"; cd "$W" || exit 1
 mkdir -p scripts tasks/fixes
 cp "$REPO/scripts/snap.sh" "$REPO/scripts/snap-prune.sh" "$REPO/scripts/release.sh" "$REPO/scripts/version-info.mjs" scripts/
+mkdir -p scripts/visual
+cp "$REPO"/scripts/visual/{release-screens.sh,release-screens.py,lib.sh} scripts/visual/
+mkdir -p packages/ui/test/visual/visual.browser.spec.ts-snapshots
+python3 -c 'from PIL import Image; Image.new("RGB", (4, 4), "white").save("packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-empty.png")' || exit 1
 mkdir -p scripts/hosting; cp "$REPO/scripts/hosting/releaseNotes.mjs" scripts/hosting/
 # The two browser runs release.sh starts are stand-ins that record how they were called.
 mkdir -p scripts/hosting/test scripts/ui-gallery
@@ -451,6 +455,9 @@ grep -q "^$ship_wt $ship_id (auto) $ship_id: Record OpenISD 7.0.2004 in the rele
   && ok "by default the ledger row is shipped with ship.sh in its task worktree, on a committed row" || fail "ship.sh call: $(cat "$GH_STATE/ship.log" 2>&1) want $ship_wt $ship_id"
 [ ! -s "$GH_STATE/land-sh.log" ] && ok "by default land.sh (a direct push to main) is never run" || fail "land.sh ran: $(cat "$GH_STATE/land-sh.log")"
 grep -q '^| 7.0.2004 ' "$LEDGER_STORE/RELEASES.md" && ok "the shipped ledger carries the 7.0.2004 row" || fail "ledger after ship: $(cat "$LEDGER_STORE/RELEASES.md")"
+git -C "$ship_wt" cat-file -e HEAD:docs/releases/screens/7.0.2004/desktop-empty.webp \
+  && git -C "$ship_wt" show HEAD:docs/releases/screens/7.0.2004/index.md | grep -Fq "$(git -C "$ship_wt" rev-parse v20260111T0000Z^{commit})" \
+  && ok "the ledger commit includes the release screens and records their source commit" || fail "release screen archive missing from $ship_wt"
 # the task contract ship.sh checks before it pushes (scripts/land/check-task-contract.sh --pr) accepts the generated task
 grep -Fq 'why: "John, 11 Jan 2026: release OpenISD 7.0.2004"' "$ship_wt/tasks/$ship_id.yml" \
   && ok "the generated task file says why" || fail "task file why: $(cat "$ship_wt/tasks/$ship_id.yml")"

@@ -325,10 +325,14 @@ console.log([...new Set(gone)].join(" "));
     printf '# Releases\n\nNewest first. `scripts/release.sh` adds a row when it promotes a snapshot. Dates are UTC.\n\n| Version | Stamp | Date | Commit | Hosted | GitHub | Notes |\n|---|---|---|---|---|---|---|\n' > RELEASES.md
   fi
   awk -v row="$ROW" '{print} /^\|---/ && !done {print row; done=1}' RELEASES.md > RELEASES.md.new && mv RELEASES.md.new RELEASES.md
+  if ! git cat-file -e "$SHA^{commit}" 2>/dev/null; then
+    git fetch --quiet origin "refs/tags/$REL" || exit 1
+  fi
+  bash scripts/visual/release-screens.sh "$PUBLIC" || exit 1
   # why: the pull request's task check asks every new task file who decided and when (T767)
-  printf 'id: %s\nrelease_note: internal\nrepo: openisd\nowner: release\nstatus: open\ngoal: %s\nwhy: "John, %s: release OpenISD %s"\ndone_test: grep -Fq "| %s | %s |" RELEASES.md\nfiles:\n  - RELEASES.md\n  - tasks/%s.yml\n' \
-    "$TASK_ID" "$GOAL" "$DAY" "$PUBLIC" "$PUBLIC" "$STAMP" "$TASK_ID" > "tasks/$TASK_ID.yml"
-  git add RELEASES.md "tasks/$TASK_ID.yml"
+  printf 'id: %s\nrelease_note: internal\nrepo: openisd\nowner: release\nstatus: open\ngoal: %s\nwhy: "John, %s: release OpenISD %s"\ndone_test: grep -Fq "| %s | %s |" RELEASES.md && grep -Fq "%s" docs/releases/screens/%s/index.md\nfiles:\n  - RELEASES.md\n  - docs/releases/screens/%s/**\n  - tasks/%s.yml\n' \
+    "$TASK_ID" "$GOAL" "$DAY" "$PUBLIC" "$PUBLIC" "$STAMP" "$SHA" "$PUBLIC" "$PUBLIC" "$TASK_ID" > "tasks/$TASK_ID.yml"
+  git add RELEASES.md "docs/releases/screens/$PUBLIC" "tasks/$TASK_ID.yml"
   git commit --quiet -m "(auto) $TASK_ID: $GOAL"
   ${RELEASE_LAND:-bash scripts/ship.sh} "$TASK_ID"
 ) || refuse "landing the ledger row ($TASK_ID in $TASK_DIR) failed; the release is out, finish that landing by hand"
