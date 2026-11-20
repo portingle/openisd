@@ -1,7 +1,7 @@
 import type {InjectionKey, Ref} from 'vue';
 import {useApp} from '../logic/app.js';
 import {computed, ref, watch} from 'vue';
-import {usePerf} from './telemetryContext.js';
+import {useFeatureUse, usePerf} from './telemetryContext.js';
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {
   buildPlotData, ChartData, type ChartEngineAreas, referenceLineColors, selectedRangeCss, type Design, DPAL, FrequencyAxis, type PlotData, rangeStatsOf, type RangeStats, type Rolloff,
@@ -40,6 +40,7 @@ export interface GraphPanelAPI {
 
   /** Every chart of the project, whatever is on screen, as one ZIP of CSV files plus the project file. */
   exportAllChartData(): void;
+  editDriverParameters(): void;
   dismissWarnings(): void;
   /** Off stores the Y range drawn now as this chart's override, so later data changes never
    *  rescale it; on removes the override. */
@@ -64,9 +65,10 @@ export const GraphPanelKey: InjectionKey<GraphPanelAPI> = Symbol('GraphPanelAPI'
 /** `chartEngine`: the simulation and environment areas the curves read — the app facade's
  *  engine, handed in by the component rather than reached for here. */
 export function useGraphPanel(props: GraphPanelProps, chartEngine: ChartEngineAreas): GraphPanelAPI {
-  const {appState, presentation: presentationState, designIO} = useApp();
+  const {appState, presentation: presentationState, designIO, selection} = useApp();
   const {allIssues, curvesData, driverName, maxData, openProjects, syncedP} = appState;
   const project = useFocusedProject();
+  const featureUse = useFeatureUse();
   const perf = usePerf();
   const overlayDesigns = computed(() => props.overlays ?? []);
 
@@ -188,6 +190,10 @@ export function useGraphPanel(props: GraphPanelProps, chartEngine: ChartEngineAr
     yRangeLabel,
     dismissWarnings,
     exportAllChartData: () => designIO.downloadAllChartData(),
+    editDriverParameters: () => {
+      featureUse.feature('driver_editor');
+      selection.editProjectDriver(false);
+    },
     setAutoY,
     frequencyAxis,
     clickCursorAt,

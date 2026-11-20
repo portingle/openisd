@@ -156,7 +156,7 @@ describe('sweep', () => {
         'Sd_m2', 'Re_ohm', 'BL_Tm', 'Cms_m_per_N', 'Mms_kg', 'Rms_kg_per_s',
       ]);
       for (const issue of issues) {
-        assert.match(issue.text, /Type .* in Parameters, or enter .* to calculate it/);
+        assert.match(issue.text, /^Type .* if you know it, otherwise enter .*\.$/);
         assert.equal(issue.chartFix.desktop, 'Enter Fs, Qes, Qms, Vas, Re and Sd (or Dd) in Driver > Edit > Parameters.');
       }
       const stated = {Fs_hz: 37, Qes: 0.4, Qms: 7, Vas_m3: 0.03, Re_ohm: 5.6, Dd_m: 0.13};
