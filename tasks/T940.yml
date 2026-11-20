@@ -8,6 +8,7 @@ why: John, QO962, 20 Nov 2026: 'B: keep the printed 2.83 V figure; the engine wo
 ruling: QO962
 done_test: bash scripts/test.sh packages/design/test/winisd/driverRecordConverter.sensitivityCondition.test.ts
 files:
+  - bugs/BUG_20261120_sensitivity-at-2p83v-stored-as-1w-spl.md
   - packages/design/domain/driverRecordConverter.ts
   - packages/design/domain/measurementNote.ts
   - packages/design/engine/driver/routes/DriverRoutes.ts
