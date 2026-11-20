@@ -3,8 +3,9 @@
  */
 import {cAdd, cDiv, cInv, cMul, cPar, cSub, cx} from '../complex.js';
 import type {SweepParams} from '../types.js';
-import {losslessTunedChambers, winisdLinePortReactance, droppedEndCorrection_m} from './port.js';
+import {tunedChamber, winisdLossyChambers, seriesChambersWithLeak} from './port.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
+import {DEFAULT_NEW_PROJECT_QP} from '../../fields/defaults.js';
 
 export class Bandpass6Box implements BoxModel {
   constructor(private readonly P: SweepParams) {}
@@ -19,11 +20,13 @@ export class Bandpass6Box implements BoxModel {
         // lossless limit (circuit.ts `boxLoss`): each chamber an ordinary vented compliance with the
         // SHARED Ql/Qa and its own port's Qpr/Qpf, port mass from its own tuning target (no separate
         // geometry field for a second port) — no inter-chamber leak (Ricl dropped).
-        const {rear, front} = losslessTunedChambers(w, P, rho, c);
-        const Zportr = rear.portBranch, Zportf = front.portBranch;
-        // Each chamber's compliance with the shared per-frequency Ql/Qa/(ω·Cab), its port in parallel.
-        const Zr = cPar(cInv(cx(0, w * rear.Cab)), cx(Ql / (w * rear.Cab), 0), cx(Qa / (w * rear.Cab), 0), Zportr);
-        const Zf = cPar(cInv(cx(0, w * front.Cab)), cx(Ql / (w * front.Cab), 0), cx(Qa / (w * front.Cab), 0), Zportf);
+        const Qp = P.Qp || DEFAULT_NEW_PROJECT_QP;
+
+        const {Cab: Cabr, Zport: Zportr} = tunedChamber(P.Vb, P.Fr ?? NaN, rho, c, w, P.Qpr ?? Qp);
+        const Zr = cPar(cInv(cx(0, w * Cabr)), cx(Ql / (w * Cabr), 0), cx(Qa / (w * Cabr), 0), Zportr);
+
+        const {Cab: Cabf, Zport: Zportf} = tunedChamber(P.Vf ?? NaN, P.Ff ?? NaN, rho, c, w, P.Qpf ?? Qp);
+        const Zf = cPar(cInv(cx(0, w * Cabf)), cx(Ql / (w * Cabf), 0), cx(Qa / (w * Cabf), 0), Zportf);
 
         const Zbox = cAdd(Zr, Zf);
         const UD = cDiv(pg, cAdd(cAdd(ZaE, ZaD), Zbox));
@@ -57,41 +60,12 @@ export class Bandpass6Box implements BoxModel {
         // Absent Qlr/Qar/Qpr/Qiclfr/Qlf/Qaf/Qpf/Fr/Ff poison every value below with NaN
         // (`?? NaN`), caught by `classifyFinite`, never a throw or a `!` — the same net the
         // vented/PR/bandpass4 `winisd-lossy` branches use for their own absent tuning fields.
-        const Cabr = P.Vb / (rho * c * c);
-        const Cabf = (P.Vf ?? NaN) / (rho * c * c);
-
-        const Qlr = P.Qlr ?? NaN, Qar = P.Qar ?? NaN, Qpr = P.Qpr ?? NaN;
-        const Qlf = P.Qlf ?? NaN, Qaf = P.Qaf ?? NaN, Qpf = P.Qpf ?? NaN;
-        const Qiclfr = P.Qiclfr ?? NaN;
-        const Fr = P.Fr ?? NaN, Ff = P.Ff ?? NaN;
-
-        const wr = 2 * Math.PI * Fr;
-        const Mapr = 1 / (wr * wr * Cabr);
-        const Ralr = cx(Qlr * wr * Mapr, 0);
-        const Raar = cx(wr * Mapr / Qar, 0);
-        const Zcr = cAdd(Raar, cInv(cx(0, w * Cabr)));
-        const RapBranchR = cAdd(cx(wr * Mapr / Qpr, 0), cx(0, P.tlPortModel ? winisdLinePortReactance(w, Mapr, P.Spr ?? NaN, droppedEndCorrection_m(P.rearPortEndCorrection_m, P.winisdTlPortNoEndCorrection), rho, c) : w * Mapr));
-        const Zr = cPar(Ralr, Zcr, RapBranchR);
-
-        const wf = 2 * Math.PI * Ff;
-        const Mapf = 1 / (wf * wf * Cabf);
-        const Ralf = cx(Qlf * wf * Mapf, 0);
-        const Raaf = cx(wf * Mapf / Qaf, 0);
-        const Zcf = cAdd(Raaf, cInv(cx(0, w * Cabf)));
-        const RapBranchF = cAdd(cx(wf * Mapf / Qpf, 0), cx(0, P.tlPortModel ? winisdLinePortReactance(w, Mapf, P.Sp ?? NaN, droppedEndCorrection_m(P.portEndCorrection_m, P.winisdTlPortNoEndCorrection), rho, c) : w * Mapf));
-        const Zf = cPar(Ralf, Zcf, RapBranchF);
-
-        const ws = 1 / Math.sqrt(Mas * Cas);
-        const Ricl = cx(Qiclfr * ws * Mas, 0);
-
-        const ZrPlusZf = cAdd(Zr, Zf);
-        const Zbox = cPar(Ricl, ZrPlusZf);
-        const UD = cDiv(pg, cAdd(cAdd(ZaE, ZaD), Zbox));
-        const Ul = cMul(UD, cDiv(Zbox, ZrPlusZf));
-        const UP = cMul(Ul, cDiv(Zf, RapBranchF));
-        const UPr = cMul(Ul, cDiv(Zr, RapBranchR));
-        const rearCompliance = cMul(Ul, cDiv(Zr, Zcr));
-        const frontCompliance = cMul(Ul, cDiv(Zf, Zcf));
+        const ch = winisdLossyChambers(P, w, Cas, Mas, rho, c);
+        const {Zbox, UD, Ul} = seriesChambersWithLeak(ch.Zr, ch.Zf, ch.Ricl, pg, ZaE, ZaD);
+        const UP = cMul(Ul, cDiv(ch.Zf, ch.RapBranchF));
+        const UPr = cMul(Ul, cDiv(ch.Zr, ch.RapBranchR));
+        const rearCompliance = cMul(Ul, cDiv(ch.Zr, ch.Zcr));
+        const frontCompliance = cMul(Ul, cDiv(ch.Zf, ch.Zcf));
         const U0 = cSub(rearCompliance, frontCompliance);
         return {Zbox, UD, UP, U0, UPr};
       }

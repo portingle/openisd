@@ -5,9 +5,9 @@
  * https://en.wikipedia.org/wiki/Helmholtz_resonance#Resonant_frequency
  */
 import type {Air, AirWorkingName} from '../air.js';
-import {END_CORRECTION} from '../air.js';
+import {END_CORRECTION, airCompliance} from '../air.js';
 import type {VentSolverParams} from '../solverTypes.js';
-import {inconsistentInputs, missingDependencies, targetUnreachable} from '../consistency.js';
+import {isPositiveGeometry, missingDependencies, targetUnreachable, tuningGoalIssue} from '../consistency.js';
 import type {CalculationIssue, TargetUnreachableIssue} from '../consistency.js';
 
 export type VentQuantityName = keyof VentSolverParams | AirWorkingName;
@@ -62,7 +62,7 @@ const VENT_GEOMETRY: readonly (keyof VentSolverParams)[] = Object.freeze(['Vb_m3
 
 export class VentEngineImpl implements VentEngine {
   lengthForTuning(Vb: number, fb: number, Sp: number, count: number, air: Air, endCorrection: number = END_CORRECTION): number {
-    const Cab = Vb / (air.rho() * air.c() * air.c());
+    const Cab = airCompliance(Vb, air.rho(), air.c());
     const wb  = 2 * Math.PI * fb;
     const Map = 1 / (wb * wb * Cab);
     const d   = 2 * Math.sqrt(Sp / Math.PI);
@@ -72,7 +72,7 @@ export class VentEngineImpl implements VentEngine {
   tuningFromLength(Vb: number, L: number, Sp: number, count: number, air: Air, endCorrection: number = END_CORRECTION): number {
     const d    = 2 * Math.sqrt(Sp / Math.PI);
     const Leff = L + endCorrection * d;
-    const Cab  = Vb / (air.rho() * air.c() * air.c());
+    const Cab  = airCompliance(Vb, air.rho(), air.c());
     const Map  = air.rho() * Leff / (count * Sp);
     return 1 / (2 * Math.PI * Math.sqrt(Map * Cab));
   }
@@ -96,13 +96,11 @@ export class VentEngineImpl implements VentEngine {
 
     const issues: VentIssue[] = [];
 
-    if (tuning != null && tuning <= 0) {
-      issues.push(inconsistentInputs('tuning_goal_hz', ['tuning_goal_hz'],
-        'Tuning frequency must be greater than zero', 0, tuning, 1));
-    }
+    const goalIssue = tuningGoalIssue(tuning);
+    if (goalIssue !== null) issues.push(goalIssue);
 
-    const geometryComplete = Vb != null && Vb > 0 && area != null && area > 0;
-    const missingGeometry = VENT_GEOMETRY.filter(f => { const v = params[f].value; return !(typeof v === 'number' && v > 0); });
+    const geometryComplete = isPositiveGeometry(Vb) && isPositiveGeometry(area);
+    const missingGeometry = VENT_GEOMETRY.filter(f => !isPositiveGeometry(params[f].value));
 
     if (tuning != null && !params.length_m.entered) {
       if (geometryComplete && tuning > 0) {

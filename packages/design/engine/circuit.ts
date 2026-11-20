@@ -28,12 +28,14 @@
 
 
 import {hotRe} from './solvers/driverQuantities.js';
+import {combinedOfN, eachOfN} from './array/driverWiring.js';
+import {airCompliance} from './air.js';
 import {cAdd, cDiv, cInv, cMul, cScale, cx} from './complex.js';
 import type {BoxType, Complex, Solution, SweepParams} from './types.js';
 import {boxModel} from './boxes/index.js';
 import type {BoxLoss, DriverSideQuantities} from './boxes/index.js';
 import {LOSSLESS_LIMIT} from './sealedResonance.js';
-import {DEFAULT_NEW_PROJECT_QA, DEFAULT_NEW_PROJECT_QP, DEFAULT_NEW_PROJECT_VENTED_QL} from '../fields/defaults.js';
+import {DEFAULT_NEW_PROJECT_QA, DEFAULT_NEW_PROJECT_VENTED_QL} from '../fields/defaults.js';
 
 // Re-exported unchanged: the box-specific box models (`./boxes/`) now own the port branch, but
 // an existing import of `portImpedance`/`portLoss` from `circuit.js` still resolves.
@@ -41,12 +43,11 @@ import {DEFAULT_NEW_PROJECT_QA, DEFAULT_NEW_PROJECT_QP, DEFAULT_NEW_PROJECT_VENT
 /** The loss Q's a box's `winisd-lossy` form reads, as it reads them: the shared Ql/Qa and the vented port's
  *  Qp with their defaults applied, and each chamber Q the caller states (the app states every one; an
  *  engine-level caller that leaves one out states no loss there). */
-function lossQsOf(box: BoxType, P: SweepParams, Ql: number, Qa: number): readonly number[] {
+function lossQsOf(box: Exclude<BoxType, 'vented'>, P: SweepParams, Ql: number, Qa: number): readonly number[] {
   const stated = (qs: readonly (number | undefined)[]): number[] => qs.filter((q): q is number => q !== undefined);
   switch (box) {
     case 'sealed':
     case 'box-passive-radiator': return [Ql, Qa];
-    case 'vented':               return [Ql, Qa, P.Qp || DEFAULT_NEW_PROJECT_QP];
     case 'bandpass4':            return [Ql, Qa, ...stated([P.Qlr, P.Qar, P.Qlf, P.Qaf, P.Qpf, P.Qiclfr])];
     case 'bandpass6':
     case 'abc':                  return [Ql, Qa, ...stated([P.Qlr, P.Qar, P.Qpr, P.Qlf, P.Qaf, P.Qpf, P.Qiclfr])];
@@ -56,11 +57,12 @@ function lossQsOf(box: BoxType, P: SweepParams, Ql: number, Qa: number): readonl
 /** 'lossless' only when every loss Q the box's lossy form reads is at or above the lossless limit, so the
  *  shortcut gives what the lossy form gives in that limit (WinISD has no lossless form: it always computes the
  *  losses, winisd_research/spec/S04_sealed_box.md section 6). A box with any real loss takes the lossy form.
- *  WinISD uses one fixed-resistance port form with or without losses, so a vented box with the
- *  transmission-line port model takes the 'winisd-lossy' form even at the limit
- *  (runs/vented-w5-tlports-lossless, 1e-11; bugs/BUG_20261018_tl-port-lossless-branch-not-winisd-form.md). */
+ *  WinISD uses one fixed-resistance vented form with or without losses, so a vented box takes the
+ *  'winisd-lossy' form even at Ql = Qa = 1e6, TL port model on (runs/vented-w5-tlports-lossless, 1e-11;
+ *  bugs/archive/BUG_20261018_tl-port-lossless-branch-not-winisd-form.md) or off (runs/vented-w5-tl0-ql1e6-qp15
+ *  and -qp100, 3e-14; bugs/BUG_20261119_vented-lossless-branch-not-winisd-form.md). */
 function boxLoss(box: BoxType, P: SweepParams, Ql: number, Qa: number): BoxLoss {
-  if (box === 'vented' && P.tlPortModel) return 'winisd-lossy';
+  if (box === 'vented') return 'winisd-lossy';
   return lossQsOf(box, P, Ql, Qa).every(q => q >= LOSSLESS_LIMIT) ? 'lossless' : 'winisd-lossy';
 }
 
@@ -114,10 +116,10 @@ function coilRdc(drv: CircuitQuantities, P: SweepParams): number {
  *  BUG_20260926_winisd-tf-reference). */
 export function hfAsymptotePressure_Pa(drv: CircuitQuantities, P: SweepParams, r_m: number): number {
   const n = P.nDrivers || 1;
-  const Rac = coilRdc(drv, P) / n + (P.rgAtDriverSide !== false ? 0 : (P.Rs || 0));
+  const Rac = eachOfN(coilRdc(drv, P), n) + (P.rgAtDriverSide !== false ? 0 : (P.Rs || 0));
   const BlPush = drv.BL_entered_Tm;
-  const pg = P.eg * BlPush / (drv.Sd_m2 * n * Rac);
-  const Mas = drv.Mms_kg / (drv.Sd_m2 * drv.Sd_m2) / n;
+  const pg = P.eg * BlPush / (combinedOfN(drv.Sd_m2, n) * Rac);
+  const Mas = eachOfN(drv.Mms_kg / (drv.Sd_m2 * drv.Sd_m2), n);
   const rho = P.air.rho();
   return rho * pg / (2 * Math.PI * r_m * Mas);
 }
@@ -130,7 +132,7 @@ export function solve(f: number, drv: CircuitQuantities, box: BoxType, P: SweepP
   const wd     = 2 * Math.PI * fDriver;
   const n      = P.nDrivers || 1;
   const eg     = P.eg;
-  const Sdt    = drv.Sd_m2 * n;
+  const Sdt    = combinedOfN(drv.Sd_m2, n);
 
   const rho = P.air.rho(), c = P.air.c();
 
@@ -155,7 +157,7 @@ export function solve(f: number, drv: CircuitQuantities, box: BoxType, P: SweepP
   const Rdc1 = coilRdc(drv, P);
   const arrayTerminals = (Le_H: number): Complex => {
     const z1 = cx(Rdc1, wd * Le_H);
-    return cScale(z1, 1/n);
+    return cScale(z1, eachOfN(1, n));
   };
   const arrayCoil = (Le_H: number): Complex =>
     rgAtDriver ? arrayTerminals(Le_H) : cAdd(arrayTerminals(Le_H), cx(Rg, 0));
@@ -189,15 +191,15 @@ export function solve(f: number, drv: CircuitQuantities, box: BoxType, P: SweepP
   // Driver acoustic elements derived from T/S parameters:
   // Cas = Cms·Sd²,  Mas = Mms/Sd²,  Ras = Rms/Sd²
   // https://en.wikipedia.org/wiki/Thiele/Small_parameters#Small_signal_parameters
-  const Cas = drv.Cms_m_per_N * drv.Sd_m2 * drv.Sd_m2 * n;
-  const Mas = drv.Mms_kg / (drv.Sd_m2 * drv.Sd_m2) / n;
-  const Ras = drv.Rms_kg_per_s / (drv.Sd_m2 * drv.Sd_m2) / n;
+  const Cas = combinedOfN(drv.Cms_m_per_N * drv.Sd_m2 * drv.Sd_m2, n);
+  const Mas = eachOfN(drv.Mms_kg / (drv.Sd_m2 * drv.Sd_m2), n);
+  const Ras = eachOfN(drv.Rms_kg_per_s / (drv.Sd_m2 * drv.Sd_m2), n);
   const ZaD = cAdd(cAdd(cx(Ras, 0), cx(0, wd * Mas)), cInv(cx(0, wd * Cas)));
 
   // Box acoustic compliance Cab = Vb/(ρc²)
   // Loss resistances in parallel with compliance: Ral (leakage) and Raa (absorption)
   // https://en.wikipedia.org/wiki/Helmholtz_resonance#Resonant_frequency
-  const Cab = P.Vb / (rho * c * c);
+  const Cab = airCompliance(P.Vb, rho, c);
   const Zc  = cInv(cx(0, w * Cab));
   const Ql  = P.Ql || DEFAULT_NEW_PROJECT_VENTED_QL;
   const Qa  = P.Qa || DEFAULT_NEW_PROJECT_QA;
