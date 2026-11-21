@@ -10,12 +10,15 @@ done_test: bash scripts/test.sh packages/design/test/engine/driver-array-physics
 files:
   - tasks/T939.yml
   - land.conf
+  - packages/design/engine/boxes/PassiveRadiatorBox.ts
   - packages/design/test/engine/driver-array-physics-law-combinations.test.ts
+  - packages/design/test/engine/passive-radiator-simulation.test.ts
   - bugs/BUG_20261120_array-pressure-and-xmax-limited-spl-not-scaled-by-driver-count.md
   - bugs/BUG_20261120_isobarik-impedance-motional-term-doubled.md
   - bugs/BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver.md
   - bugs/archive/BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver.md
   - bugs/BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md
+  - bugs/archive/BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md
   - bugs/BUG_20261121_winisd-isobarik-inductance-changes-response-shape.md
   - bugs/BUG_20261120_gate-approval-check-skipped-when-questions-file-missing.md
 notes: |
@@ -52,11 +55,29 @@ notes: |
   Each wiring has 291 passes and 51 expected failures for physical response, 194 passes and 148 expected failures for WinISD
   response, and 291 passes and 51 expected failures for impedance in each mode. Four additional sealed W5 capture comparisons pass.
 
-  The prior Iso-Barik test expectation record is resolved and archived. The passive-radiator loss defect accounts for 408
-  expected failures across response and impedance. The WinISD gyrator's pair inductance defect accounts for 228 response
-  failures, including 34 also affected by the passive-radiator defect. Each expected failure names its bug file.
+  The prior Iso-Barik test expectation record is resolved and archived. Before the loss-mass fix, the passive-radiator loss
+  defect affected 408 expected failures across response and impedance. The WinISD gyrator's pair inductance defect affected
+  228 response cases, including 34 also affected by the passive-radiator defect.
   Group delay and impedance phase are plotted in ms and degrees, so their 1e-9 s and 1e-9 rad bounds are applied in those units.
   The drive is 20 V so every box crosses Xmax somewhere. R4 checks radiator excursion and checks port velocity on boxes with a port.
   Mutation check: VA x N changed to x 1.0001 N in the driver-count branch turned 1368 cases red.
   Gate creation approval is the test-guardrails decision QO961 (John, 20 Nov 2026 00:52, "All of A-G", with the physics-law
   combination test first). The Iso-Barik ruling QO964 covers the change to the pair's expectations.
+
+  Passive-radiator loss fix. The fixed leak and absorption resistances use the combined parallel radiator mass in the
+  default calculation. The ticked WinISD formula uses one radiator's mass and its lower angular frequency. The frequency
+  and mass factors cancel. A two-radiator sweep from 2 to 500 Hz confirmed zero change in transfer magnitude (0 dB),
+  impedance magnitude (0 ohm) and radiator excursion (0 mm) across all 121 points when toggled.
+
+  The one-driver equivalent-branch regression failed on complex pressure at 2 Hz before the fix and now matches complex
+  pressure and impedance magnitude and phase exactly at all 121 points. The combination test goes from 6243 ordinary
+  passes and 602 expected failures to 6617 ordinary passes and 228 expected failures. This restores 374 ordinary passes.
+  The 34 overlapping cases remain expected failures for the WinISD gyrator's pair inductance. No existing expectation
+  or tolerance changed. The passive-radiator loss bug is resolved and archived.
+
+  Direct Vitest runs covered driver-array-physics-law-combinations.test.ts, passive-radiator-simulation.test.ts and
+  passive-radiator-count-winisd.test.ts. Together they went from 6255 ordinary passes and 602 expected failures to 6630
+  ordinary passes and 228 expected failures. The existing WinISD capture tests have 8 passes with the switch ticked.
+  The separate comparison and help update needs both switch settings on both captures and wording that says the charts
+  agree. By inspection, pr-npr-resonance.test.ts has two tests for the old switch difference and box-absent-fields.test.ts
+  has one. These expectations need the switch-equivalence update before the full suite.

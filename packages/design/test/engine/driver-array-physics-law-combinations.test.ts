@@ -352,17 +352,14 @@ const CASES: readonly Case[] = BOXES.flatMap((box) => RULES.flatMap((rule) => gr
     ? PAIR_MODES.map((pairMode): Case => ({box, rule, group, row, pairMode}))
     : LOADINGS.map((loading): Case => ({box, rule, group, row, loading}))))));
 
-const PR_LOSSES = 'BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count';
 const WINISD_PAIR_INDUCTANCE = 'BUG_20261121_winisd-isobarik-inductance-changes-response-shape';
 
 function faultsOf(c: Case): readonly string[] {
-  if (c.rule !== 'R4 Iso-Barik pair') return [];
-  const faults: string[] = [];
-  if (c.box.wpr === 'pr-w5-1' && !c.row.on.has('winisdPrNprResonance')) faults.push(PR_LOSSES);
-  if (c.group === 'response' && c.pairMode.winisdIsobarik && c.row.circuitModel === 'winisdGyrator') {
-    faults.push(WINISD_PAIR_INDUCTANCE);
+  if (c.rule === 'R4 Iso-Barik pair' && c.group === 'response' && c.pairMode.winisdIsobarik
+    && c.row.circuitModel === 'winisdGyrator') {
+    return [WINISD_PAIR_INDUCTANCE];
   }
-  return faults;
+  return [];
 }
 
 type CaptureChart = 'spl_dB' | 'excursion_m' | 'impedance_ohm';
@@ -402,7 +399,6 @@ describe('the driver array obeys physics rules over every box, driver count, wir
     if (faults.length === 0) {
       it(titleOf(c), check);
     } else {
-      // BUG_ files named in the title come from PR_LOSSES and WINISD_PAIR_INDUCTANCE above.
       it.fails(`${titleOf(c)}: ${faults.join(', ')}`, check);
     }
   }

@@ -4,6 +4,7 @@
  * https://aes.org/e-lib/browse.cfm?elib=2223
  * https://en.wikipedia.org/wiki/Thiele/Small_parameters#Small_signal_parameters
  */
+import {eachOfN} from '../array/driverWiring.js';
 import {cAdd, cDiv, cInv, cMul, cPar, cScale, cSub, cx} from '../complex.js';
 import type {SweepParams} from '../types.js';
 import type {BoxModel, BoxOutput, DriverSideQuantities} from './BoxModel.js';
@@ -41,28 +42,28 @@ export class PassiveRadiatorBox implements BoxModel {
       case 'winisd-lossy': {
         // WinISD's passive-radiator box (winisd_research/archive/GHIDRA_FINDINGS.md "Passive radiator
         // box — `0x45a960`", bugs/archive/BUG_20260927_passive-radiator-losses-not-winisd-form.md).
-        // Leak and absorption are FIXED resistances taken at ωr — never the radiator's free-air
-        // Fs and never per-frequency:
-        //   Ral = Ql·ωr·Map          leak, parallel to the box (fixed)
-        //   Raa = ωr·Map/Qa          absorption, in series with Cab (fixed)
+        // Leak and absorption are fixed across the sweep. Both use the product ωr·lossMass.
+        //   Ral = Ql·ωr·lossMass     leak, parallel to the box (fixed)
+        //   Raa = ωr·lossMass/Qa     absorption, in series with Cab (fixed)
         //   Zbox = Ral ∥ (Raa + 1/(jωCab)) ∥ Zpr
         // Radiated output is the Cab branch's own current — cone MINUS leak MINUS radiator, not
         // cone minus radiator alone. The box's own Qp is never used for a passive radiator (the
         // radiator's own loss Rap above already carries it, as ωp·Map_free/Qms per radiator,
         // WITHOUT Me — verified for Me ≠ 0 and n_pr > 1, winisd_research/archive/GHIDRA_FINDINGS.md same section).
         //
-        // ωr: with `winisdPrNprResonance` on, WinISD's OWN fixed-loss frequency,
-        // `1/√(Npr·Map·(Cab ∥ Npr·Cap))` (winisd_research/archive/GHIDRA_FINDINGS.md "4th-order bandpass"
-        // § "Added mass and radiator count" — WinISD's calc bug: the branch mass is multiplied by
-        // Npr where the true tuning divides by it, so this ωr is Npr times too low; invisible at
-        // Npr = 1). Off (the default), the physical tuning `1/√((Map/Npr)·(Cab ∥ Npr·Cap))`, which
-        // is Npr times higher. Never derived from `P.Fr` (the domain's `systemTuning_hz`, a
-        // separate reading; BUG_20260928_pr-added-mass-or-count-not-winisd.md).
+        // With `winisdPrNprResonance` off, ωr is the physical box tuning
+        // `1/√((Map/Npr)·(Cab ∥ Npr·Cap))` and lossMass is the parallel radiators' mass, `Map/Npr`.
+        // With it on, ωr is WinISD's `1/√(Npr·Map·(Cab ∥ Npr·Cap))` and lossMass is one radiator's `Map`
+        // (winisd_research/archive/GHIDRA_FINDINGS.md, "Added mass and radiator count"). The factors
+        // of Npr cancel in ωr·lossMass, so both settings give the same fixed resistances in exact arithmetic.
+        // Both frequencies come from the acoustic elements. `P.Fr` is the separate domain tuning readout.
         const CabParNCap = (Cab * n_pr * Cap) / (Cab + n_pr * Cap);
         const wrWinisd = 1 / Math.sqrt(n_pr * Map * CabParNCap);
-        const wr = P.winisdPrNprResonance === true ? wrWinisd : n_pr * wrWinisd;
-        const RalConst = cx(Ql * wr * Map, 0);
-        const RaaSeries = cx(wr * Map / Qa, 0);
+        const winisdNprResonance = P.winisdPrNprResonance === true;
+        const wr = winisdNprResonance ? wrWinisd : n_pr * wrWinisd;
+        const lossMass = winisdNprResonance ? Map : eachOfN(Map, n_pr);
+        const RalConst = cx(Ql * wr * lossMass, 0);
+        const RaaSeries = cx(wr * lossMass / Qa, 0);
         const CabBranch = cAdd(RaaSeries, Zc);
         const Zbox = cPar(RalConst, CabBranch, Zpr);
         const UD = cDiv(pg, cAdd(cAdd(ZaE, ZaD), Zbox));

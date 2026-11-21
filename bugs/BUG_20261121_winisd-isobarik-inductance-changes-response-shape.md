@@ -18,4 +18,4 @@ With “WinISD's Iso-Barik numbers” ticked, the WinISD gyrator rolls off the p
 
 ## Verification
 
-The combination test records 228 response cases across both wiring selections and all six boxes. Of these, 34 also exercise the [passive-radiator loss defect](BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md). The `winisd` and `gyrator` circuit models, the default physical pair, and the impedance part have separate assertions.
+The combination test records 228 response cases across both wiring selections and all six boxes. The 34 cases previously affected by the [passive-radiator loss defect](archive/BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md) still fail after that fix because of the pair's additional inductance. The `winisd` and `gyrator` circuit models, the default physical pair, and the impedance part have separate assertions.

@@ -34,5 +34,5 @@ T928 takes the Iso-Barik push BL from one driver whether BL is typed or not, so 
 `packages/design/test/engine/driver-array-physics-law-combinations.test.ts`: after main with T928 was merged into T939 (20 Nov 2026,
 01:35 UTC), every "(impedance)" case of R4 that named only this file passes at 1e-9 relative (impedance) and 1e-9 rad
 (impedance phase) and now runs as a plain test: all 57 combinations for sealed, vented, both bandpasses and ABC, and the 3
-passive-radiator combinations with "PR Npr resonance" ticked. The other passive-radiator impedance cases still miss by about
-6 % and stay `it.fails` under BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.
+passive-radiator combinations with "PR Npr resonance" ticked. The other passive-radiator impedance cases now pass after the
+[fix to use the combined radiator mass for box losses](archive/BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md).
