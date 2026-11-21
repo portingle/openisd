@@ -45,9 +45,11 @@ details.same summary { font-size:15px; padding:8px 0; cursor:pointer; color:var(
 <h1>__TITLE__</h1>
 __NOTE__
 <main id="out" data-folder="__FOLDER__" data-board-url="__BOARD_URL__"><p class="note">Loading…</p></main>
+<script type="application/json" id="picture-data">__PICTURES__</script>
 <script>
 // Reads index.md (the table agents keep) and shows each fix with its pictures inline.
 const out = document.getElementById('out');
+const pictureData = JSON.parse(document.getElementById('picture-data').textContent);
 const linkRe = /\[([^\]]+)\]\(([^)]+)\)/g;
 const isLive = (l) => /^live$/i.test(l.label.trim());
 const slug = (n) => n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -58,6 +60,14 @@ const isImg = (u) => /\.(png|jpe?g|gif|webp|svg)$/i.test(u);
 const { folder, boardUrl } = out.dataset;
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const commentLink = (subject) => `<a class="comment" href="${esc(boardUrl)}">Comment on this ${subject} on the board</a>`;
+const stampLine = (text) => text ? 'Stamp: ' + text : 'Stamp: none (not shot by the stamping tools)';
+
+function picture({ label, url }) {
+  const display = pictureData[url];
+  const stamp = display ? stampLine(display.stamp) : 'Stamp: …';
+  const pending = display ? '' : ' data-stamp-pending';
+  return `<div class="side"><span class="lbl">${esc(label)}</span><a href="${esc(url)}"><img loading="lazy" src="${esc(display?.src ?? url)}" alt="${esc(label)}"${pending}></a><div class="stamp">${esc(stamp)}</div>${commentLink('picture')}</div>`;
+}
 
 function pictures(cell) {
   // Groups are separated by " · ". A group may start with "name:" followed by links.
@@ -124,15 +134,14 @@ function lookLine(text) {
     const body = !any ? textItem(name(''), lookLine(look), '') : groups.map((g) => {
       const lk = lookLine(lookFor(look, g.name));
       const u = g.live || rowLive;
-      const pic = (l) => `<div class="side"><span class="lbl">${esc(l.label)}</span><a href="${esc(l.url)}"><img loading="lazy" src="${esc(l.url)}" alt="${esc(l.label)}"></a><div class="stamp">Stamp: …</div>${commentLink('picture')}</div>`;
       const figs = g.items.length ? g.items.map((it) => {
         if (it.lone && !isImg(it.lone.url)) return `<p><a href="${esc(it.lone.url)}">${esc(it.lone.label)}</a></p>`;
         if (it.lone) {
           const { label, url } = it.lone, n = name(url);
-          return `<figure ${idOf(n)} data-item data-kind="picture" data-name="${esc(n)}">${link(n)}${lk}${isBefore(label) ? '' : btn(u)}${pic(it.lone)}</figure>`;
+          return `<figure ${idOf(n)} data-item data-kind="picture" data-name="${esc(n)}">${link(n)}${lk}${isBefore(label) ? '' : btn(u)}${picture(it.lone)}</figure>`;
         }
         const n = name(it.before.url);
-        return `<figure ${idOf(n)} data-item data-kind="picture" data-pair="pair" data-name="${esc(n)}">${link(n)}${lk}${btn(u)}<div class="pair ba">${pic(it.before)}${pic(it.after)}</div></figure>`;
+        return `<figure ${idOf(n)} data-item data-kind="picture" data-pair="pair" data-name="${esc(n)}">${link(n)}${lk}${btn(u)}<div class="pair ba">${picture(it.before)}${picture(it.after)}</div></figure>`;
       }).join('')
         : textItem(name(g.live), lk, g.live);
       return `<div class="group">${g.name ? `<h3>${esc(g.name)}</h3>` : ''}<div class="${g.items.some((i) => i.lone) && !g.items.some((i) => i.before) ? 'pair' : 'items'}">${figs}</div></div>`;
@@ -180,7 +189,7 @@ async function addStamp(img) {
     const buffer = await (await fetch(img.src)).arrayBuffer();
     text = pngText(buffer, 'stamp') || pngText(buffer, 'openisd-visual-run');
   } catch { /* A missing stamp leaves the picture in place. */ }
-  img.closest('.side').querySelector('.stamp').textContent = text ? 'Stamp: ' + text : 'Stamp: none (not shot by the stamping tools)';
+  img.closest('.side').querySelector('.stamp').textContent = stampLine(text);
 }
 
 async function loadPictures() {
@@ -192,7 +201,7 @@ async function loadPictures() {
     out.innerHTML = `<p class="note">Could not read index.md (${esc(String(error))}).</p>`;
     return;
   }
-  out.querySelectorAll('img').forEach(addStamp);
+  out.querySelectorAll('img[data-stamp-pending]').forEach(addStamp);
   goToHash();
 }
 loadPictures();

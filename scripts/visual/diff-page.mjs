@@ -9,7 +9,7 @@
 // copied into <outdir>, so the page stands alone.
 // The page itself is made by scripts/feedback/feedback-page.py (rule: John's pages are never hand-built):
 // this script copies the pictures, marks them with scripts/feedback/mark-diff.py (a red box on what changed,
-// or on the whole screen when nothing can be told apart), writes <outdir>/index.md and runs the tool.
+// or on the whole screen when nothing can be told apart), then passes the marked PNGs to the page maker for display copies.
 import {spawnSync} from 'node:child_process';
 import {copyFileSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
@@ -28,6 +28,13 @@ mkdirSync(outDir, {recursive: true});
 
 const cell = text => String(text).replace(/\|/g, '/').replace(/\n/g, ' ');
 const run = (script, args) => spawnSync('python3', [join(galleryBin, script), ...args], {encoding: 'utf8'});
+const marked = new Set();
+
+function markFiles(files, args) {
+  const result = run('mark-diff.py', [...files.map(file => join(outDir, file)), ...args]);
+  if (result.status === 0) files.forEach(file => marked.add(file));
+  return result;
+}
 
 function copy(name, kind, source) {
   if (source === null || source === undefined) return null;
@@ -45,7 +52,7 @@ function size(file) {
 function markWhole(file) {
   let w, h;
   try { [w, h] = size(file); } catch { return null; }  // not a picture: nothing to mark
-  return run('mark-diff.py', [join(outDir, file), '--box', `0,0,${w},${h}`]);
+  return markFiles([file], ['--box', `0,0,${w},${h}`]);
 }
 
 // Marks the pair and returns the changed box {before, after} as mark-diff.py drew it, or null when the pair has
@@ -53,14 +60,14 @@ function markWhole(file) {
 function mark(before, after, diff) {
   let box = null;
   if (before && after) {
-    const r = run('mark-diff.py', [join(outDir, before), join(outDir, after), '--print-box']);
+    const r = markFiles([before, after], ['--print-box']);
     if (r.status === 1 || r.status === 2) { markWhole(before); markWhole(after); }  // same, or the change fills the picture
     else if (r.status !== 0) console.error(`mark-diff failed: ${r.stderr}`);
     else box = JSON.parse(r.stdout.trim().split('\n').pop());
   } else {
     for (const f of [before, after]) if (f) markWhole(f);
   }
-  if (diff) run('mark-diff.py', ['--stamp', join(outDir, diff)]);
+  if (diff) markFiles([diff], ['--stamp']);
   return box;
 }
 
@@ -95,6 +102,6 @@ const rows = prepared.map(({before, after, diff}, i) => {
 
 writeFileSync(join(outDir, 'index.md'), `# ${cell(title)}\n| Fix | Task | State | Pictures | Look at | Same as |\n|---|---|---|---|---|---|\n${rows.join('\n')}\n`);
 const todo = 'Look at the red boxes. Use the link under a picture to say on the board whether the change looks right.';
-const page = run('feedback-page.py', [outDir, '--card', card, '--todo', todo, '--note', note]);
+const page = run('feedback-page.py', [outDir, '--card', card, '--todo', todo, '--note', note, '--pictures', ...marked]);
 if (page.status !== 0) { console.error(`feedback-page.py failed: ${page.stderr}`); process.exit(1); }
 console.log(`${entries.length} screen(s) in ${leaders.filter((l, i) => l === i).length} group(s): ${join(outDir, 'index.html')}`);

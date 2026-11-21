@@ -11,14 +11,19 @@ fail() { echo "FAIL $*"; fails=$((fails + 1)); }
 
 python3 - "$SCRATCH" <<'PY'
 import sys
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, PngImagePlugin
 d = sys.argv[1]
-a = Image.new("RGB", (300, 400), "white"); b = a.copy()
-ImageDraw.Draw(b).rectangle((40, 100, 200, 140), fill="black")
-a.save(f"{d}/a.png"); b.save(f"{d}/b.png"); a.save(f"{d}/same.png")
+a = Image.new("RGB", (1800, 800), "white"); b = a.copy()
+ImageDraw.Draw(b).rectangle((400, 300, 800, 400), fill="black")
+stamp = PngImagePlugin.PngInfo()
+stamp.add_text("stamp", "source=review; build=example; viewport=1800x800")
+a.save(f"{d}/a.png", pnginfo=stamp); b.save(f"{d}/b.png"); a.save(f"{d}/same.png")
+ci_stamp = PngImagePlugin.PngInfo()
+ci_stamp.add_text("openisd-visual-run", "run=123456")
+Image.new("RGB", (300, 400), "white").save(f"{d}/diff.png", pnginfo=ci_stamp)
 PY
 cat > "$SCRATCH/entries.json" <<JSON
-[{"name":"mobile-tab-box","before":"$SCRATCH/a.png","after":"$SCRATCH/b.png","diff":null},
+[{"name":"mobile-tab-box","before":"$SCRATCH/a.png","after":"$SCRATCH/b.png","diff":"$SCRATCH/diff.png"},
  {"name":"mobile-tab-graph","before":"$SCRATCH/a.png","after":"$SCRATCH/same.png","diff":null},
  {"name":"mobile-menu","before":null,"after":"$SCRATCH/b.png","diff":null}]
 JSON
@@ -49,10 +54,46 @@ else
 fi
 rows=$(grep -c '^| Phone, ' "$out/index.md" 2>/dev/null || true)
 [ "$rows" = 3 ] && ok "index.md has one row per screen" || fail "index.md rows: $rows"
-for f in mobile-tab-box.before mobile-tab-box.after mobile-tab-graph.before mobile-tab-graph.after mobile-menu.after; do
+for f in mobile-tab-box.before mobile-tab-box.after mobile-tab-box.diff mobile-tab-graph.before mobile-tab-graph.after mobile-menu.after; do
   python3 -c "import sys; from PIL import Image; sys.exit(0 if Image.open(sys.argv[1]).text.get('marked') == '1' else 1)" "$out/$f.png" \
     && ok "$f.png is marked" || fail "$f.png is not marked"
 done
+if python3 - "$out" <<'PY'
+import json
+from pathlib import Path
+import re
+import sys
+from PIL import Image
+
+page = Path(sys.argv[1])
+links = re.findall(r"\]\(([^)]+\.png)\)", (page / "index.md").read_text())
+html = (page / "index.html").read_text()
+match = re.search(r'<script type="application/json" id="picture-data">(.*?)</script>', html)
+assert match, "page lacks display-copy and stamp data"
+pictures = json.loads(match.group(1))
+assert set(pictures) == set(links) and len(links) == 6
+assert pictures["mobile-tab-box.before.png"]["stamp"] == "source=review; build=example; viewport=1800x800"
+assert pictures["mobile-tab-box.diff.png"]["stamp"] == "run=123456"
+assert pictures["mobile-tab-box.after.png"]["stamp"] is None
+for png, picture in pictures.items():
+    assert picture["src"] == Path(png).with_suffix(".webp").name
+    with Image.open(page / png) as full, Image.open(page / picture["src"]) as display:
+        assert full.format == "PNG" and full.text["marked"] == "1"
+        assert display.format == "WEBP" and display.width == min(full.width, 900)
+        assert abs(display.height - full.height * display.width / full.width) <= 1
+        assert picture["stamp"] == (full.text.get("stamp") or full.text.get("openisd-visual-run"))
+        if png == "mobile-tab-box.after.png":
+            assert full.size == (1800, 800) and display.size == (900, 400)
+            # The red box's left edge survives on each row through the middle of the rectangle.
+            for y in range(170, 190):
+                edge = [display.getpixel((x, y)) for x in range(196, 201)]
+                assert any(r - max(g, b) > 100 for r, g, b in edge)
+PY
+then
+  ok "every picture has a marked full-size PNG link, a WebP at most 900 px wide, and its stamp data"
+else
+  fail "display copies, links or stamp data are wrong"
+fi
 [ ! -e "$out/mobile-menu.before.png" ] && ok "a new screen has no before picture" || fail "new screen has a before"
 grep -q "Look at" "$out/index.md" || grep -qi "look" "$out/index.md" && ok "rows carry a Look at statement" || fail "no Look at"
 
