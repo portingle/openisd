@@ -8,6 +8,7 @@ import type {Filter} from '@openisd/design/engine';
 import {OpenISDDriver, OpenISDProject, ProjectBuilder} from '@openisd/design';
 import {WinIsdProjectConverter} from '../../domain/winIsdProjectConverter.js';
 import {driverFromSpec} from '../fixtures/recordBuilders.js';
+import {wprText} from '../fixtures/inputLimitsSweep.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -79,6 +80,27 @@ function exported(filters: Filter[]) {
 }
 
 const orderWarnings = (errors: DriverError[]) => errors.filter(e => e.field === 'Filters' && /order/.test(e.message));
+
+function expectFiniteFilterSweep(project: OpenISDProject) {
+  const {values, issues} = project.sweep({fmin: 10, fmax: 1000, N: 24});
+  if (values === null) throw new Error(`filter sweep failed: ${JSON.stringify(issues)}`);
+  expect(values.fs).toHaveLength(25);
+  for (const trace of [values.fltMag, values.fltPhase, values.fltGd]) {
+    expect(trace).toHaveLength(values.fs.length);
+    expect(trace.every(Number.isFinite)).toBe(true);
+  }
+  return values;
+}
+
+function openWprWithFilter(engine: Engine, typeNum: number, params: string): OpenISDProject {
+  const section = `[Filters]\nCount=1\nfilter0type=${typeNum}\nfilter0params=${params}\n`;
+  const source = wprText('sealed');
+  const text = source.replace('[Filters]\nCount=0\n', section);
+  expect(text).not.toBe(source);
+  const {value, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+  if (value === null) throw new Error(`.wpr did not open: ${JSON.stringify(errors)}`);
+  return value;
+}
 
 describe('.wpr [Filters]', () => {
   describe('openIsdProjectToWinIsdProject — [Filters] export', () => {
@@ -284,5 +306,112 @@ describe('.wpr [Filters]', () => {
       expect(filters[0]).toMatchObject({order: 10});
       expect(orderWarnings(errors)).toEqual([]);
     });
+  });
+});
+
+describe('data quality for loaded filter numbers', () => {
+  const cases: ReadonlyArray<{typeNum: number; params: string; filter: Filter; warning: RegExp}> = [
+    {typeNum: 0, params: '0;1;2;0;0.707',
+      filter: {type: 'lowpass', enabled: true, family: 'butterworth', order: 2, fc: 0, Q: 0.707},
+      warning: /Cutoff frequency 0 Hz must be positive.*unity gain/},
+    {typeNum: 0, params: '1;1;3;50;0.707',
+      filter: {type: 'lowpass', enabled: true, family: 'linkwitzRiley', order: 3, fc: 50, Q: 0.707},
+      warning: /Order 3.*calculates at order 4/},
+    {typeNum: 0, params: '0;1;2;50;0',
+      filter: {type: 'lowpass', enabled: true, family: 'butterworth', order: 2, fc: 50, Q: 0},
+      warning: /Q 0 is outside the usual range.*response does not use Q/},
+    {typeNum: 1, params: '2;1;2.5;80;0.707',
+      filter: {type: 'highpass', enabled: true, family: 'bessel', order: 2.5, fc: 80, Q: 0.707},
+      warning: /Order 2\.5 must be a whole number.*unity gain/},
+    {typeNum: 1, params: '3;1;2;50;0',
+      filter: {type: 'highpass', enabled: true, family: 'sos', order: 2, fc: 50, Q: 0},
+      warning: /Q 0 must be positive.*unity gain/},
+    {typeNum: 2, params: '0;1;1e30;0.001;0.707',
+      filter: {type: 'allpass', enabled: true, order: 1e30, t: 0.001, Q: 0.707},
+      warning: /Order 1e\+30.*unity gain/},
+    {typeNum: 2, params: '0;1;2;-0.02;0.707',
+      filter: {type: 'allpass', enabled: true, order: 2, t: -0.02, Q: 0.707},
+      warning: /Delay -0\.02 s must be zero or positive.*unity gain/},
+    {typeNum: 2, params: '0;1;3;0.001;0',
+      filter: {type: 'allpass', enabled: true, order: 3, t: 0.001, Q: 0},
+      warning: /Q 0 is outside the usual range.*response does not use Q/},
+    {typeNum: 3, params: '0;1;50;0;20;0.5',
+      filter: {type: 'linkwitz', enabled: true, f0: 50, Q0: 0, fp: 20, Qp: 0.5},
+      warning: /Q0 0 must be positive.*unity gain/},
+    {typeNum: 4, params: '0;1;30;0;6',
+      filter: {type: 'peaking', enabled: true, fc: 30, Q: 0, gain: 6},
+      warning: /Q 0 must be positive.*unity gain/},
+    {typeNum: 5, params: '0;1;0;6',
+      filter: {type: 'peakHighpass', enabled: true, fpk: 0, gainPk: 6},
+      warning: /Peak frequency 0 Hz must be positive.*unity gain/},
+    {typeNum: 5, params: '0;1;50;-6',
+      filter: {type: 'peakHighpass', enabled: true, fpk: 50, gainPk: -6},
+      warning: /a peak gain below 0 dB has no curve to draw.*-6 dB at 50 Hz/},
+    {typeNum: 6, params: '0;1;4000',
+      filter: {type: 'staticGain', enabled: true, gain: 4000},
+      warning: /Gain 4000 dB.*unity gain/},
+    {typeNum: 7, params: '0;1;0;-1;6',
+      filter: {type: 'raisedCosine', enabled: true, fc: 0, bwOct: -1, gain: 6},
+      warning: /Centre frequency 0 Hz.*0\.000001 Hz.*Bandwidth -1 oct.*0\.000001 oct/},
+  ];
+
+  it.each(cases)('opens and retains .wpr filter $params and draws finite points', ({typeNum, params, filter, warning}) => {
+    const engine = createEngine();
+    const project = openWprWithFilter(engine, typeNum, params);
+    expect(project.filters.value).toEqual([filter]);
+    expect(engine.filters.issue(project.filters.value[0])?.text).toMatch(warning);
+    if ('family' in filter && filter.family === 'linkwitzRiley') {
+      expect(engine.filters.caption(project.filters.value[0])).toContain('n=3,');
+    }
+    expectFiniteFilterSweep(project);
+
+    project.save();
+    const reopened = OpenISDProject.fromOwprTextRepairing(project.toOwprText(), engine);
+    if (Array.isArray(reopened)) throw new Error(`.owpr did not reopen: ${reopened.join('; ')}`);
+    expect(reopened.repaired).toEqual([]);
+    expect(reopened.project.filters.value).toEqual([filter]);
+    expect(engine.filters.issue(reopened.project.filters.value[0])?.text).toMatch(warning);
+    expectFiniteFilterSweep(reopened.project);
+  });
+
+  const shelves: readonly ('lowshelf' | 'highshelf')[] = ['lowshelf', 'highshelf'];
+  it.each(shelves)('opens a saved %s with Q 0 and draws finite points', type => {
+    const engine = createEngine();
+    const project = aProject(p => p.sealed().volume_m3(0.02).build());
+    const filter: Filter = {type, enabled: true, fc: 100, Q: 0, gain: 6};
+    project.filters.set([filter]);
+    project.save();
+    const result = OpenISDProject.fromOwprTextRepairing(project.toOwprText(), engine);
+    if (Array.isArray(result)) throw new Error(`.owpr did not open: ${result.join('; ')}`);
+    expect(result.repaired).toEqual([]);
+    expect(result.project.filters.value).toEqual([filter]);
+    expect(engine.filters.issue(result.project.filters.value[0])?.text).toMatch(/Q 0 must be positive.*unity gain/);
+    expectFiniteFilterSweep(result.project);
+  });
+
+  it('draws the stated 80 dB gain even though it is outside the typing band', () => {
+    const engine = createEngine();
+    const project = openWprWithFilter(engine, 6, '0;1;80');
+    expect(project.filters.value).toEqual([{type: 'staticGain', enabled: true, gain: 80}]);
+    expect(engine.filters.issue(project.filters.value[0])?.text).toMatch(/Gain 80 dB is outside the usual range/);
+    expect(expectFiniteFilterSweep(project).fltMag.every(mag => mag === 80)).toBe(true);
+  });
+
+  it('keeps an extreme gain cut with force-flat response enabled', () => {
+    const engine = createEngine();
+    const project = openWprWithFilter(engine, 6, '0;1;-6300');
+    project.forceFlatResponse.set(true);
+    expect(project.filters.value).toEqual([{type: 'staticGain', enabled: true, gain: -6300}]);
+    expect(engine.filters.issue(project.filters.value[0])?.text).toMatch(/Gain -6300 dB.*extreme attenuation as silence/);
+    expectFiniteFilterSweep(project);
+  });
+
+  it('draws a second-order allpass with zero delay as unity', () => {
+    const engine = createEngine();
+    const project = openWprWithFilter(engine, 2, '0;1;2;0;0.707');
+    expect(project.filters.value).toEqual([{type: 'allpass', enabled: true, order: 2, t: 0, Q: 0.707}]);
+    expect(engine.filters.issue(project.filters.value[0])).toBeNull();
+    const {fltMag, fltPhase, fltGd} = expectFiniteFilterSweep(project);
+    expect([...fltMag, ...fltPhase, ...fltGd].every(value => value === 0)).toBe(true);
   });
 });

@@ -29,13 +29,14 @@ export class AllpassFilterModel implements FilterModel {
 
   response(f: number): Complex {
     const {order, t, Q} = this.spec;
+    if (t === 0) return cx(1, 0);
     const w = 2 * Math.PI * f;
     if (order === 2) {
       const w0 = 2 / t;
       return biquad(w, 1, -w0 / Q, w0 * w0, 1, w0 / Q, w0 * w0);
     }
     // θn has real coefficients, so θn(−jx) = conj(θn(jx)). θ1 = s + 1 is order 1's own form.
-    const d = reverseBessel(Math.max(1, order), w * t / 2);
+    const d = reverseBessel(order, w * t / 2);
     return cDiv(cx(d.re, -d.im), d);
   }
 

@@ -8,7 +8,7 @@
  * chain — every filter type's response and group delay". `.wpr` field names and Add defaults:
  * winisd_research/archive/PROBE_FINDINGS.md "`.wpr` `[Filters]` format".
  */
-import type {Filter, WinisdFilterErrors} from '../types.js';
+import type {Complex, Filter, WinisdFilterErrors, WprFilter} from '../types.js';
 import type {FilterModel} from './FilterModel.js';
 import {PassFilterModel} from './PassFilterModel.js';
 import {AllpassFilterModel} from './AllpassFilterModel.js';
@@ -18,6 +18,7 @@ import {PeakHighpassFilterModel} from './PeakHighpassFilterModel.js';
 import {StaticGainFilterModel} from './StaticGainFilterModel.js';
 import {RaisedCosineFilterModel} from './RaisedCosineFilterModel.js';
 import {ShelfFilterModel} from './ShelfFilterModel.js';
+import {safeFilterResponse} from './filterSafety.js';
 
 export type {FilterModel} from './FilterModel.js';
 export type {FilterEngine} from './FilterEngine.js';
@@ -34,6 +35,26 @@ export {StaticGainFilterModel} from './StaticGainFilterModel.js';
 export {RaisedCosineFilterModel} from './RaisedCosineFilterModel.js';
 export {ShelfFilterModel} from './ShelfFilterModel.js';
 
+class CheckedFilterModel implements FilterModel {
+  constructor(private readonly spec: Filter, private readonly model: FilterModel) {}
+
+  response(f: number): Complex {
+    return safeFilterResponse(this.spec, () => this.model.response(f));
+  }
+
+  caption(): string {
+    return this.model.caption();
+  }
+
+  wpr(): WprFilter | null {
+    return this.model.wpr();
+  }
+}
+
+export function filterModel(f: Filter, errors: WinisdFilterErrors): FilterModel {
+  return new CheckedFilterModel(f, responseModel(f, errors));
+}
+
 /**
  * The one place a `Filter` becomes behaviour — an exhaustive switch on `type`, no default
  * arm: `FilterSpec['type']` is a closed 10-member union, so an unhandled new variant fails to
@@ -41,7 +62,7 @@ export {ShelfFilterModel} from './ShelfFilterModel.js';
  * model nobody asked for. Takes the whole `Filter` (spec + `enabled`), not just the spec, so a
  * model can write its own `enabled` bit into its `.wpr()` shape.
  */
-export function filterModel(f: Filter, errors: WinisdFilterErrors): FilterModel {
+function responseModel(f: Filter, errors: WinisdFilterErrors): FilterModel {
   switch (f.type) {
     case 'lowpass':
     case 'highpass':     return new PassFilterModel(f, errors.besselHighpass);

@@ -2,6 +2,8 @@ import {cx} from '../complex.js';
 import type {Complex, FilterSpec, RaisedCosineFilter, WprFilter} from '../types.js';
 import type {FilterModel} from './FilterModel.js';
 
+/** Calculation-only floor for non-positive centre frequency and bandwidth. */
+export const RAISED_COSINE_POSITIVE_FLOOR = 1e-6;
 
 /**
  * DLP Raised Cosine. Real, zero phase: x = log10(f/fc)/(log10(2)·BW); for −1 ≤ x ≤ 1,
@@ -11,8 +13,8 @@ export class RaisedCosineFilterModel implements FilterModel {
   constructor(private readonly spec: RaisedCosineFilter) {}
 
   response(f: number): Complex {
-    const fc = this.spec.fc <= 0 ? 1e-6 : this.spec.fc;
-    const bw = this.spec.bwOct <= 0 ? 1e-6 : this.spec.bwOct;
+    const fc = this.spec.fc <= 0 ? RAISED_COSINE_POSITIVE_FLOOR : this.spec.fc;
+    const bw = this.spec.bwOct <= 0 ? RAISED_COSINE_POSITIVE_FLOOR : this.spec.bwOct;
     const x = Math.log10(f / fc) / (Math.log10(2) * bw);
     if (x < -1 || x > 1) return cx(1, 0);
     return cx(Math.pow(10, (1 + Math.cos(Math.PI * x)) * (this.spec.gain / 20) * 0.5), 0);

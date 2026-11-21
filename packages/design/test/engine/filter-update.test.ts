@@ -192,3 +192,18 @@ describe('Engine.updateShelfFilter', () => {
     expect(engine.filters.editShelf(hs, {fc: 2500}).type).toBe('highshelf');
   });
 });
+
+describe('filter edits preserve untouched loaded numbers', () => {
+  it('keeps a loaded Linkwitz–Riley order and Q when editing cutoff frequency', () => {
+    const {filter} = engine.filters.fromWpr(0, ['1', '1', '3', '50', '0']);
+    if (filter?.type !== 'lowpass') throw new Error('lowpass did not load');
+    expect(engine.filters.editPass(filter, {fc: 60})).toEqual({...filter, fc: 60});
+  });
+
+  it('keeps a loaded gain below the typing band when editing peak frequency', () => {
+    const {filter} = engine.filters.fromWpr(5, ['0', '1', '50', '-100']);
+    if (filter?.type !== 'peakHighpass') throw new Error('peaking highpass did not load');
+    expect(engine.filters.editPeakHighpass(filter, {fpk: 60})).toEqual({...filter, fpk: 60});
+    expect(engine.filters.editPeakHighpass(filter, {gainPk: -5}).gainPk).toBe(0);
+  });
+});

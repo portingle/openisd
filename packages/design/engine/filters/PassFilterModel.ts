@@ -58,12 +58,11 @@ export class PassFilterModel implements FilterModel {
     return this.spec.type === 'lowpass' ? this.family.lowpass(x) : this.family.highpass(x);
   }
 
-  /** Lowpass/Highpass share this shape; only the leading word differs. Linkwitz-Riley shows the
-   *  even order it draws (WinISD always shows n=4), and only the User SOS family (fc/Q entered
-   *  directly, not derived from a Butterworth/Bessel/LR table) states Q. */
+  /** Lowpass/Highpass share this shape. The caption shows the stated order. User SOS also
+   *  shows its Q. FilterEngine.issue explains any different order used in the response. */
   caption(): string {
     const label = this.spec.type === 'lowpass' ? 'Lowpass' : 'Highpass';
-    const n = this.spec.family === 'linkwitzRiley' ? LinkwitzRileyFamily.evenOrder(this.spec.order) : this.spec.order;
+    const n = this.spec.order;
     const q = this.spec.family === 'sos' ? `, Q=${this.spec.Q.toFixed(3)}` : '';
     return `${label} (${this.family.label}, n=${n}, fc=${this.spec.fc.toFixed(2)} Hz${q})`;
   }

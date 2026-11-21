@@ -19,8 +19,9 @@ import {
   FILTER_T_LIMITS, LINKWITZ_RILEY_ORDER_LIMITS, PEAK_HIGHPASS_GAIN_LIMITS, type FieldLimits,
 } from '../../fields/filterLimits.js';
 import {integerSpin, type FieldSpin} from '../../fields/field.js';
-import {clamp, roundClamp} from './limits.js';
+import {clampEdit, roundClamp} from './limits.js';
 import {LinkwitzRileyFamily} from './passFamilies/LinkwitzRileyFamily.js';
+import {filterParameterIssue} from './filterSafety.js';
 
 /** How a low/high-pass filter's Order box takes entry, decided per family. */
 export interface PassOrderEntry {
@@ -53,9 +54,9 @@ export interface FilterEngine {
    *  format", Add defaults column); linkwitz and the two OpenISD-only shelves keep the values
    *  OpenISD already shipped. No list id: the UI mints that. */
   default(type: FilterType): Filter;
-  /** WinISD's Filters-list caption for one filter, exact wording. */
+  /** Filters-list caption for one filter, based on the stated values. */
   caption(f: Filter): string;
-  /** What is wrong with `f` as entered (it draws no curve), or `null` when nothing is. */
+  /** Data quality issue for the filter's stated values and its effect on the response. */
   issue(f: Filter): FilterIssue | null;
   /** This filter's `.wpr` `[Filters]` `filter<i>type`/`filter<i>params` shape, or `null` for a
    *  type WinISD has no `.wpr` representation for (the OpenISD-only shelves). */
@@ -66,7 +67,7 @@ export interface FilterEngine {
    *  whenever the entry did not import as its own stated values. */
   fromWpr(typeNum: number, fields: readonly string[]): WprFilterImport;
   // Typed edits, one per filter class — what a filter EDITOR may write: `order` rounded to an
-  // integer then clamped to WinISD's 1..10, every other field clamped to its own entry range
+  // integer then clamped to its entry range, as are other typed fields
   // (`fields/filterLimits.ts`). A field left out of `patch` passes through unchanged; the
   // variant in is the variant out (bugs/archive/BUG_20260927_filter-editors-hold-domain-logic.md).
   editPass(f: PassFilter, patch: PassPatch): PassFilter;
@@ -103,6 +104,15 @@ function defaultedWprFilter(engine: FilterEngine, type: FilterType, fields: read
 /** No WinISD filter error reproduced: for a caption or `.wpr` shape, which no response maths reaches. */
 const NO_WINISD_FILTER_ERRORS: WinisdFilterErrors = Object.freeze({besselHighpass: false});
 
+/** Peaking EQ and shelves use the same three numeric fields and entry limits. */
+function editEqFields(f: ParametricEqFilter | ShelfFilter, patch: ParametricEqPatch): Pick<ParametricEqFilter, 'fc' | 'Q' | 'gain'> {
+  return {
+    fc: clampEdit(f.fc, patch.fc, FILTER_FC_LIMITS),
+    Q: clampEdit(f.Q, patch.Q, FILTER_Q_LIMITS),
+    gain: clampEdit(f.gain, patch.gain, FILTER_GAIN_LIMITS),
+  };
+}
+
 /** The one implementation. Built by `Engine`; nothing outside the engine names it. */
 export class FilterEngineImpl implements FilterEngine {
   default(type: FilterType): Filter {
@@ -123,7 +133,10 @@ export class FilterEngineImpl implements FilterEngine {
   }
 
   issue(f: Filter): FilterIssue | null {
-    return f.type === 'peakHighpass' ? new PeakHighpassFilterModel(f).issue() : null;
+    const parameters = filterParameterIssue(f);
+    const peak = f.type === 'peakHighpass' ? new PeakHighpassFilterModel(f).issue() : null;
+    if (parameters === null || peak === null) return parameters ?? peak;
+    return {text: `${peak.text} ${parameters.text}`};
   }
 
   caption(f: Filter): string {
@@ -162,13 +175,18 @@ export class FilterEngineImpl implements FilterEngine {
   }
 
   editPass(f: PassFilter, patch: PassPatch): PassFilter {
-    const next = {...f, ...patch};
-    const order = roundClamp(next.order, FILTER_ORDER_LIMITS);
+    const family = patch.family ?? f.family;
+    let order = patch.order === undefined ? f.order : roundClamp(patch.order, FILTER_ORDER_LIMITS);
+    // Selecting Linkwitz–Riley converts a regular order to its even step. An order already
+    // outside the previous family's entry contract stays visible until its own field is edited.
+    if (family === 'linkwitzRiley' && (patch.order !== undefined
+      || (family !== f.family && roundClamp(f.order, FILTER_ORDER_LIMITS) === f.order))) {
+      order = LinkwitzRileyFamily.evenOrder(order);
+    }
     return {
-      ...next,
-      order: next.family === 'linkwitzRiley' ? LinkwitzRileyFamily.evenOrder(order) : order,
-      fc: clamp(next.fc, FILTER_FC_LIMITS),
-      Q: clamp(next.Q, FILTER_Q_LIMITS),
+      ...f, family, order,
+      fc: clampEdit(f.fc, patch.fc, FILTER_FC_LIMITS),
+      Q: clampEdit(f.Q, patch.Q, FILTER_Q_LIMITS),
     };
   }
 
@@ -182,68 +200,50 @@ export class FilterEngineImpl implements FilterEngine {
   }
 
   editAllpass(f: AllpassFilter, patch: AllpassPatch): AllpassFilter {
-    const next = {...f, ...patch};
     return {
-      ...next,
-      order: roundClamp(next.order, FILTER_ORDER_LIMITS),
-      t: clamp(next.t, FILTER_T_LIMITS),
-      Q: clamp(next.Q, FILTER_Q_LIMITS),
+      ...f,
+      order: patch.order === undefined ? f.order : roundClamp(patch.order, FILTER_ORDER_LIMITS),
+      t: clampEdit(f.t, patch.t, FILTER_T_LIMITS),
+      Q: clampEdit(f.Q, patch.Q, FILTER_Q_LIMITS),
     };
   }
 
   editLinkwitz(f: LinkwitzFilter, patch: LinkwitzPatch): LinkwitzFilter {
-    const next = {...f, ...patch};
     return {
-      ...next,
-      f0: clamp(next.f0, FILTER_FC_LIMITS),
-      Q0: clamp(next.Q0, FILTER_Q_LIMITS),
-      fp: clamp(next.fp, FILTER_FC_LIMITS),
-      Qp: clamp(next.Qp, FILTER_Q_LIMITS),
+      ...f,
+      f0: clampEdit(f.f0, patch.f0, FILTER_FC_LIMITS),
+      Q0: clampEdit(f.Q0, patch.Q0, FILTER_Q_LIMITS),
+      fp: clampEdit(f.fp, patch.fp, FILTER_FC_LIMITS),
+      Qp: clampEdit(f.Qp, patch.Qp, FILTER_Q_LIMITS),
     };
   }
 
   editParametricEq(f: ParametricEqFilter, patch: ParametricEqPatch): ParametricEqFilter {
-    const next = {...f, ...patch};
-    return {
-      ...next,
-      fc: clamp(next.fc, FILTER_FC_LIMITS),
-      Q: clamp(next.Q, FILTER_Q_LIMITS),
-      gain: clamp(next.gain, FILTER_GAIN_LIMITS),
-    };
+    return {...f, ...editEqFields(f, patch)};
   }
 
   editPeakHighpass(f: PeakHighpassFilter, patch: PeakHighpassPatch): PeakHighpassFilter {
-    const next = {...f, ...patch};
     return {
-      ...next,
-      fpk: clamp(next.fpk, FILTER_FC_LIMITS),
-      // A typed Gpk stops at 0 dB; a negative one already held (from a file) is kept (QO951.c9).
-      gainPk: clamp(next.gainPk, patch.gainPk === undefined ? FILTER_GAIN_LIMITS : PEAK_HIGHPASS_GAIN_LIMITS),
+      ...f,
+      fpk: clampEdit(f.fpk, patch.fpk, FILTER_FC_LIMITS),
+      gainPk: clampEdit(f.gainPk, patch.gainPk, PEAK_HIGHPASS_GAIN_LIMITS),
     };
   }
 
   editStaticGain(f: StaticGainFilter, patch: StaticGainPatch): StaticGainFilter {
-    const next = {...f, ...patch};
-    return {...next, gain: clamp(next.gain, FILTER_GAIN_LIMITS)};
+    return {...f, gain: clampEdit(f.gain, patch.gain, FILTER_GAIN_LIMITS)};
   }
 
   editRaisedCosine(f: RaisedCosineFilter, patch: RaisedCosinePatch): RaisedCosineFilter {
-    const next = {...f, ...patch};
     return {
-      ...next,
-      fc: clamp(next.fc, FILTER_FC_LIMITS),
-      bwOct: clamp(next.bwOct, FILTER_BW_LIMITS),
-      gain: clamp(next.gain, FILTER_GAIN_LIMITS),
+      ...f,
+      fc: clampEdit(f.fc, patch.fc, FILTER_FC_LIMITS),
+      bwOct: clampEdit(f.bwOct, patch.bwOct, FILTER_BW_LIMITS),
+      gain: clampEdit(f.gain, patch.gain, FILTER_GAIN_LIMITS),
     };
   }
 
   editShelf(f: ShelfFilter, patch: ShelfPatch): ShelfFilter {
-    const next = {...f, ...patch};
-    return {
-      ...next,
-      fc: clamp(next.fc, FILTER_FC_LIMITS),
-      Q: clamp(next.Q, FILTER_Q_LIMITS),
-      gain: clamp(next.gain, FILTER_GAIN_LIMITS),
-    };
+    return {...f, ...editEqFields(f, patch)};
   }
 }

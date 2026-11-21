@@ -14,3 +14,8 @@ export function clamp(value: number, limits: FieldLimits): number {
 export function roundClamp(value: number, limits: FieldLimits): number {
   return clamp(Math.round(value), limits);
 }
+
+/** Apply entry limits only to a field supplied by the editor. */
+export function clampEdit(current: number, edit: number | undefined, limits: FieldLimits): number {
+  return edit === undefined ? current : clamp(edit, limits);
+}

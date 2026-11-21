@@ -4,7 +4,29 @@ repo: openisd
 owner: bob
 status: open
 goal: Loaded filter parameters are kept exactly as the file states, with the usual DQ warning, and filter responses stay finite (loaded-DQ group 5)
-why: John, 21 Nov 2026: 'yea no repair at all but also no crashes'
-done_test: bash scripts/quiet-test.sh npm run typecheck
+why: 'John, 21 Nov 2026, QO972 (loaded values stay as stated with a data quality warning): "a bad idea if it misrepresent data, a dq is better and more consistent" and "yea no repair at all but also  crashes".'
+goal_detail: >-
+  Keep complete numeric .wpr and .owpr filters as stated, including after an edit to another field.
+  Show a loaded Linkwitz–Riley order in the caption and explain the order used for the curve.
+  Use the existing filter issue display to explain invalid and unusual values and any calculation-only fallback.
+  Preserve the typed entry limits. Malformed tokens, unsupported codes, missing or partial entries and
+  the converter's [Filters] Count loop stay with the plan's deferred decisions or converter owner.
+done_test: bash scripts/test.sh packages/design/test/engine/filter-wpr-import.test.ts packages/design/test/engine/filter-update.test.ts packages/design/test/engine/filter-chain-charts.test.ts packages/design/test/engine/filters-winisd.test.ts packages/design/test/winisd/wpr-filters.test.ts
+tests_changed: >-
+  QO972, John's ruling to keep loaded values visible as stated ("a bad idea if it misrepresent data, a dq is better and more consistent").
+  packages/design/test/engine/filter-caption.test.ts:38 expected the caption for stored Linkwitz–Riley order 3 to show n=4; it now expects n=3.
+  The even-order caption test title now describes the stated order and its assertion is unchanged.
+  Added complete numeric .wpr and .owpr load, save/reopen, data quality, finite sweep and unrelated edit regressions.
+  Existing typed limits, malformed-format expectations and numerical tolerances are unchanged.
 files:
   - tasks/T952.yml
+  - packages/design/engine/filters/AllpassFilterModel.ts
+  - packages/design/engine/filters/FilterEngine.ts
+  - packages/design/engine/filters/PassFilterModel.ts
+  - packages/design/engine/filters/RaisedCosineFilterModel.ts
+  - packages/design/engine/filters/filterSafety.ts
+  - packages/design/engine/filters/index.ts
+  - packages/design/engine/filters/limits.ts
+  - packages/design/test/engine/filter-caption.test.ts
+  - packages/design/test/engine/filter-update.test.ts
+  - packages/design/test/winisd/wpr-filters.test.ts
