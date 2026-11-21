@@ -24,6 +24,9 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-editor-dimensions.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-editor-help-dimensions.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-editor-dimensions.png
+  - packages/ui/test/visual/screens.ts
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-driver-dimensions-with-figures.png
+  - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-driver-dimensions-with-figures.png
 visual:
   - desktop-dialog-driver-editor-dimensions
   - desktop-dialog-driver-editor-help-dimensions
