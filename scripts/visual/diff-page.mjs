@@ -2,8 +2,8 @@
 // Writes a before/after page for John with a board comment link under each picture.
 //   node scripts/visual/diff-page.mjs <outdir> <title> <entries.json> <card-id> <note>
 // entries.json: [{"name": "mobile-wizard-sealed-step4", "before": "/path/a.png", "after": "/path/b.png", "diff": "/path/d.png"}]
-// note: one or two plain sentences on what the user sees change (the task file's visual_note); shown under the title
-// and in the first picture's Look at line. Pass an empty string if there is no note.
+// note: one or two plain sentences on what the user sees change (the task file's visual_note), shown under the title.
+// Pass an empty string if there is no note. Each Look at line names the screen and points to the red boxes.
 // before, after and diff may each be null (a new or removed screen, or no diff picture). Pictures are
 // copied into <outdir>, so the page stands alone.
 // The page itself is made by scripts/feedback/feedback-page.py (rule: John's pages are never hand-built):
@@ -63,14 +63,6 @@ function mark(before, after, diff) {
   return box;
 }
 
-function look(screen, before, after, diff, isLeader) {
-  if (!before) return `${screen}, the whole screen: it is new, there is no before picture`;
-  if (!after) return `${screen}, the whole screen: it is removed, there is no after picture`;
-  if (!isLeader) return `${screen}, the same change as the first picture of this group.`;
-  const what = note ? `the red boxes: ${note}` : 'the red boxes show what changed';
-  return `${screen}, ${what}${diff ? ' (the third picture shows where they differ)' : ''}`;
-}
-
 const prepared = entries.map(entry => {
   const before = copy(entry.name, 'before', entry.before);
   const after = copy(entry.name, 'after', entry.after);
@@ -79,7 +71,6 @@ const prepared = entries.map(entry => {
   return {entry, before, after, diff, box};
 });
 const leaders = groupLeaders(prepared.map(p => ({name: p.entry.name, box: p.box})));
-const followers = leaders.map((_, i) => leaders.filter((x, k) => x === i && k !== i).length);  // pictures folded under entry i
 
 // index.md row: Fix | Task | State | Pictures | Look at | Same as. Fix is the screen in words; Task and State stay empty
 // (the page shows neither). Same as is the leader's screen name, empty for a group's first picture.
@@ -87,11 +78,9 @@ const followers = leaders.map((_, i) => leaders.filter((x, k) => x === i && k !=
 const names = prepared.map(p => plainScreenName(p.entry.name));
 const rows = prepared.map(({before, after, diff}, i) => {
   const links = [['before', before], ['after', after], ['difference', diff]].filter(([, f]) => f).map(([label, f]) => `[${label}](${f})`);
-  const more = followers[i];
-  const lookText = look(names[i], before, after, diff, leaders[i] === i);
-  const text = more ? `${lookText.replace(/\.$/, '')}. The same change shows in ${more} more picture${more === 1 ? '' : 's'}, folded below.` : lookText;
+  const look = `${names[i]}, the red boxes show what changed`;
   const leader = leaders[i] === i ? '' : names[leaders[i]];
-  return `| ${cell(names[i])} |  |  | ${links.join(' ')} | ${cell(text)} | ${cell(leader)} |`;
+  return `| ${cell(names[i])} |  |  | ${links.join(' ')} | ${cell(look)} | ${cell(leader)} |`;
 });
 
 writeFileSync(join(outDir, 'index.md'), `# ${cell(title)}\n| Fix | Task | State | Pictures | Look at | Same as |\n|---|---|---|---|---|---|\n${rows.join('\n')}\n`);

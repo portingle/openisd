@@ -10,7 +10,7 @@ Set `VISUAL_FEEDBACK_ITEM` to the live decision board card ID before publishing 
 - Pairs that show the same change are one group. "Same change" = mark-diff's changed boxes (`--print-box`)
   have the same position and size within 8 px (`BOX_TOLERANCE` in `diff-page.mjs`), compared to the group's first pair.
 - A pair with no box (new screen, removed screen, no visible difference, change fills the picture) is its own group.
-- A group shows its first pair, with its own "Look at:" line saying how many more pictures show the same change.
+- A group shows its first pair. Its "Look at:" line names the screen and points to the red boxes.
 - The other pairs of the group sit in a closed fold under it: "Same change in N more pictures (show)".
   A group of one has no fold.
 - Every picture has a link to comment on the board. Each pair keeps its own "Look at:" line when folded.

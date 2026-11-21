@@ -26,6 +26,27 @@ out="$SCRATCH/page"
 node "$REPO/scripts/visual/diff-page.mjs" "$out" "What changed on screen" "$SCRATCH/entries.json" picture-review "The box got bigger." > "$SCRATCH/log.txt" 2>&1 \
   && ok "page written" || fail "diff-page failed: $(cat "$SCRATCH/log.txt")"
 [ -s "$out/index.html" ] && grep -q "What to do" "$out/index.html" && ok "index.html is the shared feedback page with a What to do line" || fail "no feedback page"
+if python3 - "$out" <<'PY'
+from html import unescape
+from itertools import combinations
+from pathlib import Path
+import re
+import sys
+
+page = Path(sys.argv[1])
+html = (page / "index.html").read_text().split("<script>", 1)[0]
+paragraphs = [unescape(re.sub(r"<[^>]+>", "", p)) for p in re.findall(r"<p\b[^>]*>(.*?)</p>", html, re.S)]
+# The viewer renders the Look at column as one paragraph per comparison.
+paragraphs.extend(row.split("|")[5].strip() for row in (page / "index.md").read_text().splitlines()[3:])
+for first, second in combinations(paragraphs, 2):
+    if first in second or second in first:
+        sys.exit(f"Repeated paragraph text: {first!r} and {second!r}")
+PY
+then
+  ok "no paragraph repeats another paragraph's text"
+else
+  fail "a paragraph repeats another paragraph's text"
+fi
 rows=$(grep -c '^| Phone, ' "$out/index.md" 2>/dev/null || true)
 [ "$rows" = 3 ] && ok "index.md has one row per screen" || fail "index.md rows: $rows"
 for f in mobile-tab-box.before mobile-tab-box.after mobile-tab-graph.before mobile-tab-graph.after mobile-menu.after; do
@@ -56,19 +77,21 @@ gout="$SCRATCH/groups"
 node "$REPO/scripts/visual/diff-page.mjs" "$gout" "What changed on screen" "$SCRATCH/groups.json" picture-review "The box moved." > "$SCRATCH/glog.txt" 2>&1 \
   && ok "grouped page written" || fail "grouped diff-page failed: $(cat "$SCRATCH/glog.txt")"
 grep -q "3 group(s)" "$SCRATCH/glog.txt" && ok "four screens make 3 groups" || fail "group count: $(cat "$SCRATCH/glog.txt")"
-grep -q '^| Phone, Driver tab .*1 more picture, folded below. |  |$' "$gout/index.md" && ok "same box: the first picture leads and says '1 more'" || fail "leader row: $(grep 'Driver tab' "$gout/index.md")"
+grep -q '^| Phone, Driver tab .*|  |$' "$gout/index.md" && ok "same box: the first picture leads" || fail "leader row: $(grep 'Driver tab' "$gout/index.md")"
 grep -q '^| Phone, Signal tab .*| Phone, Driver tab |$' "$gout/index.md" && ok "same box: the second picture is folded under the first" || fail "follower row: $(grep 'Signal tab' "$gout/index.md")"
 grep -q '^| Phone, Filters tab .*|  |$' "$gout/index.md" && ! grep '^| Phone, Filters tab' "$gout/index.md" | grep -q "more picture" && ok "different box: its own group" || fail "g3 row: $(grep 'Filters tab' "$gout/index.md")"
 grep -q '^| Phone, no project open .*|  |$' "$gout/index.md" && ok "no box (new screen): its own group" || fail "gnew row: $(grep 'no project' "$gout/index.md")"
-# Plain words: no task id, file name or jargon in the page; the title and the note say what changed; the leader's
-# Look at line names the screen and the change; a follower points at the first picture.
+# Plain words: no task id, file name or jargon in the page. The note goes under the title and each Look at line
+# names the screen and points to the red boxes.
 for bad in 'T9' 'baseline' 'landed' '\.png' 'mobile-'; do
   sed -e 's/\[[a-z]*\]([^)]*\.png)//g' "$gout/index.md" | grep -qE "$bad" && fail "page text holds '$bad'" || ok "page text has no '$bad'"
 done
 head -1 "$gout/index.md" | grep -qx '# What changed on screen' && ok "title says what changed" || fail "title: $(head -1 "$gout/index.md")"
-grep -q 'The box moved' "$gout/index.html" && ok "the note shows under the title" || fail "no note on the page"
-grep -q '^| Phone, Driver tab .*| Phone, Driver tab, the red boxes: The box moved' "$gout/index.md" && ok "leader Look at: screen in words, the red boxes, the note" || fail "leader look: $(grep 'Driver tab' "$gout/index.md")"
-grep -q '| Phone, Signal tab, the same change as the first picture of this group\. |' "$gout/index.md" && ok "follower Look at points at the first picture" || fail "follower look"
+grep -A1 -Fx '<h1>What changed on screen</h1>' "$gout/index.html" | grep -qx '<p class="note">The box moved\.</p>' && ok "the note shows under the title" || fail "no note under the title"
+for screen in 'Driver tab' 'Signal tab' 'Filters tab' 'no project open'; do
+  grep -q "^| Phone, $screen |.*| Phone, $screen, the red boxes show what changed |" "$gout/index.md" \
+    && ok "$screen Look at names the screen and points to the red boxes" || fail "$screen Look at: $(grep "^| Phone, $screen |" "$gout/index.md")"
+done
 grep -q '^| Phone, Driver tab |  |  |' "$gout/index.md" && ok "Task and State columns are empty" || fail "task/state not empty"
 # Union-box grouping and leader: a second small box inside the same area keeps the pair in the group, and a pair with
 # fewer boxes leads even though its name sorts later.
@@ -87,7 +110,7 @@ cat > "$SCRATCH/union.json" <<JSON
 JSON
 node "$REPO/scripts/visual/diff-page.mjs" "$SCRATCH/union" "What changed on screen" "$SCRATCH/union.json" picture-review "x" > "$SCRATCH/ulog.txt" 2>&1
 grep -q "1 group(s)" "$SCRATCH/ulog.txt" && ok "union box: two pairs with different small boxes are one group" || fail "union group: $(cat "$SCRATCH/ulog.txt")"
-grep -q '^| Desktop, Box tab .*the red boxes: x' "$SCRATCH/union/index.md" && ok "leader is the pair with the fewest boxes, not the first by name" || fail "leader: $(cat "$SCRATCH/union/index.md")"
+grep -q '^| Desktop, Box tab .*|  |$' "$SCRATCH/union/index.md" && grep -q '^| Desktop, no project open .*| Desktop, Box tab |$' "$SCRATCH/union/index.md" && ok "leader is the pair with the fewest boxes, not the first by name" || fail "leader: $(cat "$SCRATCH/union/index.md")"
 node "$REPO/scripts/visual/screen-names.test.mjs" > "$SCRATCH/names.txt" 2>&1 && ok "plain screen names cover every baseline" || fail "screen names: $(cat "$SCRATCH/names.txt")"
 # feedback_page_group_test.mjs exercises the fold and the links with only the page viewer's resources.
 exit "$fails"
