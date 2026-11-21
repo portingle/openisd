@@ -8,6 +8,7 @@ task="${1:?usage: publish-changes.sh <task-id> <base> <head>}"; base="${2:?}"; h
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 ids="$(visual_changed_ids "$base" "$head")"
 [ -n "$ids" ] || exit 0
+visual_require_pages_url
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 entries="$work/entries.json"; printf '[' > "$entries"; first=1
 while IFS= read -r id; do
@@ -27,4 +28,4 @@ else
   echo "visual: warning: tasks/$task.yml has no visual_note: (one or two plain sentences on what the user sees change); the page cannot say what to look at" >&2
 fi
 node "$VISUAL_SCRIPTS/diff-page.mjs" "$out" "$title" "$entries" "$note" > /dev/null
-printf 'visual changes: %s/%s/index.html\n' "$VISUAL_PAGES_URL" "$(basename "$out")"
+printf 'visual changes: %s/%s/index.html\n' "${VISUAL_PAGES_URL%/}" "$(basename "$out")"
