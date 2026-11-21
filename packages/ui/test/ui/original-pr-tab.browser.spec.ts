@@ -199,9 +199,10 @@ test.describe('Original Passive Radiator tab', () => {
       await expect(field.locator('.ui-field-note')).toHaveText(/cannot be calculated yet.*needs equivalent volume \(Vas\)/);
     });
 
-    // John, 2026-10-05: "PR Vas is disconnected" — a project made by the New Project wizard with
-    // the ND140-PR kept the radiator's catalogue Mms and Cms, so a Vas typed on the page moved nothing.
-    test('a Vas typed on the PR page of a wizard-made ND140-PR project moves Fpr with mass, Fh and the SPL curve', async ({ appPage: page }) => {
+    // John, 2026-10-05: "PR Vas is disconnected" — a Vas typed on the page must never do nothing visible. QO534 (John, 11 Nov 2026):
+    // "an entered value is never overwritten with a calculated value"; "all get the mark". ND140-PR states Cms 0.79 mm/N: a typed Vas
+    // keeps it, and Vas and Cms both carry the warning. Clearing Cms lets the Vas drive it, and Fpr with mass, Fh and the SPL curve move.
+    test('a Vas typed on the PR page of a wizard-made ND140-PR project marks Vas and Cms; clearing Cms lets the Vas move Fpr with mass, Fh and the SPL curve', async ({ appPage: page }) => {
       await page.locator('.tb-btn[title*="New project"]').click();
       const wizard = page.locator('.overlay.open');
       const next = wizard.locator('.modal-footer button.ok-btn');   // the green lead: Next, then Create
@@ -229,6 +230,18 @@ test.describe('Original Passive Radiator tab', () => {
       const splBefore = await chartPicture(page);
 
       await fillAndCommit(page.locator('#og-pr-vas'), '20');
+      await expect(page.locator('#og-pr-vas')).toHaveClass(/value-e/);
+      await expect(page.locator('#og-pr-vas')).toHaveClass(/dq-flag/);
+      await expect(page.locator('#og-pr-cms')).toHaveClass(/value-e/);
+      await expect(page.locator('#og-pr-cms')).toHaveValue(/^0\.79/);
+      await expect(page.locator('#og-pr-cms')).toHaveClass(/dq-flag/);
+
+      await page.locator('#og-pr-cms').click();
+      await page.locator('#og-pr-cms').press('ControlOrMeta+a');
+      await page.locator('#og-pr-cms').press('Delete');
+      await page.locator('#og-pr-cms').press('Tab');
+      await expect(page.locator('#og-pr-cms')).toHaveClass(/value-c/);
+      await expect(page.locator('#og-pr-vas')).not.toHaveClass(/dq-flag/);
 
       await expect(page.locator('#og-pr-fs-mass')).not.toHaveValue(fprBefore);
       await expect.poll(() => chartPicture(page)).not.toBe(splBefore);

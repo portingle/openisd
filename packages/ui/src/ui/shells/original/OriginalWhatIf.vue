@@ -74,13 +74,13 @@ const OPTIONAL: PanelField[] = [
   { key: 'Xmax_m', def: NumberField.XMAX_M, label: 'Xmax' },
   { key: 'Pe_W', def: NumberField.PE_W,   label: 'Pe' },
 ];
-// Bl and Mms are ordinary driver fields, not outputs: the ADT derives them when they are not
-// entered and honours them when they are (Driver.enter → state E → fixed-E override), exactly
-// as the driver editor already treats them. So they are edited here like any other field, and
-// the E/C colour says which of the two is happening.
+// The parts the charts use. Typing one keeps the other parts and moves the results that follow it; typing a result above
+// keeps the other results and moves these (QO535, the engine's What-if rule).
 const DERIVED: PanelField[] = [
   { key: 'BL_Tm', def: NumberField.BL_TM,  label: 'Bl' },
   { key: 'Mms_kg', def: NumberField.MMS_KG, label: 'Mms' },
+  { key: 'Cms_m_per_N', def: NumberField.CMS_M_PER_N, label: 'Cms' },
+  { key: 'Rms_kg_per_s', def: NumberField.RMS_KG_PER_S, label: 'Rms' },
 ];
 
 const ebpVal = whatIf.ebp;
@@ -127,7 +127,7 @@ useEscToClose(() => presentationState.editDriver, close);
 
     <div class="what-if-subsect">Derived</div>
     <div class="what-if-grid">
-      <UIField v-for="f in DERIVED" :key="f.key" class="what-if-fld" :title="`${f.label} is calculated from the parameters above until you type one — then it overrides them. Clear the field to hand it back to the calculation.`" :field="f.def" :label="f.label" :cell="whatIf.specCell(f.key)" />
+      <UIField v-for="f in DERIVED" :key="f.key" class="what-if-fld" :title="`Type ${f.label} to try a different part: the other parts stay and Fs, Vas and the Qs follow it.`" :field="f.def" :label="f.label" :cell="whatIf.specCell(f.key)" />
       <!-- EBP is NOT a driver field: the ADT does not derive it and has no slot to override
            (it is ebp() = Fs/Qes, computed in the engine). Making it editable means choosing
            which of Fs or Qes an entered EBP solves backwards — a decision for the human, not
@@ -136,19 +136,21 @@ useEscToClose(() => presentationState.editDriver, close);
     </div>
 
     <div class="what-if-btns">
+      <ProvenanceLegend class="what-if-legend" />
       <button title="Back to the design's values" @click="reset">Reset</button>
       <button class="footer-buttons-pri" title="Close. Your project will not be updated." @click="close">Close</button>
     </div>
-      <ProvenanceLegend class="what-if-legend" />
     </div>
   </div>
 </template>
 
 <style scoped>
 /* Width follows its content (two columns of label, input, stepper, dq mark and unit), so no unit runs past the edge. */
+/* It sits 16px off the window's top and bottom: with the four What-if inputs (QO535) the ABC panel is 682px tall,
+   which fits a 1280 x 720 window (688px) without scrolling. */
 .what-if-panel {
-  position: fixed; right: 24px; bottom: 24px; z-index: 60;
-  width: max-content; max-width: calc(100vw - 32px); max-height: calc(100vh - 48px); overflow-y: auto;
+  position: fixed; right: 24px; bottom: 16px; z-index: 60;
+  width: max-content; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); overflow-y: auto;
   background: #f7f7f7; border: 1px solid #888; border-radius: 8px;
   box-shadow: 0 6px 24px rgba(0,0,0,.35); padding: 10px 14px 14px; font-size: 13px;
 }
@@ -160,7 +162,9 @@ useEscToClose(() => presentationState.editDriver, close);
 .what-if-titlebar .close-btn:hover { background: #e64545; color: #fff; }
 .what-if-panel-collapsed { max-height:none; overflow:visible; padding-bottom:8px; }
 .what-if-panel-collapsed .what-if-titlebar { margin-bottom:0; }
-.what-if-legend { margin-top: 10px; border: 1px solid var(--line); border-radius: 4px; }
+/* The colour legend shares the footer row with Reset and Close, so the four What-if inputs (QO535)
+   still fit a 1280 x 720 window without the panel scrolling. */
+.what-if-legend { margin-right: auto; border: 1px solid var(--line); border-radius: 4px; }
 /* The content is a grid, where margins add up instead of merging. The hint keeps the spacing it had
    as a block: 1em above it counting the title bar's 6px, and below it only the next heading's 10px. */
 .what-if-hint { width:0; min-width:100%; color: #777; font-style: italic; font-size: 11.5px; margin: calc(1em - 6px) 0 0; }
@@ -169,10 +173,17 @@ useEscToClose(() => presentationState.editDriver, close);
    column's label track is as wide as the longest label it shows and every box in the column
    starts at one edge, right after it (John, 8 Nov 2026, QO449.c11: "too much space between labels
    and cells"). The same structure as the driver editor's fields. */
-.what-if-panel { --what-if-box-w:93px; --what-if-chip-w:29px; --what-if-cue-w:24px; --what-if-spacer-w:12px; }
+/* Keep boxes at 93px and chips at 29px. Give only Cms (mm/N) and Rms (Ns/m) another 9px
+   for their units, keeping the same numeric space and left edge. John, 21 Nov 2026:
+   "only the col that needed widening really needs the fix". */
+.what-if-panel {
+  --what-if-box-w:93px; --what-if-chip-w:29px; --what-if-wide-extra:9px;
+  --what-if-box-track-w:calc(var(--what-if-box-w) + var(--what-if-wide-extra));
+  --what-if-cue-w:24px; --what-if-spacer-w:12px;
+}
 .what-if-content {
   display:grid; column-gap:2px; row-gap:0;
-  grid-template-columns:max-content var(--what-if-box-w) max-content var(--what-if-cue-w) var(--what-if-spacer-w) max-content var(--what-if-box-w) max-content var(--what-if-cue-w);
+  grid-template-columns:max-content var(--what-if-box-track-w) max-content var(--what-if-cue-w) var(--what-if-spacer-w) max-content var(--what-if-box-track-w) max-content var(--what-if-cue-w);
 }
 .what-if-content > * { grid-column:1 / -1; }
 .what-if-grid, .what-if-box-grid, .what-if-box-line { display:grid; grid-template-columns:subgrid; grid-column:1 / -1; row-gap:6px; align-items:start; }
@@ -181,22 +192,34 @@ useEscToClose(() => presentationState.editDriver, close);
 .what-if-box-placeholder { min-width:0; }
 /* A window too narrow for two columns stacks them into one, so the right column is never cut off. */
 @media (max-width: 520px) {
-  .what-if-content { grid-template-columns:max-content var(--what-if-box-w) max-content var(--what-if-cue-w); }
+  .what-if-content { grid-template-columns:max-content var(--what-if-box-track-w) max-content var(--what-if-cue-w); }
   .what-if-grid > :nth-child(even), .what-if-box-line > :nth-child(even) { grid-column:1 / 5; }
 }
-.what-if-panel :deep(.ui-field.ui-field[data-field]) {
+.what-if-panel .what-if-content :deep(.ui-field.ui-field[data-field]) {
   grid-template-columns:subgrid !important; width:auto !important; max-width:none !important;
-  --joined-chip:var(--what-if-chip-w);
+  --what-if-extra-w:0px;
+  --what-if-box-end-inset:calc(var(--what-if-wide-extra) - var(--what-if-extra-w));
+  --joined-chip:calc(var(--what-if-chip-w) + var(--what-if-extra-w));
 }
-/* The common field's chip is at least 34px; the What-if's narrower boxes take a narrower chip. */
-.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit:not(.unit-toggle)) { min-width:var(--what-if-chip-w); }
+.what-if-panel .what-if-content :deep(.ui-field.ui-field:is([data-field="Cms_m_per_N"], [data-field="Rms_kg_per_s"])) {
+  --what-if-extra-w:var(--what-if-wide-extra);
+}
+/* Start each box at the shared grid line and keep its chip and stepper next to its own right edge. */
+.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-value :is(.num-input-wrap, input[readonly], select)) {
+  justify-self:start; width:calc(var(--what-if-box-w) + var(--what-if-extra-w));
+}
+.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit) { margin-inline-end:var(--what-if-box-end-inset); }
+.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit:not(.unit-toggle)) { min-width:var(--joined-chip); }
+/* Let the centred, switchable symbols use the full chip around the divider and outer border. */
+.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit.unit-toggle) { padding-inline:0; }
+.what-if-panel :deep(.ui-field.ui-field[data-field] .num-stepper) { translate:calc(-1 * var(--what-if-box-end-inset)); }
 /* The label track is the longest label plus the desktop's 22px warning slot after every label (kept
    so a warning never moves the boxes). */
 .what-if-panel .what-if-content :deep(.ui-field.ui-field[data-field] > .ui-field-label) {
   grid-column:1; grid-row:1; white-space:nowrap; overflow-wrap:normal; text-align:left; padding-right:0;
 }
-.what-if-subsect { color: #7d9fc9; font-weight: 600; font-size: 12px; margin: 10px 0 2px; }
-.what-if-btns { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid #ddd; margin-top: 10px; }
+.what-if-subsect { color: #7d9fc9; font-weight: 600; font-size: 12px; margin: 8px 0 2px; }
+.what-if-btns { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid #ddd; margin-top: 6px; }
 .what-if-btns button { border: 1px solid #999; background: #f0f0f0; border-radius: 3px; padding: 6px 12px; cursor: pointer; }
 .what-if-btns button:hover { background: #dbeaff; border-color: #7fb3ff; }
 .what-if-btns button.footer-buttons-pri { background: #1868d1; color: #fff; border-color: #1868d1; }

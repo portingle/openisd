@@ -1,5 +1,5 @@
 import type {TestSolverQuantities} from './testSolver.js';
-import {sweepDriver, solveConsistencyGroup} from './testSolver.js';
+import {sweepDriverIn, solveConsistencyGroup} from './testSolver.js';
 /**
  * Moist-air properties — WinISD's own model of ρ and c from temperature, relative humidity and
  * static pressure, the only air model (CIPM-2007 removed 2026-10-05).
@@ -147,8 +147,10 @@ describe('the sweep actually consumes humidity and pressure', () => {
     Re_ohm: 5.6, Xmax_m: 0.005, Pe_W: 60,
   };
   const BASE: SweepParams = { Vb: 0.020, Ql: 7, eg: 2.83, fmin: 20, fmax: 200, N: 40, air: REFERENCE_AIR };
-  const drv = solveConsistencyGroup(RAW);
-  const splAt = (P: SweepParams) => engine.simulation.sweep(sweepDriver(drv), LE_H, 'sealed', P).values!.spl;
+  // A driver stated by Vas, its Cms, Mms and Rms left to be worked out in the sweep's air, as a project does for one (QO534: a stated
+  // Cms is charted as it is, so it would not follow the air). Its BL stays the one worked out at the reference air.
+  const {Cms_m_per_N: _cms, Mms_kg: _mms, Rms_kg_per_s: _rms, ...drv} = solveConsistencyGroup(RAW);
+  const splAt = (P: SweepParams) => engine.simulation.sweep(sweepDriverIn(drv, P.air), LE_H, 'sealed', P).values!.spl;
   const maxAbsDelta = (a: number[], b: number[]) => Math.max(...a.map((v, i) => Math.abs(v - b[i]!)));
 
   it('changing relative humidity changes SPL — the input is not inert', () => {

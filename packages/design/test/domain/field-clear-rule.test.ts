@@ -114,6 +114,7 @@ describe('clear rule: step 2, swap with the equation partner', () => {
 
   it('sealed Qtc cleared: Qtc C, volume E at its value', () => {
     const p = builder().sealed().volume_m3(0.03).build();
+    p.winisdChartFromFsVasQms.set(true);
     p.box.sealed.q_tc.set(0.8);
     const vb = p.box.sealed.volume_m3.value;
     p.box.sealed.q_tc.clear();
@@ -153,7 +154,8 @@ describe('clear rule: step 1 and 3', () => {
     const p = builder().sealed().volume_m3(0.03).build();
     p.driver.specs.Mms_kg.clear();
     expect(letter(p.driver.specs.Mms_kg)).toBe('C');
-    expect(p.driver.specs.Mms_kg.value).toBeCloseTo(1 / ((2 * Math.PI * 30) ** 2 * 0.0005), 9);
+    // From Fs and the Cms the charts use (WinISD works Cms out from Vas), which the box shows.
+    expect(p.driver.specs.Mms_kg.value).toBeCloseTo(1 / ((2 * Math.PI * 30) ** 2 * p.driver.specs.Cms_m_per_N.value!), 9);
   });
 
   it('counts go to 1 C, Rg to 0.1 C', () => {

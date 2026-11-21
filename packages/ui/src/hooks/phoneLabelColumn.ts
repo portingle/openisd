@@ -1,4 +1,4 @@
-import {PhoneRowColumns} from '@openisd/design/fields';
+import {ChartInputs, PhoneRowColumns} from '@openisd/design/fields';
 
 /**
  * Sizes a phone page's (or popup's) label column to its longest label (John, 10 Nov 2026: "there is tons of
@@ -38,7 +38,10 @@ export function createPhoneLabelColumn(root: HTMLElement, reserved: readonly str
       const style = view.getComputedStyle(label);
       font = style;
       canvas.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`; // the font shorthand reads back empty
-      widths.push(canvas.measureText(text).width + (parseFloat(style.marginRight) || 0));
+      // A box the charts read has its blue dot after the label's text (QO532): the column holds it too.
+      const margin = parseFloat(style.marginRight) || 0;
+      const dot = label.closest('.ui-field-drives-charts') === null ? 0 : ChartInputs.phoneDotRoomPx(margin);
+      widths.push(canvas.measureText(text).width + margin + dot);
     }
     // The canvas still holds the last label's font: a reserved label is measured in the same font as the shown ones.
     if (font !== null) {

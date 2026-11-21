@@ -3,10 +3,11 @@
  * OpenISD's charts, the Box and Vents readouts and the driver editor's marks. A driver's test file lists its runs and its known deviations.
  */
 import {describe, expect, it} from 'vitest';
+import {CompatSwitch} from '../../domain/project/compatSwitch.js';
 import {
   BOX_VOLUME, FRONT_BOX_VOLUME, FRONT_TUNING, FRONT_VENT_CROSS_AREA, FRONT_VENT_LENGTH, GROUP_DELAY_BOUND_MS, INTRA_VENT_CROSS_AREA,
   INTRA_VENT_LENGTH, PR_TUNING, SEALED_FSC, SEALED_QTC, UNSTATED_ZERO_KEYS, VENTED_FB, VENT_CROSS_AREA, VENT_LENGTH, applyEdit, unstatedBlankDeviations,
-  applyLossEdit, applyPortEdit, applySignalEdit, applySpecEdit, applyVentEdit, assertChartMatches, assertLoadParity, assertReadout,
+  applyLossEdit, applyPortEdit, applySignalEdit, applySpecEdit, applyVentEdit, assertChartMatches, assertTypedPartStands, assertLoadParity, assertReadout,
   chartRules, editorDeviations, loadBase, loadEditCapture, sweepAfterEdit,
 } from './winisdEditCapture.js';
 import type {
@@ -127,8 +128,20 @@ export function describeRun(driver: DriverRuns, run: Run): void {
     apply(project, capture, run.edit);
     const swept = sweepAfterEdit(project, capture);
     const rules = chartRules(run.box === 'bandpass6' ? BP6_GROUP_DELAY_BOUND_MS : GROUP_DELAY_BOUND_MS);
+    const spec = 'spec' in run.edit ? run.edit.spec : undefined;
+    const editsChartPart = spec === 'Mms_kg' || spec === 'Cms_m_per_N' || spec === 'Rms_kg_per_s';
+    if (editsChartPart) {
+      // WinISD ignores a typed Mms, Cms or Rms. loadBase ticks "Chart from Fs, Vas, Qms (WinISD's way)", so the charts match WinISD's;
+      // unticked (a new project's default, QO539), the typed part is charted (QO534).
+      for (const q of capture.charts.keys()) it(`"Chart from Fs, Vas, Qms" ticked: ${q} matches`, () => assertChartMatches(capture, swept, q, rules));
+      const chartFromFsVasQms = CompatSwitch.CHART_FROM_FS_VAS_QMS.of(project);
+      chartFromFsVasQms.set(false);
+      const shown = sweepAfterEdit(project, capture);
+      chartFromFsVasQms.set(true);
+      it(`"Chart from Fs, Vas, Qms" unticked: the typed ${run.edit.field} is kept and moves the charts, which WinISD ignores`, () => assertTypedPartStands(project, capture, shown, rules, spec));
+    }
     const checks: Readout[] = [
-      ...[...capture.charts.keys()].flatMap((q: Quantity): Readout[] => run.box === 'bandpass4' && q === 'groupdelay'
+      ...(editsChartPart ? [] : [...capture.charts.keys()]).flatMap((q: Quantity): Readout[] => run.box === 'bandpass4' && q === 'groupdelay'
         ? [{label: `groupdelay below ${GD_NOISE_FROM_HZ} Hz`, check: () => assertChartMatches(groupDelaySplit(capture, 'below'), swept, q, rules)},
            {label: `groupdelay above ${GD_NOISE_FROM_HZ} Hz`, check: () => assertChartMatches(groupDelaySplit(capture, 'above'), swept, q, rules)}]
         : [{label: q, check: () => assertChartMatches(capture, swept, q, rules)}]),

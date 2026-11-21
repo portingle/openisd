@@ -43,6 +43,7 @@ import {inputChecked, inputFrom, inputValue, listeningElement, selectedOption, s
 import {SealedAlignmentEditor} from './SealedAlignment-hooks.js';
 import {VentedAlignmentEditor} from './VentedAlignment-hooks.js';
 import {OriginalFilters} from './OriginalFilters-hooks.js';
+import {CompatSwitch} from '@openisd/design';
 import type {Calculated, Clearable, Entered, OpenISDProject, Readable, SimpleField, Writable} from '@openisd/design';
 import {marksOfCell, type FieldMarks} from '../logic/cellDataQuality.js';
 import {isTabId, type TabId} from '../logic/tabId.js';
@@ -211,26 +212,10 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
   } = sealedReadouts({ project, selectedBox, projectChanged });
   const sealedAlignmentEditor = new SealedAlignmentEditor(project, projectChanged, engine.sealed, engine.driver, featureUse);
   const originalFilters = new OriginalFilters(project, projectChanged, engine.filters);
-  const sealedAlignmentOpen = sealedAlignmentEditor.open;
-  const sealedAlignmentDeviationShown = sealedAlignmentEditor.deviationShown;
-  const sealedAlignmentOptions = sealedAlignmentEditor.options;
-  const sealedAlignmentSelected = sealedAlignmentEditor.selectedOption;
-  const sealedAlignmentVolume_m3 = sealedAlignmentEditor.volume_m3;
-  const sealedAlignmentEbp = sealedAlignmentEditor.ebp;
-  const sealedAlignmentSuitability = sealedAlignmentEditor.ebpSuitability;
-  const sealedAlignmentSuitabilityLabel = sealedAlignmentEditor.ebpSuitabilityLabel;
 
   // Same class the mobile skin drives (VentedAlignment-hooks.ts) — one implementation, both
   // shells' pickers.
   const ventedAlignmentEditor = new VentedAlignmentEditor(project, projectChanged, engine.driver, featureUse);
-  const ventedAlignmentOpen = ventedAlignmentEditor.open;
-  const ventedAlignmentOptions = ventedAlignmentEditor.options;
-  const ventedAlignmentSelected = ventedAlignmentEditor.selectedAlignment;
-  const ventedAlignmentVolume_m3 = ventedAlignmentEditor.volume_m3;
-  const ventedAlignmentTuning_hz = ventedAlignmentEditor.tuning_hz;
-  const ventedAlignmentEbp = ventedAlignmentEditor.ebp;
-  const ventedAlignmentSuitability = ventedAlignmentEditor.ebpSuitability;
-  const ventedAlignmentSuitabilityLabel = ventedAlignmentEditor.ebpSuitabilityLabel;
 
   // Box-type-generic rear-chamber volume (WinISD "Vb") — the Box tab's single "Volume" field
   // dispatches through the unit-tested `createBoxVolume` (`boxFields.ts`).
@@ -777,16 +762,11 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
   const prNprDeviationShown = computed(() => projectOpen.value && WinisdDeviation.PR_NPR_RESONANCE.cueShown(errorSwitches.value));
   /** The coil coefficient cue by the project's AlfaVC, where the driver's own AlfaVC changes the sums (QO953.c16). */
   const projectAlfaVCDeviationShown = computed(() => projectOpen.value && WinisdDeviation.PROJECT_ALFAVC.cueShown(errorSwitches.value));
-  /** "Simplified ABC intra-port velocity" acts on the open box. */
-  const abcVelocityApplies = computed(() => {
+  /** Whether an option switch acts on the open box (the ABC velocity one acts on an ABC box only; "Impedance of one driver" with 2 or more drivers). */
+  const optionApplies = (option: CompatSwitch): boolean => {
     void projectChanged.value;
-    return project.value.winisdAbcIntraPortVelocityApplies;
-  });
-  /** "Impedance of one driver" acts with 2 or more drivers. */
-  const oneDriverImpedanceApplies = computed(() => {
-    void projectChanged.value;
-    return project.value.winisdOneDriverImpedanceApplies;
-  });
+    return option.appliesTo(project.value);
+  };
 
   const cloudDialogOpen = ref(false);
   function openCloudDialog(): void { cloudDialogOpen.value = true; }
@@ -843,13 +823,8 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
     genOn, toggleGenerate, genHz, setCompatSwitch: compatSwitchSetter(featureUse),
     boxLabel, pending, openCharts, chartStackEl, chartStackStyle, chartsHigh, CHARTS_HIGH_OPTIONS, overlays, activeTab,
     showEnclosureTab, enclosureNavLabel, ...desktopHelp,
-    selectedBox, BOX_TYPE_OPTIONS, IMPLEMENTED_BOX_TYPES, abcVelocityApplies, oneDriverImpedanceApplies, errorSwitches, chartDeviations, prNprDeviationShown, projectAlfaVCDeviationShown,
-     boxVolumeCell, sealedFscCell, sealedQtcCell, sealedAlignmentEditor, sealedAlignmentOpen, sealedAlignmentDeviationShown,
-     sealedAlignmentOptions, sealedAlignmentSelected, sealedAlignmentVolume_m3, sealedAlignmentEbp,
-     sealedAlignmentSuitability, sealedAlignmentSuitabilityLabel, originalFilters,
-     ventedAlignmentEditor, ventedAlignmentOpen, ventedAlignmentOptions, ventedAlignmentSelected,
-     ventedAlignmentVolume_m3, ventedAlignmentTuning_hz, ventedAlignmentEbp, ventedAlignmentSuitability,
-     ventedAlignmentSuitabilityLabel,
+    selectedBox, BOX_TYPE_OPTIONS, IMPLEMENTED_BOX_TYPES, compatOptions: CompatSwitch.OPTIONS, optionApplies, errorSwitches, chartDeviations, prNprDeviationShown, projectAlfaVCDeviationShown,
+    boxVolumeCell, sealedFscCell, sealedQtcCell, sealedAlignmentEditor, ventedAlignmentEditor, originalFilters,
     FB_TARGET_TIP, FH_TARGET_TIP, VENT_GEOMETRY_TIP,
     boxResonance, rearQtc, prSystemTuningDq,
     fbUnreachable, fbUnreachableMsg, isDual,

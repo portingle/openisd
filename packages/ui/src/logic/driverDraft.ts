@@ -10,7 +10,7 @@
  */
 import {OpenISDDriver, OpenISDDriverStandalone, type VoiceCoilWiring} from '@openisd/design';
 import {type SelectorOption, MEASURED_WIRING_NOT_STATED_LABEL, VC_CONNECTION_OPTIONS} from '@openisd/design/fields';
-import type {AppContext} from '@openisd/design';
+import type {AppServices} from '@openisd/design';
 import type {Engine} from '@openisd/design/engine';
 import {stringifyWithOverflow} from '@openisd/design/json';
 import type {EditorDraftSeed} from './driverSelection.js';
@@ -52,7 +52,7 @@ export class DriverDrafts {
   /** The editing sessions that are open, each with a way to say whether it holds values not yet applied. */
   private readonly openDrafts = new Set<{changed(): boolean}>();
 
-  constructor(private readonly engine: Engine, private readonly appContext: AppContext) {}
+  constructor(private readonly engine: Engine, private readonly appContext: AppServices) {}
 
   /** Whether an open editor holds values that were typed but not applied (OK) or saved. A reload
    *  throws these away: they live only in the open dialog, never in the stored session. */

@@ -2,7 +2,7 @@ import {type Engine} from '../../engine/index.js';
 import type { Air, BoxParamsIssue, DriveLoad, ChartId, DriverError, Filter, MaxCurvesResult, MaxCurvesSolveResult, SweepPeaks, SweepResult, SweepSolveResult } from '../../engine/index.js';
 import { driveLoadOf } from './driveLoad.js';
 import { dateStamp, realAppContext } from '../appContext.js';
-import type { AppContext } from '../appContext.js';
+import type { AppServices } from '../appContext.js';
 import { defaultedField, focus, simpleField } from '../cell.js';
 import type { Calculatable, Calculated, Clearable, Entered, Precise, Readable, SimpleField, Unsolvable, Writable } from '../cell.js';
 import type { AirIssue, EnvironmentIssue } from '../../engine/index.js';
@@ -27,6 +27,8 @@ import { storedTextOf, owprTextOf, parseOwprSession, parseOwprSessionRepairing, 
 import type { FieldPath } from '../schemaRepair.js';
 import { boxParamsIssuesOf, maxCurvesOf, sweepOf, sweepPlanOf, ventAchievedFbOf, ventMaxReachableFbOf } from './projectSweep.js';
 import type { ProjectSweepSource, SweepPlan } from './projectSweep.js';
+import { ProjectContext } from '../driver/driverContext.js';
+
 import { withNullEmbeddedDriverId } from './nullDriverId.js';
 import type { ProjectIssues } from './projectIssues.js';
 import { ProjectCoilWiring } from './projectCoilWiring.js';
@@ -42,6 +44,7 @@ import type { LoadRepairNote } from './loadRepair.js';
 import { TuneLimits } from './tuneLimits.js';
 import { tuneViewOf } from './tuneView.js';
 import type { TuneView } from './tuneView.js';
+import { calculationOpenNote } from './calculationOpenNote.js';
 
 // The domain declares its state here. JSON shapes live in `openisdSchema.ts`.
 // Internal JSON types are never re-exported from `domain/index.ts`.
@@ -67,6 +70,7 @@ import type { TuneView } from './tuneView.js';
 export interface OpenedProject {
     readonly project: OpenISDProject;
     readonly loadRepairs: readonly LoadRepairNote[];
+    readonly calculationNote?: string;
 }
 
 /** The port-velocity limit line where a project does not state one. */
@@ -100,12 +104,12 @@ export class OpenISDProject {
     readonly #engine: Engine;
 
     /** The clock `modified` is stamped from. */
-    readonly #appContext: AppContext;
+    readonly #appContext: AppServices;
 
     /** The current layer's cached issues — see the class doc comment's "ONE EXCEPTION". */
     #issues: ProjectIssues = { driver: [], signal: [], vent: [], rearVent: [], pr: [], radiator: [], sealed: [], ventTuningExtra: null, air: [] };
 
-    private constructor(saved: OpenISDProjectJson, uuid: string, engine: Engine, appContext: AppContext) {
+    private constructor(saved: OpenISDProjectJson, uuid: string, engine: Engine, appContext: AppServices) {
         this.#saved = saved;
         this.#uuid = uuid;
         this.#engine = engine;
@@ -131,7 +135,7 @@ export class OpenISDProject {
         return OpenISDDriverEmbedded.wrap(
             focus(focus(root, 'driverEmbedding'), 'device'),
             this.#engine,
-            () => this.#airOver(root),
+            ProjectContext.of(() => this.#airOver(root), () => this.isWhatIfActive()),
             () => this.#issues.driver,
             () => this.#appContext.newId(),
             () => root.value.driverEmbedding.VCCon,
@@ -163,13 +167,15 @@ export class OpenISDProject {
      *  `#boxOver(this.#root())`; `#resolve()` calls it with a DIRECT (non-notifying) root of its
      *  own instead. Mirrors `#driverOver` exactly (S2-7d2). */
     #boxOver(root: SimpleField<OpenISDProjectJson>): OpenISDBox {
-        return OpenISDBox.wrap(
-            focus(root, 'box'), this.#driverOver(root), this.#engine,
-            () => driveLoadOf(root, this.#driverOver(root)),
-            () => this.#issues,
-            () => this.#issues.ventTuningExtra,
-            () => this.#airOver(root),
-        );
+        return OpenISDBox.wrap(focus(root, 'box'), {
+            driver: this.#driverOver(root),
+            engine: this.#engine,
+            load: () => driveLoadOf(root, this.#driverOver(root)),
+            issues: () => this.#issues,
+            ventTuningExtra: () => this.#issues.ventTuningExtra,
+            air: () => this.#airOver(root),
+            chartFromFsVasQms: () => ProjectAdvanced.wrap(focus(root, 'advanced'), focus(root, 'filters')).winisdChartFromFsVasQms.value,
+        });
     }
 
     /** Replace the embedded driver's whole record with `source`'s — the project adopting a
@@ -463,6 +469,11 @@ export class OpenISDProject {
         return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdFlatModel;
     }
 
+    /** WinISD Compatibility "Chart from Fs, Vas, Qms (WinISD's way)" — see `ProjectAdvanced.winisdChartFromFsVasQms`. */
+    get winisdChartFromFsVasQms(): SimpleField<boolean> {
+        return ProjectAdvanced.wrap(this.#slot('advanced'), this.#slot('filters')).winisdChartFromFsVasQms;
+    }
+
     /** Which charts are open (S10/QO130) — PROJECT-scoped, reversing QO90 for this field.
      *  Empty when absent (a project saved before S10, or a fresh one). Plain strings, not
      *  `ChartId`: this is PERSISTED project data (`.owpr`), so it must stay readable across a
@@ -546,7 +557,7 @@ export class OpenISDProject {
     /** A record ENTERS the process here. A record carries no identity, so one is minted — two
      *  wraps of one record are two independently editable projects, which is what opening a FILE
      *  twice should give. */
-    static wrap(json: OpenISDProjectJson, engine: Engine, appContext: AppContext = realAppContext): OpenISDProject {
+    static wrap(json: OpenISDProjectJson, engine: Engine, appContext: AppServices = realAppContext): OpenISDProject {
         return this.wrapWithIdentity(withNullEmbeddedDriverId(json), appContext.newId(), engine, appContext);
     }
 
@@ -560,20 +571,31 @@ export class OpenISDProject {
      * NOT for a file: a file's id was minted by another process and is provenance, never a key
      * (the driver precedent, QO81).
      */
-    static wrapWithIdentity(json: OpenISDProjectJson, uuid: string, engine: Engine, appContext: AppContext = realAppContext): OpenISDProject {
+    static wrapWithIdentity(json: OpenISDProjectJson, uuid: string, engine: Engine, appContext: AppServices = realAppContext): OpenISDProject {
         const project = new OpenISDProject(repairedRecord(json).record, uuid, engine, appContext);
         project.#repairOnLoad();
         return project;
     }
 
     /** Wrap a stored session (saved and edited states) under an adopted identity. */
-    static wrapSession(session: OpenISDProjectSessionJson, engine: Engine, appContext: AppContext = realAppContext): OpenISDProject {
-        return OpenISDProject.openSession(session, engine, appContext).project;
+    static wrapSession(session: OpenISDProjectSessionJson, engine: Engine, appContext: AppServices = realAppContext): OpenISDProject {
+        return OpenISDProject.#restoreSession(session, engine, appContext).project;
     }
 
     /** `wrapSession`, with what the load repaired in either layer, one line each for the opening
      *  message ("Driver input voltage (each) -6 V in the file: set to the 10 mV minimum"). */
-    static openSession(session: OpenISDProjectSessionJson, engine: Engine, appContext: AppContext): OpenedProject {
+    static openSession(session: OpenISDProjectSessionJson, engine: Engine, appContext: AppServices): OpenedProject {
+        const opened = OpenISDProject.#restoreSession(session, engine, appContext);
+        const record = opened.project.#current();
+        // John, 20 Nov 2026, 13:36 UTC, "D: new calculation + note" for saves without this switch.
+        if (record.advanced.winisdChartFromFsVasQms !== undefined) return opened;
+        const oldRecord = {...record, advanced: {...record.advanced, winisdChartFromFsVasQms: true}};
+        const oldCalculation = new OpenISDProject(oldRecord, session.id, engine, appContext);
+        const calculationNote = calculationOpenNote(oldCalculation, opened.project);
+        return calculationNote === undefined ? opened : {...opened, calculationNote};
+    }
+
+    static #restoreSession(session: OpenISDProjectSessionJson, engine: Engine, appContext: AppServices): OpenedProject {
         // The record's own values are repaired before the first resolve, which would otherwise work
         // a port out from a 0 Hz tuning and lose the length the file gave.
         const saved = repairedRecord(withNullEmbeddedDriverId(session.saved));
@@ -771,7 +793,7 @@ export class OpenISDProject {
      *  The project keeps the id its text carries (a text from before ids gets one minted here).
      *  Opening the same file twice gives two projects with one id: whoever opens the second
      *  gives it a new one (`assignNewId`) when the first is open or stored. */
-    static fromOwprText(text: string, engine: Engine, appContext: AppContext = realAppContext): OpenISDProject | string[] {
+    static fromOwprText(text: string, engine: Engine, appContext: AppServices = realAppContext): OpenISDProject | string[] {
         const parsed = parseOwprSession(text, () => appContext.newId());
         if ('errors' in parsed) return parsed.errors;
         return OpenISDProject.wrapSession(parsed.session, engine, appContext);
@@ -780,7 +802,7 @@ export class OpenISDProject {
     /** Like `fromOwprText`, but a field that fails the schema is removed so its default applies
      *  instead of refusing the project; `repaired` names every field that was reset, for the
      *  user to be told; `loadRepairs` every value the load repair pass set (`openSession`). Refused only when the text is not a project at all. */
-    static fromOwprTextRepairing(text: string, engine: Engine, appContext: AppContext = realAppContext): OpenedProject & { repaired: readonly FieldPath[] } | string[] {
+    static fromOwprTextRepairing(text: string, engine: Engine, appContext: AppServices = realAppContext): OpenedProject & { repaired: readonly FieldPath[] } | string[] {
         const parsed = parseOwprSessionRepairing(text, () => appContext.newId());
         if (Array.isArray(parsed)) return parsed;
         return { ...OpenISDProject.openSession(parsed.value, engine, appContext), repaired: parsed.repaired };
@@ -949,6 +971,7 @@ export class OpenISDProject {
             winisdVaModel: this.winisdVaModel,
             winisdWrapPhase: this.winisdWrapPhase,
             winisdFlatModel: this.winisdFlatModel,
+            winisdChartFromFsVasQms: this.winisdChartFromFsVasQms,
             winisdAbcIntraPortVelocity: this.winisdAbcIntraPortVelocity,
             winisdPrNprResonance: this.winisdPrNprResonance,
             winisdBesselHighpass: this.winisdBesselHighpass,
@@ -1068,6 +1091,8 @@ export class OpenISDProject {
     beginWhatIf(): void {
         if (this.#whatif) return;
         this.#whatif = structuredClone(this.#committed());
+        // The What-if boxes carry no disagreement mark (QO535): the layer's issues are rebuilt as it opens, not at the first edit.
+        this.#resolve();
         this.#notify();
     }
 

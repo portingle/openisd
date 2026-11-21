@@ -15,7 +15,7 @@ function sourceOf(p: OpenISDProject, engine: ReturnType<typeof createEngine>, ai
   return {
     driver: p.driver, box: p.box, nDrivers: p.nDrivers, driverWiring: p.driverWiring, winisdOneDriverImpedance: p.winisdOneDriverImpedance, Rs_ohm: p.Rs_ohm, circuitModel: p.circuitModel,
     winisdDriverModel: p.winisdDriverModel, winisdVaModel: p.winisdVaModel, winisdWrapPhase: p.winisdWrapPhase,
-    winisdFlatModel: p.winisdFlatModel,
+    winisdFlatModel: p.winisdFlatModel, winisdChartFromFsVasQms: p.winisdChartFromFsVasQms,
     winisdAbcIntraPortVelocity: p.winisdAbcIntraPortVelocity, winisdPrNprResonance: p.winisdPrNprResonance,
     winisdBesselHighpass: p.winisdBesselHighpass, winisdAbcGroupDelay: p.winisdAbcGroupDelay,
     winisdTlPortNoEndCorrection: p.winisdTlPortNoEndCorrection, rgAtDriverSide: p.rgAtDriverSide,

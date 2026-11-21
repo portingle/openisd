@@ -926,7 +926,7 @@ describe('useOgNewProject — passive-radiator step', () => {
     await wizard.loadBundledPassiveRadiator('e150he-pr');
     const full = { ...wizard.passiveRadiatorView.value };
     wizard.passiveRadiatorCells.Vas_m3.clear();
-    expect(wizard.passiveRadiatorView.value?.Vas_m3).toBeNull();
+    expect(wizard.passiveRadiatorCells.Vas_m3.provenance).toBe('C'); // the record's stated Mms and Cms give it (QO451)
 
     await wizard.loadBundledPassiveRadiator('e150he-pr');
 
@@ -1053,10 +1053,10 @@ describe('the radiator step holds all eight figures, stated or calculated (T703)
     return wizard;
   }
 
-  it('SP22R, which states no Qms and no Fs: both are calculated', async () => {
+  it('SP22R, which states no Qms and no Fs: both are calculated from its stated Mms, Cms and Rms', async () => {
     const {passiveRadiatorCells: cells} = await pickedThenBack('seas/sp22r');
-    expect(cells.Qms.value).toBeCloseTo(4.813, 2);
-    expect(cells.Fs_hz.value).toBeCloseTo(23.22, 1);
+    expect(cells.Qms.value).toBeCloseTo(4.836, 2); // √(Mms/Cms)/Rms from the stated 28.9 g, 1.61 mm/N, 0.876 kg/s
+    expect(cells.Fs_hz.value).toBeCloseTo(23.33, 1); // from the stated Mms and Cms, kept as stated (QO451)
     expect(cells.Qms.provenance).toBe('C');
     expect(cells.Fs_hz.provenance).toBe('C');
     expect(cells.Vas_m3.provenance).toBe('E');
@@ -1084,13 +1084,15 @@ describe('the radiator step holds all eight figures, stated or calculated (T703)
     expect(cells.Qms.value).toBeNull();
   });
 
-  it('a Cms typed over a record stating Vas reaches the project, with Vas, and both carry the conflict mark', async () => {
+  // QO534 (John, 11 Nov 2026): "an entered value is never overwritten"; "all get the mark".
+  it('a Cms typed over a record stating Vas reaches the project, with Vas left as stated, and both carry the conflict mark', async () => {
     const wizard = await pickedThenBack('accuton/asp190');
     // Vas = rho*c^2*Sd^2*Cms = 141853 Pa * 0.0202^2 m^4 * 0.002 m/N = 0.1158 m3 against the stated 0.027 m3: 4.3 times
     // apart. (0.001 gave 0.0579 m3, 2.1 times apart, but a typed 0.001 carries 0.0005 of precision, which alone
     // moves Vas by 0.0289 m3, so that pair was within the print's own slack once the air may differ by 2.5% (T804).)
     wizard.passiveRadiatorCells.Cms_m_per_N.set(0.002);
     expect(wizard.passiveRadiatorCells.Cms_m_per_N.entered).toBe(true);
+    expect(wizard.passiveRadiatorCells.Vas_m3.provenance).toBe('E');
     expect(wizard.passiveRadiatorCells.Cms_m_per_N.dq.length).toBeGreaterThan(0);
     expect(wizard.passiveRadiatorCells.Vas_m3.dq.length).toBeGreaterThan(0);
     wizard.next();
@@ -1099,6 +1101,7 @@ describe('the radiator step holds all eight figures, stated or calculated (T703)
     const spec = wizard.createProject()?.box.passiveRadiator.radiator.spec;
     expect(spec?.Cms_m_per_N.entered).toBe(true);
     expect(spec?.Cms_m_per_N.value).toBe(0.002);
+    expect(spec?.Vas_m3.entered).toBe(true);
     expect(spec?.Vas_m3.value).toBe(0.027);
   });
 

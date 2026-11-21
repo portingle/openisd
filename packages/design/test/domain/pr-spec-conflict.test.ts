@@ -1,6 +1,6 @@
 /**
- * A radiator's typed figures that disagree with the ones they imply are marked on every field in
- * the relation, as a driver's are, and the mark clears when one is corrected or cleared.
+ * A radiator's figures can disagree after picking it or editing it. Every field in a disagreeing
+ * relation is marked, and the mark clears when the conflicting entry is cleared.
  */
 import {describe, expect, it} from 'vitest';
 import {type Engine, createEngine} from '@openisd/design/engine';
@@ -30,18 +30,57 @@ describe('radiator figure conflicts reach the fields', () => {
     }
   });
 
-  it('a typed Mms that disagrees marks Mms, Fs and Cms', () => {
+  it('typing a conflicting Mms marks Mms, Fs and Cms while leaving Qms unmarked', () => {
     const spec = prProject(createEngine(), four).box.passiveRadiator.radiator.spec;
-    spec.Mms_kg.set(spec.Mms_kg.value! * 1.5);
+    const affected = [spec.Mms_kg, spec.Fs_hz, spec.Cms_m_per_N];
+    expect(affected.map(marked)).toEqual([false, false, false]);
+
+    spec.Mms_kg.set(0.12);
+
+    expect(affected.map(marked)).toEqual([true, true, true]);
+    expect(marked(spec.Qms)).toBe(false);
+  });
+
+  it('typing a 50% increase in Mms marks Mms, Fs and Cms while leaving Qms unmarked', () => {
+    const spec = prProject(createEngine(), four).box.passiveRadiator.radiator.spec;
+    const originalMms = spec.Mms_kg.value;
+    if (originalMms === null) throw new Error('Expected a calculated Mms before typing');
+
+    spec.Mms_kg.set(originalMms * 1.5);
+
+    expect([spec.Mms_kg, spec.Fs_hz, spec.Cms_m_per_N].map(marked)).toEqual([true, true, true]);
+    expect(marked(spec.Qms)).toBe(false);
+  });
+
+  it('clearing a typed Mms removes all three conflict marks and restores calculated Mms', () => {
+    const spec = prProject(createEngine(), four).box.passiveRadiator.radiator.spec;
+    const originalMms = spec.Mms_kg.value;
+    expect(originalMms).toBeGreaterThan(0);
+    spec.Mms_kg.set(0.12);
+    const affected = [spec.Mms_kg, spec.Fs_hz, spec.Cms_m_per_N];
+    expect(affected.map(marked)).toEqual([true, true, true]);
+
+    spec.Mms_kg.clear();
+
+    expect(affected.map(marked)).toEqual([false, false, false]);
+    expect(spec.Mms_kg.calculated).toBe(true);
+    expect(spec.Mms_kg.value).toBe(originalMms);
+  });
+
+  const offMms = (engine: Engine) => ({...four, Mms_kg: prProject(engine, four).box.passiveRadiator.radiator.spec.Mms_kg.value! * 1.5});
+
+  it('a stated Mms that disagrees marks Mms, Fs and Cms', () => {
+    const engine = createEngine();
+    const spec = prProject(engine, offMms(engine)).box.passiveRadiator.radiator.spec;
     expect(marked(spec.Mms_kg)).toBe(true);
     expect(marked(spec.Fs_hz)).toBe(true);
     expect(marked(spec.Cms_m_per_N)).toBe(true);
     expect(marked(spec.Qms)).toBe(false);
   });
 
-  it('clearing the typed Mms removes the mark', () => {
-    const spec = prProject(createEngine(), four).box.passiveRadiator.radiator.spec;
-    spec.Mms_kg.set(spec.Mms_kg.value! * 1.5);
+  it('clearing the stated Mms removes the mark', () => {
+    const engine = createEngine();
+    const spec = prProject(engine, offMms(engine)).box.passiveRadiator.radiator.spec;
     spec.Mms_kg.clear();
     for (const f of [spec.Fs_hz, spec.Mms_kg, spec.Cms_m_per_N]) expect(marked(f)).toBe(false);
   });

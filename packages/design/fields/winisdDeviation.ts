@@ -196,9 +196,18 @@ export class WinisdDeviation {
   static readonly PR_MMS_CMS_TYPING = new WinisdDeviation({
     title: 'WinISD has no Mms or Cms on the Passive Radiator tab',
     winisd: 'WinISD takes the passive radiator as Vas, Fs, Qms, Sd and Xmax. It works Mms and Cms out from them and shows neither.',
-    openisd: 'OpenISD shows Mms and Cms, and lets you type them, as a datasheet gives them. Vas and Fs are then worked out from them.',
-    size: 'No chart differs: the same radiator gives the same curves. Only what you can type differs.',
+    openisd: 'OpenISD shows Mms and Cms, and lets you type them, as a datasheet gives them. A value you type is never overwritten; the charts use the boxes as they show. When the boxes disagree, every box in the disagreeing set carries a warning that says what the maths gives.',
+    size: 'The charts differ whenever the Mms or Cms you type differs from the one WinISD works out from Fs and Vas.',
     fix: {kind: 'ignoredInput', seenIn: 'the Mms and Cms fields on the Passive Radiator tab.', remedy: 'WinISD has no way to type these, so OpenISD has no switch to copy it. Type Vas and Fs to work the way WinISD does.'},
+    charts: [],
+  });
+
+  static readonly DRIVER_MMS_CMS_TYPING = new WinisdDeviation({
+    title: 'WinISD ignores a typed Mms, Cms or Rms',
+    winisd: 'WinISD ignores a typed Mms, Cms or Rms: its charts keep using the Cms worked out from Vas, the Mms worked out from Fs and that Cms, and the Rms worked out from Qms.',
+    openisd: 'OpenISD charts the boxes as they show: Sd, Mms, Cms, Rms, Bl, Re and Le. A value you type is never overwritten. When the boxes disagree, every box in the disagreeing set carries a warning that says what the maths gives.',
+    size: 'The charts differ whenever a typed Mms, Cms or Rms differs from the one WinISD works out: a heavier cone gives a lower resonance and a different bass roll-off.',
+    fix: {kind: 'ignoredInput', seenIn: 'the Mms, Cms and Rms fields of the driver editor.', remedy: 'Tick "Chart from Fs, Vas, Qms (WinISD\'s way)" under "Enable WinISD-style" in the WinISD Compatibility panel: the charts then work Mms, Cms and Rms out from Fs, Vas and Qms, as WinISD does.'},
     charts: [],
   });
 

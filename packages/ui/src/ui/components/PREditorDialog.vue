@@ -8,7 +8,7 @@
 import {onMounted, ref} from 'vue';
 import type {PassiveRadiatorEditorView, PassiveRadiatorFigure} from '../../hooks/passiveRadiatorEditor.js';
 import type {PassiveRadiatorStepCells} from '../../hooks/OriginalNewProject-hooks.js';
-import {DateField, NumberField, TextField, WinisdDeviation} from '@openisd/design/fields';
+import {ChartInputs, DateField, NumberField, TextField, WinisdDeviation} from '@openisd/design/fields';
 import type {PassiveRadiatorIdentityKey} from '../../hooks/passiveRadiatorEditor.js';
 import UIField from './UIField.vue';
 import {inputFrom, inputValue} from '../../logic/domEvents.js';
@@ -95,7 +95,7 @@ const ROWS: readonly FigureRow[] = [
             <div v-for="r in ROWS" :key="r.key" class="prd-fig"
                  :class="{'prd-inspected': provenance?.key === r.key, 'prd-feeds': provenance?.inputs.includes(r.key)}"
                  @click.capture="inspectField(r.key)" @focusin="inspectField(r.key)">
-              <UIField :class="phone ? 'mob-ui-field' : undefined" stepper :input-id="r.id" :field="r.field" :cell="cells[r.key]" :deviation="r.deviation" />
+              <UIField :class="phone ? 'mob-ui-field' : undefined" stepper :input-id="r.id" :field="r.field" :cell="cells[r.key]" :deviation="r.deviation" :chart-inputs="ChartInputs.RADIATOR" />
             </div>
           </div>
         </template>
@@ -140,7 +140,7 @@ const ROWS: readonly FigureRow[] = [
 
 <style scoped>
 .prd-scrim { position: fixed; inset: 0; z-index: 1300; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, .35); }
-.prd-panel { box-sizing: border-box; width: 1100px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); display: flex; flex-direction: column; background: #f7f7f7; color: #222; border: 1px solid #bbb; border-radius: 4px; box-shadow: 0 6px 22px rgba(0,0,0,.35); font-size: 13px; }
+.prd-panel { box-sizing: border-box; width: 1160px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); display: flex; flex-direction: column; background: #f7f7f7; color: #222; border: 1px solid #bbb; border-radius: 4px; box-shadow: 0 6px 22px rgba(0,0,0,.35); font-size: 13px; }
 .prd-head { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 12px; background: #e8e8e8; border-bottom: 1px solid #d0d0d0; }
 .prd-head h3 { flex: 1 1 auto; margin: 0; font-size: 15px; font-weight: 600; }
 .prd-x { width: 38px; height: 30px; border: 1px solid #aaa; border-radius: 4px; background: #fff; font-size: 18px; cursor: pointer; }

@@ -3,7 +3,7 @@
 // vent the box draws, the passive radiator (by name: its figures are in the passive-radiator editor, QO946.c115), and the Chart section holding the velocity limit.
 // Thin: all state and domain reads/writes live in useMobileEnclosureTab()
 // (src/hooks/MobileEnclosureTab-hooks.ts). PRBrowser is the app's existing overlay, reused unchanged.
-import {NumberField, PhoneBoxText, PhoneHelp, PhoneLabels, WinisdDeviation} from '@openisd/design/fields';
+import {ChartInputs, NumberField, PhoneBoxText, PhoneHelp, PhoneLabels, WinisdDeviation} from '@openisd/design/fields';
 import {selectedOption} from '../../../logic/domEvents.js';
 import UIField from '../../components/UIField.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
@@ -75,11 +75,11 @@ const {
     <section class="mob-csection">
     <PhoneBand :section="PhoneHelp.PR_KEY_FIGURES" />
     <!-- Tapping a key figure opens the editor, as on the Driver tab. -->
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-fs" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_FS_HZ" :value="prKeyFigures.Fs_hz" readonly plain />
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-mms" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.MMS_KG" :value="prKeyFigures.Mms_kg" readonly plain />
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-sd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_SD_CM2" :value="prKeyFigures.Sd_m2" readonly plain />
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-xmax" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_XMAX_MM" :value="prKeyFigures.Xmax_m" readonly plain />
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" input-id="mob-pr-key-vd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.VD_M3" :value="prKeyFigures.Vd_m3" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-fs" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_FS_HZ" :value="prKeyFigures.Fs_hz" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-mms" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.MMS_KG" :value="prKeyFigures.Mms_kg" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-sd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_SD_CM2" :value="prKeyFigures.Sd_m2" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-xmax" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_XMAX_MM" :value="prKeyFigures.Xmax_m" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-vd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.VD_M3" :value="prKeyFigures.Vd_m3" readonly plain />
     <p v-if="prTwoTimesRule" id="mob-pr-two-times" class="mob-cnote">{{ prTwoTimesRule }}</p>
     </section>
 

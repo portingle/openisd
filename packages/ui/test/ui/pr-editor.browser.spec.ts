@@ -11,6 +11,7 @@
 import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
 import type {Locator, Page} from '@playwright/test';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
+import {clearWithKeyboard} from '../fixtures/numField.js';
 
 declare global {
   interface Window {
@@ -107,6 +108,20 @@ function suite(skin: 'desktop' | 'phone') {
     await expectProjectName(page, new RegExp(LOADED));
   });
 
+  // Clipping is a bug (John, 5 Nov 2026): with the blue dot's wider label column (QO532) the right-hand column's steppers
+  // (Sd, Xmax) ran past the desktop dialog's edge at the visual picture's 1880 x 1000. The phone editor is one full-width column.
+  if (skin === 'desktop') test('every figure\'s box, unit and steppers lie inside the editor at 1880 x 1000', async ({appPage: page}) => {
+    await page.setViewportSize({width: 1880, height: 1000});
+    const editor = await openEditor(page);
+    const right = await editor.locator('.prd-fields').evaluate(el => el.getBoundingClientRect().right);
+    for (const f of FIGURES) {
+      const row = editor.locator('.prd-fig', {has: page.locator(`#pr-editor-${f}`)});
+      const ends = await row.evaluate(el => Array.from(el.querySelectorAll('*')).map(c => c.getBoundingClientRect().right));
+      expect(Math.max(...ends), f).toBeLessThanOrEqual(right + 0.5);
+    }
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
+  });
+
   test('the editor holds every radiator figure and the name, the driver editor\'s buttons, and no build choice', async ({appPage: page}) => {
     const editor = await openEditor(page);
     await expect(editor.getByRole('tab', {name: 'Parameters'})).toHaveAttribute('aria-selected', 'true');
@@ -192,17 +207,36 @@ function suite(skin: 'desktop' | 'phone') {
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
   });
 
+  // QO534 (John, 11 Nov 2026): "an entered value is never overwritten with a calculated value": Auto calculate fills an unknown, so
+  // the stated Cms is cleared first to make it one.
   test('Auto calculate unknowns: ticked, a typed figure recalculates the others; unticked, it does not', async ({appPage: page}) => {
     const editor = await openEditor(page);
     const mms = editor.locator('#pr-editor-mms');
-    const cmsBefore = await editor.locator('#pr-editor-cms').inputValue();
+    const cms = editor.locator('#pr-editor-cms');
     await editor.getByRole('checkbox', {name: 'Auto calculate unknowns'}).uncheck();
+    await clearWithKeyboard(cms);
+    await cms.press('Tab');
     await editor.locator('#pr-editor-vas').fill('54');
     await editor.locator('#pr-editor-vas').press('Tab');
-    await expect(editor.locator('#pr-editor-cms')).toHaveValue(cmsBefore);
+    await expect(cms).toHaveValue('');
     await editor.getByRole('checkbox', {name: 'Auto calculate unknowns'}).check();
-    await expect(editor.locator('#pr-editor-cms')).not.toHaveValue(cmsBefore);
+    await expect(cms).not.toHaveValue('');
     await expect(mms).not.toHaveValue('');
+    await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
+  });
+
+  // QO534 (John, 11 Nov 2026): "an entered value is never overwritten with a calculated value"; "all get the mark".
+  test('Auto calculate unknowns never replaces a stated Cms: a typed Vas leaves it, and both carry the warning mark', async ({appPage: page}) => {
+    const editor = await openEditor(page);
+    const cms = editor.locator('#pr-editor-cms');
+    const vas = editor.locator('#pr-editor-vas');
+    await expect(editor.getByRole('checkbox', {name: 'Auto calculate unknowns'})).toBeChecked();
+    await expect(cms).toHaveValue('0.46');
+    await vas.fill('54');
+    await vas.press('Tab');
+    await expect(cms).toHaveValue('0.46');
+    await expect(cms).toHaveClass(/dq-flag/);
+    await expect(vas).toHaveClass(/dq-flag/);
     await editor.getByRole('button', {name: 'Cancel', exact: true}).click();
   });
 

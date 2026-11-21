@@ -92,7 +92,11 @@ Three kinds of WinISD difference, handled differently:
   (WinISD's way). Ignored-input bugs have no switch.
 - **One allowance** (John, QO946.c131, driver wiring plan #519): "Impedance of one driver" is an option that is OFF for a new
   project and a file that does not say, because WinISD's one-driver impedance is not what the amplifier sees. It is
-  `CompatSwitch.ONE_DRIVER_IMPEDANCE` with `winisdValue` false; a test pins it. Every other option stays ticked.
+  `CompatSwitch.ONE_DRIVER_IMPEDANCE` with `winisdValue` false; a test pins it. Every other option stays ticked, but for
+  the allowance below.
+- **A second allowance** (John, 11 Nov 2026, QO539: picked B, "an option 'Chart from Fs, Vas, Qms (WinISD's way)',
+  unticked"): the charts use the Mms, Cms and Rms boxes as shown unless the user ticks it. It is
+  `CompatSwitch.CHART_FROM_FS_VAS_QMS` with `winisdValue` false; the same test pins both.
 
 (John, 2026-09-26; switch titles and no reset 2026-10-05.)
 

@@ -1,4 +1,4 @@
-import {describe, expect, it, beforeEach} from 'vitest';
+import {assert, describe, expect, it, beforeEach} from 'vitest';
 import {computed, defineComponent, effectScope, h, provide} from 'vue';
 import {renderToString} from 'vue/server-renderer';
 import {createEngine} from '@openisd/design/engine';
@@ -71,7 +71,7 @@ describe('OriginalWhatIf-hooks', () => {
       api.boxRows.value.filter(row => row.cell !== null).forEach(row => row.cell!.clear());
       expect(api.portLengthRows.value.map(row => row.label)).toEqual(expectedPorts);
       expect(api.portLengthRows.value.every(row => row.cell.value !== null)).toBe(true);
-      expect(api.sheetRows.map(row => row.key)).toEqual(['Fs_hz', 'Vas_m3', 'Qes', 'Qms']);
+      expect(api.sheetRows.map(row => row.key)).toEqual(['Fs_hz', 'Vas_m3', 'Qes', 'Qms', 'Qts', 'SPL_dB']);
     }
   });
 
@@ -172,17 +172,26 @@ describe('OriginalWhatIf-hooks', () => {
     expect(typeof api.dqNote('Fs_hz')).toBe('string');
   });
 
-  it('Mms is calculated by default, becomes entered when set, and returns to calculated when cleared', async () => {
+  it('keeps a typed Mms, moves Fs, and calculates Mms again when cleared', async () => {
     const api = await renderHook();
-    expect(api.specField('Mms_kg').calculated).toBe(true);
+    const initialMms = api.specField('Mms_kg');
+    expect(initialMms.calculated).toBe(true);
+    const calculatedMms = initialMms.value;
+    const fs = api.specField('Fs_hz').value;
+    assert.isNotNull(calculatedMms);
+    assert.isNotNull(fs);
 
-    api.enterField('Mms_kg', 0.0125);
+    api.enterField('Mms_kg', calculatedMms * 4);
     const entered = api.specField('Mms_kg');
     expect(entered.entered).toBe(true);
-    expect(entered.value).toBeCloseTo(0.0125, 6);
+    expect(entered.value).toBeCloseTo(calculatedMms * 4, 6);
+    expect(api.specField('Fs_hz').value).toBeCloseTo(fs / 2, 6);
+    expect(api.specField('Vas_m3').value).toBe(0.03);
 
     api.clearField('Mms_kg');
-    expect(api.specField('Mms_kg').calculated).toBe(true);
+    const cleared = api.specField('Mms_kg');
+    expect(cleared.calculated).toBe(true);
+    expect(cleared.value).not.toBeNull();
   });
 
   it('BL_Tm becomes entered when set directly', async () => {
@@ -193,7 +202,7 @@ describe('OriginalWhatIf-hooks', () => {
     expect(blCell.value).toBeCloseTo(9.5, 6);
   });
 
-  it('a blank Q auto-solves from the other two, and re-tracks when a sibling changes', async () => {
+  it('a blank Q auto-solves from the other two; a typed Qes then keeps Qms and moves Qts (QO535: the other results stay)', async () => {
     const project = createProject();
     project.driver.specs.Qms.set(4.0);
     const api = await renderHook(project);
@@ -206,7 +215,8 @@ describe('OriginalWhatIf-hooks', () => {
     expect(solved).not.toBeNull();
 
     api.enterField('Qes', 0.55);
-    expect(api.specField('Qms').value).not.toBeCloseTo(solved!, 6);
+    expect(api.specField('Qms').value).toBeCloseTo(solved!, 6);
+    expect(api.specField('Qts').value).toBeCloseTo(0.55 * solved! / (0.55 + solved!), 6);
   });
 
   it('clearing a second Q of the trio leaves the dependents not-available, not falsely calculated', async () => {

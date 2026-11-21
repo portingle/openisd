@@ -334,7 +334,7 @@ test.describe('Original Advanced tab', () => {
     test('WinISD Compatibility labels say "optional" or "bug" and are unclipped', async ({ appPage: page }) => {
       const panel = page.locator('.sim-options-box');
       const labels = panel.locator('label[data-field-key]');
-      await expect(labels).toHaveText([/Phase wrapping/, /Uncapped flat response/, /Simplified ABC intra-port velocity/, /Impedance of one driver/, /Two-BL driver/, /Re without Rg/, /PR Npr resonance/, /Bessel high-pass/, /ABC group delay/, /Sealed picker volume/, /Coil wiring: Re and BL only/, /Coil coefficient from project/, /TL port without end correction/]);
+      await expect(labels).toHaveText([/Phase wrapping/, /Uncapped flat response/, /Simplified ABC intra-port velocity/, /Chart from Fs, Vas, Qms \(WinISD's way\)/, /Impedance of one driver/, /Two-BL driver/, /Re without Rg/, /PR Npr resonance/, /Bessel high-pass/, /ABC group delay/, /Sealed picker volume/, /Coil wiring: Re and BL only/, /Coil coefficient from project/, /TL port without end correction/]);
       // A pane too narrow for every column scrolls sideways: scrolled to its right end, nothing is clipped.
       await page.locator('.tab-section.active').evaluate(el => { el.scrollLeft = el.scrollWidth; });
       const panelBox = (await panel.boundingBox())!;
@@ -494,7 +494,7 @@ test.describe('Original Advanced tab', () => {
         await page.setViewportSize({width, height});
         await showAdvancedOn(page, 'abc');
         const labels = page.locator('.sim-switches label[data-field-key]');
-        await expect(labels).toHaveCount(13);
+        await expect(labels).toHaveCount(14);
         for (const label of await labels.all()) {
           const m = await label.evaluate(el => {
             const r = document.createRange(); r.selectNodeContents(el);
@@ -507,7 +507,7 @@ test.describe('Original Advanced tab', () => {
           });
           const name = await label.innerText();
           // eslint-disable-next-line playwright/no-conditional-in-test
-          const lines = await label.getAttribute('data-field-key') === 'winisdAbcIntraPortVelocity' ? 2 : 1;
+          const lines = ['winisdAbcIntraPortVelocity', 'winisdChartFromFsVasQms'].includes(await label.getAttribute('data-field-key') ?? '') ? 2 : 1;
           expect(m.textHeight, `${name}: ${lines} line(s)`).toBeLessThan((lines + 0.5) * 1.3 * m.fontPx);
           expect(m.textRight, `${name}: text inside its label`).toBeLessThanOrEqual(m.labelRight + 1);
           expect(m.labelRight, `${name}: label inside its group`).toBeLessThanOrEqual(m.groupRight + 1);

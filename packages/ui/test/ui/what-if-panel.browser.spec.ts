@@ -253,6 +253,53 @@ test.describe('What-if panel', () => {
       await expect(bl).toHaveClass(/value-e/);
     });
 
+    // T744, QO535 (John, 11 Nov 2026): "I only want to add inputs": Qts and Sensitivity in the main group, Cms and Rms beside Bl and Mms.
+    test('the panel has Qts and Sensitivity in the main group and Cms and Rms in Derived, all typed boxes', async ({ page }) => {
+      const whatIf = await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      const groups = await whatIf.evaluate(el => {
+        const out: Record<string, string[]> = {};
+        let heading = '';
+        for (const child of [...el.querySelectorAll('.what-if-content > *')]) {
+          if (child.classList.contains('what-if-subsect')) heading = child.textContent?.trim() ?? '';
+          else if (child.classList.contains('what-if-grid')) out[heading] = [...child.querySelectorAll('.what-if-fld label')].map(l => l.textContent?.trim() ?? '');
+        }
+        return out;
+      });
+      expect(groups['Driver']).toEqual(expect.arrayContaining(['Qts', 'Sensitivity']));
+      expect(groups['Derived']).toEqual(expect.arrayContaining(['Bl', 'Mms', 'Cms', 'Rms']));
+      for (const label of ['Qts', 'Sensitivity', 'Cms', 'Rms']) await expect(whatIfField(page, label).locator('input')).toBeEditable();
+    });
+
+    test('typing Mms moves Fs and leaves Vas, and no box carries a warning mark', async ({ page }) => {
+      await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      const fs = whatIfField(page, 'Fs').locator('input');
+      const vas = whatIfField(page, 'Vas').locator('input');
+      const fsBefore = await fs.inputValue();
+      const vasBefore = await vas.inputValue();
+      const mms = whatIfField(page, 'Mms').locator('input');
+      const mmsBefore = Number(await mms.inputValue());
+      await mms.click();
+      await mms.press('Control+a');
+      await mms.pressSequentially(String(Math.round(mmsBefore * 1.5 * 10) / 10));
+      await mms.press('Tab');
+      await expect(fs).not.toHaveValue(fsBefore);
+      await expect(vas).toHaveValue(vasBefore);
+      await expect(page.locator('.what-if-panel .dq-flag')).toHaveCount(0);
+    });
+
+    test('opened on a driver whose stated figures disagree (W5-1138SMF), no What-if box carries a warning mark', async ({ page }) => {
+      await page.goto('/');
+      await openAProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      await page.locator('.project-nav li', { hasText: 'Driver' }).click();
+      await page.getByRole('button', { name: /^Select driver$/i }).click();
+      await page.getByText('Tang Band W5-1138SMF', { exact: true }).click();
+      await page.locator('.driver-library .use-btn').click();
+      await expect(page.getByText(/values disagree/).first()).toBeVisible();
+      await page.locator('.edit-btn', { hasText: 'What-if' }).click();
+      await expect(page.locator('.what-if-panel')).toBeVisible();
+      await expect(page.locator('.what-if-panel .dq-flag')).toHaveCount(0);
+    });
+
     // John, 8 Nov 2026: "Try values and watch the charts. The design is not changed. becomes Experiment - Try values & watch the charts. Your project will not be updated."
     test('the hint and the Close buttons say the project will not be updated', async ({ page }) => {
       await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
@@ -261,27 +308,49 @@ test.describe('What-if panel', () => {
       await expect(page.locator('.what-if-btn')).toHaveAttribute('title', 'Try values & watch the charts. Your project will not be updated.');
     });
 
-    test('numeric fields are narrow and uniform, not stretched to fill the column', async ({ page }) => {
+    test('only Cms and Rms get wider boxes and unit chips', async ({ page }) => {
       await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
       const named = await page.locator('.what-if-panel .what-if-fld:not(.what-if-ro) input').evaluateAll(
-        els => els.map(e => ({ label: e.closest('.what-if-fld')?.querySelector('label')?.textContent ?? '', width: Math.round(e.getBoundingClientRect().width) })));
-      const widths = named.map(n => n.width);
-      expect(widths.length).toBeGreaterThan(8);
-      // One width for the whole panel — a field that sizes to its container instead of its content
-      // would vary with the column it landed in.
-      expect(new Set(widths).size, JSON.stringify(named)).toBe(1);
-      expect(widths[0], 'joined box includes its 29px unit rail, 25% narrower than 124px (John, 8 Nov 2026)').toBe(93);
-      const railWidths = await page.locator('.what-if-panel .what-if-fld:not(.what-if-ro) input').evaluateAll(els => els.filter(el => el.closest('.what-if-fld')?.querySelector('.ui-field-unit')?.textContent?.trim()).map(el => { const css = getComputedStyle(el); return el.getBoundingClientRect().width - parseFloat(css.paddingRight); }));
-      for (const width of railWidths) expect(width, 'numeric rail stays narrow').toBeLessThanOrEqual(90);
-      // ...and genuinely narrower than the cell holding it, i.e. leftover whitespace exists.
-      const cellW = await page.locator('.what-if-panel .what-if-fld').first().evaluate(e => e.getBoundingClientRect().width);
-      expect(widths[0]).toBeLessThan(cellW);
+        async els => {
+          await document.fonts.ready;
+          return els.map(input => {
+            const row = input.closest('.what-if-fld');
+            const unit = row?.querySelector('.ui-field-unit');
+            const chip = unit?.getBoundingClientRect();
+            const text = document.createRange();
+            if (unit) text.selectNodeContents(unit);
+            const glyphs = text.getBoundingClientRect();
+            return {
+              label: row?.querySelector('label')?.textContent?.trim() ?? '',
+              rowWidth: row?.getBoundingClientRect().width ?? 0,
+              width: Math.round(input.getBoundingClientRect().width),
+              symbol: unit?.textContent?.trim() ?? '',
+              chipWidth: Math.round(chip?.width ?? 0),
+              unitFits: chip !== undefined && glyphs.left >= chip.left - 0.5 && glyphs.right <= chip.right + 0.5,
+              chipPadding: parseFloat(getComputedStyle(input).paddingRight),
+            };
+          });
+        });
+      expect(named.length).toBeGreaterThan(8);
+      expect(named.find(row => row.label === 'Cms')?.symbol).toBe('mm/N');
+      expect(named.find(row => row.label === 'Rms')?.symbol).toBe('Ns/m');
+      for (const {label, rowWidth, width} of named) {
+        const wide = label === 'Cms' || label === 'Rms';
+        expect(width, label).toBe(wide ? 102 : 93);
+        expect(width, label).toBeLessThan(rowWidth);
+      }
+      for (const {label, width, symbol, chipWidth, unitFits, chipPadding} of named.filter(row => row.symbol !== '')) {
+        const wide = label === 'Cms' || label === 'Rms';
+        expect(chipWidth, label).toBe(wide ? 38 : 29);
+        expect(unitFits, `${label} ${symbol}`).toBe(true);
+        expect(width - chipPadding, `${label} numeric rail`).toBe(64);
+      }
     });
 
     test('a blank Q autocalculates from the other two, with the editor E/C/N marks and red border', async ({ page }) => {
       const whatIf = await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
-      // The panel has no Qts row (John, 18 Oct 2026): Qes and Qms are the Q inputs.
-      await expect(whatIfField(page, 'Qts')).toHaveCount(0);
+      // QO535 (John, 11 Nov 2026): the panel has a Qts box beside Qes and Qms.
+      const qts = whatIfField(page, 'Qts').locator('input');
       const qes = whatIfField(page, 'Qes').locator('input');
       const qms = whatIfField(page, 'Qms').locator('input');
 
@@ -302,12 +371,14 @@ test.describe('What-if panel', () => {
       await expect(qms).not.toHaveClass(/de-input-empty/);
       await expect(qms).not.toHaveValue('');
 
-      // It keeps tracking the other two: change Qes and the solved Qms follows.
+      // A typed Qes keeps the other results (Qms) and Qts follows it (QO535).
       const before = await qms.inputValue();
+      const qtsBefore = await qts.inputValue();
       await qes.click();
       await qes.press('Control+a');
       await qes.pressSequentially('0.55');
-      await expect(qms).not.toHaveValue(before);
+      await expect(qts).not.toHaveValue(qtsBefore);
+      await expect(qms).toHaveValue(before);
 
       // Clear Qes again: the solver does not use a calculated Qms as a new stated input, so Qms
       // becomes unavailable too.
@@ -404,7 +475,7 @@ test('every row fits inside the panel: no unit label runs past its right edge', 
   }
 });
 
-for (const size of [{ width: 1280, height: 800 }, { width: 1024, height: 700 }]) {
+for (const size of [{ width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 1024, height: 700 }]) {
   test(`the panel does not clip or scroll sideways at ${size.width}x${size.height}`, async ({ page }) => {
     await page.setViewportSize(size);
     const whatIf = await openWhatIf(page);

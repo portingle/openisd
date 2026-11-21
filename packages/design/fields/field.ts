@@ -1013,7 +1013,8 @@ export class NumberField extends Field {
     value: "Vd_m3",
     label: "Vd",
     display: {kind: 'switchable', group: 'volume', base: 'cm3'},
-    limits: {min: 0, max: 100000},
+    // 10,000 cm3: far beyond any driver, and it fits the phone driver editor's box in every unit (QO946.c187, lead).
+    limits: {min: 0, max: 0.01},
     floor: "positive",
     precision: 0,
     description: "Peak Displacement Volume (Vd)\nAir displaced by the cone at full excursion (Vd = Sd × Xmax).",
@@ -1736,6 +1737,12 @@ export class ToggleField extends Field {
     label: "Simplified ABC intra-port velocity",
     description: "Simplified ABC intra-port velocity: WinISD works out the air speed in an ABC box's inner port without a small leak term, Zf·jωMai/Ricl, but that term is part of the real current through the port mass. So its chart is slightly off: by up to 1.35 dB and 4.6° near 110 Hz, and under 0.1 dB elsewhere (W5-1138SMF). OpenISD drops the same term by default, so it matches WinISD. Untick this to use the exact port-mass current. It changes the ABC box's Intra port velocity chart only.",
   }, null, 'intra-port');
+  // Unticked in a new project (John, 11 Nov 2026, QO539: picked B): the charts use the Mms, Cms and Rms boxes.
+  static readonly ADV_WINISDCHARTFROMFSVASQMS = new ToggleField({
+    value: "adv_WinisdChartFromFsVasQms",
+    label: "Chart from Fs, Vas, Qms (WinISD's way)",
+    description: "Chart from Fs, Vas, Qms: WinISD draws its charts from Fs, Vas and Qms and works Cms, Mms and Rms out from them, so a Cms, Mms or Rms you type is shown but ignored. But datasheets often state Mms, Cms and Rms that do not agree with their own Fs, Vas and Qms, and then WinISD's charts follow figures that are not the ones on your screen (E150HE-44: up to 6.8 dB apart). So OpenISD draws its charts from the boxes you see — Sd, Mms, Cms, Rms, BL, Re, Le — and marks the ones that disagree. Tick this to draw from Fs, Vas and Qms as WinISD does.",
+  }, null, 'Qms');
   static readonly PROJECT_WINISDISOBARIK = new ToggleField({
     value: "project_winisdIsobarik",
     label: "WinISD's Iso-Barik numbers",

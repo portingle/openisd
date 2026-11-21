@@ -109,9 +109,9 @@ describe('CompatSwitch per-switch default (QO946.c131)', () => {
     expect(sw.of(sealedProject()).value).toBe(false);
   });
 
-  it('it is the only option off by default: every other option stays ticked, every bug unticked', () => {
+  it('it and "Chart from Fs, Vas, Qms" (John, QO539: picked B) are the only options off by default: every other option stays ticked, every bug unticked', () => {
     const off = CompatSwitch.OPTIONS.filter(s => !s.winisdValue);
-    expect(off).toEqual([CompatSwitch.ONE_DRIVER_IMPEDANCE]);
+    expect(off).toEqual([CompatSwitch.CHART_FROM_FS_VAS_QMS, CompatSwitch.ONE_DRIVER_IMPEDANCE]);
     for (const s of CompatSwitch.BUGS) expect(s.winisdValue, s.field.label).toBe(false);
   });
 });
@@ -124,9 +124,9 @@ describe('CompatSwitch per-switch default (QO946.c131)', () => {
     expect(sw.of(sealedProject()).value).toBe(false);
   });
 
-  it('it is the only option off by default: every other option stays ticked, every bug unticked', () => {
+  it('it and "Chart from Fs, Vas, Qms" (John, QO539: picked B) are the only options off by default: every other option stays ticked, every bug unticked', () => {
     const off = CompatSwitch.OPTIONS.filter(s => !s.winisdValue);
-    expect(off).toEqual([CompatSwitch.ONE_DRIVER_IMPEDANCE]);
+    expect(off).toEqual([CompatSwitch.CHART_FROM_FS_VAS_QMS, CompatSwitch.ONE_DRIVER_IMPEDANCE]);
     for (const s of CompatSwitch.BUGS) expect(s.winisdValue, s.field.label).toBe(false);
   });
 });
@@ -139,8 +139,8 @@ describe('CompatSwitch per-switch default (QO946.c131)', () => {
     expect(sw.of(sealedProject()).value).toBe(false);
   });
 
-  it('it is the only option off by default: every other option stays ticked, every bug unticked', () => {
-    expect(CompatSwitch.OPTIONS.filter(s => !s.winisdValue)).toEqual([CompatSwitch.ONE_DRIVER_IMPEDANCE]);
+  it('it and "Chart from Fs, Vas, Qms" (John, QO539: picked B) are the only options off by default: every other option stays ticked, every bug unticked', () => {
+    expect(CompatSwitch.OPTIONS.filter(s => !s.winisdValue)).toEqual([CompatSwitch.CHART_FROM_FS_VAS_QMS, CompatSwitch.ONE_DRIVER_IMPEDANCE]);
     for (const s of CompatSwitch.BUGS) expect(s.winisdValue, s.field.label).toBe(false);
   });
 });

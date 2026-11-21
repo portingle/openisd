@@ -2,8 +2,8 @@ import {readFileSync} from 'node:fs';
 import {expect, exportedProjectOwpr, forEachEditorTab, openAProject, openDriverEditor, test} from '../fixtures.js';
 import {setFocusedBoxType} from '../fixtures.js';
 import {NumberField, UNIT_GROUPS} from '@openisd/design/fields';
-import {OpenISDDriver} from '@openisd/design';
-import {createEngine, DEFAULT_VENTED_DESIGN_LIMITS, FixedAir} from '@openisd/design/engine';
+import {OpenISDDriver, OpenISDProject} from '@openisd/design';
+import {createEngine, DEFAULT_VENTED_DESIGN_LIMITS} from '@openisd/design/engine';
 import {DRIVER_SPEC_FIELD_NAMES, type NumericDriverSpecFieldName} from '../../../design/domain/driver/driverSpecFieldName.js';
 import {z} from 'zod';
 
@@ -60,10 +60,8 @@ function entryValue(value: unknown): unknown {
   return isRecord(value) ? value.value : undefined;
 }
 
-function expectedState(key: string, source: SpecEntry, radiator: boolean): string {
-  return radiator && source.state === 'E' && PR_FIELDS_DERIVED_FROM_WINISD_FIGURES.has(key)
-    ? 'C'
-    : source.state;
+function expectedState(source: SpecEntry): string {
+  return source.state;
 }
 
 function visibleNumber(cell: unknown, field: NumberField | undefined, unitLabel: string): string {
@@ -82,11 +80,6 @@ function numericEntry(value: unknown, name: string): number {
   return number;
 }
 
-function numericValueOrNull(value: unknown): number | null {
-  const number = entryValue(value);
-  return typeof number === 'number' ? number : null;
-}
-
 function selectedDriverSpecs(project: unknown): Record<string, Record<string, unknown>> {
   if (!isRecord(project) || !isRecord(project.saved)
     || !isRecord(project.saved.driverEmbedding) || !isRecord(project.saved.driverEmbedding.device)
@@ -101,13 +94,11 @@ function selectedDriverSpecs(project: unknown): Record<string, Record<string, un
   return sections;
 }
 
-function detachedEditorSpecs(project: unknown): Record<string, unknown> {
-  if (!isRecord(project) || !isRecord(project.saved) || !isRecord(project.saved.driverEmbedding)
-    || !isRecord(project.saved.driverEmbedding.device)) {
-    throw new Error('exported project has no embedded driver record for the editor draft');
-  }
-  const driver = OpenISDDriver.fromConformingRecord(project.saved.driverEmbedding.device, createEngine());
-  if (Array.isArray(driver)) throw new Error(`exported driver cannot open in editor: ${driver.join(', ')}`);
+/** What the project's driver editor opens on: a copy of the project's driver, read in the project (its air), as the app does. */
+function detachedEditorSpecs(exported: unknown): Record<string, unknown> {
+  const project = OpenISDProject.fromOwprText(JSON.stringify(exported), createEngine());
+  if (Array.isArray(project)) throw new Error(`exported project cannot be opened: ${project.join(', ')}`);
+  const driver = project.driver.detach();
   return Object.fromEntries(NUMERIC_DRIVER_NAMES.map(key => {
     const field = driver.specField(key);
     return [key, {
@@ -127,10 +118,6 @@ function projectAirValues(project: unknown) {
     c: numericEntry(environment.c_m_per_s, 'environment.c_m_per_s'),
     rho: numericEntry(environment.roo_kg_per_m3, 'environment.roo_kg_per_m3'),
   };
-}
-
-function projectAir(project: unknown) {
-  return new FixedAir(projectAirValues(project));
 }
 
 function projectEngine(project: unknown) {
@@ -178,39 +165,11 @@ function selectedRadiatorSpecs(project: unknown): Record<string, unknown> {
   return project.saved.box.passiveRadiator.component.specs['passive-radiator'];
 }
 
-const PR_DERIVED_FIELD_KEYS = ['Cms_m_per_N', 'Mms_kg', 'Rms_kg_per_s'] as const;
-const PR_FIELDS_DERIVED_FROM_WINISD_FIGURES = new Set<string>(PR_DERIVED_FIELD_KEYS);
-
-function expectedWinisdRadiatorValues(source: Record<string, SpecEntry>, project: unknown) {
-  return createEngine().pr.solveSpec({
-    Fs_hz: numericValueOrNull(source.Fs_hz),
-    Qms: numericValueOrNull(source.Qms),
-    Vas_m3: numericValueOrNull(source.Vas_m3),
-    Sd_m2: numericValueOrNull(source.Sd_m2),
-    Mms_kg: null,
-    Cms_m_per_N: null,
-    Rms_kg_per_s: null,
-  }, projectAir(project));
-}
-
-function expectDerivedRadiatorValue(model: string, key: typeof PR_DERIVED_FIELD_KEYS[number], expected: number | null,
-  actual: Record<string, unknown>): void {
-  const value = entryValue(actual[key]);
-  expect(entryState(actual[key]), `${model}.${key} has the wrong derived state`).toBe(expected === null ? 'N' : 'C');
-  if (expected === null) {
-    expect(value, `${model}.${key} became populated without sufficient primary figures`).toBeUndefined();
-  } else {
-    expect(value, `${model}.${key} is not numeric`).toEqual(expect.any(Number));
-    expect(value, `${model}.${key} does not match the WinISD primary figures`).toBeCloseTo(expected, 12);
-  }
-}
-
 function expectEverySourceField(
   model: string,
   expected: Record<string, SpecEntry>,
   actual: Record<string, unknown>,
   freshlyResolved: Record<string, unknown>,
-  radiator = false,
   projectAirForDiagnostics?: {c: number; rho: number},
 ): void {
   const missing = Object.entries(expected)
@@ -221,16 +180,16 @@ function expectEverySourceField(
   for (const [key, source] of Object.entries(expected)) {
     const cell = actual[key];
     expect(entryState(cell), `${model}.${key} changed its Entered/Calculated/Not available state`)
-      .toBe(expectedState(key, source, radiator));
-    const retainedEnteredValue = source.state !== 'E' || expectedState(key, source, radiator) === 'C'
+      .toBe(expectedState(source));
+    const retainedEnteredValue = source.state !== 'E' || expectedState(source) === 'C'
       || Object.is(entryValue(cell), source.value);
     expect(retainedEnteredValue, `${model}.${key} changed its bundled entered value`).toBe(true);
     const requiresCalculation = source.state === 'C'
-      || expectedState(key, source, radiator) === 'C';
+      || expectedState(source) === 'C';
     const calculatedValue = entryValue(cell);
     expect(!requiresCalculation || (typeof calculatedValue === 'number' && Number.isFinite(calculatedValue)),
       `${model}.${key} has no finite calculated value`).toBe(true);
-    if (source.state === 'C' && expectedState(key, source, radiator) === 'C' && key !== 'VCCon') {
+    if (source.state === 'C' && expectedState(source) === 'C' && key !== 'VCCon') {
       const fresh = entryValue(freshlyResolved[key]);
       expect(typeof fresh, `${model}.${key} fresh calculation is not numeric`).toBe('number');
       if (typeof fresh === 'number' && typeof calculatedValue === 'number') {
@@ -310,7 +269,7 @@ test.describe('Original driver bundle selection', () => {
       const actual = actualSections.woofer;
       expect(actual, `${model} has no embedded woofer spec section`).toBeDefined();
       const editorSpecs = detachedEditorSpecs(exported);
-      expectEverySourceField(model, source.specs.woofer, actual, freshlyResolvedBundleSpecs(path, exported), false, projectAirValues(exported));
+      expectEverySourceField(model, source.specs.woofer, actual, freshlyResolvedBundleSpecs(path, exported), projectAirValues(exported));
 
       await openDriverEditor(page);
       const unresolvedCoilKeys = ['Re_ohm', 'BL_Tm'].filter(key =>
@@ -357,6 +316,12 @@ test.describe('Original driver bundle selection', () => {
         `${model} editor changed a bundled field's Entered/Calculated/Not available state`).toEqual([]);
       expect(wrongUiValues.map(key => ({key, rendered: renderedValues[key], editor: editorSpecs[key], formatted: visibleNumber(editorSpecs[key], NumberField.named(key), renderedValues[key]?.unit ?? '')})),
         `${model} editor values do not match the detached editor driver's resolved data`).toEqual([]);
+      const wrongEnteredValues = uiSpecKeys.filter(key => {
+        const bundled = source.specs.woofer[key];
+        return bundled?.state === 'E'
+          && renderedValues[key]?.value !== visibleNumber(bundled, NumberField.named(key), renderedValues[key]?.unit ?? '');
+      });
+      expect(wrongEnteredValues, `${model} editor values do not match the bundled entered figures`).toEqual([]);
     });
   }
 
@@ -382,26 +347,28 @@ test.describe('Original driver bundle selection', () => {
       await page.reload();
       const exported = await exportedProjectOwpr(page);
       const actual = selectedRadiatorSpecs(exported);
-      expectEverySourceField(model, source.specs['passive-radiator'], actual, {}, true);
-      const expectedDerived = expectedWinisdRadiatorValues(source.specs['passive-radiator'], exported);
-      for (const key of PR_DERIVED_FIELD_KEYS) expectDerivedRadiatorValue(model, key, expectedDerived[key], actual);
+      expectEverySourceField(model, source.specs['passive-radiator'], actual, {});
 
       const displayedFields = [
         ['Fs_hz', '#og-pr-fs', NumberField.PR_FS_HZ], ['Qms', '#og-pr-qms', NumberField.PR_QMS],
         ['Vas_m3', '#og-pr-vas', NumberField.PR_VAS_L],
         ['Sd_m2', 'label.ui-field-label:text-is("Sd") ~ .ui-field-value input', NumberField.PR_SD_CM2],
         ['Mms_kg', '#og-pr-mms', NumberField.MMS_KG], ['Cms_m_per_N', '#og-pr-cms', NumberField.CMS_M_PER_N],
+        ['Rms_kg_per_s', '#og-pr-rms', NumberField.RMS_KG_PER_S],
         ['Xmax_m', 'label.ui-field-label:text-is("Xmax") ~ .ui-field-value input', NumberField.PR_XMAX_MM],
       ] as const;
       const shown = await Promise.all(displayedFields.map(async ([key, selector, field]) => ({
         key,
         value: await page.locator(selector).inputValue(),
+        state: await page.locator(selector).evaluate(element =>
+          ['E', 'C', 'N'].find(state => element.classList.contains(`value-${state.toLowerCase()}`))),
         unit: await page.locator(selector).evaluate(element =>
           element.closest('.field')?.querySelector('.unit-label')?.textContent?.trim() ?? ''),
         field,
       })));
-      const wrongDisplayedValues = shown.filter(item =>
-        item.value !== visibleNumber(actual[item.key], item.field, item.unit)).map(item => item.key);
+      const wrongDisplayedStates = shown.filter(item => item.state !== entryState(actual[item.key])).map(item => item.key);
+      expect(wrongDisplayedStates, `${model} page states do not match the embedded project data`).toEqual([]);
+      const wrongDisplayedValues = shown.filter(item => item.value !== visibleNumber(actual[item.key], item.field, item.unit)).map(item => item.key);
       expect(wrongDisplayedValues, `${model} page values do not match the embedded project data`).toEqual([]);
     });
   }

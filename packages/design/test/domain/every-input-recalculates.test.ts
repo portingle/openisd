@@ -17,9 +17,10 @@
  * An input that legitimately moves no chart is in an EXEMPT table with its reason. An exempt input
  * is also proven to move nothing, so an exemption cannot go stale.
  *
- * Target behaviour (John, 18 Oct 2026): the circuit is driven from Fs, Vas, Qes, Qms, Re, Sd, BL, Le
- * as WinISD does. Cms, Mms, Rms are display only; Qts only fills a missing Qes/Qms or shows a
- * conflict; the What-if driver rows are Fs, Vas, Qes, Qms (no Qts).
+ * Target behaviour (QO534, John 11 Nov 2026: "the editor and pr settings will use the [on-screen] values not hidden
+ * recalcs always"): the circuit is driven from the boxes Sd, Mms, Cms, Rms, Bl, Re and Le as they show. With those
+ * entered, as on this library driver, Fs, Vas, Qes and Qms feed no chart: a change to one of them is marked as a
+ * disagreement instead. In the What-if panel a typed Fs, Vas, Qes or Qms moves the parts (QO535), so it moves a chart there.
  */
 import {VoiceCoilWiring} from '../../domain/voiceCoilWiring.js';
 import {describe, expect, it} from 'vitest';
@@ -110,6 +111,19 @@ function itRecalculates(box: BoxType, edit: Edit, prepare: (project: OpenISDProj
   });
 }
 
+/** An input that moves a chart in a What-if (where a typed figure moves the parts that follow it, QO535), and a cancel puts every chart back. */
+function itRecalculatesInWhatIf(box: BoxType, edit: Edit): void {
+  it('a What-if edit moves a chart and cancel puts every chart back', () => {
+    const project = PROJECTS[box]();
+    const before = chartsOf(project);
+    project.beginWhatIf();
+    edit.apply(project);
+    expect(changedSeries(before, chartsOf(project))).not.toEqual([]);
+    project.cancelWhatIf();
+    expect(changedSeries(before, chartsOf(project))).toEqual([]);
+  });
+}
+
 function itMovesNothing(box: BoxType, edit: Edit, prepare: (project: OpenISDProject) => void = () => undefined): void {
   it('an exempt input moves no chart', () => {
     const project = PROJECTS[box]();
@@ -126,10 +140,10 @@ function itMovesNothing(box: BoxType, edit: Edit, prepare: (project: OpenISDProj
 const EXEMPT_DRIVER_FIELDS: ReadonlyMap<NumericDriverSpecFieldName, string> = new Map([
   ['Qts', 'Qts only fills a missing Qes or Qms or shows a conflict; it feeds no other calculation (John, 18 Oct 2026)'],
   ['numVC', 'not a simulation input: Re and BL are the published figures, whatever the coil count (QO900 R1; WinISD does the same, FINDING_20261019_numvc-is-not-a-simulation-input)'],
-  ['BL_Tm', 'with "Two-BL driver" unticked (the default) there is one BL, the one Re, Fs, Qes and Vas imply; a typed BL is not read (John, 18 Oct 2026). Ticked, it moves the charts: see the compat switch cases'],
-  ['Cms_m_per_N', 'display only: the circuit is driven from Fs, Vas, Qes, Qms (John, 18 Oct 2026)'],
-  ['Mms_kg', 'display only: the circuit is driven from Fs, Vas, Qes, Qms (John, 18 Oct 2026)'],
-  ['Rms_kg_per_s', 'display only: the circuit is driven from Fs, Vas, Qes, Qms (John, 18 Oct 2026)'],
+  ['Fs_hz', 'with Mms and Cms entered the charts use those boxes; an edited Fs is marked as disagreeing with them (QO534)'],
+  ['Vas_m3', 'with Cms and Sd entered the charts use those boxes; an edited Vas is marked as disagreeing with them (QO534)'],
+  ['Qes', 'with Bl, Re and Mms entered the charts use those boxes; an edited Qes is marked as disagreeing with them (QO534)'],
+  ['Qms', 'with Rms and Mms entered the charts use those boxes; an edited Qms is marked as disagreeing with them (QO534)'],
   ['Znom_ohm', 'nominal impedance is a catalogue label; the circuit uses Re'],
   ['fLe_hz', 'a Le measurement frequency; Le itself is the input'],
   ['KLe_H_sqrtHz', 'lossy-inductance model constant the sweep does not read'],
@@ -258,6 +272,7 @@ const PROJECT_SETTINGS: Readonly<Record<SettingKey, SettingCase>> = {
   winisdTlPortNoEndCorrection: compat,
   winisdProjectAlfaVC: compat,
   winisdFlatModel: compat,
+  winisdChartFromFsVasQms: compat,
   winisdOneDriverImpedance: compat,
   graphs: exempt('which charts are open: view state'),
   cursorF: exempt('chart cursor: view state'),
@@ -308,6 +323,8 @@ const COMPAT_SCENARIOS: ReadonlyMap<CompatSwitch, CompatScenario | string> = new
   [CompatSwitch.WRAP_PHASE, {box: 'sealed', prepare: () => undefined}],
   [CompatSwitch.FLAT_MODEL, {box: 'sealed', prepare: p => p.forceFlatResponse.set(true)}],
   [CompatSwitch.ABC_INTRA_PORT_VELOCITY, {box: 'abc', prepare: () => undefined}],
+  // A Cms box that disagrees with Vas: the charts follow the box unticked and Vas ticked (QO539).
+  [CompatSwitch.CHART_FROM_FS_VAS_QMS, {box: 'sealed', prepare: p => p.driver.specField('Cms_m_per_N').set(0.0005)}],
   // Two drivers: with one the impedance chart is the one driver's either way.
   [CompatSwitch.ONE_DRIVER_IMPEDANCE, {box: 'sealed', prepare: p => p.nDrivers.set(2)}],
 ]);
@@ -397,25 +414,30 @@ for (const type of BOX_TYPES) {
       },
     };
     const reason = EXEMPT_WHATIF_ROWS.get(row);
-    if (reason === undefined) itRecalculates(type, edit);
+    // A driver row (Fs, Vas, Qes, Qms, Qts, Sensitivity, Cms, Rms) moves the charts only in a What-if: outside one, the charts use the stated parts (QO534).
+    if (reason === undefined && SheetField.DRIVER_SPEC.includes(row)) itRecalculatesInWhatIf(type, edit);
+    else if (reason === undefined) itRecalculates(type, edit);
     else itMovesNothing(type, edit);
   });
 }
 
 describe('the What-if driver rows', () => {
-  it('are Fs, Vas, Qes and Qms in that order: no Qts row', () => {
+  it('are Fs, Vas, Qes, Qms, Qts and Sensitivity, then the parts Cms and Rms (John, QO535: "I only want to add inputs")', () => {
     expect(SheetField.DRIVER_SPEC.map(row => row.field)).toEqual([
-      NumberField.FS_HZ, NumberField.VAS_M3, NumberField.QES, NumberField.QMS,
+      NumberField.FS_HZ, NumberField.VAS_M3, NumberField.QES, NumberField.QMS, NumberField.QTS, NumberField.SPL_DB,
+      NumberField.CMS_M_PER_N, NumberField.RMS_KG_PER_S,
     ]);
+    expect(SheetField.DRIVER_SPEC).toEqual([...SheetField.DRIVER_RESULTS, ...SheetField.DRIVER_PARTS]);
   });
 
-  /** The four driver rows John ruled, written as the sheet will write them: through the driver's own field. */
+  /** The driver rows John ruled, written as the sheet will write them: through the driver's own field. */
   const TARGET_DRIVER_ROWS: readonly (readonly [string, NumericDriverSpecFieldName])[] = [
-    ['Fs', 'Fs_hz'], ['Vas', 'Vas_m3'], ['Qes', 'Qes'], ['Qms', 'Qms'],
+    ['Fs', 'Fs_hz'], ['Vas', 'Vas_m3'], ['Qes', 'Qes'], ['Qms', 'Qms'], ['Qts', 'Qts'], ['Sensitivity', 'SPL_dB'],
+    ['Cms', 'Cms_m_per_N'], ['Rms', 'Rms_kg_per_s'],
   ];
   for (const type of BOX_TYPES) {
     describe.each(TARGET_DRIVER_ROWS)(`${type}: What-if driver row %s`, (_label, spec) => {
-      itRecalculates(type, driverEdit(spec));
+      itRecalculatesInWhatIf(type, driverEdit(spec));
     });
   }
 });
