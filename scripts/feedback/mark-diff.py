@@ -18,16 +18,19 @@ same, 2 when every box was too big to draw.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import difflib
 import json
+from pathlib import Path
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw, PngImagePlugin
+from PIL import Image, ImageChops, ImageDraw, PngImagePlugin
 
 THRESH = 2         # mean per-column colour difference that counts, for bands of different height
 GAP_X = 32         # column runs closer than this are one box
 PAD = 6            # margin around each box
+CROP_MARGIN = 12   # context around the changed pixels on a release comparison
 MARKER_KEY, MARKER_VALUE = "marked", "1"  # PNG text chunk: this picture was marked by this tool
 RED = (230, 0, 0)
 WIDTH = 3
@@ -134,16 +137,77 @@ def draw_on(img: Image.Image, boxes: list[Box]) -> None:
             d.rectangle(box, outline=RED, width=WIDTH)
 
 
-def _draw_file(path: str, boxes: list[Box]) -> None:
-    src = Image.open(path)
+def _save_marked(src: Image.Image, path: str | Path, boxes: list[Box], compress_level: int, *, mode: str = "RGB") -> None:
     kept = {k: v for k, v in src.info.items() if isinstance(v, str) and k != MARKER_KEY}  # keep text chunks, e.g. "stamp"
-    img = src.convert("RGB")
+    img = src.convert(mode)
     draw_on(img, boxes)
     info = PngImagePlugin.PngInfo()
     for k, v in kept.items():
         info.add_text(k, v)
     info.add_text(MARKER_KEY, MARKER_VALUE)  # check-answerable.mjs fails any picture without this
-    img.save(path, format="PNG", pnginfo=info)
+    img.save(path, format="PNG", pnginfo=info, compress_level=compress_level)
+
+
+def _draw_file(path: str, boxes: list[Box]) -> None:
+    with Image.open(path) as src:
+        src.load()
+        _save_marked(src, path, boxes, 6)
+
+
+def _ranked_pair(entry, out: Path):
+    def load(path):
+        if path is None:
+            return None
+        with Image.open(path) as src:
+            return src.convert("RGBA")
+
+    before, after = load(entry.get("before")), load(entry.get("after"))
+    images = [image for image in (before, after) if image is not None]
+    widths, heights = zip(*(image.size for image in images))
+    fraction = 1.0
+    box = (0, 0, max(widths), max(heights))
+    if before is not None and after is not None:
+        width, height = min(widths), min(heights)
+        overlap = (0, 0, width, height)
+        before_overlap = before if before.size == (width, height) else before.crop(overlap)
+        after_overlap = after if after.size == (width, height) else after.crop(overlap)
+        r, g, b, a = ImageChops.difference(before_overlap, after_overlap).split()
+        diff = ImageChops.lighter(ImageChops.lighter(r, g), ImageChops.lighter(b, a))
+        boxes = [diff.getbbox()]
+        if max(widths) > width:
+            boxes.append((width, 0, max(widths), max(image.height for image in images if image.width > width)))
+        if max(heights) > height:
+            boxes.append((0, height, max(image.width for image in images if image.height > height), max(heights)))
+        changed = [box for box in boxes if box is not None]
+        if not changed:
+            return None
+        left, top, right, bottom = zip(*changed)
+        box = (min(left), min(top), max(right), max(bottom))
+        # Count the differing pixels in the shared area and the pixels present on only one side.
+        area = sum(image.width * image.height for image in images) - width * height
+        fraction = 1 - diff.histogram()[0] / area
+    marked = {"name": entry["name"], "fraction": fraction}
+    x0, y0, x1, y1 = box
+    left, top = max(0, x0 - CROP_MARGIN), max(0, y0 - CROP_MARGIN)
+    translated_box = (x0 - left, y0 - top, x1 - left, y1 - top)
+    for label, image in (("before", before), ("after", after)):
+        if image is None:
+            marked[label] = None
+            continue
+        file = f"{entry['name']}.{label}.png"
+        path = out / file
+        path.parent.mkdir(parents=True, exist_ok=True)
+        crop = image.crop((left, top, min(image.width, x1 + CROP_MARGIN), min(image.height, y1 + CROP_MARGIN)))
+        _save_marked(crop, path, [translated_box], 1, mode="RGBA")
+        marked[label] = file
+    return marked
+
+
+def _ranked_gallery(out: Path, manifest: Path) -> None:
+    entries = json.loads(manifest.read_text(encoding="utf-8"))
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        rows = [row for row in pool.map(lambda entry: _ranked_pair(entry, out), entries) if row is not None]
+    print(json.dumps(sorted(rows, key=lambda row: (-row["fraction"], row["name"]))))
 
 
 def stamp(path: str) -> None:
@@ -158,7 +222,14 @@ def main() -> int:
     ap.add_argument("--print-box", action="store_true",
                     help="two-picture mode: also print one JSON line {\"before\": [[x,y,w,h]…], \"after\": […]} of the boxes drawn")
     ap.add_argument("--box", action="append", default=[], help="X,Y,W,H in px (repeatable)")
+    ap.add_argument("--ranked", action="store_true", help="write marked crops ranked by differing pixels")
     args = ap.parse_args()
+
+    if args.ranked:
+        if len(args.pictures) != 2:
+            ap.error("--ranked needs an output folder and a JSON manifest of before/after paths")
+        _ranked_gallery(*(Path(p) for p in args.pictures))
+        return 0
 
     if args.stamp:
         for p in args.pictures:
