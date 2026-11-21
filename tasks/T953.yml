@@ -4,7 +4,7 @@ repo: openisd
 owner: bob
 status: done
 goal: Give the Dimensions-with-figures pictures a plain name so the before/after page test passes on main
-why: fixer (lead), 21 Nov 2026: main's shell check is red because desktop-driver-dimensions-with-figures has no plain name (came in with the Dimensions change T946)
+why: John, 3 Nov 2026 ("I approve uncontroversial fixes"); reported by fixer (lead), 21 Nov 2026: main's shell check is red because desktop-driver-dimensions-with-figures has no plain name (came in with the Dimensions change T946)
 done_test: bash scripts/quiet-test.sh bash scripts/land/test/visual-page.test.sh
 label: fixes
 files:
