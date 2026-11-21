@@ -7,4 +7,7 @@ goal: 'Find why the phone chart readout sometimes never shows after a hover over
 why: 'fixer (lead), 21 Nov 2026: CI picture run 44914881724 failed on screen mobile dialog-shared-chart-readout (viewOpenShared.ts:65, no ''.gread'' with Hz within 20 s); run 44912730900 passed; John 16-17 Oct 2026 ''no workarounds'''
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
+  - bugs/BUG_20261121_phone-chart-readout-sometimes-missing-after-hover.md
+  - packages/ui/src/ui/components/GraphPanel.vue
+  - packages/ui/test/ui/mobile-chart-readout.browser.spec.ts
   - tasks/T954.yml
