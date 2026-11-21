@@ -1,0 +1,10 @@
+id: T952
+release_note: internal
+repo: openisd
+owner: bob
+status: open
+goal: Loaded filter parameters are kept exactly as the file states, with the usual DQ warning, and filter responses stay finite (loaded-DQ group 5)
+why: John, 21 Nov 2026: 'yea no repair at all but also no crashes'
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T952.yml
