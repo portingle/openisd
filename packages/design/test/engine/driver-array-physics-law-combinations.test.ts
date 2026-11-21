@@ -251,7 +251,7 @@ function pairMisses(s: Setup, {winisdIsobarik, wiring}: PairMode): Miss[] {
   const one = sweep(s, oneParams);
   // WinISD adds acoustic roll-off to the pair with inductance on. Check that response against the captures below.
   // The response law still applies with Le = 0. Terminal impedance obeys its law with inductance on too.
-  const responseSetup = {...s, Le_H: 0};
+  const responseSetup: Setup = {...s, Le_H: 0};
   const [pairResponse, oneResponse] = winisdIsobarik && s.P.circuitModel === 'winisdGyrator' && (s.Le_H ?? 0) !== 0
     ? [sweep(responseSetup, pairParams), sweep(responseSetup, oneParams)]
     : [pair, one];
@@ -419,7 +419,7 @@ describe('the driver array obeys physics rules over every box, driver count, wir
   const captureTolerance = 1e-11;
   const absoluteMiss = (g: number, w: number): number => Math.abs(g - w);
   const frequencies = inductanceCaptures.frequency_Hz;
-  const captureGrid = {fmin: frequencies[0], fmax: frequencies[frequencies.length - 1], N: frequencies.length - 1};
+  const captureGrid: FrequencyGrid = {fmin: frequencies[0], fmax: frequencies[frequencies.length - 1], N: frequencies.length - 1};
   for (const capture of inductanceCaptures.runs) {
     it(`R4 matches WinISD W5 capture with inductance on: ${capture.run}`, () => {
       const path = join(TEST_DIR, 'fixtures', 'winisd-isobarik-inductance', `${capture.run}.wpr`);

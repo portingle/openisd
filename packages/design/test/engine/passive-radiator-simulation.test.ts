@@ -80,7 +80,7 @@ describe('passive radiator simulation', () => {
       // Acoustic mass and damping divide by diaphragm area squared, and compliance multiplies by it.
       // Each smaller radiator has acoustic values 2M, C/2, 2R. Both see the same pressure and their
       // volume velocities add, so the pair presents the original branch impedance at every frequency.
-      const two = {
+      const two: SweepParams = {
         ...one, prNum: 2, prSd: one.prSd / 2, prMmd: one.prMmd / 2, prMadd: one.prMadd / 2,
         prCms: 2 * one.prCms, prRms: one.prRms / 2,
       };
