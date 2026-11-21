@@ -24,5 +24,8 @@ files:
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-editor-dimensions.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/desktop-dialog-driver-editor-help-dimensions.png
   - packages/ui/test/visual/visual.browser.spec.ts-snapshots/mobile-dialog-editor-dimensions.png
+visual:
+  - desktop-dialog-driver-editor-dimensions
+  - desktop-dialog-driver-editor-help-dimensions
+  - mobile-dialog-editor-dimensions
 visual_note: The drawing spells out each dimension and still shows its measurement when known. The desktop Dimensions field list uses full names.
-# The lead adds the visual list once CI supplies the stamped pictures.
