@@ -1,0 +1,19 @@
+id: T947
+release_note: internal
+repo: openisd
+owner: lead
+status: done
+goal: 'Phone Driver tab shows the Placement dropdown John approved, not the Standard/Iso-Barik radios'
+why: 'John approved the dropdown (QO953.c38) and tapped Yes: ship it on the phone-placement card, 20 Nov 2026 20:37'
+ruling: QO953
+review_note: "John approved the phone Placement dropdown (QO953.c38, t919d pictures) and on 20 Nov 2026 20:37 tapped 'Yes: ship it' on the phone-placement card ('drop-down is consistent'). The page-order and field-inventory expectations list the approved dropdown; no test removed."
+done_test: bash scripts/quiet-test.sh npm run typecheck
+label: fixes
+files:
+  - tasks/T947.yml
+  - packages/ui/src/hooks/DriverWiring-hooks.ts
+  - packages/ui/src/ui/components/DriverWiring.vue
+  - packages/ui/test/fixtures/fieldInventoryScenarios.ts
+  - packages/ui/test/ui/mobile-driver-tab.browser.spec.ts
+  - packages/ui/test/ui/phone-field-inventory.browser.spec.ts
+  - packages/ui/test/fixtures/branchMap/shared.ts

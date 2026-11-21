@@ -98,6 +98,8 @@ export const SHARED_BRANCH_MAP:BranchMap={
   'conditional-branch-86a74738b0c40fb4':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:32
   'conditional-branch-265d98b1829da319':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:35
   'conditional-branch-ad20275eedeb4b3a':{kind:'partOf',view:'tab-driver'}, // components/DriverCoilWiring.vue:34 (the catcher over the greyed control)
+  'conditional-branch-089d41505f621872':{kind:'partOf',view:'tab-driver'}, // DriverWiring.vue (phone Placement dropdown)
+  'conditional-branch-6deb725ca7e59744':{kind:'partOf',view:'tab-driver'}, // DriverWiring.vue (desktop Placement radios)
   'conditional-branch-28578796288ae007':{kind:'partOf',view:'tab-driver'}, // DriverWiring.vue (Iso-Barik compatibility checkbox)
   'conditional-branch-587ab05924db500c':{kind:'partOf',view:'tab-driver'}, // components/DriverWiring.vue:15 (the phone row)
   'conditional-branch-eb847ee4b5bc2de2':{kind:'partOf',view:'tab-driver'}, // components/DriverWiring.vue:23 (the desktop row)
