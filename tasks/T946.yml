@@ -31,4 +31,6 @@ visual:
   - desktop-dialog-driver-editor-dimensions
   - desktop-dialog-driver-editor-help-dimensions
   - mobile-dialog-editor-dimensions
-visual_note: The drawing spells out each dimension and still shows its measurement when known. The desktop Dimensions field list uses full names.
+  - desktop-driver-dimensions-with-figures
+  - mobile-driver-dimensions-with-figures
+visual_note: The drawing spells out each dimension and still shows its measurement when known. The desktop Dimensions field list uses full names. New screen driver-dimensions-with-figures pictures a catalogue driver that states its sizes (Faital Pro 18HP1030-4), desktop and phone; John approved both on the board (21 Nov 2026: "it's good").
