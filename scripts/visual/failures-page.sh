@@ -22,8 +22,9 @@ for actual in "$copy"/test-results/*/*-actual.png; do
 done
 printf ']' >> "$entries"
 [ "${#names[@]}" -gt 0 ] || exit 0
+printf 'visual screens: %s\n' "$(IFS=,; echo "${names[*]}" | sed 's/,/, /g')"
+visual_require_pages_url
 
 out="$VISUAL_PAGES_DIR/red-${sha:0:10}"
 node "$VISUAL_SCRIPTS/diff-page.mjs" "$out" "Screens that differ from their baseline at ${sha:0:10}" "$entries" red > /dev/null
-printf 'visual screens: %s\n' "$(IFS=,; echo "${names[*]}" | sed 's/,/, /g')"
-printf 'visual page: %s/red-%s/index.html\n' "$VISUAL_PAGES_URL" "${sha:0:10}"
+printf 'visual page: %s/red-%s/index.html\n' "${VISUAL_PAGES_URL%/}" "${sha:0:10}"
