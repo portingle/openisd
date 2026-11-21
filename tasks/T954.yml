@@ -11,3 +11,4 @@ files:
   - packages/ui/src/ui/components/GraphPanel.vue
   - packages/ui/test/ui/mobile-chart-readout.browser.spec.ts
   - tasks/T954.yml
+label: fixes
