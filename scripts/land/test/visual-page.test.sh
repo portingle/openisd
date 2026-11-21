@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The before/after page of a landed visual change is made by scripts/feedback/feedback-page.py: one item per
-# picture with its own comment box, every picture marked by mark-diff.py, a "What to do" first line.
+# picture with its own board link, every picture marked by mark-diff.py, a "What to do" first line.
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 SCRATCH="$(mktemp -d)"; trap 'rm -rf "$SCRATCH"' EXIT
@@ -23,7 +23,7 @@ cat > "$SCRATCH/entries.json" <<JSON
  {"name":"mobile-menu","before":null,"after":"$SCRATCH/b.png","diff":null}]
 JSON
 out="$SCRATCH/page"
-node "$REPO/scripts/visual/diff-page.mjs" "$out" "What changed on screen" "$SCRATCH/entries.json" "The box got bigger." > "$SCRATCH/log.txt" 2>&1 \
+node "$REPO/scripts/visual/diff-page.mjs" "$out" "What changed on screen" "$SCRATCH/entries.json" picture-review "The box got bigger." > "$SCRATCH/log.txt" 2>&1 \
   && ok "page written" || fail "diff-page failed: $(cat "$SCRATCH/log.txt")"
 [ -s "$out/index.html" ] && grep -q "What to do" "$out/index.html" && ok "index.html is the shared feedback page with a What to do line" || fail "no feedback page"
 rows=$(grep -c '^| Phone, ' "$out/index.md" 2>/dev/null || true)
@@ -36,7 +36,7 @@ done
 grep -q "Look at" "$out/index.md" || grep -qi "look" "$out/index.md" && ok "rows carry a Look at statement" || fail "no Look at"
 
 # Grouping: pairs whose changed box is at the same place and size are one group (leader + "Same as" followers);
-# a different box, or a pair with no box, is its own group. Folded pictures keep their own comment box.
+# a different box, or a pair with no box, is its own group.
 python3 - "$SCRATCH" <<'PY'
 import sys
 from PIL import Image, ImageDraw
@@ -53,7 +53,7 @@ cat > "$SCRATCH/groups.json" <<JSON
  {"name":"mobile-empty","before":null,"after":"$SCRATCH/g1.b.png","diff":null}]
 JSON
 gout="$SCRATCH/groups"
-node "$REPO/scripts/visual/diff-page.mjs" "$gout" "What changed on screen" "$SCRATCH/groups.json" "The box moved." > "$SCRATCH/glog.txt" 2>&1 \
+node "$REPO/scripts/visual/diff-page.mjs" "$gout" "What changed on screen" "$SCRATCH/groups.json" picture-review "The box moved." > "$SCRATCH/glog.txt" 2>&1 \
   && ok "grouped page written" || fail "grouped diff-page failed: $(cat "$SCRATCH/glog.txt")"
 grep -q "3 group(s)" "$SCRATCH/glog.txt" && ok "four screens make 3 groups" || fail "group count: $(cat "$SCRATCH/glog.txt")"
 grep -q '^| Phone, Driver tab .*1 more picture, folded below. |  |$' "$gout/index.md" && ok "same box: the first picture leads and says '1 more'" || fail "leader row: $(grep 'Driver tab' "$gout/index.md")"
@@ -85,10 +85,9 @@ cat > "$SCRATCH/union.json" <<JSON
 [{"name":"desktop-empty","before":"$SCRATCH/u1.a.png","after":"$SCRATCH/u1.b.png","diff":null},
  {"name":"desktop-tab-box","before":"$SCRATCH/u2.a.png","after":"$SCRATCH/u2.b.png","diff":null}]
 JSON
-node "$REPO/scripts/visual/diff-page.mjs" "$SCRATCH/union" "What changed on screen" "$SCRATCH/union.json" "x" > "$SCRATCH/ulog.txt" 2>&1
+node "$REPO/scripts/visual/diff-page.mjs" "$SCRATCH/union" "What changed on screen" "$SCRATCH/union.json" picture-review "x" > "$SCRATCH/ulog.txt" 2>&1
 grep -q "1 group(s)" "$SCRATCH/ulog.txt" && ok "union box: two pairs with different small boxes are one group" || fail "union group: $(cat "$SCRATCH/ulog.txt")"
 grep -q '^| Desktop, Box tab .*the red boxes: x' "$SCRATCH/union/index.md" && ok "leader is the pair with the fewest boxes, not the first by name" || fail "leader: $(cat "$SCRATCH/union/index.md")"
 node "$REPO/scripts/visual/screen-names.test.mjs" > "$SCRATCH/names.txt" 2>&1 && ok "plain screen names cover every baseline" || fail "screen names: $(cat "$SCRATCH/names.txt")"
-# The fold itself (each folded picture keeps its own comment box) is a browser check on the board's thread
-# module, which lives in the workspace, not in CI: feedback_page_test.py runs it (feedback_page_group_test.mjs).
+# feedback_page_group_test.mjs exercises the fold and the links with only the page viewer's resources.
 exit "$fails"

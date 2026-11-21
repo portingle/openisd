@@ -231,6 +231,7 @@ if [ $r = 1 ] && [ "$(origin_head)" = "$before" ] && grep -q "browser spec" "$SC
 
 # 6d. baselines (scripts/visual/): a task changes exactly the screens it lists under visual:, and a landing leaves a page
 export VISUAL_PAGES_DIR="$SCRATCH/pages" VISUAL_PAGES_URL="http://example.test/pages"
+export VISUAL_FEEDBACK_ITEM=picture-review
 SNAP=packages/ui/test/visual/visual.browser.spec.ts-snapshots
 setup; mkdir -p "$SCRATCH/w/w1/$SNAP"; printf one > "$SCRATCH/w/w1/$SNAP/mobile-a.png"
 git -C "$SCRATCH/w/w1" add -A; git -C "$SCRATCH/w/w1" commit -qm "baseline"; git -C "$SCRATCH/w/w1" push -q origin main

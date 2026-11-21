@@ -4,6 +4,7 @@
 #   bash scripts/visual/failures-page.sh <clean-copy-dir> <sha>
 # Prints "visual screens: a, b" and "visual page: <url>", or nothing when no screenshot test failed.
 # Reads <clean-copy-dir>/test-results/*/<screen>-{expected,actual,diff}.png, which Playwright writes.
+# VISUAL_FEEDBACK_ITEM names the live decision board card for the pictures.
 set -euo pipefail
 copy="${1:?usage: failures-page.sh <clean-copy-dir> <sha>}"; sha="${2:?}"
 # shellcheck source=./lib.sh
@@ -22,8 +23,9 @@ for actual in "$copy"/test-results/*/*-actual.png; do
 done
 printf ']' >> "$entries"
 [ "${#names[@]}" -gt 0 ] || exit 0
+card="${VISUAL_FEEDBACK_ITEM:?Set VISUAL_FEEDBACK_ITEM to the live decision board card ID}"
 
 out="$VISUAL_PAGES_DIR/red-${sha:0:10}"
-node "$VISUAL_SCRIPTS/diff-page.mjs" "$out" "Screens that differ from their baseline at ${sha:0:10}" "$entries" red > /dev/null
+node "$VISUAL_SCRIPTS/diff-page.mjs" "$out" "Screens that differ from their baseline at ${sha:0:10}" "$entries" "$card" red > /dev/null
 printf 'visual screens: %s\n' "$(IFS=,; echo "${names[*]}" | sed 's/,/, /g')"
 printf 'visual page: %s/red-%s/index.html\n' "$VISUAL_PAGES_URL" "${sha:0:10}"

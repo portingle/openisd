@@ -3,6 +3,7 @@
 After a landing changes visual baselines, `publish-changes.sh <task> <base> <head>` writes a before/after page
 for John (`diff-page.mjs` builds it, `scripts/feedback/feedback-page.py` renders it,
 `scripts/feedback/mark-diff.py` draws the red boxes).
+Set `VISUAL_FEEDBACK_ITEM` to the live decision board card ID before publishing changed baselines or a failure page.
 
 ## Grouping rule
 
@@ -12,7 +13,7 @@ for John (`diff-page.mjs` builds it, `scripts/feedback/feedback-page.py` renders
 - A group shows its first pair, with its own "Look at:" line saying how many more pictures show the same change.
 - The other pairs of the group sit in a closed fold under it: "Same change in N more pictures (show)".
   A group of one has no fold.
-- Every picture, folded or not, keeps its OWN comment box and its own "Look at:" line. The fold only hides; it never drops a picture.
+- Every picture has a link to comment on the board. Each pair keeps its own "Look at:" line when folded.
 
 ## How it is written
 

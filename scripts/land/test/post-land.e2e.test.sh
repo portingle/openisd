@@ -79,6 +79,7 @@ if [ $r = 1 ] && [ "$(release)" = "$before" ] && [ -n "$f" ] && grep -q '^status
 
 # 2b. a red caused by a screenshot differing names the screen and links the before/after page (scripts/visual/)
 export VISUAL_PAGES_DIR="$SCRATCH/pages" VISUAL_PAGES_URL="http://example.test/pages"
+export VISUAL_FEEDBACK_ITEM=picture-review
 setup; s=$(commit_push vis VISUALFAIL); post "$s" a; r=$?
 git -C "$SCRATCH/w/c" pull -q origin main
 f=$(grep -l "sha: $s" "$SCRATCH"/w/c/tasks/fixes/F*.yml 2>/dev/null | head -1)

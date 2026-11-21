@@ -14,6 +14,7 @@ git config user.email t@t; git config user.name t
 mkdir -p scripts tasks
 cp -r "$REPO/scripts/visual" "$REPO/scripts/feedback" scripts/
 export VISUAL_PAGES_DIR="$SCRATCH/pages" VISUAL_PAGES_URL="http://example.test/pages"
+export VISUAL_FEEDBACK_ITEM=picture-review
 SNAP=packages/ui/test/visual/visual.browser.spec.ts-snapshots
 mkdir -p "$SNAP"
 . "$REPO/scripts/land/test/stamp-chunk.sh"

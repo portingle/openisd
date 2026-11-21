@@ -3,11 +3,9 @@
 // showing me images I've already ruled on". A fix with a side-by-side shows only that one picture ("why are you
 // showing me same image over and over").
 //   node feedback_page_ruled_test.mjs <generated index.html>   (exit 0 = pass)
+// Keep the earlier comment and answered-fold assertions active for the lead's decision.
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
-
-// The pictures page loads the board's one thread module; serve the workspace copy.
-const THREAD_JS = readFileSync(new URL('../../../_agent_files/board-state/thread.js', import.meta.url), 'utf8');
 
 const page_html = readFileSync(process.argv[2], 'utf8');
 const md = `<table><thead><tr><th>Fix</th><th>Task</th><th>State</th><th>Pictures</th><th>Look at</th></tr></thead><tbody>
@@ -19,13 +17,6 @@ const md = `<table><thead><tr><th>Fix</th><th>Task</th><th>State</th><th>Picture
 <tr><td>Long path</td><td>T7</td><td>landed</td><td></td><td>A long file path wraps on a phone: packages/persistence/src/repos/projectRepoWithALongName.ts</td></tr>
 <tr><td>Live only</td><td>T5</td><td>landed</td><td><a href="mock-b.html?tab=vented&look=x">live</a></td><td>the vented tab</td></tr>
 </tbody></table>`;
-const thread = [
-  { id: 'QO0.c1', by: 'John', at: '2026-10-20T01:00:00Z', text: '[picture: F/a/before.png] ok' },
-  { id: 'QO0.c2', by: 'John', at: '2026-10-20T01:00:00Z', text: '[picture: F/a/after.png] ok' },
-  { id: 'QO0.c3', by: 'John', at: '2026-10-20T01:00:00Z', text: '[picture: F/b/before.png] ok' },
-  { id: 'QO0.c4', by: 'John', at: '2026-10-20T01:00:00Z', text: '[picture: F/b/after.png] too narrow' },
-  { id: 'QO0.c5', by: 'bob', at: '2026-10-20T02:00:00Z', text: '[picture: F/b/after.png] fixed, new picture' },
-];
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
 
 const browser = await chromium.launch();
@@ -36,13 +27,11 @@ try {
     const u = r.request().url();
     if (u.endsWith('/F/index.html')) return r.fulfill({ contentType: 'text/html', body: page_html });
     if (u.includes('index.md?html')) return r.fulfill({ contentType: 'text/html', body: md });
-    if (u.endsWith('/board/thread.js')) return r.fulfill({ contentType: 'text/javascript', body: THREAD_JS });
-    if (u.includes('/board/api/thread')) return r.fulfill({ contentType: 'application/json', body: JSON.stringify({ entries: thread, states: {}, owner: 'bob' }) });
     if (u.endsWith('.png')) return r.fulfill({ contentType: 'image/png', body: png });
     return r.fulfill({ status: 404, body: '' });
   });
   await p.goto('http://test.invalid/F/index.html');
-  await p.waitForSelector('form.compose'); await p.waitForSelector('details.ruled', { state: 'attached' });
+  await p.waitForSelector('figure[data-item]');
   // Answered pictures stay in page order, each in its own closed fold; none moved to a bottom fold.
   const allOrder = await p.$$eval('figure[data-item]', (fs) => fs.map((f) => f.dataset.name));
   const wantAll = ['F/mock-b.html?tab=vented&look=x', 'F/T7', 'F/e/shot.png', 'F/d/before.png', 'F/b/before.png', 'F/c/side-by-side.png', 'F/a/before.png'];
@@ -114,18 +103,21 @@ try {
   await p.setViewportSize({ width: 374, height: 705 });
   const txt = await p.$eval('figure[data-name*="mock-b"]', (f) => f.querySelector('.look')?.textContent + '|' + !!f.querySelector('form.compose'));
   if (!/vented tab\|true/.test(txt)) failures.push(`live-only item lacks look/comment box: ${txt}`);
+  const liveItem = p.locator('figure[data-name*="mock-b"]');
+  if (!(await liveItem.locator('.look').textContent()).includes('vented tab')) failures.push('live-only item lacks its Look at line');
+  if ((await liveItem.getByRole('link', { name: 'Comment on this item on the board' }).getAttribute('href')) !== 'http://woody:8000/?item=picture-review') failures.push('live-only item lacks its board link');
   // Deep link: every item has id + link anchor.
   const ids = await p.$$eval('figure[data-item]', (fs) => fs.map((f) => [f.id, f.querySelector('a.permalink')?.getAttribute('href')]));
   if (ids.some(([id, h]) => !id || !/^[a-z0-9-]+$/.test(id) || h !== '#' + id)) failures.push(`item ids/links bad: ${JSON.stringify(ids)}`);
   // Deep link to a visible item scrolls and rings it.
   await p.goto('http://test.invalid/F/index.html#f-b-before-png');
-  await p.waitForSelector('details.ruled', { state: 'attached' }); await p.waitForSelector('figure.here');
+  await p.waitForSelector('figure.here');
   const inView = await p.$eval('figure.here', (f) => { const r = f.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; });
   if (!inView) failures.push('deep-linked item not scrolled into view');
   // Deep link into the closed answered fold opens it.
   await p.goto('http://test.invalid/F/index.html#f-a-before-png');
   await p.waitForSelector('figure.here');
-  if (!(await p.$eval('details.ruled', (d) => d.open)) || !(await p.$eval('figure.here', (f) => f.checkVisibility()))) failures.push('deep link into answered fold did not open it');
+  if (!(await p.locator('details.ruled[open]').count()) || !(await p.$eval('figure.here', (f) => f.checkVisibility()))) failures.push('deep link into answered fold did not open it');
 } finally {
   await browser.close();
 }

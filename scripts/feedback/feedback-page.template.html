@@ -31,21 +31,20 @@ a { color:inherit; }
 .live { display:inline-block; margin:6px 0 0; padding:10px 14px; border-radius:6px; background:#1d5fd0; color:#fff; font-size:15px; font-weight:600; text-decoration:none; }
 .permalink { float:right; font-size:13px; line-height:1; color:var(--muted); text-decoration:none; padding:2px 4px; }
 .side { min-width:0; }
-.lbl { display:block; font-size:12px; color:var(--muted); margin:0 0 2px; }
+.lbl { display:block; font-size:12px; color:var(--muted); margin:0 0 2px; overflow-wrap:anywhere; }
+.stamp { font:11px/1.3 monospace; color:var(--muted); overflow-wrap:anywhere; margin-top:2px; }
+.comment { display:block; margin-top:4px; font-size:14px; }
 
 figure.here { outline:3px solid #c62828; outline-offset:3px; border-radius:4px; }
 details.same { margin:0 0 16px; }
 details.same summary { font-size:15px; padding:8px 0; cursor:pointer; color:var(--muted); }
-details.ruled { margin:8px 0 0; }
-details.ruled summary { font-size:15px; color:var(--muted); padding:8px 0; cursor:pointer; }
 </style>
-<script src="/board/thread.js"></script>
 </head>
 <body>
 <p class="sub todo"><b>What to do:</b> __TODO__</p>
 <h1>__TITLE__</h1>
 __NOTE__
-<main id="out"><p class="note">Loading…</p></main>
+<main id="out" data-folder="__FOLDER__" data-board-url="__BOARD_URL__"><p class="note">Loading…</p></main>
 <script>
 // Reads index.md (the table agents keep) and shows each fix with its pictures inline.
 const out = document.getElementById('out');
@@ -56,9 +55,9 @@ const slug = (n) => n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$
 const isBefore = (label) => /^before$/i.test(label.trim());
 const isAfter = (label) => /^after$/i.test(label.trim());
 const isImg = (u) => /\.(png|jpe?g|gif|webp|svg)$/i.test(u);
-const ITEM = '__ITEM__';
-const FOLDER = '__FOLDER__';  // every comment on this page goes to this board item, prefixed with its picture
+const { folder, boardUrl } = out.dataset;
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const commentLink = (subject) => `<a class="comment" href="${esc(boardUrl)}">Comment on this ${subject} on the board</a>`;
 
 function pictures(cell) {
   // Groups are separated by " · ". A group may start with "name:" followed by links.
@@ -107,13 +106,13 @@ function lookLine(text) {
   // A second line, written after ' ¶ ' in the cell, is its own line in the same block.
   const [first, ...more] = (text || '').split(' ¶ ');
   return text ? `<p class="look"><b>Look at:</b> ${esc(first)}${more.map((m) => `<span class="ask">${esc(m)}</span>`).join('')}</p>`
-    : '<p class="look missing"><b>Look at:</b> not written yet. Tell us in the box what is unclear.</p>';
+    : '<p class="look missing"><b>Look at:</b> not written yet. Use the comment link to say what is unclear.</p>';
 }
 
   const sameAs = (r) => (r[5] || '').trim();
   const foldedUnder = (leader) => rows.filter((r) => sameAs(r) === leader[0]);
   const section = ([fix, task, state, cell, look]) => {
-    const name = (label, group, url) => url ? FOLDER + '/' + url : FOLDER + '/' + task;
+    const name = (url) => `${folder}/${url || task}`;
     const cls = /^landed/.test(state) ? 'done' : 'wait';
     const groups = pictures(cell || '');
     const rowLive = groups.map((g) => g.live).find(Boolean) || '';
@@ -121,26 +120,26 @@ function lookLine(text) {
     const btn = (u) => u ? `<a class="live" href="${esc(u)}">Open live mock</a>` : '';
     const idOf = (n) => `id="${esc(slug(n))}"`;
     const link = (n) => `<a class="permalink" href="#${esc(slug(n))}" aria-label="link to this item" title="link to this item">\u{1F517}</a>`;
-    const textItem = (n, lk, u) => `<figure ${idOf(n)} data-item data-kind="item" data-name="${esc(n)}">${link(n)}${lk}${btn(u)}</figure>`;
-    const body = !any ? textItem(name('', '', ''), lookLine(look), '') : groups.map((g) => {
+    const textItem = (n, lk, u) => `<figure ${idOf(n)} data-item data-kind="item" data-name="${esc(n)}">${link(n)}${lk}${btn(u)}${commentLink('item')}</figure>`;
+    const body = !any ? textItem(name(''), lookLine(look), '') : groups.map((g) => {
       const lk = lookLine(lookFor(look, g.name));
       const u = g.live || rowLive;
-      const pic = (l, lbl) => `<div class="side">${lbl ? `<span class="lbl">${lbl}</span>` : ''}<a href="${esc(l.url)}"><img loading="lazy" src="${esc(l.url)}" alt="${esc(l.label)}"></a></div>`;
+      const pic = (l) => `<div class="side"><span class="lbl">${esc(l.label)}</span><a href="${esc(l.url)}"><img loading="lazy" src="${esc(l.url)}" alt="${esc(l.label)}"></a><div class="stamp">Stamp: …</div>${commentLink('picture')}</div>`;
       const figs = g.items.length ? g.items.map((it) => {
         if (it.lone && !isImg(it.lone.url)) return `<p><a href="${esc(it.lone.url)}">${esc(it.lone.label)}</a></p>`;
         if (it.lone) {
-          const { label, url } = it.lone, n = name(label, g.name, url);
-          return `<figure ${idOf(n)} data-item data-kind="picture" data-name="${esc(n)}">${link(n)}${lk}${isBefore(label) ? '' : btn(u)}${pic(it.lone, '')}</figure>`;
+          const { label, url } = it.lone, n = name(url);
+          return `<figure ${idOf(n)} data-item data-kind="picture" data-name="${esc(n)}">${link(n)}${lk}${isBefore(label) ? '' : btn(u)}${pic(it.lone)}</figure>`;
         }
-        const n = name('', g.name, it.before.url), other = name('', g.name, it.after.url);
-        return `<figure ${idOf(n)} data-item data-kind="picture" data-pair="pair" data-name="${esc(n)}" data-also="${esc(other)}">${link(n)}${lk}${btn(u)}<div class="pair ba">${pic(it.before, 'before')}${pic(it.after, 'after')}</div></figure>`;
+        const n = name(it.before.url);
+        return `<figure ${idOf(n)} data-item data-kind="picture" data-pair="pair" data-name="${esc(n)}">${link(n)}${lk}${btn(u)}<div class="pair ba">${pic(it.before)}${pic(it.after)}</div></figure>`;
       }).join('')
-        : textItem(name('', '', g.live), lk, g.live);
+        : textItem(name(g.live), lk, g.live);
       return `<div class="group">${g.name ? `<h3>${esc(g.name)}</h3>` : ''}<div class="${g.items.some((i) => i.lone) && !g.items.some((i) => i.before) ? 'pair' : 'items'}">${figs}</div></div>`;
     }).join('');
     return `<section class="fix"><h2>${esc(fix)}</h2>${task || state ? `<p class="meta">${esc(task)} · <span class="state ${cls}">${esc(state)}</span></p>` : ''}${body}</section>`;
   };
-  // A group shows its first picture, then every other picture of the same change in a closed fold; each keeps its own comment box.
+  // A group shows its first picture, then the other pictures of the same change in a closed fold.
   const withFold = (r) => {
     const rest = foldedUnder(r);
     return section(r) + (rest.length ? `<details class="same"><summary>Same change in ${rest.length} more picture${rest.length === 1 ? '' : 's'} (show)</summary>${rest.map(section).join('')}</details>` : '');
@@ -148,60 +147,20 @@ function lookLine(text) {
   out.innerHTML = rows.filter((r) => !sameAs(r)).reverse().map(withFold).join('');
 }
 
-// Every comment box, every entry under a picture, the polling and the "is answering" line come from the one thread module.
-const store = BoardThread.store(ITEM);
-
-function commentBoxes() {
-  for (const fig of document.querySelectorAll('figure[data-item]')) {
-    const n = fig.dataset.name, also = fig.dataset.also;  // a pair holds two pictures: comments on either belong to it
-    const topic = { kind: fig.dataset.kind, name: n, also };
-    let first = true;
-    const list = store.list({ topic, order: 'newest', replies: true, onSync: (entries) => {
-      const last = entries[entries.length - 1];
-      if (first) {
-        first = false;
-        // John's comment is the last word on it: he has ruled, so it is folded where it stands until an agent answers.
-        const johnOnBefore = entries.some((t) => BoardThread.isJohn(t.by) && BoardThread.topicOf(t)?.name === n);
-        const waiting = last && BoardThread.isJohn(last.by) && last.kind === 'question';
-        if (last && BoardThread.isJohn(last.by) && !waiting && (!also || johnOnBefore)) fig.dataset.ruled = '1';
-      } else if (last && !BoardThread.isJohn(last.by)) unfold(fig);
-    } });
-    // the picture's own box sits right under the picture, above its comments (newest first), each with its own reply box
-    fig.append(store.compose({ topic, label: 'Comment on ' + n, placeholder: 'Your comment' }), list);
-  }
-}
-
-// Answered pictures stay where they are in the page order, each in its own closed fold.
-function foldRuled() {
-  const ruled = [...document.querySelectorAll('figure[data-item][data-ruled]')];
-  for (const fig of ruled) {
-    const fold = document.createElement('details'); fold.className = 'ruled';
-    fold.innerHTML = '<summary>Answered: tap to show</summary>';
-    fig.before(fold); fold.append(fig);
-  }
-  if (ruled.length && !out.querySelector('figure[data-item]:not([data-ruled])')) out.insertAdjacentHTML('afterbegin', '<p class="note">Nothing new to look at: every picture here has your answer.</p>');
-}
-function unfold(fig) { const d = fig.closest('details.ruled'); if (d) { d.replaceWith(fig); delete fig.dataset.ruled; } }
-
-// Deep link: index.html#<id> opens the answered fold if needed, scrolls to the item and rings it.
+// A picture link opens its group if needed, scrolls to the item and rings it.
 function goToHash() {
   document.querySelectorAll('figure.here').forEach((f) => f.classList.remove('here'));
-  const id = decodeURIComponent(location.hash.slice(1));
-  const el = id && document.getElementById(id);
+  let id;
+  try { id = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+  const el = document.getElementById(id);
   if (!el) return;
-  const fold = el.closest('details.ruled'); if (fold) fold.open = true;
+  const fold = el.closest('details.same'); if (fold) fold.open = true;
   el.classList.add('here');
   el.scrollIntoView({ block: 'center' });
 }
 addEventListener('hashchange', goToHash);
 
-fetch('index.md?html', { cache: 'no-store' })
-  .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
-  .then(render)
-  .then(() => store.ready).then(commentBoxes).then(foldRuled).then(goToHash)
-  .catch((e) => { out.innerHTML = `<p class="note">Could not read index.md (${esc(String(e))}).</p>`; });
-
-// Stamp line under every picture: read from the PNG text chunk "stamp" (before-after-shoot.mjs writes it, mark-diff.py keeps it).
+// Both the review capture tools and the CI baseline job write provenance to PNG text chunks.
 function pngText(buf, key) {
   const v = new DataView(buf);
   if (buf.byteLength < 8 || v.getUint32(0) !== 0x89504e47) return null;
@@ -216,17 +175,27 @@ function pngText(buf, key) {
   return null;
 }
 async function addStamp(img) {
-  if (img.dataset.stamped) return;
-  img.dataset.stamped = '1';
   let text = null;
-  try { text = pngText(await (await fetch(img.src)).arrayBuffer(), 'stamp'); } catch (e) { text = null; }
-  const d = document.createElement('div');
-  d.className = 'stamp'; d.style.cssText = 'font:11px/1.3 monospace;color:#666;overflow-wrap:anywhere;margin-top:2px';
-  d.textContent = text ? 'Stamp: ' + text : 'Stamp: none (not shot by the stamping tools)';
-  (img.closest('a') || img).after(d);
+  try {
+    const buffer = await (await fetch(img.src)).arrayBuffer();
+    text = pngText(buffer, 'stamp') || pngText(buffer, 'openisd-visual-run');
+  } catch { /* A missing stamp leaves the picture in place. */ }
+  img.closest('.side').querySelector('.stamp').textContent = text ? 'Stamp: ' + text : 'Stamp: none (not shot by the stamping tools)';
 }
-new MutationObserver(() => out.querySelectorAll('img').forEach(addStamp)).observe(out, { childList: true, subtree: true });
-out.querySelectorAll('img').forEach(addStamp);
+
+async function loadPictures() {
+  try {
+    const response = await fetch('index.md?html', { cache: 'no-store' });
+    if (!response.ok) throw new Error(response.status);
+    render(await response.text());
+  } catch (error) {
+    out.innerHTML = `<p class="note">Could not read index.md (${esc(String(error))}).</p>`;
+    return;
+  }
+  out.querySelectorAll('img').forEach(addStamp);
+  goToHash();
+}
+loadPictures();
 </script>
 </body>
 </html>

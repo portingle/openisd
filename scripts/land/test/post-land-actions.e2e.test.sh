@@ -84,6 +84,7 @@ if [ $r = 1 ] && [ -n "$f" ] && grep -q '^status: open' "$f" && grep -q 'browser
 
 # 3. a red with screen-picture failures builds the visual before/after page from the downloaded pictures
 export VISUAL_PAGES_DIR="$SCRATCH/pages" VISUAL_PAGES_URL="http://example.test/pages"
+export VISUAL_FEEDBACK_ITEM=picture-review
 setup; s=$(commit_push three); echo failure > "$FAKE_GH/$s.conclusion"
 echo "  ✘  7 packages/ui/test/visual/visual.browser.spec.ts:9:3 › visual mobile a (1.0s)" > "$FAKE_GH/$s.log"
 mkdir -p "$FAKE_GH/$s.artifacts/failures-2/visual-mobile-a"
@@ -91,7 +92,7 @@ for k in expected actual diff; do printf "$k" > "$FAKE_GH/$s.artifacts/failures-
 post "$s" a; r=$?; f=$(fixes_for "$s")
 if [ $r = 1 ] && [ -n "$f" ] && grep -q 'visual screens: mobile-a' "$f" && [ -e "$VISUAL_PAGES_DIR/red-${s:0:10}/mobile-a.diff.png" ]; then
     ok "a screen-picture red names the screen and builds its page"; else fail "visual red (r=$r f=$f) $(tail -5 "$SCRATCH/out.a")"; fi
-unset VISUAL_PAGES_DIR VISUAL_PAGES_URL
+unset VISUAL_PAGES_DIR VISUAL_PAGES_URL VISUAL_FEEDBACK_ITEM
 
 # 4. no Actions run for the sha within ACTIONS_FIND_S is a red, never a green
 setup; s=$(commit_push four); post "$s" a; r=$?; f=$(fixes_for "$s")

@@ -47,11 +47,12 @@ class Generate(unittest.TestCase):
         m = load()
         with tempfile.TemporaryDirectory() as d:
             pathlib.Path(d, "index.md").write_text("# My fixes\n| a |\n|---|\n| b |\n")
-            m.write_page(pathlib.Path(d), "QO12", "Look at each picture.")
+            m.write_page(pathlib.Path(d), "picture-review", "Look at each picture.", "")
             html = pathlib.Path(d, "index.html").read_text()
-            self.assertIn("QO12", html)
+            self.assertIn('data-board-url="http://woody:8000/?item=picture-review"', html)
             self.assertIn("Look at each picture.", html)
             self.assertIn("My fixes", html)
+            self.assertNotIn("__BOARD_URL__", html)
             self.assertNotIn("__ITEM__", html)
             self.assertNotIn("__TODO__", html)
             self.assertLess(html.index("What to do"), html.index("<h1>"))
@@ -59,16 +60,26 @@ class Generate(unittest.TestCase):
     def test_todo_is_escaped(self):
         m = load()
         with tempfile.TemporaryDirectory() as d:
-            m.write_page(pathlib.Path(d), "QO1", "<script>x</script> & y")
+            m.write_page(pathlib.Path(d), "picture-review", "<script>x</script> & y", "")
             html = pathlib.Path(d, "index.html").read_text()
             self.assertNotIn("<script>x</script>", html)
 
     def test_same_source_for_every_folder(self):
         m = load()
         with tempfile.TemporaryDirectory() as a, tempfile.TemporaryDirectory() as b:
-            m.write_page(pathlib.Path(a), "QO1", "t"); m.write_page(pathlib.Path(b), "QO1", "t")
+            m.write_page(pathlib.Path(a), "picture-review", "t", ""); m.write_page(pathlib.Path(b), "picture-review", "t", "")
             self.assertEqual(pathlib.Path(a, "index.html").read_text().replace(pathlib.Path(a).name, ""),
                              pathlib.Path(b, "index.html").read_text().replace(pathlib.Path(b).name, ""))
+
+    def test_card_is_required(self):
+        with tempfile.TemporaryDirectory() as d:
+            args = ["python3", str(HERE / "feedback-page.py"), d, "--todo", "Review the pictures", "--note", ""]
+            for card in ([], ["--card", " "]):
+                with self.subTest(card=card):
+                    result = subprocess.run([*args, *card], capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn("--card", result.stderr)
+                    self.assertFalse(pathlib.Path(d, "index.html").exists())
 
 
 @unittest.skipUnless(NODE_OK, "playwright missing")
@@ -169,11 +180,14 @@ class MarkDiff(unittest.TestCase):
 
 
 class SharedThreadModule(unittest.TestCase):
-    """One conversation, one code (T508): the page draws, sends and polls through the board's thread module."""
+    """Keep the earlier thread contract visible for the lead's decision."""
     def test_template_uses_board_thread_module_only(self):
         t = (HERE / "feedback-page.template.html").read_text(encoding="utf-8")
         self.assertIn('<script src="/board/thread.js"></script>', t)
         self.assertIn("store.list(", t); self.assertIn("store.compose(", t)
+
+    def test_template_has_no_copy_of_thread_logic(self):
+        t = (HERE / "feedback-page.template.html").read_text(encoding="utf-8")
         for own_copy in ("waitingLine", "pollThread", "/board/api/inbox", "/board/api/thread", "function said("):
             self.assertNotIn(own_copy, t)
 
@@ -183,15 +197,15 @@ class RuledPictures(unittest.TestCase):
     def test_answered_pictures_fold_away(self):
         with tempfile.TemporaryDirectory() as d:
             folder = pathlib.Path(d) / "F"; folder.mkdir()
-            page = load().write_page(folder, "QO0", "t")
+            page = load().write_page(folder, "picture-review", "t", "")
             done = subprocess.run(["node", str(HERE / "feedback_page_ruled_test.mjs"), str(page)],
                                   capture_output=True, text=True, cwd="/tmp")
             self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
 
-    def test_same_change_pictures_fold_and_keep_their_boxes(self):
+    def test_same_change_pictures_fold_and_keep_their_comment_links(self):
         with tempfile.TemporaryDirectory() as d:
             folder = pathlib.Path(d) / "F"; folder.mkdir()
-            page = load().write_page(folder, "QO0", "t")
+            page = load().write_page(folder, "picture-review", "t", "")
             done = subprocess.run(["node", str(HERE / "feedback_page_group_test.mjs"), str(page)],
                                   capture_output=True, text=True, cwd="/tmp")
             self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
@@ -199,7 +213,7 @@ class RuledPictures(unittest.TestCase):
     def test_live_thread_send_order_and_poll(self):
         with tempfile.TemporaryDirectory() as d:
             folder = pathlib.Path(d) / "F"; folder.mkdir()
-            page = load().write_page(folder, "QO0", "t")
+            page = load().write_page(folder, "picture-review", "t", "")
             done = subprocess.run(["node", str(HERE / "feedback_page_live_test.mjs"), str(page)],
                                   capture_output=True, text=True, cwd="/tmp")
             self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
@@ -225,7 +239,7 @@ class MarkDiffKeepsStamp(unittest.TestCase):
         m = load()
         with tempfile.TemporaryDirectory() as d:
             pathlib.Path(d, "index.md").write_text("# t\n")
-            m.write_page(pathlib.Path(d), "QO1", "x")
+            m.write_page(pathlib.Path(d), "picture-review", "x", "")
             r = subprocess.run(["node", str(HERE / "feedback_page_stamp_test.mjs"), str(pathlib.Path(d, "index.html"))],
                                capture_output=True, text=True, cwd=str(HERE))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)

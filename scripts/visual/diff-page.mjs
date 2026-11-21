@@ -1,15 +1,14 @@
 #!/usr/bin/env node
-// Writes a before/after page for John: one item per picture, each with its own comment box.
-//   node scripts/visual/diff-page.mjs <outdir> <title> <entries.json> [note]
+// Writes a before/after page for John with a board comment link under each picture.
+//   node scripts/visual/diff-page.mjs <outdir> <title> <entries.json> <card-id> <note>
 // entries.json: [{"name": "mobile-wizard-sealed-step4", "before": "/path/a.png", "after": "/path/b.png", "diff": "/path/d.png"}]
 // note: one or two plain sentences on what the user sees change (the task file's visual_note); shown under the title
-// and in the first picture's Look at line.
+// and in the first picture's Look at line. Pass an empty string if there is no note.
 // before, after and diff may each be null (a new or removed screen, or no diff picture). Pictures are
 // copied into <outdir>, so the page stands alone.
 // The page itself is made by scripts/feedback/feedback-page.py (rule: John's pages are never hand-built):
 // this script copies the pictures, marks them with scripts/feedback/mark-diff.py (a red box on what changed,
 // or on the whole screen when nothing can be told apart), writes <outdir>/index.md and runs the tool.
-// Comments go to the board item in VISUAL_FEEDBACK_ITEM (default QO284).
 import {spawnSync} from 'node:child_process';
 import {copyFileSync, mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
@@ -17,13 +16,12 @@ import {fileURLToPath} from 'node:url';
 import {groupLeaders} from './groups.mjs';
 import {plainScreenName} from './screen-names.mjs';
 
-const [outDir, title, entriesFile, note = ''] = process.argv.slice(2);
-if (!outDir || !title || !entriesFile) {
-  console.error('usage: diff-page.mjs <outdir> <title> <entries.json> [note]');
+const [outDir, title, entriesFile, card, note] = process.argv.slice(2);
+if (!outDir || !title || !entriesFile || !card?.trim() || note === undefined) {
+  console.error('usage: diff-page.mjs <outdir> <title> <entries.json> <card-id> <note>');
   process.exit(2);
 }
 const galleryBin = process.env.VISUAL_GALLERY_BIN ?? resolve(dirname(fileURLToPath(import.meta.url)), '../feedback');
-const item = process.env.VISUAL_FEEDBACK_ITEM ?? 'QO284';
 const entries = JSON.parse(readFileSync(entriesFile, 'utf8'));
 mkdirSync(outDir, {recursive: true});
 
@@ -85,7 +83,7 @@ const followers = leaders.map((_, i) => leaders.filter((x, k) => x === i && k !=
 
 // index.md row: Fix | Task | State | Pictures | Look at | Same as. Fix is the screen in words; Task and State stay empty
 // (the page shows neither). Same as is the leader's screen name, empty for a group's first picture.
-// feedback-page.template.html folds every row that names a leader under that leader, with its own comment box.
+// feedback-page.template.html folds every row that names a leader under that leader.
 const names = prepared.map(p => plainScreenName(p.entry.name));
 const rows = prepared.map(({before, after, diff}, i) => {
   const links = [['before', before], ['after', after], ['difference', diff]].filter(([, f]) => f).map(([label, f]) => `[${label}](${f})`);
@@ -97,7 +95,7 @@ const rows = prepared.map(({before, after, diff}, i) => {
 });
 
 writeFileSync(join(outDir, 'index.md'), `# ${cell(title)}\n| Fix | Task | State | Pictures | Look at | Same as |\n|---|---|---|---|---|---|\n${rows.join('\n')}\n`);
-const todo = 'Look at the red boxes and type under each picture whether the new look is right or wrong. Nothing else to do.';
-const page = spawnSync('python3', [join(galleryBin, 'feedback-page.py'), outDir, '--item', item, '--todo', todo, '--note', note], {encoding: 'utf8'});
+const todo = 'Look at the red boxes. Use the link under a picture to say on the board whether the change looks right.';
+const page = run('feedback-page.py', [outDir, '--card', card, '--todo', todo, '--note', note]);
 if (page.status !== 0) { console.error(`feedback-page.py failed: ${page.stderr}`); process.exit(1); }
 console.log(`${entries.length} screen(s) in ${leaders.filter((l, i) => l === i).length} group(s): ${join(outDir, 'index.html')}`);

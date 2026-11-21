@@ -2,12 +2,14 @@
 # After a landing that changed baselines: a before/after page of each changed screen, for John to approve.
 #   bash scripts/visual/publish-changes.sh <task-id> <base> <head>
 # Prints "visual changes: <url>", or nothing when no baseline changed. Pictures come from the two commits.
+# VISUAL_FEEDBACK_ITEM names the live decision board card for the pictures.
 set -euo pipefail
 task="${1:?usage: publish-changes.sh <task-id> <base> <head>}"; base="${2:?}"; head="${3:?}"
 # shellcheck source=./lib.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 ids="$(visual_changed_ids "$base" "$head")"
 [ -n "$ids" ] || exit 0
+card="${VISUAL_FEEDBACK_ITEM:?Set VISUAL_FEEDBACK_ITEM to the live decision board card ID}"
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 entries="$work/entries.json"; printf '[' > "$entries"; first=1
 while IFS= read -r id; do
@@ -26,5 +28,5 @@ else
   title="Screens that look different after this change"
   echo "visual: warning: tasks/$task.yml has no visual_note: (one or two plain sentences on what the user sees change); the page cannot say what to look at" >&2
 fi
-node "$VISUAL_SCRIPTS/diff-page.mjs" "$out" "$title" "$entries" "$note" > /dev/null
+node "$VISUAL_SCRIPTS/diff-page.mjs" "$out" "$title" "$entries" "$card" "$note" > /dev/null
 printf 'visual changes: %s/%s/index.html\n' "$VISUAL_PAGES_URL" "$(basename "$out")"
