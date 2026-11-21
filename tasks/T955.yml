@@ -2,7 +2,7 @@ id: T955
 release_note: internal
 repo: openisd
 owner: bob
-status: open
+status: done
 goal: 'The Your data and Restore one project pictures depend on save times and the browser'''s persistence answer; fix both in the picture harness'
 why: 'fixer (lead), 21 Nov 2026: CI picture review on PR 154 (run 44923383800) flagged mobile-dialog-options-your-data showing ''This site uses 1.2 MB of the 2.3 GB this browser allows'' and sizes moving 20.5 to 20.6 KB between runs; John, 16 Oct 2026 ''no workarounds''; BUG_20261121_your-data-picture-depends-on-save-time-and-browser'
 done_test: bash scripts/quiet-test.sh npm run typecheck
