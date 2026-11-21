@@ -2,7 +2,7 @@ id: T950
 release_note: internal
 repo: openisd
 owner: lead
-status: open
+status: done
 label: fixes
 goal: Update the blocked-chart wording and new-project driver preview assertions for the approved screen changes.
 why: "Main suite run 44838606967 failed 27 browser cases on the prior wording and preview precision. John, 20 Nov 2026, approved the screen changes that introduced both."
