@@ -21,3 +21,4 @@ visual:
   - mobile-dialog-options-your-data
   - mobile-dialog-shared-storage-restore-picker
 visual_note: Your data keeps the fixed 1.2 MB of 2.3 GB line; the stored sizes no longer carry a startup backup or depend on save times. The restore picker shows one backup taken at 14:00 UTC.
+label: fixes
