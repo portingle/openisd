@@ -1,0 +1,10 @@
+id: T955
+release_note: internal
+repo: openisd
+owner: bob
+status: open
+goal: 'The phone Options ''Your data'' picture shows the drawing machine''s real disk quota and storage sizes; fake them in the picture harness so the picture is the same on every machine'
+why: 'fixer (lead), 21 Nov 2026: CI picture review on PR 154 (run 44923383800) flagged mobile-dialog-options-your-data showing ''This site uses 1.2 MB of the 2.3 GB this browser allows'' and sizes moving 20.5 to 20.6 KB between runs; John, 16 Oct 2026 ''no workarounds''; BUG_20261121_options-your-data-picture-shows-machine-quota'
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T955.yml
