@@ -3,7 +3,7 @@
  * (standard, Iso-Barik) x the Advanced switches the sweep reads (John, 20 Nov 2026 00:52, board card test-guardrails:
  * "All of A-G: build every guardrail on the card, the physics-law combination test (B) first"; plan
  * docs/plans/PLAN_20261119_TEST_STRATEGY.md option B). The rules, why each holds and why each tolerance is what it is:
- * tasks/T939.yml `notes`. A rule that fails is a fault in the engine: it is written as the right expectation under
+ * the driver-array guardrail task notes (tasks/T939.yml). A rule that fails is a fault in the engine: it is written as the right expectation under
  * `it.fails` naming its bug file, never loosened.
  *
  * Each box starts from its WinISD fixture; the project turns it into the engine's sweep job and the test varies the job.
@@ -16,10 +16,14 @@ import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '../../engine/Engine.js';
 import {FixedAir} from '../../engine/air.js';
+import type {DriverWiring} from '../../engine/array/driverWiring.js';
 import type {CircuitModel, Filter, MaxCurvesResult, SweepParams, SweepResult} from '../../engine/types.js';
 import type {SweepDriver} from '../../engine/solverTypes.js';
+import type {FrequencyGrid} from '../../domain/box/frequencyGrid.js';
 import type {SweepJob} from '../../domain/project/projectSweep.js';
 import {WinIsdProjectConverter} from '../../domain/winIsdProjectConverter.js';
+import {WINISD_ISOBARIK_ND1_ISO_CAPTURE as CAPTURE_PAIR, type WinIsdPlottedPoint} from '../fixtures/winisdIsobarikNd1IsoCapture.js';
+import {WINISD_ISOBARIK_ND1_STD_CAPTURE as CAPTURE_ONE} from '../fixtures/winisdIsobarikNd1StdCapture.js';
 
 const engine = createEngine();
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), '..', 'winisd', 'fixtures');
@@ -49,14 +53,14 @@ const BOXES: readonly BoxCase[] = [
 ];
 
 /** One driver's job, from the fixture as WinISD saved it, with the "Two-BL driver" switch ticked so the typed BL is in it. */
-function baseJob(c: BoxCase): SweepJob {
-  const {value: project, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(readFileSync(join(FIXTURES, `${c.wpr}.wpr`), 'utf8'));
-  if (project === null) throw new Error(`${c.wpr}: ${JSON.stringify(errors)}`);
+function baseJob(wpr: string, grid: FrequencyGrid): SweepJob {
+  const {value: project, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(readFileSync(join(FIXTURES, `${wpr}.wpr`), 'utf8'));
+  if (project === null) throw new Error(`${wpr}: ${JSON.stringify(errors)}`);
   project.nDrivers.set(1);
   project.loading.set('standard');
   project.winisdDriverModel.set(true);
-  const plan = project.sweepPlan(GRID);
-  if (plan.kind !== 'ready') throw new Error(`${c.wpr}: sweep blocked: ${JSON.stringify(plan.issues)}`);
+  const plan = project.sweepPlan(grid);
+  if (plan.kind !== 'ready') throw new Error(`${wpr}: sweep blocked: ${JSON.stringify(plan.issues)}`);
   return plan.job;
 }
 
@@ -94,10 +98,6 @@ function allOff(p: SweepParams): SweepParams {
     vcTempRise: 0, alfaVC: 0, driverAddedMass: 0, filters: []};
 }
 
-/** `winisdIsobarik: true`: the pair is WinISD's (T942's "WinISD's Iso-Barik numbers"; the project default is the physical pair,
- *  whose coil wiring follows the array's `driverWiring`, so R2's one-pair reference and its series array would not be the same
- *  pair). The physical pair is not covered here: R4 and R2 for it wait for John (tasks/T939.yml notes). */
-
 /** A combination: which switches are on, and the circuit model. */
 interface Row { readonly name: string; readonly on: ReadonlySet<SwitchName>; readonly circuitModel: CircuitModel }
 
@@ -112,7 +112,7 @@ interface Setup { readonly driver: SweepDriver; readonly Le_H: number | undefine
 
 function setupOf(job: SweepJob, row: Row): Setup {
   let P: SweepParams = allOff({...job.sweep, air: new FixedAir(job.air), eg: DRIVE_V, nDrivers: 1, loading: 'standard',
-    driverWiring: 'parallel', circuitModel: row.circuitModel, winisdIsobarik: true});
+    driverWiring: 'parallel', circuitModel: row.circuitModel});
   for (const s of row.on) if (s !== 'twoBlDriver') P = SWITCHES[s](P);
   const driver: SweepDriver = row.on.has('twoBlDriver') ? job.driver : {...job.driver, winisdBL_Tm: null};
   return {driver, Le_H: job.Le_H, box: job.box, P};
@@ -226,11 +226,55 @@ function rgEach(P: SweepParams, n: number, wiring: 'parallel' | 'series'): numbe
 
 type RuleId = 'R1 parallel array' | 'R2 series array' | 'R3 Xmax limit only lowers' | 'R4 Iso-Barik pair' | 'R9 every curve finite';
 
-/** The misses of one rule for one box, one combination and one loading. */
-function ruleMisses(rule: RuleId, s: Setup, loading: 'standard' | 'isobaric'): Miss[] {
-  const P: SweepParams = {...s.P, loading};
+interface PairMode { readonly winisdIsobarik: boolean; readonly wiring: DriverWiring }
+const WIRINGS: readonly DriverWiring[] = ['parallel', 'series'];
+const PAIR_MODES = [false, true].flatMap((winisdIsobarik) => WIRINGS.map((wiring): PairMode => ({winisdIsobarik, wiring})));
+
+function pairMisses(s: Setup, {winisdIsobarik, wiring}: PairMode): Miss[] {
+  // Two coupled cones move together, with one cone radiating. Each motor still has its own BL. The moving mass,
+  // suspension stiffness and mechanical damping double. Halving the chamber volumes, port areas and radiator count
+  // doubles the acoustic load, so both motors work into the same load per cone as the single driver.
+  // At a given terminal voltage, parallel gives both coils the full voltage and twice the total force, so the
+  // doubled load moves at the single cone's speed. Series gives each coil half the voltage and half the current,
+  // so the force equals one driver's and the doubled load moves at half speed. The identical branch impedances
+  // halve in parallel or double in series, including their motional component.
+  // WinISD's equal-load convention has half the cone motion and pressure in the half-box comparison. The same-box
+  // capture check below tests the measured 6.03 dB gap at 1998.9 Hz on the exact capture geometry.
+  const motion = winisdIsobarik || wiring === 'series' ? 0.5 : 1;
+  const load = winisdIsobarik ? 1 : wiring === 'parallel' ? 0.5 : 2;
+  const pair = sweep(s, {...boxTimes(s.P, 0.5), loading: 'isobaric', driverWiring: wiring, winisdIsobarik});
+  // Keep the same amplifier voltage and the same source-resistance drop relative to the terminal load.
+  const one = sweep(s, {...s.P, Rs: (s.P.Rs ?? 0) / load});
+  const portMotion = 2 * motion;
+  return misses([
+    {name: 'SPL', group: 'response', got: pair.spl, want: one.spl, check: levelPlus(20 * Math.log10(motion))},
+    {name: 'excursion', group: 'response', got: pair.exc, want: one.exc, check: times(motion)},
+    {name: 'impedance', group: 'impedance', got: pair.zmag, want: one.zmag, check: times(load)},
+    {name: 'impedance phase', group: 'impedance', got: pair.zph, want: one.zph, check: samePhaseDeg},
+    {name: 'phase', group: 'response', got: pair.phase, want: one.phase, check: samePhase},
+    {name: 'group delay', group: 'response', got: pair.gd, want: one.gd, check: sameDelay},
+    {name: 'transfer function', group: 'response', got: pair.tfMag, want: one.tfMag, check: levelPlus(0)},
+    // The same fraction of total flow goes through half the port area or half the radiators.
+    {name: 'radiator excursion', group: 'response', got: pair.excPR, want: one.excPR, check: times(portMotion)},
+    // A passive-radiator box has no port: its `pv` is no chart (SweepResult.pv), so only ported boxes are held to this.
+    {name: 'port velocity', group: 'response', got: s.box === 'box-passive-radiator' ? null : pair.pv, want: s.box === 'box-passive-radiator' ? null : one.pv, check: times(portMotion)},
+    {name: 'rear port velocity', group: 'response', got: pair.pvRear, want: one.pvRear, check: times(portMotion)},
+    {name: 'intra port velocity', group: 'response', got: pair.pvIntra, want: one.pvIntra, check: times(portMotion)},
+  ]);
+}
+
+type RuleCase =
+  | { readonly rule: 'R4 Iso-Barik pair'; readonly pairMode: PairMode }
+  | { readonly rule: Exclude<RuleId, 'R4 Iso-Barik pair'>; readonly loading: 'standard' | 'isobaric' };
+
+/** The misses of one rule for one box and combination. */
+function ruleMisses(s: Setup, c: RuleCase): Miss[] {
+  if (c.rule === 'R4 Iso-Barik pair') return pairMisses(s, c.pairMode);
+  // Keep the existing array-rule comparisons on WinISD pairs. A physical series array changes the wiring inside
+  // each pair too, so its one-pair reference would need a separate array-rule comparison.
+  const P: SweepParams = {...s.P, loading: c.loading, winisdIsobarik: true};
   const oneDriverImpedance = P.winisdOneDriverImpedance === true;
-  switch (rule) {
+  switch (c.rule) {
     case 'R1 parallel array':
       return [2, 3].flatMap((n) => {
         const array: SweepParams = {...boxTimes(P, n), nDrivers: n, driverWiring: 'parallel'};
@@ -268,24 +312,6 @@ function ruleMisses(rule: RuleId, s: Setup, loading: 'standard' | 'isobaric'): M
       }
       return found.slice(0, 3);
     }
-    case 'R4 Iso-Barik pair': {
-      const pair = sweep(s, {...boxTimes(P, 0.5), loading: 'isobaric'});
-      const one = sweep(s, {...P, loading: 'standard'});
-      return misses([
-        {name: 'SPL', group: 'response', got: pair.spl, want: one.spl, check: levelPlus(-10 * Math.log10(2))},
-        {name: 'excursion', group: 'response', got: pair.exc, want: one.exc, check: times(Math.SQRT1_2)},
-        {name: 'impedance', group: 'impedance', got: pair.zmag, want: one.zmag, check: sameLinear},
-        {name: 'impedance phase', group: 'impedance', got: pair.zph, want: one.zph, check: samePhaseDeg},
-        {name: 'phase', group: 'response', got: pair.phase, want: one.phase, check: samePhase},
-        {name: 'group delay', group: 'response', got: pair.gd, want: one.gd, check: sameDelay},
-        {name: 'transfer function', group: 'response', got: pair.tfMag, want: one.tfMag, check: levelPlus(0)},
-        {name: 'radiator excursion', group: 'response', got: pair.excPR, want: one.excPR, check: times(Math.SQRT2)},
-        // A passive-radiator box has no port: its `pv` is no chart (SweepResult.pv), so only ported boxes are held to this.
-        {name: 'port velocity', group: 'response', got: s.box === 'box-passive-radiator' ? null : pair.pv, want: s.box === 'box-passive-radiator' ? null : one.pv, check: times(Math.SQRT2)},
-        {name: 'rear port velocity', group: 'response', got: pair.pvRear, want: one.pvRear, check: times(Math.SQRT2)},
-        {name: 'intra port velocity', group: 'response', got: pair.pvIntra, want: one.pvIntra, check: times(Math.SQRT2)},
-      ]);
-    }
     case 'R9 every curve finite': {
       const found: Miss[] = [];
       for (const n of [1, 2, 3]) for (const wiring of ['parallel', 'series'] as const) {
@@ -316,50 +342,86 @@ function groupsOf(rule: RuleId): readonly Group[] {
   }
 }
 
-/** One case: a box, a rule, a part of it, a combination and a loading (R4 compares the two loadings, so it runs once). */
-interface Case { readonly box: BoxCase; readonly rule: RuleId; readonly group: Group; readonly row: Row; readonly loading: 'standard' | 'isobaric' }
-const titleOf = (c: Case): string =>
-  `${c.box.label}: ${c.rule} (${c.group}), ${c.row.name}${c.rule === 'R4 Iso-Barik pair' ? '' : `, ${c.loading} loading`}`;
+type Case = RuleCase & { readonly box: BoxCase; readonly group: Group; readonly row: Row };
+const settingOf = (c: RuleCase): string => c.rule === 'R4 Iso-Barik pair'
+  ? `${c.pairMode.winisdIsobarik ? 'WinISD numbers' : 'physical pair'}, ${c.pairMode.wiring}` : `${c.loading} loading`;
+const titleOf = (c: Case): string => `${c.box.label}: ${c.rule} (${c.group}), ${c.row.name}, ${settingOf(c)}`;
 
 const CASES: readonly Case[] = BOXES.flatMap((box) => RULES.flatMap((rule) => groupsOf(rule).flatMap((group) => ROWS.flatMap((row) =>
-  (rule === 'R4 Iso-Barik pair' ? (['standard'] as const) : LOADINGS).map((loading): Case => ({box, rule, group, row, loading}))))));
+  rule === 'R4 Iso-Barik pair'
+    ? PAIR_MODES.map((pairMode): Case => ({box, rule, group, row, pairMode}))
+    : LOADINGS.map((loading): Case => ({box, rule, group, row, loading}))))));
 
-/** The faults the rules found on main (20 Nov 2026), each a bug file in bugs/, and the cases each one breaks. A case a fault
- *  breaks runs as `it.fails`: when the fault is fixed the case passes, `it.fails` goes red, and the fault comes out of here. */
-const ISOBARIK_TWO_BL = 'BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver';
 const PR_LOSSES = 'BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count';
+const WINISD_PAIR_INDUCTANCE = 'BUG_20261121_winisd-isobarik-inductance-changes-response-shape';
 
 function faultsOf(c: Case): readonly string[] {
-  const prLosses = c.box.wpr.startsWith('pr-') && !c.row.on.has('winisdPrNprResonance');
   if (c.rule !== 'R4 Iso-Barik pair') return [];
-  const pairFault = c.group === 'response' ? [ISOBARIK_TWO_BL] : [];
-  return [...pairFault, ...(prLosses ? [PR_LOSSES] : [])];
+  const faults: string[] = [];
+  if (c.box.wpr === 'pr-w5-1' && !c.row.on.has('winisdPrNprResonance')) faults.push(PR_LOSSES);
+  if (c.group === 'response' && c.pairMode.winisdIsobarik && c.row.circuitModel === 'winisdGyrator') {
+    faults.push(WINISD_PAIR_INDUCTANCE);
+  }
+  return faults;
+}
+
+type CaptureChart = 'spl_dB' | 'excursion_m' | 'impedance_ohm';
+const difference = (pair: number, one: number): number => pair - one;
+const ratio = (pair: number, one: number): number => pair / one;
+
+function captureMiss(chart: CaptureChart, pair: readonly number[], one: readonly number[], compare: (pair: number, one: number) => number, check: Check): string | null {
+  const capturedPair: readonly WinIsdPlottedPoint[] = CAPTURE_PAIR[chart];
+  const capturedOne: readonly WinIsdPlottedPoint[] = CAPTURE_ONE[chart];
+  const got = capturedPair.map((_, i) => compare(pair[i * CAPTURE_PAIR.step], one[i * CAPTURE_ONE.step]));
+  const want = capturedPair.map((p, i) => compare(p.v, capturedOne[i].v));
+  return check(got, want);
 }
 
 describe('the driver array obeys physics rules over every box, driver count, wiring, loading and switch combination', () => {
-  const jobs = new Map(BOXES.map((b) => [b.wpr, baseJob(b)]));
+  const jobs = new Map(BOXES.map((b) => [b.wpr, baseJob(b.wpr, GRID)]));
   const jobOf = (box: BoxCase): SweepJob => {
     const job = jobs.get(box.wpr);
     if (job === undefined) throw new Error(`no job for ${box.wpr}`);
     return job;
   };
-  // A rule's parts share one computation: the misses of every part, per box, rule, combination and loading.
+  // A rule's parts share one computation for each box, rule, switch combination and comparison setting.
   const computed = new Map<string, readonly Miss[]>();
   const caseMisses = (c: Case): string[] => {
-    const key = `${c.box.wpr}|${c.rule}|${c.row.name}|${c.loading}`;
-    const all = computed.get(key) ?? ruleMisses(c.rule, setupOf(jobOf(c.box), c.row), c.loading);
+    const key = `${c.box.wpr}|${c.rule}|${c.row.name}|${settingOf(c)}`;
+    const all = computed.get(key) ?? ruleMisses(setupOf(jobOf(c.box), c.row), c);
     computed.set(key, all);
     return all.filter((m) => m.group === c.group).map((m) => m.text);
   };
 
   for (const c of CASES) {
+    const check = () => {
+      const found = caseMisses(c);
+      expect(found, found.join('\n')).toEqual([]);
+    };
     const faults = faultsOf(c);
     if (faults.length === 0) {
-      it(titleOf(c), () => expect(caseMisses(c)).toEqual([]));
+      it(titleOf(c), check);
     } else {
-      // BUG_ files: named in the title, from ISOBARIK_TWO_BL and PR_LOSSES above.
-      it.fails(`${titleOf(c)}: ${faults.join(', ')}`, () => expect(caseMisses(c)).toEqual([]));
+      // BUG_ files named in the title come from PR_LOSSES and WINISD_PAIR_INDUCTANCE above.
+      it.fails(`${titleOf(c)}: ${faults.join(', ')}`, check);
     }
+  }
+
+  // Both captures used the same 4.48 L box and 1 W setting. Compare the whole captured SPL gap,
+  // excursion ratio and impedance ratio on that geometry with the same voltage in both sweeps.
+  const captureJob = baseJob('sealed-w5-isobarik', CAPTURE_ONE.grid);
+  const captureParams: SweepParams = {...captureJob.sweep, air: new FixedAir(captureJob.air), rgAtDriverSide: false, winisdIsobarik: true};
+  const captureSetup: Setup = {...captureJob, P: captureParams};
+  const captureOne = sweep(captureSetup, captureParams);
+  for (const driverWiring of WIRINGS) {
+    const pair = sweep(captureSetup, {...captureParams, loading: 'isobaric', driverWiring});
+    it(`R4 Iso-Barik pair (response), WinISD sealed W5 capture, ${driverWiring}`, () => {
+      expect(captureMiss('spl_dB', pair.spl, captureOne.spl, difference, levelPlus(0)), 'SPL difference').toBeNull();
+      expect(captureMiss('excursion_m', pair.exc, captureOne.exc, ratio, sameLinear), 'excursion ratio').toBeNull();
+    });
+    it(`R4 Iso-Barik pair (impedance), WinISD sealed W5 capture, ${driverWiring}`, () => {
+      expect(captureMiss('impedance_ohm', pair.zmag, captureOne.zmag, ratio, sameLinear)).toBeNull();
+    });
   }
 
   it('R3 is not vacuous: every box drives the cone past Xmax somewhere at the test voltage', () => {

@@ -3,7 +3,7 @@ release_note: internal
 repo: openisd
 owner: guardrails-b
 status: done
-goal: A combination test over box type x number of drivers x Iso-Barik x wiring x the Advanced switches checks the engine against physics rules that always hold (array scaling, Iso-Barik equivalence, series = parallel at N x voltage, every curve finite).
+goal: A combination test over box type x number of drivers x Iso-Barik x wiring x the Advanced switches checks array scaling, both Iso-Barik modes, series = parallel at N x voltage, and curve finiteness.
 why: 'John, 20 Nov 2026 00:52, board card test-guardrails: "All of A-G: build every guardrail on the card, the physics-law combination test (B) first, plus the Finite number type and the four lint rules as ratchets"; plan docs/plans/PLAN_20261119_TEST_STRATEGY.md option B. The card says each guardrail "refuses a pull request, and removing one needs your OK", so the test file joins GATE_FILES in land.conf (protected gate files) on this branch.' 
 gates_approved: QO961
 done_test: bash scripts/test.sh packages/design/test/engine/driver-array-physics-law-combinations.test.ts
@@ -14,7 +14,9 @@ files:
   - bugs/BUG_20261120_array-pressure-and-xmax-limited-spl-not-scaled-by-driver-count.md
   - bugs/BUG_20261120_isobarik-impedance-motional-term-doubled.md
   - bugs/BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver.md
+  - bugs/archive/BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver.md
   - bugs/BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md
+  - bugs/BUG_20261121_winisd-isobarik-inductance-changes-response-shape.md
   - bugs/BUG_20261120_gate-approval-check-skipped-when-questions-file-missing.md
 notes: |
   Guardrail B of John's test-guardrails decision (20 Nov 2026 00:52, "All of A-G ... the physics-law combination test (B)
@@ -26,33 +28,35 @@ notes: |
   all on, and each switch on alone, which covers every pair of two switches in all four on/off states; the whole set is
   run for each of the three circuit models.
 
-  Rules (written before the test was run; tolerances are fixed by numerics, never tuned to a result):
+  Iso-Barik ruling QO964. John selected "A: real physics by default (box unticked)" on 20 Nov 2026 at 02:25 UTC and added
+  "the real physics by default was approved by me months ago". The recorded meaning is "Replaces the physics-law test
+  rule R4 (-3.01 dB): the test expects the coil wiring's physics when unticked and WinISD's captured numbers when ticked."
+
+  Rules (tolerances are fixed by numerics):
 
   | Rule | Statement | Why it holds | Tolerance and why |
   | ---- | --------- | ------------ | ----------------- |
   | R1 parallel array | N drivers wired in parallel in N x the box (every chamber volume, port area and radiator count x N) at amplifier voltage V equal one driver in the box at V, with series resistance N x Rg when Rg sits at the amplifier (Rg when each driver has its own): SPL and Xmax-limited SPL + 20 log10 N, pressure x N, VA x N, impedance / N (one driver's x 1 with "Impedance of one driver"), excursion, radiator excursion, port velocities, phase, group delay, transfer functions and port and radiator gains unchanged; maximum SPL + 20 log10 N, maximum power x N | Every driver sees the same voltage and the same share of the box, so by symmetry each moves as the one driver does (Thevenin: N parallel branches behind Rg each see N x Rg); N in-phase sources sum to N x the volume velocity, so N x the pressure; the parallel load is 1/N of one branch | 1e-9 dB on levels, 1e-9 relative on linear values, 1e-9 rad on phase (mod 2 pi), 1e-9 s on group delay. The two sides differ only by one N x then / N rounding of the box values (a few ulp, 1e-16 relative) carried through a solve of a few hundred floating-point operations; even with a condition number of 1e4 at a sharp resonance that is 1e-11. 1e-9 dB is 6 orders below anything audible (about 0.1 dB), so a real fault cannot hide under it |
   | R2 series array | The same N drivers wired in series at N x V give the same curves as the parallel array at V (same SPL, excursion, phase, group delay, VA, maximum curves), impedance N^2 x the parallel one; with Rg at the amplifier each driver sees Rg / N, so the comparison is made at Rg = 0 or with Rg at each driver | Series: each driver gets 1/N of the amplifier voltage, N x V / N = V, so each driver does exactly what it does in the parallel array; series impedances add (N x one), parallel divide (one / N) | As R1 |
   | R3 Xmax limit only lowers | The Xmax-limited SPL never exceeds the SPL at any frequency, equals it wherever peak excursion is at or below Xmax, and R1 holds for it (checked in R1) | Backing off the drive can only lower the level | 1e-9 dB, as R1 |
-  | R4 Iso-Barik pair | An Iso-Barik pair in half the box (every chamber volume and port area / 2, radiator count / 2) at V, against one driver in the box at V: pressure / sqrt 2 (SPL - 10 log10 2 = -3.0103 dB) and excursion / sqrt 2 at every frequency; impedance, phase, group delay and transfer function equal; port velocities x sqrt 2 | OpenISD's (WinISD's) pair is Mms x 2, Cms / 2, Rms x 2, BL x sqrt 2, Re and Le unchanged (isobarikPair). Half the box doubles every acoustic impedance the cone works into, so every mechanical impedance doubles; with force factor sqrt 2 the cone velocity solves to v / sqrt 2 exactly and the motional impedance BL^2 / Zm is unchanged. The constant is the model's convention (equal electrical load, so equal input power), fitted to the WinISD capture sealed-w5-isobarik; a parallel-wired physical pair would instead give the same SPL at twice the current | As R1 |
+  | R4 Iso-Barik pair | With the pair in half the box at the same amplifier voltage, the physical pair's SPL, cone excursion and impedance are 0 dB, x1 and x0.5 in parallel, and -6.020599913 dB, x0.5 and x2 in series. WinISD's numbers call for -6.020599913 dB, x0.5 and x1 in either wiring in the half-volume comparison. The existing phase, delay and normalized transfer relationships apply. The same-volume sealed W5 comparison checks the captured SPL gap, excursion ratio and impedance ratio at each captured point | Two motors drive twice the moving mass, suspension stiffness and damping, with the doubled acoustic load of the half-box. Parallel supplies each coil its full voltage, and series divides the voltage between the coils. One cone radiates. Halving port area and radiator count doubles their motion per unit of total volume flow. The single-driver reference uses the equivalent source resistance for the same fractional voltage drop. The WinISD captures use the same 4.48 L box for both runs and give a 6.03 dB gap near 2 kHz with almost equal impedance | As R1 |
   | R9 every curve finite | Every plotted sweep and maximum-curve point is a finite number (the -200 dB silence mark counts as finite; maximum curves may be +Infinity only for a driver with neither Pe nor Xmax, which these fixtures do not have) | The engine standard (ARCHITECTURE.md section 4: failure is a value, never a silent NaN) | Exact |
 
   A rule that fails on main is not loosened or skipped: it is written as the right expectation under it.fails naming a bug
   file in bugs/.
 
-  Run on main (T942 Iso-Barik wiring, T943 NaN guard merged), 21 Nov 2026: 4789 cases, 4396 pass, 393 it.fails, 0 red, 0 unexpectedly passed.
-  R1, R2, R3 and R9 hold everywhere (R1 and R2 for the array's pressure and Xmax-limited SPL since T928). The sweep job the
-  test builds pins `winisdIsobarik: true` (WinISD's numbers): the project default, the physical pair, wires its coils as the
-  array is wired, so R2's one-pair reference and series array are not the same pair and R4's -3.01 dB is not its result either
-  (parallel 0 dB, series -6.02 dB, WinISD numbers -6.02 dB); the physical pair is not covered until John rules on R4.
-  - BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver: R4 response part, every combination of every box (342
-    it.fails): the pair is 6.02 dB below one driver, not R4's 3.01 dB. R4's value is John's call; not changed.
-  - BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count: R4 on the passive-radiator box with "PR Npr
-    resonance" unticked (its 54 response cases are among the 342; 51 more are the impedance part).
-  - BUG_20261120_array-pressure-and-xmax-limited-spl-not-scaled-by-driver-count and BUG_20261120_isobarik-impedance-motional-term-doubled:
-    fixed by T928; their cases are plain tests.
-  Corrections made to the rules while building, before any rule was judged (none loosens a tolerance): group delay and impedance
-  phase are plotted in ms and degrees, so their 1e-9 s and 1e-9 rad bounds are applied in those units; the drive is 20 V, not 10,
-  so the sealed box also passes Xmax (the R3 non-vacuity check); R4 checks radiator excursion x sqrt 2 and leaves out the
-  passive-radiator box's `pv`, which is no chart (SweepResult.pv: none for a box without a port).
+  Direct single-file run, 21 Nov 2026. Before the Iso-Barik ruling was applied the test had 4396 passes and 393 expected failures.
+  After it, the test has 6243 passes and 602 expected failures. R1 parallel-array response and pressure, R2 series-array
+  response and pressure, and R9 finite curves each have 684 passes. R3 Xmax limiting has 685 passes including its non-vacuity check.
+  The array rules exercise standard drivers and WinISD pairs. R4 exercises both Iso-Barik modes and both wiring selections.
+  Each wiring has 291 passes and 51 expected failures for physical response, 194 passes and 148 expected failures for WinISD
+  response, and 291 passes and 51 expected failures for impedance in each mode. Four additional sealed W5 capture comparisons pass.
+
+  The prior Iso-Barik test expectation record is resolved and archived. The passive-radiator loss defect accounts for 408
+  expected failures across response and impedance. The WinISD gyrator's pair inductance defect accounts for 228 response
+  failures, including 34 also affected by the passive-radiator defect. Each expected failure names its bug file.
+  Group delay and impedance phase are plotted in ms and degrees, so their 1e-9 s and 1e-9 rad bounds are applied in those units.
+  The drive is 20 V so every box crosses Xmax somewhere. R4 checks radiator excursion and checks port velocity on boxes with a port.
   Mutation check: VA x N changed to x 1.0001 N in the driver-count branch turned 1368 cases red.
-  Gate-file change approved: QO961 (John, 20 Nov 2026 00:52, recorded by the lead).
+  Gate creation approval is the test-guardrails decision QO961 (John, 20 Nov 2026 00:52, "All of A-G", with the physics-law
+  combination test first). The Iso-Barik ruling QO964 covers the change to the pair's expectations.
