@@ -3,7 +3,8 @@
 //   node scripts/visual/diff-page.mjs <outdir> <title> <entries.json> <card-id> <note>
 // entries.json: [{"name": "mobile-wizard-sealed-step4", "before": "/path/a.png", "after": "/path/b.png", "diff": "/path/d.png"}]
 // note: one or two plain sentences on what the user sees change (the task file's visual_note), shown under the title.
-// Pass an empty string if there is no note. Each Look at line names the screen and points to the red boxes.
+// Pass an empty string if there is no note. A group's first picture points to the red boxes and counts the
+// pictures folded below it. Folded pictures point to the group's first picture.
 // before, after and diff may each be null (a new or removed screen, or no diff picture). Pictures are
 // copied into <outdir>, so the page stands alone.
 // The page itself is made by scripts/feedback/feedback-page.py (rule: John's pages are never hand-built):
@@ -71,6 +72,10 @@ const prepared = entries.map(entry => {
   return {entry, before, after, diff, box};
 });
 const leaders = groupLeaders(prepared.map(p => ({name: p.entry.name, box: p.box})));
+const followerCounts = leaders.map(() => 0);
+leaders.forEach((leader, i) => {
+  if (leader !== i) followerCounts[leader] += 1;
+});
 
 // index.md row: Fix | Task | State | Pictures | Look at | Same as. Fix is the screen in words; Task and State stay empty
 // (the page shows neither). Same as is the leader's screen name, empty for a group's first picture.
@@ -78,9 +83,14 @@ const leaders = groupLeaders(prepared.map(p => ({name: p.entry.name, box: p.box}
 const names = prepared.map(p => plainScreenName(p.entry.name));
 const rows = prepared.map(({before, after, diff}, i) => {
   const links = [['before', before], ['after', after], ['difference', diff]].filter(([, f]) => f).map(([label, f]) => `[${label}](${f})`);
-  const look = `${names[i]}, the red boxes show what changed`;
-  const leader = leaders[i] === i ? '' : names[leaders[i]];
-  return `| ${cell(names[i])} |  |  | ${links.join(' ')} | ${cell(look)} | ${cell(leader)} |`;
+  const isLeader = leaders[i] === i;
+  const look = isLeader
+    ? `${names[i]}, the red boxes show what changed`
+    : `${names[i]}, the same change as the first picture of this group.`;
+  const more = followerCounts[i];
+  const summary = more ? `. The same change shows in ${more} more picture${more === 1 ? '' : 's'}, folded below.` : '';
+  const leader = isLeader ? '' : names[leaders[i]];
+  return `| ${cell(names[i])} |  |  | ${links.join(' ')} | ${cell(look + summary)} | ${cell(leader)} |`;
 });
 
 writeFileSync(join(outDir, 'index.md'), `# ${cell(title)}\n| Fix | Task | State | Pictures | Look at | Same as |\n|---|---|---|---|---|---|\n${rows.join('\n')}\n`);

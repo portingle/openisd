@@ -77,18 +77,20 @@ gout="$SCRATCH/groups"
 node "$REPO/scripts/visual/diff-page.mjs" "$gout" "What changed on screen" "$SCRATCH/groups.json" picture-review "The box moved." > "$SCRATCH/glog.txt" 2>&1 \
   && ok "grouped page written" || fail "grouped diff-page failed: $(cat "$SCRATCH/glog.txt")"
 grep -q "3 group(s)" "$SCRATCH/glog.txt" && ok "four screens make 3 groups" || fail "group count: $(cat "$SCRATCH/glog.txt")"
-grep -q '^| Phone, Driver tab .*|  |$' "$gout/index.md" && ok "same box: the first picture leads" || fail "leader row: $(grep 'Driver tab' "$gout/index.md")"
+grep -q '^| Phone, Driver tab .*1 more picture, folded below. |  |$' "$gout/index.md" && ok "same box: the first picture leads and says '1 more'" || fail "leader row: $(grep 'Driver tab' "$gout/index.md")"
 grep -q '^| Phone, Signal tab .*| Phone, Driver tab |$' "$gout/index.md" && ok "same box: the second picture is folded under the first" || fail "follower row: $(grep 'Signal tab' "$gout/index.md")"
 grep -q '^| Phone, Filters tab .*|  |$' "$gout/index.md" && ! grep '^| Phone, Filters tab' "$gout/index.md" | grep -q "more picture" && ok "different box: its own group" || fail "g3 row: $(grep 'Filters tab' "$gout/index.md")"
 grep -q '^| Phone, no project open .*|  |$' "$gout/index.md" && ok "no box (new screen): its own group" || fail "gnew row: $(grep 'no project' "$gout/index.md")"
-# Plain words: no task id, file name or jargon in the page. The note goes under the title and each Look at line
-# names the screen and points to the red boxes.
+# Plain words: no task id, file name or jargon in the page. The note goes under the title. The first picture's
+# Look at line names the screen and points to the red boxes. A folded picture points to the first picture.
 for bad in 'T9' 'baseline' 'landed' '\.png' 'mobile-'; do
   sed -e 's/\[[a-z]*\]([^)]*\.png)//g' "$gout/index.md" | grep -qE "$bad" && fail "page text holds '$bad'" || ok "page text has no '$bad'"
 done
 head -1 "$gout/index.md" | grep -qx '# What changed on screen' && ok "title says what changed" || fail "title: $(head -1 "$gout/index.md")"
 grep -A1 -Fx '<h1>What changed on screen</h1>' "$gout/index.html" | grep -qx '<p class="note">The box moved\.</p>' && ok "the note shows under the title" || fail "no note under the title"
-for screen in 'Driver tab' 'Signal tab' 'Filters tab' 'no project open'; do
+grep -q '^| Phone, Driver tab .*| Phone, Driver tab, the red boxes show what changed\.' "$gout/index.md" && ok "leader Look at names the screen and points to the red boxes" || fail "leader look: $(grep 'Driver tab' "$gout/index.md")"
+grep -q '| Phone, Signal tab, the same change as the first picture of this group\. |' "$gout/index.md" && ok "follower Look at points at the first picture" || fail "follower look"
+for screen in 'Filters tab' 'no project open'; do
   grep -q "^| Phone, $screen |.*| Phone, $screen, the red boxes show what changed |" "$gout/index.md" \
     && ok "$screen Look at names the screen and points to the red boxes" || fail "$screen Look at: $(grep "^| Phone, $screen |" "$gout/index.md")"
 done
