@@ -1,5 +1,5 @@
 /**
- * The driver array against physics rules that always hold, over every box type x number of drivers x wiring x loading
+ * The driver array against physics rules and WinISD captures, over every box type x number of drivers x wiring x loading
  * (standard, Iso-Barik) x the Advanced switches the sweep reads (John, 20 Nov 2026 00:52, board card test-guardrails:
  * "All of A-G: build every guardrail on the card, the physics-law combination test (B) first"; plan
  * docs/plans/PLAN_20261119_TEST_STRATEGY.md option B). The rules, why each holds and why each tolerance is what it is:
@@ -22,11 +22,13 @@ import type {SweepDriver} from '../../engine/solverTypes.js';
 import type {FrequencyGrid} from '../../domain/box/frequencyGrid.js';
 import type {SweepJob} from '../../domain/project/projectSweep.js';
 import {WinIsdProjectConverter} from '../../domain/winIsdProjectConverter.js';
+import inductanceCaptures from '../fixtures/winisd-isobarik-inductance/charts.json';
 import {WINISD_ISOBARIK_ND1_ISO_CAPTURE as CAPTURE_PAIR, type WinIsdPlottedPoint} from '../fixtures/winisdIsobarikNd1IsoCapture.js';
 import {WINISD_ISOBARIK_ND1_STD_CAPTURE as CAPTURE_ONE} from '../fixtures/winisdIsobarikNd1StdCapture.js';
 
 const engine = createEngine();
-const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), '..', 'winisd', 'fixtures');
+const TEST_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
+const FIXTURES = join(TEST_DIR, 'winisd', 'fixtures');
 
 /** 1e-9 dB on levels, 1e-9 relative on linear values, 1e-9 rad on phase, 1e-9 s on group delay: the two sides of each rule
  *  differ only by rounding of the scaled box values carried through the solve (about 1e-11 at worst), far below 0.1 dB. */
@@ -152,8 +154,9 @@ function worst(got: readonly number[], want: readonly number[], miss: (g: number
 
 const levelPlus = (gain: number): Check => (got, want) =>
   worst(got, want.map((w) => w === SILENCE_DB ? w : w + gain), (g, w) => Math.abs(g - w), DB_TOL, 'dB');
+const relativeMiss = (g: number, w: number): number => Math.abs(g - w) / Math.max(Math.abs(w), Number.MIN_VALUE);
 const times = (k: number): Check => (got, want) =>
-  worst(got, want.map((w) => w * k), (g, w) => Math.abs(g - w) / Math.max(Math.abs(w), Number.MIN_VALUE), REL_TOL, 'relative');
+  worst(got, want.map((w) => w * k), relativeMiss, REL_TOL, 'relative');
 const sameLinear = times(1);
 const angleMiss = (turn: number) => (g: number, w: number): number => { const d = Math.abs(g - w) % turn; return Math.min(d, turn - d); };
 /** Phase in radians, compared modulo one turn. */
@@ -238,28 +241,35 @@ function pairMisses(s: Setup, {winisdIsobarik, wiring}: PairMode): Miss[] {
   // doubled load moves at the single cone's speed. Series gives each coil half the voltage and half the current,
   // so the force equals one driver's and the doubled load moves at half speed. The identical branch impedances
   // halve in parallel or double in series, including their motional component.
-  // WinISD's equal-load convention has half the cone motion and pressure in the half-box comparison. The same-box
-  // capture check below tests the measured 6.03 dB gap at 1998.9 Hz on the exact capture geometry.
+  // WinISD's equal-load convention has half the cone motion and pressure in the half-box comparison with Le = 0.
   const motion = winisdIsobarik || wiring === 'series' ? 0.5 : 1;
   const load = winisdIsobarik ? 1 : wiring === 'parallel' ? 0.5 : 2;
-  const pair = sweep(s, {...boxTimes(s.P, 0.5), loading: 'isobaric', driverWiring: wiring, winisdIsobarik});
+  const pairParams: SweepParams = {...boxTimes(s.P, 0.5), loading: 'isobaric', driverWiring: wiring, winisdIsobarik};
   // Keep the same amplifier voltage and the same source-resistance drop relative to the terminal load.
-  const one = sweep(s, {...s.P, Rs: (s.P.Rs ?? 0) / load});
+  const oneParams: SweepParams = {...s.P, Rs: (s.P.Rs ?? 0) / load};
+  const pair = sweep(s, pairParams);
+  const one = sweep(s, oneParams);
+  // WinISD adds acoustic roll-off to the pair with inductance on. Check that response against the captures below.
+  // The response law still applies with Le = 0. Terminal impedance obeys its law with inductance on too.
+  const responseSetup = {...s, Le_H: 0};
+  const [pairResponse, oneResponse] = winisdIsobarik && s.P.circuitModel === 'winisdGyrator' && (s.Le_H ?? 0) !== 0
+    ? [sweep(responseSetup, pairParams), sweep(responseSetup, oneParams)]
+    : [pair, one];
   const portMotion = 2 * motion;
   return misses([
-    {name: 'SPL', group: 'response', got: pair.spl, want: one.spl, check: levelPlus(20 * Math.log10(motion))},
-    {name: 'excursion', group: 'response', got: pair.exc, want: one.exc, check: times(motion)},
+    {name: 'SPL', group: 'response', got: pairResponse.spl, want: oneResponse.spl, check: levelPlus(20 * Math.log10(motion))},
+    {name: 'excursion', group: 'response', got: pairResponse.exc, want: oneResponse.exc, check: times(motion)},
     {name: 'impedance', group: 'impedance', got: pair.zmag, want: one.zmag, check: times(load)},
     {name: 'impedance phase', group: 'impedance', got: pair.zph, want: one.zph, check: samePhaseDeg},
-    {name: 'phase', group: 'response', got: pair.phase, want: one.phase, check: samePhase},
-    {name: 'group delay', group: 'response', got: pair.gd, want: one.gd, check: sameDelay},
-    {name: 'transfer function', group: 'response', got: pair.tfMag, want: one.tfMag, check: levelPlus(0)},
+    {name: 'phase', group: 'response', got: pairResponse.phase, want: oneResponse.phase, check: samePhase},
+    {name: 'group delay', group: 'response', got: pairResponse.gd, want: oneResponse.gd, check: sameDelay},
+    {name: 'transfer function', group: 'response', got: pairResponse.tfMag, want: oneResponse.tfMag, check: levelPlus(0)},
     // The same fraction of total flow goes through half the port area or half the radiators.
-    {name: 'radiator excursion', group: 'response', got: pair.excPR, want: one.excPR, check: times(portMotion)},
+    {name: 'radiator excursion', group: 'response', got: pairResponse.excPR, want: oneResponse.excPR, check: times(portMotion)},
     // A passive-radiator box has no port: its `pv` is no chart (SweepResult.pv), so only ported boxes are held to this.
-    {name: 'port velocity', group: 'response', got: s.box === 'box-passive-radiator' ? null : pair.pv, want: s.box === 'box-passive-radiator' ? null : one.pv, check: times(portMotion)},
-    {name: 'rear port velocity', group: 'response', got: pair.pvRear, want: one.pvRear, check: times(portMotion)},
-    {name: 'intra port velocity', group: 'response', got: pair.pvIntra, want: one.pvIntra, check: times(portMotion)},
+    {name: 'port velocity', group: 'response', got: s.box === 'box-passive-radiator' ? null : pairResponse.pv, want: s.box === 'box-passive-radiator' ? null : oneResponse.pv, check: times(portMotion)},
+    {name: 'rear port velocity', group: 'response', got: pairResponse.pvRear, want: oneResponse.pvRear, check: times(portMotion)},
+    {name: 'intra port velocity', group: 'response', got: pairResponse.pvIntra, want: oneResponse.pvIntra, check: times(portMotion)},
   ]);
 }
 
@@ -352,16 +362,6 @@ const CASES: readonly Case[] = BOXES.flatMap((box) => RULES.flatMap((rule) => gr
     ? PAIR_MODES.map((pairMode): Case => ({box, rule, group, row, pairMode}))
     : LOADINGS.map((loading): Case => ({box, rule, group, row, loading}))))));
 
-const WINISD_PAIR_INDUCTANCE = 'BUG_20261121_winisd-isobarik-inductance-changes-response-shape';
-
-function faultsOf(c: Case): readonly string[] {
-  if (c.rule === 'R4 Iso-Barik pair' && c.group === 'response' && c.pairMode.winisdIsobarik
-    && c.row.circuitModel === 'winisdGyrator') {
-    return [WINISD_PAIR_INDUCTANCE];
-  }
-  return [];
-}
-
 type CaptureChart = 'spl_dB' | 'excursion_m' | 'impedance_ohm';
 const difference = (pair: number, one: number): number => pair - one;
 const ratio = (pair: number, one: number): number => pair / one;
@@ -391,16 +391,10 @@ describe('the driver array obeys physics rules over every box, driver count, wir
   };
 
   for (const c of CASES) {
-    const check = () => {
+    it(titleOf(c), () => {
       const found = caseMisses(c);
       expect(found, found.join('\n')).toEqual([]);
-    };
-    const faults = faultsOf(c);
-    if (faults.length === 0) {
-      it(titleOf(c), check);
-    } else {
-      it.fails(`${titleOf(c)}: ${faults.join(', ')}`, check);
-    }
+    });
   }
 
   // Both captures used the same 4.48 L box and 1 W setting. Compare the whole captured SPL gap,
@@ -417,6 +411,29 @@ describe('the driver array obeys physics rules over every box, driver count, wir
     });
     it(`R4 Iso-Barik pair (impedance), WinISD sealed W5 capture, ${driverWiring}`, () => {
       expect(captureMiss('impedance_ohm', pair.zmag, captureOne.zmag, ratio, sameLinear)).toBeNull();
+    });
+  }
+
+  // WinISD 0.7.0.950 WPL chart captures and their original projects, from winisd_research commit 159e1f2.
+  // The comparison report records a worst miss of 4.59e-12 mm (2.19e-12 relative); the other charts differ by <5e-13.
+  const captureTolerance = 1e-11;
+  const absoluteMiss = (g: number, w: number): number => Math.abs(g - w);
+  const frequencies = inductanceCaptures.frequency_Hz;
+  const captureGrid = {fmin: frequencies[0], fmax: frequencies[frequencies.length - 1], N: frequencies.length - 1};
+  for (const capture of inductanceCaptures.runs) {
+    it(`R4 matches WinISD W5 capture with inductance on: ${capture.run}`, () => {
+      const path = join(TEST_DIR, 'fixtures', 'winisd-isobarik-inductance', `${capture.run}.wpr`);
+      const {value: project, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(readFileSync(path, 'utf8'));
+      if (project === null) throw new Error(`${capture.run}: ${JSON.stringify(errors)}`);
+      project.winisdDriverModel.set(true);
+      project.winisdIsobarik.set(true);
+      const {values, issues} = project.sweep(captureGrid);
+      if (values === null) throw new Error(`${capture.run}: sweep refused: ${JSON.stringify(issues)}`);
+      expect(sameLinear(values.fs, frequencies), 'frequency grid').toBeNull();
+      expect(worst(values.spl, capture.spl_dB, absoluteMiss, captureTolerance, 'dB'), 'SPL').toBeNull();
+      expect(worst(values.exc, capture.excursion_mm, relativeMiss, captureTolerance, 'relative'), 'excursion').toBeNull();
+      expect(worst(values.zmag, capture.impedance_ohm, absoluteMiss, captureTolerance, 'ohm'), 'impedance magnitude').toBeNull();
+      expect(worst(values.zph, capture.impedancePhase_deg, angleMiss(360), captureTolerance, 'deg'), 'impedance phase').toBeNull();
     });
   }
 

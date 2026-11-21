@@ -24,4 +24,4 @@ With “PR Npr resonance” unticked, scaling the box volume and radiator count 
 
 With one active driver, two radiators each having half the area, half the moving mass, twice the compliance and half the damping present the same combined acoustic load as one radiator. With Ql 7 and Qa 30, the regression compares complex pressure and impedance magnitude and phase at all 121 frequencies from 2 to 500 Hz. It failed on complex pressure at 2 Hz before the fix and all points match exactly with the fix.
 
-The driver-array combination test now passes 374 formerly expected failures as ordinary tests. The 34 response cases that also exercised the [WinISD gyrator's extra Iso-Barik inductance](../BUG_20261121_winisd-isobarik-inductance-changes-response-shape.md) remain expected failures for that defect.
+The driver-array combination test now passes 374 formerly expected failures as ordinary tests. At the time of the loss fix, the 34 response cases that also exercised the [WinISD gyrator's extra Iso-Barik inductance](BUG_20261121_winisd-isobarik-inductance-changes-response-shape.md) were still expected failures.
