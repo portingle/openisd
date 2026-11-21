@@ -1,0 +1,100 @@
+id: T939
+release_note: internal
+repo: openisd
+owner: guardrails-b
+status: done
+goal: A combination test over box type x number of drivers x Iso-Barik x wiring x the Advanced switches checks array scaling, both Iso-Barik modes, series = parallel at N x voltage, and curve finiteness.
+why: 'John, 20 Nov 2026 00:52, board card test-guardrails: "All of A-G: build every guardrail on the card, the physics-law combination test (B) first, plus the Finite number type and the four lint rules as ratchets"; plan docs/plans/PLAN_20261119_TEST_STRATEGY.md option B. The card says each guardrail "refuses a pull request, and removing one needs your OK", so the test file joins GATE_FILES in land.conf (protected gate files) on this branch.' 
+gates_approved: QO961
+done_test: bash scripts/test.sh packages/design/test/engine/driver-array-physics-law-combinations.test.ts
+files:
+  - tasks/T939.yml
+  - land.conf
+  - packages/design/engine/boxes/PassiveRadiatorBox.ts
+  - packages/design/test/engine/driver-array-physics-law-combinations.test.ts
+  - packages/design/test/fixtures/winisd-isobarik-inductance/charts.json
+  - packages/design/test/fixtures/winisd-isobarik-inductance/*.wpr
+  - packages/design/test/engine/passive-radiator-simulation.test.ts
+  - bugs/BUG_20261120_array-pressure-and-xmax-limited-spl-not-scaled-by-driver-count.md
+  - bugs/BUG_20261120_isobarik-impedance-motional-term-doubled.md
+  - bugs/BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver.md
+  - bugs/archive/BUG_20261120_isobarik-pair-with-two-bl-driver-6db-below-one-driver.md
+  - bugs/BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md
+  - bugs/archive/BUG_20261120_passive-radiator-box-losses-not-scaled-with-radiator-count.md
+  - bugs/BUG_20261121_winisd-isobarik-inductance-changes-response-shape.md
+  - bugs/archive/BUG_20261121_winisd-isobarik-inductance-changes-response-shape.md
+  - bugs/BUG_20261120_gate-approval-check-skipped-when-questions-file-missing.md
+notes: |
+  Guardrail B of John's test-guardrails decision (20 Nov 2026 00:52, "All of A-G ... the physics-law combination test (B)
+  first"), plan docs/plans/PLAN_20261119_TEST_STRATEGY.md option B (rules R1, R2, R3, R4, R9 there).
+  Test: packages/design/test/engine/driver-array-physics-law-combinations.test.ts. Engine level: each of the six box types starts from
+  its WinISD fixture (packages/design/test/winisd/fixtures/<box>-w5-1.wpr, sealed-w5-nd2.wpr with one driver), the project
+  turns it into the engine's sweep job, and the test then varies the job: number of drivers (1, 2, 3), wiring (parallel,
+  series), loading (standard, Iso-Barik) and every Advanced switch the sweep reads. Switches are combined pairwise: all off,
+  all on, and each switch on alone, which covers every pair of two switches in all four on/off states; the whole set is
+  run for each of the three circuit models.
+
+  Iso-Barik ruling QO964. John selected "A: real physics by default (box unticked)" on 20 Nov 2026 at 02:25 UTC and added
+  "the real physics by default was approved by me months ago". The recorded meaning is "Replaces the physics-law test
+  rule R4 (-3.01 dB): the test expects the coil wiring's physics when unticked and WinISD's captured numbers when ticked."
+
+  Rules (tolerances are fixed by numerics):
+
+  | Rule | Statement | Why it holds | Tolerance and why |
+  | ---- | --------- | ------------ | ----------------- |
+  | R1 parallel array | N drivers wired in parallel in N x the box (every chamber volume, port area and radiator count x N) at amplifier voltage V equal one driver in the box at V, with series resistance N x Rg when Rg sits at the amplifier (Rg when each driver has its own): SPL and Xmax-limited SPL + 20 log10 N, pressure x N, VA x N, impedance / N (one driver's x 1 with "Impedance of one driver"), excursion, radiator excursion, port velocities, phase, group delay, transfer functions and port and radiator gains unchanged; maximum SPL + 20 log10 N, maximum power x N | Every driver sees the same voltage and the same share of the box, so by symmetry each moves as the one driver does (Thevenin: N parallel branches behind Rg each see N x Rg); N in-phase sources sum to N x the volume velocity, so N x the pressure; the parallel load is 1/N of one branch | 1e-9 dB on levels, 1e-9 relative on linear values, 1e-9 rad on phase (mod 2 pi), 1e-9 s on group delay. The two sides differ only by one N x then / N rounding of the box values (a few ulp, 1e-16 relative) carried through a solve of a few hundred floating-point operations; even with a condition number of 1e4 at a sharp resonance that is 1e-11. 1e-9 dB is 6 orders below anything audible (about 0.1 dB), so a real fault cannot hide under it |
+  | R2 series array | The same N drivers wired in series at N x V give the same curves as the parallel array at V (same SPL, excursion, phase, group delay, VA, maximum curves), impedance N^2 x the parallel one; with Rg at the amplifier each driver sees Rg / N, so the comparison is made at Rg = 0 or with Rg at each driver | Series: each driver gets 1/N of the amplifier voltage, N x V / N = V, so each driver does exactly what it does in the parallel array; series impedances add (N x one), parallel divide (one / N) | As R1 |
+  | R3 Xmax limit only lowers | The Xmax-limited SPL never exceeds the SPL at any frequency, equals it wherever peak excursion is at or below Xmax, and R1 holds for it (checked in R1) | Backing off the drive can only lower the level | 1e-9 dB, as R1 |
+  | R4 Iso-Barik pair | With the pair in half the box at the same amplifier voltage, the physical pair's SPL, cone excursion and impedance are 0 dB, x1 and x0.5 in parallel, and -6.020599913 dB, x0.5 and x2 in series. In the half-volume comparison with inductance off, WinISD's numbers call for -6.020599913 dB, x0.5 and x1 in either wiring. The phase, delay and normalized transfer relationships also apply to that response. With inductance on, the WinISD gyrator still holds the half-volume impedance law, and the ticked response is checked directly against the captured curves. The original same-volume sealed W5 comparison with inductance off checks the captured SPL gap, excursion ratio and impedance ratio at each captured point | Two motors drive twice the moving mass, suspension stiffness and damping, with the doubled acoustic load of the half-box. Parallel supplies each coil its full voltage, and series divides the voltage between the coils. One cone radiates. Halving port area and radiator count doubles their motion per unit of total volume flow. The single-driver reference uses the equivalent source resistance for the same fractional voltage drop. The WinISD captures use the same 4.48 L box for both runs and give a 6.03 dB gap near 2 kHz with almost equal impedance | As R1 |
+  | R9 every curve finite | Every plotted sweep and maximum-curve point is a finite number (the -200 dB silence mark counts as finite; maximum curves may be +Infinity only for a driver with neither Pe nor Xmax, which these fixtures do not have) | The engine standard (ARCHITECTURE.md section 4: failure is a value, never a silent NaN) | Exact |
+
+  A rule that fails on main is not loosened or skipped: it is written as the right expectation under it.fails naming a bug
+  file in bugs/.
+
+  Direct single-file run, 21 Nov 2026. Before the Iso-Barik ruling was applied the test had 4396 passes and 393 expected failures.
+  After it, the test has 6243 passes and 602 expected failures. R1 parallel-array response and pressure, R2 series-array
+  response and pressure, and R9 finite curves each have 684 passes. R3 Xmax limiting has 685 passes including its non-vacuity check.
+  The array rules exercise standard drivers and WinISD pairs. R4 exercises both Iso-Barik modes and both wiring selections.
+  Each wiring has 291 passes and 51 expected failures for physical response, 194 passes and 148 expected failures for WinISD
+  response, and 291 passes and 51 expected failures for impedance in each mode. Four additional sealed W5 capture comparisons pass.
+
+  The prior Iso-Barik test expectation record is resolved and archived. Before the loss-mass fix, the passive-radiator loss
+  defect affected 408 expected failures across response and impedance. The original response-law expectation for the ticked
+  WinISD gyrator affected 228 cases, including 34 also affected by the passive-radiator defect.
+  Group delay and impedance phase are plotted in ms and degrees, so their 1e-9 s and 1e-9 rad bounds are applied in those units.
+  The drive is 20 V so every box crosses Xmax somewhere. R4 checks radiator excursion and checks port velocity on boxes with a port.
+  Mutation check: VA x N changed to x 1.0001 N in the driver-count branch turned 1368 cases red.
+  Gate creation approval is the test-guardrails decision QO961 (John, 20 Nov 2026 00:52, "All of A-G", with the physics-law
+  combination test first). The Iso-Barik ruling QO964 covers the change to the pair's expectations.
+
+  Passive-radiator loss fix. The fixed leak and absorption resistances use the combined parallel radiator mass in the
+  default calculation. The ticked WinISD formula uses one radiator's mass and its lower angular frequency. The frequency
+  and mass factors cancel. A two-radiator sweep from 2 to 500 Hz confirmed zero change in transfer magnitude (0 dB),
+  impedance magnitude (0 ohm) and radiator excursion (0 mm) across all 121 points when toggled.
+
+  The one-driver equivalent-branch regression failed on complex pressure at 2 Hz before the fix and now matches complex
+  pressure and impedance magnitude and phase exactly at all 121 points. The combination test goes from 6243 ordinary
+  passes and 602 expected failures to 6617 ordinary passes and 228 expected failures. This restores 374 ordinary passes.
+  At the time of the loss fix, the 34 overlapping cases were still expected failures for the WinISD gyrator's pair inductance.
+  The passive-radiator loss bug is resolved and archived.
+
+  Direct Vitest runs covered driver-array-physics-law-combinations.test.ts, passive-radiator-simulation.test.ts and
+  passive-radiator-count-winisd.test.ts. Together they went from 6255 ordinary passes and 602 expected failures to 6630
+  ordinary passes and 228 expected failures. The existing WinISD capture tests have 8 passes with the switch ticked.
+  The separate comparison and help update needs both switch settings on both captures and wording that says the charts
+  agree. By inspection, pr-npr-resonance.test.ts has two tests for the old switch difference and box-absent-fields.test.ts
+  has one. These expectations need the switch-equivalence update before the full suite.
+
+  The inductance-on WinISD captures from winisd_research commit 159e1f2 confirm the extra roll-off in the ticked
+  Iso-Barik pair. In the sealed half-volume comparison, the SPL gap already differs from the exact half-motion
+  law at 1 Hz. The full-grid response-law checks for the 228 ticked WinISD-gyrator cases now use zero inductance.
+  Their original inductance-on impedance checks and the unticked physical laws retain their full grids and tolerances.
+  Seven additional tests use the original WinISD projects and compare every point from 1 Hz to 20.14 kHz on SPL,
+  excursion, impedance magnitude and impedance phase. The capture tolerance is 1e-11 relative for excursion and
+  1e-11 in the chart units for the other quantities. John's Iso-Barik ruling QO964, "A: real physics by default
+  (box unticked)", covers this expectation change.
+
+  Direct single-file guardrail run, 21 Nov 2026. Before the inductance expectation change there were 6617 passes and
+  228 expected failures. After the change there were 6852 passes and zero expected failures. With the new capture
+  test deliberately unticked, the four pair captures failed on SPL and all three single-driver captures passed.
+  Typecheck passed for design, persistence and UI.

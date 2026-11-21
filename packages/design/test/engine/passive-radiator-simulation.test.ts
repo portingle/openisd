@@ -72,6 +72,33 @@ describe('passive radiator simulation', () => {
         'PR peak excursion should be positive (PR is moving)');
     });
 
+    it('equivalent radiator branches give the same complex output and impedance with box losses', () => {
+      const one = {
+        ...PR_BOX, air: REFERENCE_AIR, eg: 2.83, Ql: 7, Qa: 30, prRms: 1,
+        nDrivers: 1, winisdPrNprResonance: false, fmin: 2, fmax: 500, N: 120,
+      } satisfies SweepParams;
+      // Acoustic mass and damping divide by diaphragm area squared, and compliance multiplies by it.
+      // Each smaller radiator has acoustic values 2M, C/2, 2R. Both see the same pressure and their
+      // volume velocities add, so the pair presents the original branch impedance at every frequency.
+      const two: SweepParams = {
+        ...one, prNum: 2, prSd: one.prSd / 2, prMmd: one.prMmd / 2, prMadd: one.prMadd / 2,
+        prCms: 2 * one.prCms, prRms: one.prRms / 2,
+      };
+      const driver = sweepDriver(d);
+      const single = engine.simulation.sweep(driver, LE_H, 'box-passive-radiator', one).values;
+      const pair = engine.simulation.sweep(driver, LE_H, 'box-passive-radiator', two).values;
+      assert.ok(single && pair, 'both sweeps produce curves');
+      assert.equal(single.fs.length, one.N + 1);
+      assert.deepEqual(pair.fs, single.fs);
+      assert.equal(engine.simulation.classifyFinite(single), null);
+      assert.ok(single.H.some(({re, im}) => re !== 0 || im !== 0), 'the reference produces sound');
+      for (const [i, f] of single.fs.entries()) {
+        assert.deepEqual(pair.H[i], single.H[i], `${f} Hz: complex pressure`);
+        assert.equal(pair.zmag[i], single.zmag[i], `${f} Hz: impedance magnitude`);
+        assert.equal(pair.zph[i], single.zph[i], `${f} Hz: impedance phase`);
+      }
+    });
+
     it('the theoretical Fp (from prTuning formula) sits between the two impedance peaks', () => {
       // Like a vented box, the PR system shows two impedance peaks straddling the tuning freq Fp.
       // Ref: Small, R.H. "Passive-Radiator Loudspeaker Systems — Part I." JAES 22(8) 1974.
