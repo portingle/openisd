@@ -5,6 +5,12 @@ owner: lead
 status: open
 goal: 'The task-contract landing check reads decisions from the questions/ folder (one file per decision) as well as a single questions file'
 why: 'John, 22 Nov 2026: ''Approve: the landing check reads the new folder'''
+gates_approved: QO982
 done_test: bash scripts/quiet-test.sh npm run typecheck
 files:
   - tasks/T956.yml
+  - .github/workflows/pr.yml
+  - land.conf
+  - scripts/land/check-task-contract.sh
+  - scripts/land/questions_reader.py
+  - scripts/land/test/land-gates.test.sh
