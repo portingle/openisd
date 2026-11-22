@@ -1,0 +1,10 @@
+id: T958
+release_note: internal
+repo: openisd
+owner: card-loaded-dq
+status: open
+goal: A loaded number of drivers, source resistance, entered air values, leakage and absorption stay as the file states them, with a DQ mark, and charts stay finite; typed values are still refused
+why: John, 21 Nov 2026: 'a bad idea if it misrepresent data, a dq is better and more consistent'
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T958.yml
