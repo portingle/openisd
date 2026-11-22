@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {entryRefusal, type EntryBounds} from '../../src/logic/entryRefusal.js';
+import {entryRefusal, type EntryBounds} from '@openisd/design/fields';
 
 /** A box in litres showing two decimals, its SI band given in m³. */
 function litres(over: Partial<EntryBounds> = {}): EntryBounds {

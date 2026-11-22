@@ -8,19 +8,20 @@ status: done
 # ruling: QO532 - John, 11 Nov 2026, on the "Desktop: driver editor, Parameters page, Blue dot" picture: "do this" (a blue dot right of the label; no ring, no bold).
 # ruling: QO539 - John, 11 Nov 2026, on driver files whose Mms, Cms, Rms disagree with their Fs, Vas, Qms: "B" (the charts keep the on-screen boxes; an option "Chart from Fs, Vas, Qms (WinISD's way)", unticked by default, charts them WinISD's way; openisdSchema.ts gains the switch).
 # ruling: QO539 help text - John approved 16 Nov 2026 14:51 UTC (woody board QO946.c167) the switch help "Chart from Fs, Vas, Qms: WinISD draws its charts from Fs, Vas and Qms ... Tick this to draw from Fs, Vas and Qms as WinISD does." (field.ts ADV_WINISDCHARTFROMFSVASQMS; phone line in phoneText.ts).
-# ruling text: John, 21 Nov 2026 (desktop What-if widths): "only the col that needed widening really needs the fix".
+# ruling: QO986 - John, 22 Nov 2026, on desktop What-if widths: "Yes: keep every box 93 px".
+# ruling: QO987 - John, 22 Nov 2026, on impossible What-if entries: "Refuse -5 g" (openIsdDriverSpec.ts applies the entry rule).
 # ruling text: John, 21 Nov 2026 (desktop Driver editor help): "big text dialogues can scroll if needed, better than losing good explanations, or the key words can be expanding for more info, that kind of thing".
 # QO946.c187 (lead): Vd top limit 10,000 cm3
 # The gate reads the first bare ruling line; QO534 is the driver-model ruling for this task (openIsdDriverSpec.ts changes).
 ruling: QO534
-why: 'John, 11 Nov 2026 (QO534): "an entered value is never overwritten with a calculated value"; "the editor and pr settings will use the [on-screen] values not hidden recalcs always"; "all get the mark". (QO535) What-if is for experiments and learning: "I only want to add inputs". (QO532) the boxes the charts read get a blue dot. (QO539, B) WinISD''s way stays one tick away, unticked by default. John, 21 Nov 2026 (desktop What-if widths): "only the col that needed widening really needs the fix".'
-release_note: The driver editor and the passive radiator settings chart exactly the values in their boxes; a value you type is never replaced, and when boxes disagree every box involved is marked and its note says what the maths gives. The boxes that feed the charts are highlighted. The What-if panel gains Qts, Sensitivity, Cms and Rms, and a typed value moves the figures that follow it, so the boxes always agree.
-visual_note: The boxes the charts read (Sd, Mms, Cms, Rms, BL, Re, Le) have a small blue dot right of their label, and the WinISD Compatibility panel has a new unticked switch, Chart from Fs, Vas, Qms. The What-if gains Qts, Sensitivity, Cms and Rms; screens that show a project's saved size show it a few bytes larger (the new switch). The desktop driver editor help sheets are capped at 680 px wide and scroll inside the editor when their text exceeds the available height.
+why: 'John, 11 Nov 2026 (QO534): "an entered value is never overwritten with a calculated value"; "the editor and pr settings will use the [on-screen] values not hidden recalcs always"; "all get the mark". (QO535) What-if is for experiments and learning: "I only want to add inputs". (QO532) the boxes the charts read get a blue dot. (QO539, B) WinISD''s way stays one tick away, unticked by default. John, 22 Nov 2026: "Yes: keep every box 93 px" (QO986) and "Refuse -5 g" (QO987).'
+release_note: The driver editor and the passive radiator settings chart exactly the values in their boxes. When boxes disagree, every box involved is marked and its note says what the maths gives. The boxes that feed the charts are highlighted. The What-if panel gains Qts, Sensitivity, Cms and Rms. An accepted edit moves the figures that follow it. An impossible typed value keeps the previous value and shows a refusal note.
+visual_note: The boxes the charts read (Sd, Mms, Cms, Rms, BL, Re, Le) have a small blue dot right of their label, and the WinISD Compatibility panel has a new unticked switch, Chart from Fs, Vas, Qms. The desktop What-if boxes are 93 px wide and the units sit inside. The new switch makes the project's saved size a few bytes larger. The desktop driver editor help sheets are capped at 680 px wide and scroll inside the editor when their text exceeds the available height.
 goal: The driver editor and radiator settings chart what the boxes show and mark every box of a disagreeing set; What-if gains Qts, Sensitivity, Cms and Rms and a move rule; a blue dot marks every box the charts read; the "Chart from Fs, Vas, Qms" switch (unticked) charts WinISD's way
 goal_detail:
   - "QO534 driver editor and radiator settings: an entered value is never overwritten with a calculated value; an empty box is calculated and shown. The charts use the boxes that feed the engine (Sd, Mms, Cms, Rms, Bl, Re, Le) as they show, never worked out again from Fs, Vas and the Q's. Test: packages/design/test/domain/on-screen-values.test.ts rows 0-4 and the radiator cases."
   - "QO534 warning mark: when boxes disagree, every box in the disagreeing relation carries the existing warning mark; its popup names the boxes and says what the maths gives (e.g. 'Fs, Mms and Cms disagree: Fs = 1/(2π·√(Mms·Cms)) gives Fs 34.9 Hz, the box says 40.00 Hz'). Test: on-screen-values.test.ts 'row 1: the popup'."
-  - "QO535 What-if: adds Qts and Sensitivity to the main group and Cms and Rms to Derived beside Bl and Mms (no read-outs, groups unchanged). A typed result (Fs, Vas, Qts, Qes, Qms, Sensitivity) keeps the other results and moves the parts; a typed part (Mms, Cms, Rms, Bl, Sd, Re) keeps the other parts and moves the results that depend on it. No warning marks in What-if; it never writes to the project. Tests: packages/design/test/engine/what-if-moves.test.ts rows 0-8, packages/design/test/domain/what-if-driver.test.ts, packages/ui/test/hooks/OriginalWhatIf-hooks.test.ts."
+  - "QO535 What-if: adds Qts and Sensitivity to the main group and Cms and Rms to Derived beside Bl and Mms (no read-outs, groups unchanged). A typed result (Fs, Vas, Qts, Qes, Qms, Sensitivity) keeps the other results and moves the parts; a typed part (Mms, Cms, Rms, Bl, Sd, Re) keeps the other parts and moves the results that depend on it. What-if hides disagreement marks and never writes to the project. It refuses an impossible typed value with a note and restores the previous value. Odd but possible driver values stay with a warning (QO987). Tests: packages/design/test/engine/what-if-moves.test.ts rows 0-8, packages/design/test/domain/what-if-driver.test.ts, packages/ui/test/hooks/OriginalWhatIf-hooks.test.ts."
   - "QO532 highlight: the boxes that feed the engine (driver Sd, Mms, Cms, Rms, Bl, Re, Le; radiator Sd, Mms, Cms, Rms) carry a blue dot (8 px, 4 px right of the label text, ChartInputs in packages/design) in the driver editor (phone and desktop), the phone Driver tab and the radiator settings; no input changes size, padding or font (no ring, no bold, no tighter spacing). The label column keeps room for the dot so it never runs into the warning mark or the box. Tests: driver-editor-cms-note and original-pr-cms-note browser specs, packages/design/test/fields/chartInputs.test.ts."
   - "WinISD difference: WinISD charts Cms from Vas and Mms from Fs, ignoring a typed Cms, Mms or Rms. Recorded in docs/research/WINISD_PARITY.md and ACCURACY_IMPROVEMENTS.md; the not-equal-W cue sits by Mms and Cms."
   - "QO539 option: \"Chart from Fs, Vas, Qms (WinISD's way)\" under \"Enable WinISD-style\", unticked in a new project and in a file that does not say; ticked, the charts work Cms, Mms and Rms out from Vas, Fs and Qms as WinISD does (DriverEngine.winisdCircuitValues); the boxes and their warning marks stay either way. Tests: compat-switch.test.ts, driver-circuit-values.test.ts, driver-edit-parity-e150he-44.test.ts (E150HE-44 as its file states). The switch covers the passive radiator too (DriverEngine.winisdRadiatorMechanics, the driver's routes): pr-chart-from-fs-vas-qms.test.ts."
@@ -35,11 +36,12 @@ tests_changed: >-
   original-driver-bundle-selection.browser.spec.ts checks the editor's displayed states against the bundle and its entered numbers against the bundled figures, and checks all eight displayed passive radiator figures and states against the saved selection. This enforces John's on-screen values ruling (QO534), "an entered value is never overwritten with a calculated value".
   All four historical layout-6 storage recordings keep the original sealed Qtc of 0.7101774159567577.
   load-repair-report.test.ts checks Qtc 0.8193428312756991 and the on-open note from both layout-5 and layout-6 saves. storageUpgrade.test.ts checks the exact recalculated Qtc in today's writes and the original bytes when a layout-6 backup is restored and exported as-is, following John's older-save ruling, "D: new calculation + note".
-  The desktop What-if layout checks 102 px boxes and 38 px chips for Cms and Rms, with 93 px boxes and 29 px chips for the other fields.
+  The desktop What-if layout checks aligned 93 px boxes and 29 px chips for every field, including the full 0.36872 value beside the Cms unit (QO986). The refusal checks cover typing -5 g into Mms and keeping the previous value (QO987).
   Desktop help checks that every sheet fits the editor and viewport at 1280 × 720 and that scrolling reaches its last paragraph. The large-window check still requires help that fits to be fully visible on opening. The overview now checks that its full text is reachable by scrolling at 680 px.
   The passive radiator label-span cap (62 to 74 px) remains a branch change pending picture review.
 done_test: bash scripts/test.sh packages/design/test/domain/on-screen-values.test.ts
 files:
+  - docs/design/field-use-cases-behaviour.ts
   - packages/design/domain/project/calculationOpenNote.ts
   - packages/design/engine/consistency.ts
   - packages/design/test/domain/project/project-air.coverage.test.ts
@@ -93,11 +95,13 @@ files:
   - packages/design/engine/driver/routes/smallSignalRoutes.ts
   - packages/design/engine/driver/whatIfMoves.ts
   - packages/design/engine/index.ts
+  - packages/design/engine/physicalRange.ts
   - packages/design/engine/issueText.ts
   - packages/design/engine/pr/PrEngine.ts
   - packages/design/engine/simulation/SimulationEngine.ts
   - packages/design/fields/chartInputs.ts
   - packages/design/fields/desktopHelp.ts
+  - packages/design/fields/entryRefusal.ts
   - packages/design/fields/index.ts
   - packages/design/fields/phoneText.ts
   - packages/design/fields/winisdDeviation.ts
@@ -152,6 +156,8 @@ files:
   - packages/design/test/engine/what-if-moves.test.ts
   - packages/design/test/fixtures/domainBuilders.ts
   - packages/design/test/fixtures/driverSolverGolden.ts
+  - packages/design/test/fixtures/driverSolverRun.ts
+  - packages/design/test/fixtures/inputLimitsSweep.ts
   - packages/design/test/fixtures/recordBuilders.ts
   - packages/design/test/fixtures/winisdEditCapture.ts
   - packages/design/test/fixtures/winisdEditRuns.ts
@@ -182,6 +188,13 @@ files:
   - packages/ui/test/ui/what-if-panel.browser.spec.ts
   - tasks/T744.yml
   - packages/design/test/fields/chartInputs.test.ts
+  - packages/ui/src/hooks/NumInput-hooks.ts
+  - packages/ui/coverage-baseline.json
+  - packages/ui/src/logic/entryRefusal.ts
+  - packages/ui/src/ui/components/NumInput.vue
+  - packages/ui/src/ui/components/cellScope.ts
+  - packages/ui/test/hooks/NumInput-hooks.test.ts
+  - packages/ui/test/logic/entryRefusal.test.ts
   - packages/ui/src/hooks/labelColumns.ts
   - packages/ui/src/hooks/phoneLabelColumn.ts
   - packages/ui/test/fixtures/engineDot.ts

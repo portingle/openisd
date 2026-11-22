@@ -26,7 +26,7 @@ import type {
     SolverInput,
 } from '../solverTypes.js';
 import {approximateCharts, missingDependencies, resultRefused} from '../consistency.js';
-import type {CalculationIssue, CalculationPrerequisite, OutOfRangeIssue, WiringIssue} from '../consistency.js';
+import type {CalculationIssue, CalculationPrerequisite, NormalBandIssue, OutOfRangeIssue, WiringIssue} from '../consistency.js';
 import {geometryRefusal} from '../dvolRelation.js';
 import {basketRangeWarning, checkRange, isPhysicallyPlausible, rangeIssue} from '../physicalRange.js';
 import type {DriverWorkingSet} from '../solvers/driverQuantities.js';
@@ -60,7 +60,7 @@ const WINISD_Q_FALLBACK_FACTOR = 2;
 
 export type DriverQuantityName = keyof DriverSolverParams;
 /** `WiringIssue`s are the domain's: the engine's own solve never raises one. */
-export type DriverIssue = CalculationIssue<DriverQuantityName> | OutOfRangeIssue | WiringIssue;
+export type DriverIssue = CalculationIssue<DriverQuantityName> | NormalBandIssue<DriverQuantityName> | OutOfRangeIssue | WiringIssue;
 export type DriverPrerequisite = CalculationPrerequisite<DriverQuantityName>;
 
 /** The radiator figures WinISD charts a passive radiator from, and its stated Mms, Cms and Rms; null where not stated. */

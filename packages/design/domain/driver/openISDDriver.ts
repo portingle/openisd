@@ -190,6 +190,7 @@ export abstract class OpenISDDriver extends OpenISDDevice {
                 case 'approximate-charts':
                 case 'result-refused':
                 case 'out-of-range':
+                case 'outside-normal-band':
                 case 'wiring-not-stated':
                 case 'wiring-inferred':
                 case 'multi-coil-without-numvc':
@@ -339,6 +340,7 @@ export abstract class OpenISDDriver extends OpenISDDevice {
                 case 'approximate-charts':
                 case 'result-refused':
                 case 'out-of-range':
+                case 'outside-normal-band':
                 case 'wiring-not-stated':
                 case 'wiring-inferred':
                 case 'multi-coil-without-numvc':
@@ -360,6 +362,7 @@ export abstract class OpenISDDriver extends OpenISDDevice {
                     return [{level: 'warn', field: issue.field, message: issue.text}];
                 case 'inconsistent-inputs':
                 case 'approximate-charts':
+                case 'outside-normal-band':
                     return [{level: 'warn', field: issue.target, message: issue.text}];
                 // A note, not a warning: the wiring was inferred, and the issue says from what.
                 // A refused calculation is a note too: the field says why it is empty, and the data

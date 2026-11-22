@@ -194,13 +194,11 @@ export function useOriginalWhatIf(): OriginalWhatIfAPI {
   }
 
   function enterField(key: NumSpecField, v: number, precision?: number): void {
-    session.begin();
-    specField(key).set(v, precision);
+    specCell(key).set(v, precision);
   }
 
   function clearField(key: NumSpecField): void {
-    session.begin();
-    specField(key).clear();
+    specCell(key).clear();
   }
 
   async function reset(): Promise<void> {

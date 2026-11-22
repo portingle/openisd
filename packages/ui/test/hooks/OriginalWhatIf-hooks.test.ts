@@ -194,6 +194,27 @@ describe('OriginalWhatIf-hooks', () => {
     expect(cleared.value).not.toBeNull();
   });
 
+  it('refuses negative and zero Mms and negative resistance, keeping the previous What-if values', async () => {
+    const project = createProject();
+    project.driver.specs.Re_ohm.set(5);
+    project.save();
+    const api = await renderHook(project);
+    api.enterField('Mms_kg', 0.04);
+    const fs = api.cellVal('Fs_hz');
+    const rms = api.cellVal('Rms_kg_per_s');
+
+    api.enterField('Mms_kg', -0.005);
+    expect(api.cellVal('Mms_kg')).toBe(0.04);
+    api.specCell('Mms_kg').set(0);
+    expect(api.cellVal('Mms_kg')).toBe(0.04);
+    api.specCell('Re_ohm').set(-1);
+    expect(api.cellVal('Re_ohm')).toBe(5);
+    api.specCell('Rms_kg_per_s').set(-1);
+    expect(api.cellVal('Rms_kg_per_s')).toBe(rms);
+    expect(api.cellVal('Fs_hz')).toBe(fs);
+    expect(project.isModified()).toBe(false);
+  });
+
   it('BL_Tm becomes entered when set directly', async () => {
     const api = await renderHook();
     api.enterField('BL_Tm', 9.5);

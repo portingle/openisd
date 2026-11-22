@@ -443,12 +443,6 @@
     "functions": 0,
     "statements": 0
   },
-  "packages/ui/src/logic/entryRefusal.ts": {
-    "lines": 100,
-    "branches": 85,
-    "functions": 100,
-    "statements": 95
-  },
   "packages/ui/src/logic/exportNotice.ts": {
     "lines": 33,
     "branches": 100,

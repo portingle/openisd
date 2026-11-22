@@ -13,6 +13,8 @@
  */
 
 import type {Air} from '../air.js';
+import {numberEntryProblem} from '../../fields/entryRefusal.js';
+import {NumberField} from '../../fields/field.js';
 import {efficiencyFromSpl, splFromEfficiency} from '../efficiency.js';
 import {Q_PARALLEL} from './routes/relations.js';
 
@@ -88,10 +90,11 @@ function qesMoves(shown: WhatIfFigures, Qes: number, air: Air): readonly (readon
 /** Every figure that moves when `figure` is typed as `value`, from the figures the boxes show now, the driver's sensitivity read in
  *  `air`. The typed figure itself is not listed. */
 export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFigures, air: Air): WhatIfMoves {
-  if (!Number.isFinite(value)) return {};
+  const field = NumberField.named(figure);
+  if (field === undefined || numberEntryProblem(field.floor, field.limits, value) !== null) return {};
   switch (figure) {
     case 'Fs_hz': {
-      if (!positive(shown.Fs_hz) || !positive(value)) return {};
+      if (!positive(shown.Fs_hz)) return {};
       const r = value / shown.Fs_hz;
       // Cms stays (Vas stays): Mms ∝ 1/Fs²; Rms and Bl keep Qms and Qes.
       return moves([
@@ -102,7 +105,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
       ]);
     }
     case 'Vas_m3': {
-      if (!positive(shown.Vas_m3) || !positive(value)) return {};
+      if (!positive(shown.Vas_m3)) return {};
       const r = value / shown.Vas_m3;
       // Sd stays: Cms ∝ Vas; Fs stays: Mms ∝ 1/Cms; Rms and Bl keep Qms and Qes.
       return moves([
@@ -116,7 +119,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
     case 'Qes':
       return moves(qesMoves(shown, value, air));
     case 'Qms': {
-      if (!positive(shown.Qms) || !positive(value)) return {};
+      if (!positive(shown.Qms)) return {};
       return moves([
         ['Rms_kg_per_s', scaled(shown.Rms_kg_per_s, shown.Qms / value)],
         ['Qts', positive(shown.Qes) ? parallelQ(shown.Qes, value) : null],
@@ -124,7 +127,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
     }
     case 'Qts': {
       // Qms stays, so Qes is what gives: Qes = Qts·Qms/(Qms−Qts). A Qts at or above Qms has no Qes.
-      if (!positive(shown.Qms) || !positive(value) || value >= shown.Qms) return {};
+      if (!positive(shown.Qms) || value >= shown.Qms) return {};
       const Qes = value * shown.Qms / (shown.Qms - value);
       return moves([['Qes', Qes], ...qesMoves(shown, Qes, air).filter(([f]) => f !== 'Qts')]);
     }
@@ -135,7 +138,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
       return moves([['Qes', Qes], ...qesMoves(shown, Qes, air).filter(([f]) => f !== 'SPL_dB')]);
     }
     case 'Mms_kg': {
-      if (!positive(shown.Mms_kg) || !positive(value)) return {};
+      if (!positive(shown.Mms_kg)) return {};
       const r = value / shown.Mms_kg;
       const Qes = scaled(shown.Qes, Math.sqrt(r));
       const Qms = scaled(shown.Qms, Math.sqrt(r));
@@ -147,7 +150,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
       ]);
     }
     case 'Cms_m_per_N': {
-      if (!positive(shown.Cms_m_per_N) || !positive(value)) return {};
+      if (!positive(shown.Cms_m_per_N)) return {};
       const r = value / shown.Cms_m_per_N;
       const Qes = scaled(shown.Qes, 1 / Math.sqrt(r));
       const Qms = scaled(shown.Qms, 1 / Math.sqrt(r));
@@ -160,7 +163,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
       ]);
     }
     case 'Rms_kg_per_s': {
-      if (!positive(shown.Rms_kg_per_s) || !positive(value)) return {};
+      if (!positive(shown.Rms_kg_per_s)) return {};
       const Qms = scaled(shown.Qms, shown.Rms_kg_per_s / value);
       return moves([
         ['Qms', Qms],
@@ -168,7 +171,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
       ]);
     }
     case 'BL_Tm': {
-      if (!positive(shown.BL_Tm) || !positive(value)) return {};
+      if (!positive(shown.BL_Tm)) return {};
       const r = value / shown.BL_Tm;
       const Qes = scaled(shown.Qes, 1 / (r * r));
       return moves([
@@ -178,7 +181,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
       ]);
     }
     case 'Sd_m2': {
-      if (!positive(shown.Sd_m2) || !positive(value)) return {};
+      if (!positive(shown.Sd_m2)) return {};
       const r = value / shown.Sd_m2;
       return moves([
         ['Vas_m3', scaled(shown.Vas_m3, r * r)],
@@ -186,7 +189,7 @@ export function whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFi
       ]);
     }
     case 'Re_ohm': {
-      if (!positive(shown.Re_ohm) || !positive(value)) return {};
+      if (!positive(shown.Re_ohm)) return {};
       const r = value / shown.Re_ohm;
       const Qes = scaled(shown.Qes, r);
       return moves([

@@ -51,6 +51,7 @@ export type { SimulationEngine, SweepIssue, SweepSolveResult, MaxCurvesSolveResu
 export { createSimulationEngine } from './simulation/SimulationEngine.js';
 export type {ChartResonanceFigures, DriverEngine, DriverQuantityName, DriverIssue, DriverPrerequisite, RadiatorFigures, RadiatorMechanics} from './driver/DriverEngine.js';
 export type {WhatIfFigure, WhatIfFigures, WhatIfMoves} from './driver/whatIfMoves.js';
+export {whatIfRangeWarning} from './physicalRange.js';
 export type {WiredMotor, WiringConversion, WiringConverted, WiringRefused} from './solvers/driverQuantities.js';
 export type {DriverWiring} from './array/driverWiring.js';
 export type {RouteFormula, RouteFormulas} from './driver/routes/index.js';

@@ -14,6 +14,7 @@
  * dropped.
  */
 import {NumberField} from '../fields/field.js';
+import {numberEntryProblem} from '../fields/entryRefusal.js';
 import type {DriverSolverParams} from './solverTypes.js';
 import {outsideNormalBand, outOfRange} from './consistency.js';
 import type {NormalBandIssue, OutOfRangeIssue} from './consistency.js';
@@ -94,6 +95,16 @@ export function rangeIssue(field: string, value: number): OutOfRangeIssue | unde
   if (value < spec.plausible.min) return outOfRange(field, value, spec.plausible.min, 'below');
   if (value > spec.plausible.max) return outOfRange(field, value, spec.plausible.max, 'above');
   return undefined;
+}
+
+/** A What-if value inside its entry limits can still be outside the normal range. */
+export function whatIfRangeWarning<Q extends string>(issue: OutOfRangeIssue, target: Q): NormalBandIssue<Q> | OutOfRangeIssue {
+  const field = NumberField.named(target);
+  if (field === undefined || numberEntryProblem(field.floor, field.limits, issue.value) !== null) return issue;
+  const {min, max} = field.plausible;
+  const unit = field.unitLabel();
+  const display = (value: number): string => `${field.format(value)}${unit === '' ? '' : ` ${unit}`}`;
+  return outsideNormalBand(target, `${field.label} ${display(issue.value)} is outside the normal range (${display(min)} to ${display(max)}).`);
 }
 
 /** Basket dimensions get a live warning independent of the driver solve. */

@@ -1,4 +1,6 @@
 import type {Air, DqIssue, DriverEngine, DriverIssue, DriverQuantityName, DriverSolverParams, DriverValues, IssueEngine, SolverInput, SweepDriver, WhatIfFigure, WhatIfFigures, Wiring, WiringIssue} from '../../engine/index.js';
+import {whatIfRangeWarning} from '../../engine/index.js';
+import {numberEntryProblem} from '../../fields/entryRefusal.js';
 import {NumberField} from '../../fields/field.js';
 import type {ValueFloor} from '../../fields/field.js';
 import type {
@@ -268,11 +270,16 @@ export class OpenIsdDriverSpec {
                 const spec = sectionLens.value;
                 const {[key]: _removed, ...rest} = spec;
                 if (v === undefined) { sectionLens.set(rest); return; }
-                // In the What-if panel a typed figure moves the ones that follow it, in the same write, so the boxes always agree (QO535).
-                // Each moved figure keeps its own state. Outside the What-if nothing else moves: a typed value never overwrites another (QO534).
-                const figure = this.#driver.whatIfFigures.find(name => name === key);
-                const moved = v.state === 'E' && context.inWhatIf() && figure !== undefined ? this.#whatIfEntries(figure, v.value) : {};
-                sectionLens.set({...spec, ...moved, [key]: v});
+                if (v.state === 'E' && context.inWhatIf()) {
+                    const field = NumberField.named(key);
+                    if (field !== undefined && numberEntryProblem(field.floor, field.limits, v.value) !== null) return;
+                    // A What-if edit moves its dependent figures in the same write, preserving their states (QO535).
+                    const figure = this.#driver.whatIfFigures.find(name => name === key);
+                    const moved = figure === undefined ? {} : this.#whatIfEntries(figure, v.value);
+                    sectionLens.set({...spec, ...moved, [key]: v});
+                    return;
+                }
+                sectionLens.set({...spec, [key]: v});
             },
         });
         /** The `VCCon` slot: a wiring entry, not a numeric one. */
@@ -424,9 +431,13 @@ export class OpenIsdDriverSpec {
             wiring: this.VCCon,
         } satisfies DriverSolverParams;
         const solved = this.#driver.solve(params, air);
-        // The What-if boxes always agree (QO535): no box there carries a disagreement mark.
+        // What-if suppresses disagreement marks and warns when a kept value is outside its normal range.
         const shown = this.#context.inWhatIf()
-            ? solved.filter(issue => issue.kind !== 'inconsistent-inputs')
+            ? solved.filter(issue => issue.kind !== 'inconsistent-inputs').map(issue => {
+                if (issue.kind !== 'out-of-range') return issue;
+                const target = DRIVER_QUANTITY_NAMES.find(key => key === issue.field);
+                return target === undefined ? issue : whatIfRangeWarning(issue, target);
+            })
             : solved.map(issue => issue.kind === 'inconsistent-inputs' ? withDisagreementNote(issue) : issue);
         this.#issues = [...shown, ...wiringIssues];
         this.#markDq(params, this.#issues);
