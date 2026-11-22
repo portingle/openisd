@@ -1,5 +1,4 @@
 import type {Air, DqIssue, DriverEngine, DriverIssue, DriverQuantityName, DriverSolverParams, DriverValues, IssueEngine, SolverInput, SweepDriver, WhatIfFigure, WhatIfFigures, Wiring, WiringIssue} from '../../engine/index.js';
-import {whatIfRangeWarning} from '../../engine/index.js';
 import {numberEntryProblem} from '../../fields/entryRefusal.js';
 import {NumberField} from '../../fields/field.js';
 import type {ValueFloor} from '../../fields/field.js';
@@ -436,7 +435,7 @@ export class OpenIsdDriverSpec {
             ? solved.filter(issue => issue.kind !== 'inconsistent-inputs').map(issue => {
                 if (issue.kind !== 'out-of-range') return issue;
                 const target = DRIVER_QUANTITY_NAMES.find(key => key === issue.field);
-                return target === undefined ? issue : whatIfRangeWarning(issue, target);
+                return target === undefined ? issue : this.#driver.whatIfRangeWarning(issue, target);
             })
             : solved.map(issue => issue.kind === 'inconsistent-inputs' ? withDisagreementNote(issue) : issue);
         this.#issues = [...shown, ...wiringIssues];

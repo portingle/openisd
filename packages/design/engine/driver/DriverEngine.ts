@@ -28,7 +28,7 @@ import type {
 import {approximateCharts, missingDependencies, resultRefused} from '../consistency.js';
 import type {CalculationIssue, CalculationPrerequisite, NormalBandIssue, OutOfRangeIssue, WiringIssue} from '../consistency.js';
 import {geometryRefusal} from '../dvolRelation.js';
-import {basketRangeWarning, checkRange, isPhysicallyPlausible, rangeIssue} from '../physicalRange.js';
+import {basketRangeWarning, checkRange, isPhysicallyPlausible, rangeIssue, whatIfRangeWarning} from '../physicalRange.js';
 import type {DriverWorkingSet} from '../solvers/driverQuantities.js';
 import {coilAlfaVC_per_K, convertWiring, hotRe, perCoilResistanceFactor} from '../solvers/driverQuantities.js';
 import type {WiringConversion, WiredMotor} from '../solvers/driverQuantities.js';
@@ -234,6 +234,8 @@ export interface DriverEngine {
   rangeIssue(field: string, value: number): OutOfRangeIssue | undefined;
   /** The warning for a basket diameter outside its normal range. */
   basketRangeWarning: typeof basketRangeWarning;
+  /** A What-if value inside its entry limits but outside the normal range, as a warning. */
+  whatIfRangeWarning: typeof whatIfRangeWarning;
   /** Sealed resonance and Qtc read off a swept impedance curve, rather than computed. */
   findImpedancePeak(result: SweepResult | null, Re: number): { Fsc: number; Qtc: number } | null;
   /** The formulas `solve` works quantities out by: one per route, with its text and inputs, in the order it tries them.
@@ -265,6 +267,7 @@ export class DriverEngineImpl implements DriverEngine {
   readonly whatIfMoves = whatIfMoves;
   readonly whatIfFigures = WHAT_IF_FIGURES;
   readonly basketRangeWarning = basketRangeWarning;
+  readonly whatIfRangeWarning = whatIfRangeWarning;
 
   circuitValues(values: DriverValues): DriverValues {
     const fallback = this.qFallback(values);
