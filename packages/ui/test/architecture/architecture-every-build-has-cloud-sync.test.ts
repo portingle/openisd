@@ -9,7 +9,7 @@
  * every build (Vite reads packages/ui/.env), and never comes from a CI-only variable.
  * Bug: bugs/archive/BUG_20261029_preview-builds-hide-cloud-sync.md.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -28,10 +28,16 @@ describe('every build has cloud sync', () => {
     expect(config).toMatch(/BUILD_TEST_APP = `[^`]*vite build --mode test /);
   });
 
-  it('no workflow sets the client id, so CI builds the same app as a local build', () => {
-    for (const wf of ['build.yml', 'suite.yml', 'deploy.yml', 'release.yml']) {
-      const text = readFileSync(join(REPO, '.github', 'workflows', wf), 'utf8');
-      expect(text, wf).not.toMatch(/VITE_GOOGLE_CLIENT_ID/);
+  it('the repository holds no CI workflow, so no CI-only variable can set the client id', () => {
+    expect(existsSync(join(REPO, '.github', 'workflows'))).toBe(false);
+  });
+
+  it('no file under .github sets the client id', () => {
+    const dir = join(REPO, '.github');
+    const files = existsSync(dir) ? readdirSync(dir, { recursive: true, withFileTypes: true }) : [];
+    for (const f of files.filter((e) => e.isFile())) {
+      const path = join(f.parentPath, f.name);
+      expect(readFileSync(path, 'utf8'), path).not.toMatch(/VITE_GOOGLE_CLIENT_ID/);
     }
   });
 });
