@@ -2,7 +2,7 @@ id: T958
 release_note: internal
 repo: openisd
 owner: card-loaded-dq
-status: open
+status: done
 goal: A loaded number of drivers, source resistance and entered air values stay as the file states them, with a DQ mark, and the sweep stays finite or says why it is refused; typed values are still refused
 why: John, 21 Nov 2026: 'a bad idea if it misrepresent data, a dq is better and more consistent'
 done_test: bash scripts/test.sh packages/design/test/domain/air-and-box-load-repair.test.ts packages/ui/test/logic/loaded-values-typed-refusal.test.ts packages/persistence/test/load-repair-report.test.ts
