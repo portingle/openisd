@@ -41,6 +41,8 @@ tests_changed: >-
 done_test: bash scripts/test.sh packages/design/test/domain/on-screen-values.test.ts
 files:
   - packages/design/domain/project/calculationOpenNote.ts
+  - packages/design/engine/consistency.ts
+  - packages/design/test/domain/project/project-air.coverage.test.ts
   - packages/design/test/domain/multi-coil-goldens.test.ts
   - packages/persistence/src/repos/projectRepo.ts
   - packages/persistence/test/goldens/backup-file/file-layout-6.json
