@@ -163,7 +163,7 @@ export interface ProjectRepairReport {
   readonly backupKey: string | null;
 }
 
-/** A project whose values the load repaired on opening (a drive level below 10 mV set to 10 mV,
+/** A project whose values the load repaired on opening (a series resistance below 0 Ω set to 0 Ω,
  *  `OpenISDProject.openSession`): the user is told by a toast, one line per repair (QO953.c31). */
 export interface LoadRepairReport {
   readonly projectName: string;

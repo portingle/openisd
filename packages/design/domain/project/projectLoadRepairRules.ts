@@ -1,6 +1,5 @@
 /**
- * The load repair rules (`loadRepair.ts`) of a project record's own values, beside the drive level's
- * (`ProjectSignal.loadRepairRules`): the air, the driver count, the series resistance, and the
+ * The load repair rules (`loadRepair.ts`) of a project record's own values (the drive level is not repaired on load: QO972): the air, the driver count, the series resistance, and the
  * active box's tunings, port lengths, losses and passive radiator. A box volume of 0 is not repaired:
  * it is how a built project holds a chamber nothing has designed yet (`ProjectBuilder.empty()`). Each rule is the
  * field's own `NumberField.loadRepair`; this file only says where in the record each field lives.

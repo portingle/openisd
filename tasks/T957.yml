@@ -1,0 +1,21 @@
+id: T957
+release_note: internal
+repo: openisd
+owner: card-loaded-dq
+status: done
+goal: 'A loaded drive level (voltage or power) is shown exactly as the file states it with its data-quality mark, never repaired; typed values stay refused'
+why: 'John, 21 Nov 2026: ''a bad idea if it misrepresent data, a dq is better and more consistent'''
+done_test: npx vitest run packages/design/test/domain/drive-level-load-repair.test.ts packages/persistence/test/load-repair-report.test.ts
+files:
+  - tasks/T957.yml
+  - packages/design/domain/project/openISDProject.ts
+  - packages/design/domain/project/projectLoadRepairRules.ts
+  - packages/design/domain/project/projectSignal.ts
+  - packages/design/engine/signal/SignalEngine.ts
+  - packages/design/fields/field.ts
+  - packages/design/test/domain/drive-level-load-repair.test.ts
+  - packages/persistence/src/repos/projectRepo.ts
+  - packages/persistence/test/load-repair-report.test.ts
+  - packages/ui/src/logging/flash.ts
+  - packages/ui/src/logic/loadRepairNotice.ts
+  - packages/ui/test/ui/drive-level-limits.browser.spec.ts

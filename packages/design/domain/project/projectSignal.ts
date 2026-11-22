@@ -1,24 +1,20 @@
-import type { SignalEngine, SignalIssue } from '../../engine/index.js';
+import type { DqIssue, SignalEngine, SignalIssue } from '../../engine/index.js';
 import { DefaultingFieldImpl, DualWriteFieldImpl, absentCell, calculatedCell, enteredCell } from '../cell.js';
 import type { SimpleField } from '../cell.js';
 import { calculatedEntry, enteredEntry } from '../specEntry.js';
 import type { OpenISDProjectJson } from '../openisdSchema.js';
 import { NumberField } from '../../fields/field.js';
-import { fieldLoadRule, loadRepairText } from './loadRepair.js';
-import type { LoadRepairRule } from './loadRepair.js';
 
 /** The voltage a sweep runs at before anything is known. */
 const DEFAULT_DRIVE_VOLTAGE_V = 1;
 /** The lowest drive voltage a project may hold: 10 mV, the Driver input voltage box's own minimum. */
 const MIN_DRIVE_VOLTAGE_V = NumberField.SIGNAL_DRIVEV_V.limits.min;
-/** "the 10 mV minimum": how a message names that minimum (the field's own load repair). */
-const MIN_DRIVE_DESCRIBED = describedMinimum();
-
-function describedMinimum(): string {
-    const repair = NumberField.SIGNAL_DRIVEV_V.loadRepair;
-    if (repair === null) throw new Error(`${NumberField.SIGNAL_DRIVEV_V.value} must state its load repair`);
-    return repair.described;
-}
+/** "the 10 mV minimum": how a message names that minimum. */
+const MIN_DRIVE_DESCRIBED = 'the 10 mV minimum';
+/** The reference drive voltage: the level a sweep runs at ONLY when the project's stated drive level is
+ *  not a positive finite voltage (a loaded -6 V, 0 V, or a negative power). It is for the calculation
+ *  alone and is never written back into a field: the boxes keep showing what the file stated, with their marks. */
+export const REFERENCE_DRIVE_VOLTAGE_V = MIN_DRIVE_VOLTAGE_V;
 
 /** A project's own signal window (drive power/voltage), built fresh on every access — same
  *  reasoning as `driver`/`box`/`ProjectMeta`/`ProjectEnvironment`.
@@ -69,7 +65,7 @@ export class ProjectSignal {
                 const entry = signal.value.power_W;
                 if (entry === undefined) return absentCell<number>('power_W', this.#signalIssues());
                 return entry.state === 'E'
-                    ? enteredCell<number | null>('power_W', entry.value)
+                    ? enteredCell<number | null>('power_W', entry.value, this.#powerMarks(entry.value))
                     : calculatedCell<number | null>('power_W', entry.value);
             },
             {
@@ -122,39 +118,13 @@ export class ProjectSignal {
         return Math.max(NumberField.SIGNAL_PIN_W.limits.min, this.#powerFor(MIN_DRIVE_VOLTAGE_V, Re_ohm));
     }
 
-    /** The load repair rules of the drive level (`loadRepair.ts`), run once when a project opens:
-     *  a voltage below 10 mV is set to 10 mV; an entered power of 0 W or below, or one driving below
-     *  10 mV, is set to the power that drives 10 mV. The voltage is checked when it is the one
-     *  entered, or when no power is entered to recalculate it from. */
-    loadRepairRules(): readonly LoadRepairRule[] {
-        const signal = this.#lens;
-        const voltage = fieldLoadRule(NumberField.SIGNAL_DRIVEV_V,
-            () => {
-                const {voltage_V, power_W} = signal.value;
-                if (voltage_V === undefined) return null;
-                return voltage_V.state === 'E' || power_W?.state !== 'E' ? voltage_V.value : null;
-            },
-            v => {
-                const {voltage_V} = signal.value;
-                if (v === null) signal.set({...signal.value, voltage_V: undefined});
-                else signal.set({...signal.value, voltage_V: voltage_V?.state === 'C' ? calculatedEntry(v) : enteredEntry(v)});
-            });
-        const power: LoadRepairRule = {
-            field: NumberField.SIGNAL_PIN_W,
-            loaded: () => {
-                const {power_W} = signal.value;
-                return power_W?.state === 'E' && this.#usableRe() !== null ? power_W.value : null;
-            },
-            breaks: v => this.powerDriveRefusal(v) !== '',
-            fix: v => {
-                const Re_ohm = this.#usableRe();
-                if (Re_ohm === null) throw new Error('a power is repaired only against a usable Re');
-                const P = this.#powerFor(MIN_DRIVE_VOLTAGE_V, Re_ohm);
-                return {value: P, text: loadRepairText(NumberField.SIGNAL_PIN_W, v, `${NumberField.SIGNAL_PIN_W.format(P)} ${NumberField.SIGNAL_PIN_W.unitLabel()}, the power that drives ${MIN_DRIVE_DESCRIBED}`)};
-            },
-            write: v => signal.set({...signal.value, power_W: v === null ? undefined : enteredEntry(v)}),
-        };
-        return [voltage, power];
+    /** The marks a stated power earns: its own, and the low drive it implies (QO972). A power that is
+     *  zero, negative or not finite is never turned into a voltage. */
+    #powerMarks(power_W: number): readonly DqIssue[] {
+        const Re_ohm = this.#usableRe();
+        const usable = Number.isFinite(power_W) && power_W > 0 && Re_ohm !== null;
+        const voltage_V = usable ? this.#amplifierVoltageFor(power_W, Re_ohm, this.readoutRs_ohm) : null;
+        return this.#engine.drivePowerIssues(power_W, voltage_V);
     }
 
     /** The power this project's drivers draw at amplifier voltage `voltage_V` (the inverse of `#amplifierVoltageFor`). */
@@ -167,21 +137,22 @@ export class ProjectSignal {
         return this.#engine.amplifierVoltageFor(power_W, this.#nDrivers(), this.#driverWiring(), Re_ohm, rs_ohm, this.#rgAtDriverSide());
     }
 
-    /** The amplifier voltage the sweep runs at (`eg`): `driveVoltage_V`, or with "Re without Rg"
+    /** The amplifier voltage the sweep runs at (`eg`): `driveVoltage_V` (the reference drive voltage when that is not a positive number), or with "Re without Rg"
      *  bug switch ticked, the voltage that drives the power read into Re + Rg — WinISD's SPL
      *  chart drives its Re-only power readout into Re + Rg. */
     get sweepVoltage_V(): number {
-        const V = this.driveVoltage_V.value;
+        const stated = this.driveVoltage_V.value;
+        const V = Number.isFinite(stated) && stated > 0 ? stated : REFERENCE_DRIVE_VOLTAGE_V;
         const Re_ohm = this.#usableRe();
         const power_W = this.powerDrive_W.value;
-        if (!this.#winisdReWithoutRg() || Re_ohm === null || power_W === null) return V;
+        if (!this.#winisdReWithoutRg() || Re_ohm === null || power_W === null || !(Number.isFinite(power_W) && power_W > 0)) return V;
         return this.#amplifierVoltageFor(power_W, Re_ohm, this.#rsOhm());
     }
 
     /**
      * The drive voltage each driver gets — the `eg` every sweep runs at (see `sweepVoltage_V`). Never absent: an empty slot reads
-     * `DEFAULT_DRIVE_VOLTAGE_V` as calculated, and it is never below 10 mV: a typed one is refused,
-     * a loaded one repaired on opening (`loadRepairRules`). Entering it needs no
+     * `DEFAULT_DRIVE_VOLTAGE_V` as calculated, and a typed one below 10 mV is refused; a loaded one is
+     * kept exactly as the file states it, with a data-quality mark (the engine's `driveVoltageIssues`). Entering it needs no
      * Re. `.clear()` empties the pair; the resolve then fills it back from its defaults.
      */
     get driveVoltage_V(): DefaultingFieldImpl<number> {
@@ -191,7 +162,7 @@ export class ProjectSignal {
                 const entry = signal.value.voltage_V;
                 if (entry === undefined) return calculatedCell('voltage_V', DEFAULT_DRIVE_VOLTAGE_V);
                 return entry.state === 'E'
-                    ? enteredCell('voltage_V', entry.value)
+                    ? enteredCell('voltage_V', entry.value, this.#engine.driveVoltageIssues(entry.value))
                     : calculatedCell('voltage_V', entry.value);
             },
             {
