@@ -89,7 +89,7 @@ describe('records whose T/S values disagree (QO414: consistency warnings never r
     const result = project(text);
     assert.deepEqual(result.errors.filter(e => e.level === 'error'), []);
     assert.ok(result.openisd !== null && result.wdr !== null);
-    assert.deepEqual(result.errors.filter(e => /disagree/.test(e.message)).map(e => e.message), []);
+    assert.deepEqual(result.errors.filter(e => e.message.includes('off from what')).map(e => e.message), []);
     assert.ok(result.errors.some(e => e.level === 'warn' && e.field === 'VCCon' && /Measured wiring not stated/.test(e.message)));
   });
 
@@ -99,7 +99,20 @@ describe('records whose T/S values disagree (QO414: consistency warnings never r
       const result = project(text);
       assert.deepEqual(result.errors.filter(e => e.level === 'error'), []);
       assert.ok(result.openisd !== null && result.wdr !== null);
-      assert.ok(result.errors.some(e => e.level === 'warn' && /disagree/.test(e.message)));
+      assert.deepEqual(result.errors.filter(e => e.message.includes('off from what')), [
+        {
+          level: 'warn',
+          field: 'Fs_hz',
+          message: 'Fs is 0.8% off from what Mms and Cms give: they give 32.07 Hz, the box says 31.80 Hz. '
+            + 'Correct whichever is wrong, or clear one box and the app works it out from the others.',
+        },
+        {
+          level: 'warn',
+          field: 'Rms_kg_per_s',
+          message: 'Rms is 2.0% off from what Fs, Mms and Qms give: they give 0.73524 Ns/m, the box says 0.75 Ns/m. '
+            + 'Correct whichever is wrong, or clear one box and the app works it out from the others.',
+        },
+      ]);
     });
   }
 });

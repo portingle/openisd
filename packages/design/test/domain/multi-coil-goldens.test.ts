@@ -258,7 +258,7 @@ describe('Dayton RSS265HO-44 (2 coils; product page: "measured with the voice co
     expect(agrees(vas, printedOf(RSS, 'Vas_m3'))).toBe(false);
     const texts = inconsistencies(project(RSS).driver);
     expect(texts).toHaveLength(1);
-    expect(texts[0]).toContain('Vas = ρ·c²·Sd²·Cms');
+    expect(texts[0]).toContain('Vas is 5.9% off from what Cms, Sd, rho and c give: they give 36.97 L, the box says 34.80 L.');
   });
 
   // Evidence: the product page (https://daytonaudio.com/product/1108/rss265ho-44-10-reference-ho-dvc-subwoofer-4-ohms-per-coil) prints
@@ -400,11 +400,13 @@ describe('Bliesma W137A-854-4 (3 independent coils, configuration as published, 
     const texts = inconsistencies(project(W137).driver);
     // The USPL line is the sensitivity check of QO962 (20 Nov 2026): 88 dB at 2.83 V/1 m into Re 3.4 is 84.3 dB at 1 W,
     // and Fs/Vas/Qes imply 87.0 dB; it is about the sensitivity, not Qes or the motor.
-    // The warning names fields as a user reads them ('USPL, η₀, Re, rho and c disagree'), not raw keys ('USPL_dB, no, ...'):
+    // The warning uses the labels USPL and η₀:
     // John, 20 Nov 2026 on card w137a-text: "and fix it!"; 1 Nov: a test never pins a defect.
-    expect(texts.filter(t => !/Rms|Qms/.test(t) && !t.startsWith('USPL,'))).toEqual([]);
-    expect(texts.filter(t => t.startsWith('USPL,'))).toHaveLength(1);
-    expect(texts.length).toBeGreaterThan(0);
+    expect(texts).toHaveLength(2);
+    expect(texts).toEqual(expect.arrayContaining([
+      expect.stringContaining('Rms is 2.7% off from what Fs, Mms and Qms give: they give 0.72975 Ns/m, the box says 0.75 Ns/m.'),
+      expect.stringContaining('USPL is 3.0% off from what η₀, Re, rho and c give: they give 90.69 dB, the box says 88.00 dB.'),
+    ]));
   });
 
   // The record is ONE chosen wiring of a three-coil driver, so it is modelled as a single equivalent coil: its override

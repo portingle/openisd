@@ -71,7 +71,7 @@ describe('driver calc check through the driver.yml projection', () => {
 
     const qts = result.errors.filter(e => e.field === 'Qts');
     expect(qts.map(e => e.level)).toEqual(['warn']);
-    expect(qts[0]?.message).toContain('Qts = Qes·Qms/(Qes+Qms)');
+    expect(qts[0]?.message).toContain('Qts is 32.1% off from what Qes and Qms give: they give 0.3395, the box says 0.50.');
   });
 
   it('does not report the printed Qts 0.34 the datasheet rounds from 0.3397', () => {

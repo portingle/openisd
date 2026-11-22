@@ -51,8 +51,7 @@ describe('QO534 driver editor: E150HE-44, all entered from the datasheet', () =>
     const p = project();
     p.driver.specField('Mms_kg').set(0.0346);
     const text = p.driver.specs.Fs_hz.dq.map(issue => issue.text).join('\n');
-    expect(text).toMatch(/Fs, Mms and Cms disagree/);
-    expect(text).toMatch(/gives Fs 34\.\d+ Hz/);
+    expect(text).toContain('Fs is 12.7% off from what Mms and Cms give: they give 34.93 Hz, the box says 40.00 Hz.');
   });
 
   it('row 2: type Cms 0.80 mm/N: the charts use Mms 26.6 and Cms 0.80; Vas, Cms, Fs and Mms are marked', () => {

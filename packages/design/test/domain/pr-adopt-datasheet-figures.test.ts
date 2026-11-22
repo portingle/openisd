@@ -105,7 +105,8 @@ describe('a radiator edited before the project exists (the New Project wizard)',
     expect(spec.Vas_m3.entered).toBe(true);
     expect(spec.Cms_m_per_N.entered).toBe(true);
     expect(spec.Cms_m_per_N.value).toBe(0.01);
-    expect(spec.Cms_m_per_N.dq.map(i => i.text).join(' ')).toMatch(/Vas.*Cms.* disagree/);
+    expect(spec.Cms_m_per_N.dq.map(i => i.text).join(' '))
+      .toContain('Vas is 90.0% off from what Cms, Sd, rho and c give: they give 239.73 L, the box says 24.00 L.');
     expect(spec.Vas_m3.dq.length).toBeGreaterThan(0);
   });
 });
