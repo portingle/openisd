@@ -5,7 +5,7 @@
  * Escape) ends the What-if; Reset puts the project's values back. Behaviour in
  * `OriginalWhatIf-hooks.ts`.
  */
-import {computed, ref} from 'vue';
+import {computed, provide, ref} from 'vue';
 import {useApp} from '../../../logic/app.js';
 import type {NumericDriverSpecFieldName} from '@openisd/design';
 import {NumberField} from '@openisd/design/fields';
@@ -13,13 +13,14 @@ import ProvenanceLegend from '../../components/ProvenanceLegend.vue';
 import UIField from '../../components/UIField.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import WhatIfBoxField from '../../components/WhatIfBoxField.vue';
-import {provideCellScope} from '../../components/cellScope.js';
+import {provideCellScope, RESTORE_REFUSED_ENTRY} from '../../components/cellScope.js';
 import {useEscToClose} from '../../../logic/useEscToClose.js';
 import {useOriginalWhatIf} from '../../../hooks/OriginalWhatIf-hooks.js';
 const {appState, presentation: presentationState} = useApp();
 const {projectChanged} = appState;
 
 provideCellScope({ revision: projectChanged, written: () => {} });
+provide(RESTORE_REFUSED_ENTRY, true);
 
 const whatIf = useOriginalWhatIf();
 const collapsed = ref(false);
@@ -173,17 +174,10 @@ useEscToClose(() => presentationState.editDriver, close);
    column's label track is as wide as the longest label it shows and every box in the column
    starts at one edge, right after it (John, 8 Nov 2026, QO449.c11: "too much space between labels
    and cells"). The same structure as the driver editor's fields. */
-/* Keep boxes at 93px and chips at 29px. Give only Cms (mm/N) and Rms (Ns/m) another 9px
-   for their units, keeping the same numeric space and left edge. John, 21 Nov 2026:
-   "only the col that needed widening really needs the fix". */
-.what-if-panel {
-  --what-if-box-w:93px; --what-if-chip-w:29px; --what-if-wide-extra:9px;
-  --what-if-box-track-w:calc(var(--what-if-box-w) + var(--what-if-wide-extra));
-  --what-if-cue-w:24px; --what-if-spacer-w:12px;
-}
+.what-if-panel { --what-if-box-w:93px; --what-if-chip-w:29px; --what-if-cue-w:24px; --what-if-spacer-w:12px; }
 .what-if-content {
   display:grid; column-gap:2px; row-gap:0;
-  grid-template-columns:max-content var(--what-if-box-track-w) max-content var(--what-if-cue-w) var(--what-if-spacer-w) max-content var(--what-if-box-track-w) max-content var(--what-if-cue-w);
+  grid-template-columns:max-content var(--what-if-box-w) max-content var(--what-if-cue-w) var(--what-if-spacer-w) max-content var(--what-if-box-w) max-content var(--what-if-cue-w);
 }
 .what-if-content > * { grid-column:1 / -1; }
 .what-if-grid, .what-if-box-grid, .what-if-box-line { display:grid; grid-template-columns:subgrid; grid-column:1 / -1; row-gap:6px; align-items:start; }
@@ -192,27 +186,23 @@ useEscToClose(() => presentationState.editDriver, close);
 .what-if-box-placeholder { min-width:0; }
 /* A window too narrow for two columns stacks them into one, so the right column is never cut off. */
 @media (max-width: 520px) {
-  .what-if-content { grid-template-columns:max-content var(--what-if-box-track-w) max-content var(--what-if-cue-w); }
+  .what-if-content { grid-template-columns:max-content var(--what-if-box-w) max-content var(--what-if-cue-w); }
   .what-if-grid > :nth-child(even), .what-if-box-line > :nth-child(even) { grid-column:1 / 5; }
 }
 .what-if-panel .what-if-content :deep(.ui-field.ui-field[data-field]) {
   grid-template-columns:subgrid !important; width:auto !important; max-width:none !important;
-  --what-if-extra-w:0px;
-  --what-if-box-end-inset:calc(var(--what-if-wide-extra) - var(--what-if-extra-w));
-  --joined-chip:calc(var(--what-if-chip-w) + var(--what-if-extra-w));
+  --joined-chip:var(--what-if-chip-w);
 }
+/* A 29px chip, 7px left inset and two 1px borders leave 55px for the number. */
 .what-if-panel .what-if-content :deep(.ui-field.ui-field:is([data-field="Cms_m_per_N"], [data-field="Rms_kg_per_s"])) {
-  --what-if-extra-w:var(--what-if-wide-extra);
+  --joined-inset:7px;
 }
-/* Start each box at the shared grid line and keep its chip and stepper next to its own right edge. */
-.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-value :is(.num-input-wrap, input[readonly], select)) {
-  justify-self:start; width:calc(var(--what-if-box-w) + var(--what-if-extra-w));
+.what-if-panel :deep(.ui-field.ui-field:is([data-field="Cms_m_per_N"], [data-field="Rms_kg_per_s"]) .ui-field-unit) {
+  font-size:10px; letter-spacing:-0.5px;
 }
-.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit) { margin-inline-end:var(--what-if-box-end-inset); }
 .what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit:not(.unit-toggle)) { min-width:var(--joined-chip); }
 /* Let the centred, switchable symbols use the full chip around the divider and outer border. */
 .what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit.unit-toggle) { padding-inline:0; }
-.what-if-panel :deep(.ui-field.ui-field[data-field] .num-stepper) { translate:calc(-1 * var(--what-if-box-end-inset)); }
 /* The label track is the longest label plus the desktop's 22px warning slot after every label (kept
    so a warning never moves the boxes). */
 .what-if-panel .what-if-content :deep(.ui-field.ui-field[data-field] > .ui-field-label) {

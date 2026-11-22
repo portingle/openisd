@@ -409,7 +409,7 @@ export function trialsFor(inp: Input): readonly Trial[] {
 }
 
 /** Whether the screen would store the trial: inside the field's band and floor, as
- *  `entryRefusal` (packages/ui/src/logic/entryRefusal.ts) decides, or any finite number for a box
+ *  `entryRefusal` (packages/design/fields/entryRefusal.ts) decides, or any finite number for a box
  *  bound `allow-out-of-range`. An empty box is stored where the screen offers a clear. */
 export function screenAccepts(inp: Input, trial: Trial): boolean {
   const v = trial.value;

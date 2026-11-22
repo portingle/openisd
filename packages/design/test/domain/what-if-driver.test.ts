@@ -52,6 +52,24 @@ describe('QO535 What-if, driver figures', () => {
     expect(Math.max(...p.sweep(GRID).values!.spl.map((v, i) => Math.abs(v - before[i]!)))).toBeGreaterThan(0.01);
   });
 
+  it('keeps an unusually high but possible Mms and warns that it is outside the normal range', () => {
+    const p = whatIf();
+    p.driver.specs.Mms_kg.set(2.5);
+
+    expect(p.driver.specs.Mms_kg.value).toBe(2.5);
+    const warning = p.driver.specs.Mms_kg.dq.find(issue => issue.kind === 'outside-normal-band');
+    expect(warning?.text).toContain('outside the normal range');
+  });
+
+  it('keeps a negative Mms from a driver record when opening the What-if', () => {
+    const engine = createEngine();
+    const driver = driverFromSpec(engine, {...E150HE_44, Mms_kg: -0.005});
+    const p = new ProjectBuilder(driver, engine).sealed().volume_m3(0.012).build();
+
+    p.beginWhatIf();
+    expect(p.driver.specs.Mms_kg.value).toBe(-0.005);
+  });
+
   it('Fs typed (row 1): Vas and the Qs stay, Mms 34.7 g; the charts use the moved Mms', () => {
     const p = whatIf();
     p.driver.specField('Fs_hz').set(35, 0.005);

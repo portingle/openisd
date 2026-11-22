@@ -287,6 +287,24 @@ test.describe('What-if panel', () => {
       await expect(page.locator('.what-if-panel .dq-flag')).toHaveCount(0);
     });
 
+    test('refusing -5 g in Mms restores its previous value and shows the refusal note', async ({ page }) => {
+      await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      const row = whatIfField(page, 'Mms');
+      const mms = row.locator('input');
+      const before = await mms.inputValue();
+      const fs = await whatIfField(page, 'Fs').locator('input').inputValue();
+      await expect(row.locator('.ui-field-unit')).toHaveText('g');
+      await mms.click();
+      await mms.press('Control+a');
+      await mms.pressSequentially('-5');
+      await mms.press('Enter');
+
+      await expect(row.getByRole('note')).toHaveText(/Mms must be greater than 0 .*above 0.* g/);
+      await expect(mms).toHaveValue(before);
+      await expect(whatIfField(page, 'Fs').locator('input')).toHaveValue(fs);
+      expect(await focusedIsModified(page)).toBe(false);
+    });
+
     test('opened on a driver whose stated figures disagree (W5-1138SMF), no What-if box carries a warning mark', async ({ page }) => {
       await page.goto('/');
       await openAProject(page, COMPLETE_DRIVER_PROJECT_OWPR);
@@ -308,24 +326,29 @@ test.describe('What-if panel', () => {
       await expect(page.locator('.what-if-btn')).toHaveAttribute('title', 'Try values & watch the charts. Your project will not be updated.');
     });
 
-    test('only Cms and Rms get wider boxes and unit chips', async ({ page }) => {
-      await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
-      const named = await page.locator('.what-if-panel .what-if-fld:not(.what-if-ro) input').evaluateAll(
+    test('all boxes are 93 px, all unit chips are 29 px and each column aligns', async ({ page }) => {
+      const whatIf = await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      const named = await whatIf.locator('.ui-field :is(input, select)').evaluateAll(
         async els => {
           await document.fonts.ready;
           return els.map(input => {
-            const row = input.closest('.what-if-fld');
+            const row = input.closest('.ui-field');
             const unit = row?.querySelector('.ui-field-unit');
             const chip = unit?.getBoundingClientRect();
+            const box = input.getBoundingClientRect();
             const text = document.createRange();
             if (unit) text.selectNodeContents(unit);
             const glyphs = text.getBoundingClientRect();
             return {
               label: row?.querySelector('label')?.textContent?.trim() ?? '',
               rowWidth: row?.getBoundingClientRect().width ?? 0,
-              width: Math.round(input.getBoundingClientRect().width),
+              left: box.left,
+              right: box.right,
+              width: box.width,
+              column: getComputedStyle(row ?? input).gridColumnStart,
               symbol: unit?.textContent?.trim() ?? '',
-              chipWidth: Math.round(chip?.width ?? 0),
+              chipWidth: chip?.width ?? 0,
+              chipRight: chip?.right,
               unitFits: chip !== undefined && glyphs.left >= chip.left - 0.5 && glyphs.right <= chip.right + 0.5,
               chipPadding: parseFloat(getComputedStyle(input).paddingRight),
             };
@@ -334,17 +357,44 @@ test.describe('What-if panel', () => {
       expect(named.length).toBeGreaterThan(8);
       expect(named.find(row => row.label === 'Cms')?.symbol).toBe('mm/N');
       expect(named.find(row => row.label === 'Rms')?.symbol).toBe('Ns/m');
+      const columns = new Set(named.map(row => row.column));
       for (const {label, rowWidth, width} of named) {
-        const wide = label === 'Cms' || label === 'Rms';
-        expect(width, label).toBe(wide ? 102 : 93);
+        expect(width, label).toBe(93);
         expect(width, label).toBeLessThan(rowWidth);
       }
-      for (const {label, width, symbol, chipWidth, unitFits, chipPadding} of named.filter(row => row.symbol !== '')) {
-        const wide = label === 'Cms' || label === 'Rms';
-        expect(chipWidth, label).toBe(wide ? 38 : 29);
+      expect(columns.size).toBe(2);
+      for (const column of columns) {
+        const leftEdges = new Set(named.filter(row => row.column === column).map(row => row.left));
+        expect(leftEdges.size, `column ${column} box left edges`).toBe(1);
+      }
+      for (const {label, width, right, symbol, chipWidth, chipRight, unitFits, chipPadding} of named.filter(row => row.symbol !== '')) {
+        expect(chipWidth, label).toBe(29);
+        expect(chipRight, label).toBe(right);
         expect(unitFits, `${label} ${symbol}`).toBe(true);
         expect(width - chipPadding, `${label} numeric rail`).toBe(64);
       }
+    });
+
+    test('Cms shows all of 0.36872 beside its unit', async ({ page }) => {
+      await openWhatIf(page, COMPLETE_DRIVER_PROJECT_OWPR);
+      const cms = whatIfField(page, 'Cms').locator('input');
+      await cms.fill('0.36872');
+      await cms.blur();
+      await expect(cms).toHaveValue('0.36872');
+      const width = await cms.evaluate(async input => {
+        if (!(input instanceof HTMLInputElement)) throw new Error('Cms is not a number input');
+        await document.fonts.ready;
+        const style = getComputedStyle(input);
+        const context = document.createElement('canvas').getContext('2d');
+        if (!context) throw new Error('Canvas text measurement is unavailable');
+        context.font = style.font;
+        return {
+          text: context.measureText(input.value).width,
+          available: input.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+        };
+      });
+      expect(width.available).toBe(55);
+      expect(width.text).toBeLessThanOrEqual(width.available);
     });
 
     test('a blank Q autocalculates from the other two, with the editor E/C/N marks and red border', async ({ page }) => {

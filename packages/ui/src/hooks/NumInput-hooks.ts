@@ -1,8 +1,7 @@
 
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
-import {CARET_HOLD_START_MS, DragSpin, DRAG_SPIN_THRESHOLD_PX, caretRepeatDelayMs, digitAtCaret, pressedDigit, formatFixed, PHONE_MAX_SIGNIFICANT, NUMBER_TEXT, pastedEdit, typedEdit, spinStep, NumberField, type FieldSpin, type NumberEdit, type SpinDirection, type SteppedPlace, type StepAt} from '@openisd/design/fields';
+import {CARET_HOLD_START_MS, DragSpin, DRAG_SPIN_THRESHOLD_PX, caretRepeatDelayMs, digitAtCaret, entryRefusal, pressedDigit, formatFixed, PHONE_MAX_SIGNIFICANT, NUMBER_TEXT, pastedEdit, typedEdit, spinStep, NumberField, type EntryBounds, type FieldSpin, type NumberEdit, type SpinDirection, type SteppedPlace, type StepAt} from '@openisd/design/fields';
 import {inputFrom} from '../logic/domEvents.js';
-import {entryRefusal, type EntryBounds} from '../logic/entryRefusal.js';
 import type {StepperPin} from '../logic/stepperPin.js';
 import type {DragClock} from '../logic/dragClock.js';
 import {screenTopPx} from '../logic/visibleViewport.js';
@@ -47,11 +46,12 @@ export interface NumInputDependencies {
   readonly attrs: Readonly<Record<string, unknown>>;
   /** Told the id of the field whose box has just refused an entry (usage statistics). */
   readonly refusalSeen: (fieldId: string) => void;
+  readonly restoreRefusedEntry: boolean;
 }
 
 /** One injectable owner of numeric input, digit spinning, validation and focus behaviour. */
 export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, dependencies: NumInputDependencies) {
-  const {presentationState, stepperPin, fieldEditMode, dragClock, attrs, refusalSeen} = dependencies;
+  const {presentationState, stepperPin, fieldEditMode, dragClock, attrs, refusalSeen, restoreRefusedEntry} = dependencies;
   const activeToken = computed(() => props.field?.unitTokenFor(presentationState.ui.unitTokens ?? {}));
 
   function fmt(v: number | null | undefined, halfWidth: number | null | undefined = props.halfWidth): string {
@@ -73,6 +73,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
   let tabReturn = false;
   const groupFocused = ref(false);
   const badEntry = ref(false);
+  const settledRefusal = ref('');
   /** The person emptied the box (a typed blank), as opposed to a box that never had a value. */
   const emptied = ref(false);
   const entryValue = ref<number | null | undefined>(props.modelValue);
@@ -83,9 +84,10 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
   const typedDraft = ref(false);
 
   watch([() => props.modelValue, () => props.halfWidth], ([v]) => {
-    if (!groupFocused.value && refusal.value === '') showStored(v);
+    if (!groupFocused.value && (refusal.value === '' || settledRefusal.value !== '')) showStored(v);
   });
   watch(activeToken, (newToken, oldToken) => {
+    settledRefusal.value = '';
     if (!groupFocused.value || refusal.value === '') {
       // Accepted input is already stored at full SI precision. Never convert the
       // rounded display back into a value when cycling units.
@@ -142,7 +144,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
       return;
     }
     underlineIndex.value = null;
-    if (refusal.value !== '') return;   // a refused entry stays as typed until fixed or Esc
+    if (refusal.value !== '' && settledRefusal.value === '') return;   // keep a refused draft available for correction
     badEntry.value = false;
     emptied.value = false;
     entryValue.value = props.modelValue;
@@ -419,6 +421,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
   function revertToStored(el: HTMLInputElement | null) {
     const before = refusal.value !== '' && publishedText ? valueBeforeEdit : undefined;
     if (before !== undefined) restoreBeforeRefusal();
+    settledRefusal.value = '';
     badEntry.value = false;
     emptied.value = false;
     if (before === undefined) showStored(props.modelValue);
@@ -427,6 +430,20 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
       display.value = fmt(before?.value, before?.halfWidth);
     }
     if (el) el.value = display.value;
+  }
+
+  /** Commit a refusal by showing the value from before the edit and keeping the note. */
+  function settleRefusedDraft(): void {
+    if (!restoreRefusedEntry || !typedDraft.value || refusal.value === '') return;
+    const note = refusal.value;
+    restoreBeforeRefusal();
+    badEntry.value = false;
+    emptied.value = false;
+    typedDraft.value = false;
+    display.value = fmt(valueBeforeEdit?.value, valueBeforeEdit?.halfWidth);
+    if (inputEl.value !== null) inputEl.value.value = display.value;
+    editedThisFocus = false;
+    settledRefusal.value = note;
   }
 
   /** Letters never go in: the design rule judges the text the edit would leave. */
@@ -481,6 +498,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
       }
     }
     if (isReadonly.value) return;
+    if (e.key === 'Enter' && e.target === inputEl.value) settleRefusedDraft();
     if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault();
       stopRepeat();
@@ -577,6 +595,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     const spun = spinStep(display.value, at, lastStep, dir, bounds, rule);
     if (spun === null) return;
     const si = fromDisp(spun.value);
+    settledRefusal.value = '';
     display.value = spun.text;
     typedDraft.value = true;
     lastCaret = {kind: 'digit', at: spun.mark};
@@ -772,6 +791,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
   function onInput(e: Event) {
     const t = inputFrom(e);
     if (t === null) return;
+    settledRefusal.value = '';
     display.value = t.value;
     typedDraft.value = true;
     editedThisFocus = true;
@@ -799,6 +819,7 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
 
   function onBlur(e: Event) {
     clearRepeat();
+    settleRefusedDraft();
     commitEdit();
     focused.value = false;
     // Unit and spinner controls share the number's draft and chosen place.
@@ -835,16 +856,15 @@ export function useNumInput(props: Readonly<NumInputProps>, emit: NumInputEmit, 
     if (props.modelValue !== entryValue.value) emit('blur-notify', props.modelValue ?? null);
   }
 
-  /** What is wrong with the text in the box, '' when it may be stored (or is empty). Only a typed
-   *  entry is refused: the stored value showing unchanged is never refused, even when a limit has
-   *  since moved past it (a bigger box lowering the PR's Fp ceiling) — that is the domain's ⚠. */
+  /** Why the typed entry was refused. A stored value can have its own data-quality note. */
   const refusal = computed<string>(() => {
+    if (settledRefusal.value !== '') return settledRefusal.value;
     if (badEntry.value) return props.allowOutOfRange ? '' : entryRefusal(bounds.value, { kind: 'not-a-number' });
     // Refused only when the person emptied the box. A box that never had a value is just unset, so a value that arrives later still shows.
     if (emptied.value && props.blankRefused && !props.allowOutOfRange) return entryRefusal(bounds.value, { kind: 'not-a-number' });
     if (!typedDraft.value) return '';
     if (display.value === '' || !isFinite(numberOf(display.value))) return '';
-    if (display.value === fmt(props.modelValue)) return '';
+    if (!restoreRefusedEntry && display.value === fmt(props.modelValue)) return '';
     return entryRefusal(entryBounds.value, { kind: 'number', si: fromDisp(numberOf(display.value)) });
   });
   watch(refusal, text => {

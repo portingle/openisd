@@ -36,6 +36,7 @@ export {
 export { knownDecimals } from './precision.js';
 
 export { type NumberBox, type NumberEdit, NUMBER_TEXT, numberInPaste, pastedEdit, typedEdit } from './numberText.js';
+export { entryRefusal, type EntryBounds } from './entryRefusal.js';
 
 export {
   type FieldLimits,
