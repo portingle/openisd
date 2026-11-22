@@ -55,7 +55,7 @@
       "Cms_m_per_N": {
         "dq_calculated": [
           {
-            "detail": "Fs_hz, Mms_kg, Cms_m_per_N disagree by 2.9%: Fs = 1/(2π·√(Mms·Cms)). Every field in the group is marked - correct one of them, or clear one to let it be calculated.",
+            "detail": "Fs is 11.9% off from what Mms and Cms give: they give 29.06 Hz, the box says 33.00 Hz. Correct whichever is wrong, or clear one box and the app works it out from the others.",
             "kind": "calc",
             "params": {
               "actual": 33,
@@ -97,7 +97,7 @@
       "Fs_hz": {
         "dq_calculated": [
           {
-            "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 36.9%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated.",
+            "detail": "Rms is 57.4% off from what Fs, Mms and Qms give: they give 4.69107 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others.",
             "kind": "calc",
             "params": {
               "actual": 2,
@@ -134,7 +134,7 @@
       "Mms_kg": {
         "dq_calculated": [
           {
-            "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 36.9%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated.",
+            "detail": "Rms is 57.4% off from what Fs, Mms and Qms give: they give 4.69107 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others.",
             "kind": "calc",
             "params": {
               "actual": 2,
@@ -182,7 +182,7 @@
       "Qms": {
         "dq_calculated": [
           {
-            "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 36.9%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated.",
+            "detail": "Rms is 57.4% off from what Fs, Mms and Qms give: they give 4.69107 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others.",
             "kind": "calc",
             "params": {
               "actual": 2,
@@ -235,7 +235,7 @@
       "Rms_kg_per_s": {
         "dq_calculated": [
           {
-            "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 36.9%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated.",
+            "detail": "Rms is 57.4% off from what Fs, Mms and Qms give: they give 4.69107 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others.",
             "kind": "calc",
             "params": {
               "actual": 2,

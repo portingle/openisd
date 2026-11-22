@@ -49,7 +49,7 @@ test('driver editor: the Qes warning glyph opens a popup; the row, the dialog wi
   await qes.locator('.ui-field-dq-btn').click();
   const note = qes.locator('.ui-field-note');
   await expect(note).toBeVisible();
-  await expect(note).toContainText('disagree by');
+  await expect(note).toContainText(/is [0-9.]+% off from what/);
 
   expect(await rowBox(qes)).toEqual(rowBefore);
   expect((await modal.boundingBox())?.width).toBe(modalWidthBefore);

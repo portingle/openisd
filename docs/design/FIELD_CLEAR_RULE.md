@@ -77,8 +77,9 @@ the [on-screen] values not hidden recalcs always"; "all get the mark".
 - Driver editor, Driver tab and radiator settings: the charts use the boxes Sd, Mms, Cms, Rms, Bl, Re and Le (radiator: Sd, Mms,
   Cms, Rms) as they show. Those boxes are accented (QO532; the list is `ChartInputs` in `packages/design/fields/chartInputs.ts`).
 - A typed value moves no other box. An empty box is calculated and shown.
-- When the boxes disagree, every box in the disagreeing set carries the warning mark; its popup names them and says what the maths
-  gives (E150HE-44 with Mms typed 34.6 g: "Fs, Mms and Cms disagree: … gives Fs 34.9 Hz, the box says 40 Hz.").
+- When the boxes disagree, every box in the group carries the warning mark. The popup names the target and the other boxes
+  (W5-1138SMF: "Fs is 7.8% off from what Mms and Cms give: they give 48.83 Hz, the box says 45.00 Hz.
+  Correct whichever is wrong, or clear one box and the app works it out from the others.").
 - Clearing a box lets the others work it out.
 
 John, QO535, 11 Nov 2026: "what if is all about tweaking things you need to buy a different driver to obtain, ie experiments and

@@ -42,12 +42,12 @@ describe('DqIssue text', () => {
       );
     });
 
-    it('renders an inconsistent-inputs issue as "<fields> disagree by <pct>: <formula>. Every field..."', () => {
+    it('renders an inconsistent-inputs issue with the target, the other boxes, and how to resolve it', () => {
       const issue: CalculationIssue<string> = engine.issues.inconsistentInputs<string>(
         'Qts', ['Qts', 'Qes', 'Qms'], 'Qts = Qes·Qms/(Qes+Qms)', 1, 1.953, 0.953);
       expect(issue.text).toBe(
-        'Qts, Qes, Qms disagree by 48.8%: Qts = Qes·Qms/(Qes+Qms). Every field in the group is marked '
-        + '- correct one of them, or clear one to let it be calculated.',
+        'Qts is 48.8% off from what Qes and Qms give: they give 1.00, the box says 1.953. '
+        + 'Correct whichever is wrong, or clear one box and the app works it out from the others.',
       );
     });
   });
@@ -98,7 +98,7 @@ describe('DqIssue text', () => {
   describe('every DqIssue kind carries its own sentence', () => {
     it('each factory decides the text at construction, so no reader has to dispatch on kind', () => {
       expect(engine.issues.missingDependencies<string>('Qts', []).text).toMatch(/Qts/);
-      expect(engine.issues.inconsistentInputs<string>('Qts', ['Qts'], 'f', 1, 2, 1).text).toMatch(/disagree/);
+      expect(engine.issues.inconsistentInputs<string>('Qts', ['Qts'], 'f', 1, 2, 1).text).toBe('f');
       expect(engine.issues.nonPhysicalQuantity('Vb', -1).text).toMatch(/not a physical/i);
       expect(engine.issues.quantityOutOfBand('Fb', 1, 10, 20).text).toMatch(/plausible/);
       expect(engine.issues.targetUnreachable('length_m', 42).text).toMatch(/42 Hz/);
@@ -108,10 +108,10 @@ describe('DqIssue text', () => {
   describe('the gap an inconsistent-inputs warning prints', () => {
     it('a tiny nonzero gap keeps enough digits to be nonzero, never 0.0%', () => {
       const text = (actual: number): string => engine.issues.inconsistentInputs<string>('Qts', ['Qts', 'Qes'], 'f', 1, actual, 0).text;
-      expect(text(1.0004)).toContain('disagree by 0.040%');
-      expect(text(1.000004)).toContain('disagree by 0.00040%');
-      expect(text(1.5)).toContain('disagree by 33.3%');
-      expect(text(1.002)).toContain('disagree by 0.2%');
+      expect(text(1.0004)).toContain('Qts is 0.040% off');
+      expect(text(1.000004)).toContain('Qts is 0.00040% off');
+      expect(text(1.5)).toContain('Qts is 33.3% off');
+      expect(text(1.002)).toContain('Qts is 0.2% off');
     });
 
     // BUG_20261104_driver-consistency-gap-shown-as-zero: BL stated 24.7 Tm, implied 26.748 Tm.
@@ -119,13 +119,12 @@ describe('DqIssue text', () => {
       const driver = OpenISDDriver.fromConformingRecord(JSON.parse(BC_18NW100_4), engine);
       if (Array.isArray(driver)) throw new Error(driver.join('; '));
       const bl = driver.dataQualityWarnings().find(w => w.field === 'BL_Tm');
-      // The displayed values, 26.74834 Tm and 24.70 Tm, are 7.7% apart.
       expect(bl?.level).toBe('warn');
-      expect(bl?.message).toMatch(/^BL, Re, Fs, Qes and Cms disagree by 7.7%:/);
-      expect(bl?.message).toContain('gives BL 26.74834 Tm, the box says 24.70 Tm');
-      expect(bl?.message).toContain('Correct one of them, or clear one to let it be calculated.');
+      expect(bl?.message).toBe(
+        'BL is 7.7% off from what Re, Fs, Qes and Cms give: they give 26.75 Tm, the box says 24.70 Tm. '
+        + 'Correct whichever is wrong, or clear one box and the app works it out from the others.',
+      );
       expect(bl?.message).not.toMatch(/0\.0%/);
-      expect(bl?.message).toContain('disagree by 7.7%');
     });
   });
 });

@@ -81,7 +81,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms is 48.0% off from what Fs, Mms and Qms give: they give 3.84739 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others."
                 }
               ]
             },
@@ -156,7 +156,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms is 48.0% off from what Fs, Mms and Qms give: they give 3.84739 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others."
                 }
               ]
             },
@@ -198,7 +198,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms is 48.0% off from what Fs, Mms and Qms give: they give 3.84739 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others."
                 }
               ]
             },
@@ -250,7 +250,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms is 48.0% off from what Fs, Mms and Qms give: they give 3.84739 Ns/m, the box says 2.00 Ns/m. Correct whichever is wrong, or clear one box and the app works it out from the others."
                 }
               ]
             },
