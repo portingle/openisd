@@ -2,7 +2,7 @@ id: T957
 release_note: internal
 repo: openisd
 owner: card-loaded-dq
-status: open
+status: done
 goal: 'A loaded drive level (voltage or power) is shown exactly as the file states it with its data-quality mark, never repaired; typed values stay refused'
 why: 'John, 21 Nov 2026: ''a bad idea if it misrepresent data, a dq is better and more consistent'''
 done_test: npx vitest run packages/design/test/domain/drive-level-load-repair.test.ts packages/persistence/test/load-repair-report.test.ts
