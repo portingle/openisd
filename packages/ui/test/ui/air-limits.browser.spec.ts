@@ -5,14 +5,14 @@
  *    are refused: the box goes red with a note saying what to enter, and nothing is stored.
  *  - Typed odd: an air pressure of 5000 Pa or a temperature of 400 K is kept and used, and the box
  *    carries a ⚠ warning that names the normal band.
- *  - Opened: a project file holding an air pressure of 0 Pa, a humidity of 150 % and a sound velocity
- *    of 0 m/s opens with each box showing the app's or the calculated value, no ⚠ on any air box, the
- *    opening message naming each repair, and the chart drawn.
+ *  - Opened (QO972, 21 Nov 2026): a project file holding an air pressure of 0 Pa, a humidity of 150 % and a
+ *    sound velocity of 0 m/s opens with each box showing exactly what the file states, each carrying its ⚠,
+ *    nothing repaired and no repair line in the opening message.
  * A user's actions only: opening a file, tabs, typing, the ⚠.
  */
 import {writeFileSync} from 'node:fs';
 import type {Locator, Page, TestInfo} from '@playwright/test';
-import {expect, expectChartDrawn, openAMobileProject, openAProject, test} from '../fixtures.js';
+import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
 import {fillAndBlur} from '../fixtures/numField.js';
 import {forceMobileSkin, mobileFieldRow} from '../fixtures/mobileSkin.js';
 import {PIXEL_9} from '../fixtures/phoneSizes.js';
@@ -26,12 +26,6 @@ const TEMPERATURE_NOTE = /^Temperature must be greater than 0 — enter a value 
 /** A band warning conflicts with nothing, so its ⚠ says only the warning, with no conflict prefix. */
 const PRESSURE_WARNING = 'Air pressure 5000 Pa is outside the sane range for air (30000 Pa to 110000 Pa). It is kept and used; check it.';
 const TEMPERATURE_WARNING = 'Temperature 400.00 K is outside the sane range for air (174.00 K to 373.00 K). It is kept and used; check it.';
-/** In the order the boxes stand on the Advanced tab. */
-const REPAIR_LINES = [
-  "Relative humidity 150 % in the file: emptied, so the box shows the app's humidity (Options)",
-  "Air pressure 0 Pa in the file: emptied, so the box shows the app's pressure (Options)",
-  'Sound velocity 0 m/s in the file: emptied, so the box shows the value worked out from the temperature, humidity and pressure',
-];
 
 /** The sample project with its air pressure 0 Pa, humidity 150 % and sound velocity 0 m/s, as a file a person opens. */
 function impossibleAirProject(testInfo: TestInfo): string {
@@ -158,27 +152,15 @@ for (const shell of ['desktop', 'phone'] as const) {
     await expectWarned(page, row(page, shell, 'Temperature'), '400', TEMPERATURE_WARNING, testInfo.outputPath(`${shell}-temperature-400K-warned.png`));
   });
 
-  test(`${shell}: a project file with air pressure 0, humidity 150 % and sound velocity 0 opens repaired, unmarked, the repairs named`, async ({page}, testInfo) => {
+  test(`${shell}: a project file with air pressure 0, humidity 150 % and sound velocity 0 opens as the file states it, each box marked, nothing repaired (QO972)`, async ({page}, testInfo) => {
     await open(page, shell, impossibleAirProject(testInfo));
-    const message = openingMessage(page, shell);
-    await expect(message).toHaveText(`Project imported from impossible-air.owpr\n${REPAIR_LINES.join('\n')}`, {useInnerText: true});
-    await expectInside(page, message);
-    await page.screenshot({path: testInfo.outputPath(`${shell}-opened-impossible-air-message.png`)});
-    await expect(message).toBeHidden();
+    await expect(openingMessage(page, shell)).not.toContainText('in the file:');
     await openAdvanced(page, shell);
-    for (const label of ['Temperature', 'Relative humidity', 'Air pressure', 'Sound velocity', 'Air density']) {
+    for (const [label, stated] of [['Relative humidity', 150], ['Air pressure', 0], ['Sound velocity', 0]] as const) {
       const field = row(page, shell, label);
-      const input = field.locator('input').first();
-      await expect(input).not.toHaveValue('');
-      expect(Number(await input.inputValue()), label).toBeGreaterThan(0);
-      await expect(field.locator('.ui-field-dq-btn'), `${label}: no ⚠ on a repaired value`).toHaveCount(0);
+      await expect(field.locator('input').first(), `${label} shows what the file states`).toHaveValue(new RegExp(`^${stated}(\\.0+)?$`));
+      await expect(field.locator('.ui-field-dq-btn'), `${label}: a ⚠ on the stated value`).toHaveCount(1);
     }
     await page.screenshot({path: testInfo.outputPath(`${shell}-opened-impossible-air-advanced.png`)});
   });
 }
-
-test('desktop: a project file with impossible air draws its chart', async ({page}, testInfo) => {
-  await open(page, 'desktop', impossibleAirProject(testInfo));
-  await expect(page.locator('.flash')).toContainText('emptied, so the box shows');
-  await expectChartDrawn(page);
-});

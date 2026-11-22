@@ -660,7 +660,6 @@ export class NumberField extends Field {
     label: "Series resistance",
     display: {kind: 'fixed', symbol: 'Ω'},
     limits: {min: 0, max: 1000},
-    loadRepair: {breaks: 'min', to: 0, described: '0 Ω, the least'},
     precision: 3,
     description: "Series Resistance\nCombined amplifier output impedance, wiring and crossover resistance, in series with the driver.",
   });
@@ -744,7 +743,6 @@ export class NumberField extends Field {
     // outside it a typed or loaded temperature is kept with a warning (QO953.c14).
     plausible: {min: 174, max: 373},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: "the app's temperature (Options)"},
     precision: 2,
     description: "Ambient Temperature\nUsed to calculate the speed of sound and the density of air.",
   });
@@ -753,7 +751,6 @@ export class NumberField extends Field {
     label: "Relative humidity",
     display: {kind: 'fixed', symbol: '%'},
     limits: {min: 0, max: 100},
-    loadRepair: {breaks: 'band', to: 'empty', described: "the app's humidity (Options)"},
     precision: 2,
     description: "Relative Humidity\nAffects the speed of sound and the density of the air.",
   });
@@ -766,7 +763,6 @@ export class NumberField extends Field {
     // shore (about 107 kPa). Outside it a pressure is kept with a warning (QO953.c14).
     plausible: {min: 30000, max: 110000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: "the app's pressure (Options)"},
     precision: 0,
     description: "Air Pressure\nAtmospheric pressure — affects air density and acoustic impedance.",
   });
@@ -780,7 +776,6 @@ export class NumberField extends Field {
     // velocity is kept with a warning (QO953.c14).
     plausible: {min: 260, max: 500},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: 'the value worked out from the temperature, humidity and pressure'},
     precision: 2,
     formula: "c = √(γ·p/ρ), γ = 1.4",
     description: "Speed of Sound\nHow fast an acoustic wave travels through air, at the stated conditions.",
@@ -794,7 +789,6 @@ export class NumberField extends Field {
     // density is kept with a warning (QO953.c14).
     plausible: {min: 0.15, max: 2.25},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: 'the value worked out from the temperature, humidity and pressure'},
     precision: 5,
     formula: "ρ = p·Ma/(R·T)·[1 − xv(1 − Mv/Ma)]",
     description: "Air Density\nMass density of air, derived from temperature, humidity and pressure.",
@@ -1370,7 +1364,6 @@ export class NumberField extends Field {
     label: "Num. of drivers",
     display: {kind: 'fixed', symbol: ''},
     limits: {min: 1, max: 64},
-    loadRepair: {breaks: 'min', to: 1, described: '1, the fewest'},
     spin: INTEGER_SPIN,
     precision: 0,
     description: "Driver Count\nHow many drivers are active in the enclosure.",
