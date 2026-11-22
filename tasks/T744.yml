@@ -27,6 +27,7 @@ goal_detail:
   - "Removed from the earlier T744 build (older rule): the 'Cms from Vas' option, the typed-last memory (TypedFigure), the 'shown' chain that replaced a stated Cms/Mms/Rms on screen, and the typed-last-wins pairs."
   - "Done when: the tests above are green; typecheck green; before/after page under ui-gallery/T744-rules passes check-answerable."
 tests_changed: >-
+  The disagreement note uses the plainer wording John chose on 22 Nov 2026 (03:01 UTC, QO976, "I prefer the plainer wording"): the tests, fixtures and stored examples that held the old "disagree by ... formula" sentence carry the new sentence; no number changes.
   QO960 (WinISD project import, John, 20 Nov 2026): "if you open a wpr then it gets converted immediately to OpenISD model and the app is unaware of provenance, if the user wants some legacy behave we have flags for that".
   The WinISD reference cases explicitly tick 'Chart from Fs, Vas, Qms' because the sealed Box readout follows the calculation selected for the charts (QO959).
   Their expected values, tolerances and assertions stay the same in vented-lossless-winisd.test.ts, isobarik-power-winisd.test.ts, sealed-readout-heats-coil.test.ts, coil-alfavc-driver-first.test.ts, sealed-triple.test.ts, field-clear-rule.test.ts and the WinISD-reference cases in sealed-readout-counts-drivers.test.ts.
@@ -281,6 +282,33 @@ files:
   - packages/ui/test/ui/driver-editor-help-overview-clip.browser.spec.ts
   - CLAUDE.md
   - packages/design/test/domain/driver-wiring-data-facade.test.ts
+  - docs/reports/TEST_REVIEW_20261004_REMOVED_TESTS.md
+  - packages/design/fields/disagreementText.ts
+  - packages/design/test/engine/air-solver-failed-step.test.ts
+  - packages/design/test/winisd/driver-dq-range-calc.test.ts
+  - packages/design/test/winisd/scraper-driver-json-projection.test.ts
+  - packages/persistence/test/fixtures/bc-18nw100-4-with-marks.json
+  - packages/persistence/test/goldens/backup-file/file-layout-1.json
+  - packages/persistence/test/goldens/backup-file/file-layout-2.json
+  - packages/persistence/test/goldens/backup-file/file-layout-3.json
+  - packages/persistence/test/goldens/custom-drivers/dump-layout-1.json
+  - packages/persistence/test/goldens/custom-drivers/dump-layout-2.json
+  - packages/persistence/test/goldens/custom-drivers/dump-layout-3.json
+  - packages/persistence/test/goldens/exported-driver-file/file-layout-1.owdr
+  - packages/persistence/test/goldens/exported-driver-file/file-layout-2.owdr
+  - packages/persistence/test/goldens/exported-driver-file/file-layout-3.owdr
+  - packages/persistence/test/goldens/exported-project-file/file-layout-1.owpr
+  - packages/persistence/test/goldens/exported-project-file/file-layout-2.owpr
+  - packages/persistence/test/goldens/exported-project-file/file-layout-3.owpr
+  - packages/persistence/test/goldens/many-projects/dump-layout-1.json
+  - packages/persistence/test/goldens/many-projects/dump-layout-2.json
+  - packages/persistence/test/goldens/one-project/dump-layout-1.json
+  - packages/persistence/test/goldens/one-project/dump-layout-2.json
+  - packages/persistence/test/goldens/open-sessions/dump-layout-1.json
+  - packages/persistence/test/goldens/open-sessions/dump-layout-2.json
+  - packages/ui/test/logic/sweepIssueMessage.test.ts
+  - packages/ui/test/ui/consistency-dq.browser.spec.ts
+  - packages/ui/test/ui/field-note-popup.browser.spec.ts
 # Merge with main 19 Nov: CLAUDE.md names QO539's unticked option beside QO946.c131's allowance; main's option-default test lists both off options.
 # Desktop and phone graph screens: the charts read the boxes as they show (QO534); phone Driver tab: the blue dot by Re (QO532);
 # both Advanced tabs: the "Chart from Fs, Vas, Qms (WinISD's way)" switch (QO539); every desktop screen: the saved size of a new project (its new switch).
