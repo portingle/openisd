@@ -116,10 +116,10 @@ export class OpenISDProject {
     /** The one load repair pass (`loadRepair.ts`) over the current layer, written directly like a
      *  resolve's own writes (opening a project is not an edit), then resolved again. Returns the
      *  repairs made, for the opening message only: a repaired value is a good value, with no mark on
-     *  its box (QO953.c26, c30, c31). Every door a record enters by runs it. */
+     *  its box (QO953.c26, c30, c31). The drive level is not repaired: a loaded one stays as stated, marked (QO972). Every door a record enters by runs it. */
     #repairOnLoad(): readonly LoadRepairNote[] {
         const root = this.#directRoot();
-        const notes = repairLoaded([...projectLoadRepairRules(root), ...this.#signalOver(root).loadRepairRules()]);
+        const notes = repairLoaded([...projectLoadRepairRules(root)]);
         if (notes.length > 0) this.#resolve();
         return notes;
     }
@@ -845,9 +845,9 @@ export class OpenISDProject {
         return this.#signalOver(this.#root());
     }
 
-    /** A drive power read from a WinISD `.wpr` (`[SignalSource] P`): stored as the file states it,
-     *  then repaired like every loaded value (a power of 0 W or below, or one driving below 10 mV,
-     *  is set to the power that drives 10 mV). Returns the repairs made. Needs a usable Re. */
+    /** A drive power read from a WinISD `.wpr` (`[SignalSource] P`): stored exactly as the file states it,
+     *  never repaired (QO972); a power of 0 W or below, or one driving below 10 mV, is marked by the
+     *  Signal tab's data-quality marks. Returns the record repairs the pass made. Needs a usable Re. */
     /** The load repair pass, run by an importer that wrote a file's values through the project's own
      *  fields (a WinISD `.wpr`) once it has written them all. Returns the repairs made. */
     repairImported(): readonly LoadRepairNote[] {

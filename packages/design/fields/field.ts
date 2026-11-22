@@ -651,7 +651,6 @@ export class NumberField extends Field {
     display: {kind: 'fixed', symbol: 'V'},
     limits: {min: 0.01, max: 1000},
     minimumReason: "The drive level must be at least 10 mV.",
-    loadRepair: {breaks: 'min', to: 0.01, described: 'the 10 mV minimum'},
     precision: 2,
     formula: "driveV = √(Pin · Re)",
     description: "Amplifier Output Voltage\nThe voltage at your amplifier's output. With one driver, or several wired in parallel, each driver gets all of it (V = √(P · Re) for one driver); wired in series each gets its share, the voltage divided by the number of drivers. Power and voltage set each other.",

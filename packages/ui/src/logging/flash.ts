@@ -6,7 +6,7 @@ import {ref, type Ref} from 'vue';
 /** How long a one-line flash stays on screen. */
 const VISIBLE_MS = 2000;
 /** How much longer a flash stays for each line after its first: a line per value the opening
- *  repaired ("Driver input voltage (each) -6 V in the file: set to the 10 mV minimum") must stay
+ *  repaired ("Series resistance -2 Ω in the file: set to 0 Ω, the least") must stay
  *  long enough to read (QO953.c31, "all you can do is show a toast"). */
 const EXTRA_LINE_MS = 4000;
 

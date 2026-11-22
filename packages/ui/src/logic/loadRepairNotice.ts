@@ -1,6 +1,6 @@
 /**
  * The toast that tells the user what opening a stored project, a backup or a share link repaired
- * (a drive level below 10 mV set to 10 mV): one line per repair, under the project's name. John,
+ * (a series resistance below 0 Ω set to 0 Ω): one line per repair, under the project's name. John,
  * 18 Nov 2026 (QO953.c31): "all you can do is show a toast". File > Open shows its own repairs under
  * "Project imported from X" (`applicationIO.ts`).
  *
