@@ -14,7 +14,7 @@
 #
 # Exit 0 clean. Exit 1: the first problem, on stdout as `REFUSE<TAB><gate><TAB><detail>` (land.sh turns that
 # into its refusal); more lines may follow. The board check of gates_approved reads QUESTIONS_FILE (land.conf);
-# where that file does not exist (a GitHub runner) the field must still be a well-formed QO<n>.
+# where an approval record is unavailable (a GitHub runner) the field must still be a well-formed QO<n>.
 set -uo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -153,15 +153,39 @@ if [ -n "$gate_hits" ]; then
   gates_msg="gate files changed: ${gate_hits}; a gate file changed; John approves gate changes: put the change to John as a board item and add gates_approved: QO<n> to the task once he has answered"
   [ -n "$gates_qo" ] || fail gates "$gates_msg"
   printf '%s' "$gates_qo" | grep -Eq '^QO[0-9]+$' || fail gates "gates_approved '$gates_qo' is not QO<n>"
-  if [ -f "${QUESTIONS_FILE:-/nonexistent}" ]; then
+  record_path="${QUESTIONS_FILE:-/nonexistent}"
+  layout_marker="$(dirname "$record_path")/questions/LAYOUT"
+  # the decision record is a folder (layout split-v1) once its LAYOUT marker exists beside the old questions.yml path
+  if [ ! -e "$record_path" ] && { [ -e "$layout_marker" ] || [ -L "$layout_marker" ]; }; then record_path="$(dirname "$record_path")/questions"; fi
+  if [ -f "$record_path" ] || [ -d "$record_path" ] || [ -e "$layout_marker" ] || [ -L "$layout_marker" ]; then
     # exit 0 only when the item with id == gates_approved names this task and has a thread entry by John
-    python3 -I - "$QUESTIONS_FILE" "$gates_qo" "$gates_id" <<'PY' || fail gates "$gates_msg (board item $gates_qo has no answer by John in $QUESTIONS_FILE)"
-import re, sys, yaml
-path, qo, task_id = sys.argv[1], sys.argv[2], sys.argv[3]
+    python3 -I - "$record_path" "$gates_qo" "$gates_id" "$BASE" <<'PY' || fail gates "$gates_msg (board item $gates_qo has no answer by John in $QUESTIONS_FILE)"
+from pathlib import Path
+import os
+import re
+import subprocess
+import sys
+from types import ModuleType
+import yaml
+
+record = Path(sys.argv[1]).absolute()
+qo, task_id, base = sys.argv[2:]
+
 names_task = re.compile(r"(?<![A-Za-z0-9])" + re.escape(task_id) + r"(?![A-Za-z0-9])")
-with open(path) as f:
-    doc = yaml.safe_load(f)
-items = doc.get("questions", []) if isinstance(doc, dict) else doc
+if record.is_dir() or os.path.lexists(record.parent / "questions/LAYOUT"):
+    # The proposed checkout and the decision workspace supply data only.
+    ref = subprocess.check_output(["git", "rev-parse", "--verify", f"{base}^{{commit}}"], text=True).strip()
+    path = "scripts/land/questions_reader.py"
+    source = subprocess.check_output(["git", "show", f"{ref}:{path}"])
+    reader = ModuleType("protected_questions_reader")
+    sys.modules[reader.__name__] = reader
+    exec(compile(source, f"{ref}:{path}", "exec"), reader.__dict__)
+    items = reader.read_gate_record(record, "live", qo)
+else:
+    # An approval on the current legacy layout can land the first protected reader.
+    with record.open() as f:
+        doc = yaml.safe_load(f)
+    items = doc.get("questions", []) if isinstance(doc, dict) else doc
 for item in items or []:
     if isinstance(item, dict) and item.get("id") == qo:
         text = str(item.get("title", "")) + "\n" + str(item.get("body", ""))

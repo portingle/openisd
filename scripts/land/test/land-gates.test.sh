@@ -272,5 +272,46 @@ if [ "$r" = 1 ] && grep -q "the base's land.conf .* sets no GATE_FILES" "$SCRATC
 ci_setup "" 0; printf 'def fnmatchcase(name, pat):\n    return False\n' > fnmatch.py; git add -A; git commit -qm planted; r=$(ci_contract "$NOT_BASE")
 if [ "$r" = 1 ] && grep -q $'REFUSE\tgates\tgate files changed: [^;]*tsconfig.json' "$SCRATCH/out"; then ok "32 a checkout-local fnmatch.py is not imported by the checker"; else fail "32 (r=$r): $(tr '\n' ' ' < "$SCRATCH/out" | cut -c1-400)"; fi
 
+# Exercise the real checkout's contract with a protected fixture base and an untrusted workspace.
+split="$SCRATCH/record/questions"; mkdir -p "$split" "$SCRATCH/record/_agent_files/bin"
+printf 'split-v1\n' > "$split/LAYOUT"
+printf '{"questions.yml":["QO1","QO2","QO11"],"questions-archived.yml":["QO3"]}\n' > "$split/ORDER.json"
+printf '%s\n' '- id: QO1' '  title: Gate change for T9' '  thread: [{by: John}]' > "$split/QO1.yml"
+printf '%s\n' '- id: QO2' '  title: Gate change for T9' '  thread: [{by: john}]' > "$split/QO2.yml"
+printf '%s\n' '- id: QO3' '  title: Gate change for T9' '  thread: [{by: John}]' > "$split/QO3.yml"
+printf '%s\n' '- id: QO11' '  title: Gate change for T90' '  thread: [{by: John}]' > "$split/QO11.yml"
+cat > "$SCRATCH/record/_agent_files/bin/qboard.py" <<'PYFIXTURE'
+from pathlib import Path
+Path("untrusted-reader-was-run").touch()
+print("questions: [{id: QO2, title: Gate change for T9, thread: [{by: John}]}]")
+PYFIXTURE
+contract() {
+    GATE_FILES="tsconfig.json" QUESTIONS_FILE="$1" bash scripts/land/check-task-contract.sh T9 origin/main HEAD > "$SCRATCH/out" 2>&1
+}
+setup $'gates_approved: QO2\n' tsconfig.json
+if contract "$split" || [ -e untrusted-reader-was-run ] || ! grep -q 'REFUSE.*gates' "$SCRATCH/out"; then
+    fail "33 workspace executable influenced the approval: $(cat "$SCRATCH/out")"
+else ok "33 folder gate refuses lowercase author and ignores the workspace reader"; fi
+
+setup $'gates_approved: QO1\n' tsconfig.json
+printf '%s\n' 'raise RuntimeError("the proposed reader ran")' > scripts/land/questions_reader.py
+git add scripts/land/questions_reader.py; git commit -qm "vary proposed reader"
+if contract "$split" && [ ! -e untrusted-reader-was-run ]; then
+    ok "34 split approval uses the reader from the protected base"
+else fail "34 protected reader: $(cat "$SCRATCH/out")"; fi
+
+for qo in QO3 QO11; do
+    setup "gates_approved: $qo"$'\n' tsconfig.json
+    if contract "$split" || ! grep -q 'REFUSE.*gates' "$SCRATCH/out"; then
+        fail "35 wrong-scope or wrong-task approval ($qo): $(cat "$SCRATCH/out")"
+    else ok "35 refuses archived or wrong-task approval ($qo)"; fi
+done
+
+setup $'gates_approved: QO1\n' tsconfig.json
+cp "$SCRATCH/questions.yml" "$SCRATCH/record/questions.yml"
+if contract "$SCRATCH/record/questions.yml" || ! grep -q 'mixed decision layouts' "$SCRATCH/out"; then
+    fail "36 mixed decision record: $(cat "$SCRATCH/out")"
+else ok "36 recreated legacy path cannot approve from a mixed record"; fi
+
 [ $fails = 0 ] && { echo "land-gates: all passed"; exit 0; }
 echo "land-gates: $fails failed"; exit 1
