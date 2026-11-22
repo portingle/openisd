@@ -1,8 +1,8 @@
 /**
- * A project file whose air, driver count, series resistance or box holds a value no design can
- * use is repaired automatically on opening: air pressure, sound velocity or density at or below 0,
- * humidity outside 0-100 %, temperature at or below 0 K; a driver or passive radiator count below 1,
- * a negative series resistance or added mass, a loss Q or port tuning at or below 0, a
+ * John, 21 Nov 2026 (QO972): a loaded air value, driver count or series resistance is shown exactly as the
+ * file states it, never repaired, with the usual data-quality mark; the charts stay finite and nothing
+ * crashes. A project file whose box holds a value no design can use is still repaired automatically on
+ * opening: a passive radiator count below 1, a negative added mass, a loss Q or port tuning at or below 0, a
  * negative port length. The box shows the repaired value with NO data-quality mark, the opening
  * message names each repair once, and the charts draw. John, 18 Nov 2026: "refuse impossible, warn
  * odd" (QO953.c14); "a 0 is just the same as clearing the value in a sense" (QO953.c28); "there
@@ -48,47 +48,42 @@ function expectCharts(project: OpenISDProject): void {
   expect(result.refused).toBe(false);
 }
 
-const STANDARD_AIR = loadProject('sealed');
-
-describe('loaded impossible air is emptied on opening: the box shows the app\'s or the calculated value, unmarked (QO953.c14, c28, c30)', () => {
+describe('a loaded impossible air value is shown as the file states it, with its mark, and the charts stay finite (QO972)', () => {
   const cases = [
-    {key: 'pressure_Pa', value: 0, field: NumberField.ADV_PRESSURE_KPA, read: (p: OpenISDProject) => p.envPressurePa, line: "Air pressure 0 Pa in the file: emptied, so the box shows the app's pressure (Options)"},
-    {key: 'pressure_Pa', value: -1, field: NumberField.ADV_PRESSURE_KPA, read: (p: OpenISDProject) => p.envPressurePa, line: "Air pressure -1 Pa in the file: emptied, so the box shows the app's pressure (Options)"},
-    {key: 'c_m_per_s', value: 0, field: NumberField.ADV_SOUNDVELOCITY_M_PER_S, read: (p: OpenISDProject) => p.envC_m_per_s, line: 'Sound velocity 0 m/s in the file: emptied, so the box shows the value worked out from the temperature, humidity and pressure'},
-    {key: 'roo_kg_per_m3', value: -100, field: NumberField.ADV_AIRDENSITY_KG_PER_M3, read: (p: OpenISDProject) => p.envRoo_kg_per_m3, line: 'Air density -100 kg/m³ in the file: emptied, so the box shows the value worked out from the temperature, humidity and pressure'},
-    {key: 'humidity_pct', value: 150, field: NumberField.ADV_HUMIDITY_PCT, read: (p: OpenISDProject) => p.envHumidityPct, line: "Relative humidity 150 % in the file: emptied, so the box shows the app's humidity (Options)"},
-    {key: 'humidity_pct', value: -5, field: NumberField.ADV_HUMIDITY_PCT, read: (p: OpenISDProject) => p.envHumidityPct, line: "Relative humidity -5 % in the file: emptied, so the box shows the app's humidity (Options)"},
-    {key: 'temperature_K', value: 0, field: NumberField.ADV_TEMP_K, read: (p: OpenISDProject) => p.envTempK, line: "Temperature 0 K in the file: emptied, so the box shows the app's temperature (Options)"},
-    {key: 'temperature_K', value: -20, field: NumberField.ADV_TEMP_K, read: (p: OpenISDProject) => p.envTempK, line: "Temperature -20 K in the file: emptied, so the box shows the app's temperature (Options)"},
+    {key: 'pressure_Pa', value: 0, read: (p: OpenISDProject) => p.envPressurePa},
+    {key: 'pressure_Pa', value: -1, read: (p: OpenISDProject) => p.envPressurePa},
+    {key: 'c_m_per_s', value: 0, read: (p: OpenISDProject) => p.envC_m_per_s},
+    {key: 'roo_kg_per_m3', value: -100, read: (p: OpenISDProject) => p.envRoo_kg_per_m3},
+    {key: 'humidity_pct', value: 150, read: (p: OpenISDProject) => p.envHumidityPct},
+    {key: 'humidity_pct', value: -5, read: (p: OpenISDProject) => p.envHumidityPct},
+    {key: 'temperature_K', value: 0, read: (p: OpenISDProject) => p.envTempK},
+    {key: 'temperature_K', value: -20, read: (p: OpenISDProject) => p.envTempK},
   ] as const;
 
   for (const c of cases) {
-    it(`${c.field.label} ${c.value} in a project file opens calculated, unmarked, the repair named once, and the charts draw`, () => {
+    it(`${c.key} ${c.value} in a project file stays ${c.value}, entered, marked, nothing repaired, and the charts are finite`, () => {
       const {project, loadRepairs} = opened(owprWith('sealed', withAir(c.key, c.value)));
       const field = c.read(project);
-      expect(field.entered).toBe(false);
-      expect(field.value).not.toBeNull();
-      expect(field.value).toBeGreaterThan(0);
-      expect(field.dq).toEqual([]);
-      for (const other of [project.envTempK, project.envHumidityPct, project.envPressurePa, project.envC_m_per_s, project.envRoo_kg_per_m3]) {
-        expect(other.dq).toEqual([]);
-      }
-      expect(loadRepairs.map(r => r.text)).toEqual([c.line]);
-      expect(project.air.c()).toBeCloseTo(STANDARD_AIR.air.c(), 6);
-      expectCharts(project);
+      expect(field.value).toBe(c.value);
+      expect(field.entered).toBe(true);
+      expect(field.dq.length).toBeGreaterThan(0);
+      expect(loadRepairs).toEqual([]);
+      const result = projectFindings(project, DEFAULT_GRID);
+      expect(result.findings).toEqual([]);
     });
   }
 
-  it('a WinISD .wpr with T=0, p=0 and phi=2 (200 %) opens in the app\'s air, three repairs named, the charts draw', () => {
+  it('a WinISD .wpr with T=0, p=0 and phi=2 (200 %) keeps all three as the file states them, nothing repaired, the charts finite', () => {
     const plain = wprText('sealed');
     const text = plain.replace('T=293.15\n', 'T=0\n').replace('p=101325\n', 'p=0\n').replace('phi=0.3\n', 'phi=2\n');
     expect(text, 'the sealed W5 file states T, p and phi').not.toBe(plain);
     const {value, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
     if (value === null) throw new Error(errors.map(e => e.message).join('; '));
-    expect(loadRepairs.map(r => r.field)).toEqual([NumberField.ADV_TEMP_K, NumberField.ADV_HUMIDITY_PCT, NumberField.ADV_PRESSURE_KPA]);
-    expect(value.envTempK.entered).toBe(false);
-    expect(value.envPressurePa.dq).toEqual([]);
-    expectCharts(value);
+    expect(loadRepairs).toEqual([]);
+    expect(value.envTempK.value).toBe(0);
+    expect(value.envPressurePa.value).toBe(0);
+    expect(value.envHumidityPct.value).toBe(200);
+    expect(projectFindings(value, DEFAULT_GRID).findings).toEqual([]);
   });
 
   it('odd but possible air in a file (pressure 5000 Pa, 330 K, 60 %) is kept as it is and nothing is repaired', () => {
@@ -139,19 +134,33 @@ describe('the air boxes warn outside their normal band, keeping and using the va
   });
 });
 
-describe('the other loaded impossible values T916 flagged and blocked are repaired on opening, unmarked, named once (QO953.c28)', () => {
-  it('driver count 0 opens as 1 and series resistance -2 Ω as 0 Ω', () => {
+describe('the driver count and series resistance stay as the file states them; the other loaded impossible values are repaired on opening, unmarked, named once (QO953.c28, QO972)', () => {
+  it('driver count 0 and series resistance -2 Ω stay as the file states them; the sweep says so with its existing refusal, nothing is non-finite', () => {
     const {project, loadRepairs} = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, nDrivers: 0, Rs_ohm: -2}})));
-    expect(project.nDrivers.value).toBe(1);
-    expect(project.Rs_ohm.value).toBe(0);
-    expect(loadRepairs.map(n => n.text)).toEqual([
-      'Num. of drivers 0 in the file: set to 1, the fewest',
-      'Series resistance -2 Ω in the file: set to 0 Ω, the least',
-    ]);
-    expectCharts(project);
+    expect(project.nDrivers.value).toBe(0);
+    expect(project.Rs_ohm.value).toBe(-2);
+    expect(loadRepairs).toEqual([]);
+    const swept = project.sweep(DEFAULT_GRID);
+    expect(swept.values).toBeNull();
+    expect(swept.issues.map(i => [i.kind, i.text])).toEqual(expect.arrayContaining([
+      ['result-refused', 'Num. of drivers must be at least 1.'],
+      ['result-refused', 'Series resistance must not be negative: a negative resistance is not a wire.'],
+    ]));
+    const result = projectFindings(project, DEFAULT_GRID);
+    expect(result.findings).toEqual([]);
+    expect(result.refused).toBe(true);
   });
 
-  it("a sealed box's Ql 0 and Qa -1 open at WinISD's defaults 10 and 100", () => {
+  it('a series resistance of -2 Ω alone is refused by the sweep with its own note, and the driver count alone likewise', () => {
+    const rs = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, Rs_ohm: -2}}))).project;
+    expect(rs.Rs_ohm.value).toBe(-2);
+    expect(rs.sweep(DEFAULT_GRID).issues.map(i => i.text)).toEqual(['Series resistance must not be negative: a negative resistance is not a wire.']);
+    const n = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, nDrivers: 0}}))).project;
+    expect(n.nDrivers.value).toBe(0);
+    expect(n.sweep(DEFAULT_GRID).issues.map(i => i.text)).toEqual(['Num. of drivers must be at least 1.']);
+  });
+
+  it("a sealed box's Ql 0 and Qa -1 open at WinISD's defaults 10 and 100 (not yet changed: no mark exists for a loss factor)", () => {
     const {project, loadRepairs} = opened(owprWith('sealed', r => ({...r, box: {...r.box, sealed: {...r.box.sealed, losses: {Ql: 0, Qa: -1}}}})));
     expect(project.box.sealed.losses.Ql.value).toBe(10);
     expect(project.box.sealed.losses.Qa.value).toBe(100);
@@ -221,8 +230,8 @@ describe('the other loaded impossible values T916 flagged and blocked are repair
     expectCharts(bp4.project);
   });
 
-  it('a project opened from a repaired file copies with nothing left to repair', () => {
-    const {project} = opened(owprWith('sealed', withAir('pressure_Pa', 0)));
+  it('a project opened from a repaired file (an emptied tuning) copies with nothing left to repair', () => {
+    const {project} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {...r.box.vented, chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: 0}}}}})));
     expect(opened(project.toOwprText()).loadRepairs).toEqual([]);
     expect(opened(project.toStoredText()).loadRepairs).toEqual([]);
   });

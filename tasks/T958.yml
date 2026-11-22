@@ -3,8 +3,14 @@ release_note: internal
 repo: openisd
 owner: card-loaded-dq
 status: open
-goal: A loaded number of drivers, source resistance, entered air values, leakage and absorption stay as the file states them, with a DQ mark, and charts stay finite; typed values are still refused
+goal: A loaded number of drivers, source resistance and entered air values stay as the file states them, with a DQ mark, and the sweep stays finite or says why it is refused; typed values are still refused
 why: John, 21 Nov 2026: 'a bad idea if it misrepresent data, a dq is better and more consistent'
-done_test: bash scripts/quiet-test.sh npm run typecheck
+done_test: bash scripts/test.sh packages/design/test/domain/air-and-box-load-repair.test.ts packages/ui/test/logic/loaded-values-typed-refusal.test.ts packages/persistence/test/load-repair-report.test.ts
 files:
   - tasks/T958.yml
+  - packages/design/domain/project/projectLoadRepairRules.ts
+  - packages/design/fields/field.ts
+  - packages/design/test/domain/air-and-box-load-repair.test.ts
+  - packages/ui/test/logic/loaded-values-typed-refusal.test.ts
+  - packages/ui/test/ui/air-limits.browser.spec.ts
+  - packages/persistence/test/load-repair-report.test.ts

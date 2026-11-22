@@ -1,5 +1,5 @@
 /**
- * The load repair rules (`loadRepair.ts`) of a project record's own values (the drive level is not repaired on load: QO972): the air, the driver count, the series resistance, and the
+ * The load repair rules (`loadRepair.ts`) of a project record's own values (the drive level, driver count, series resistance and air are not repaired on load: QO972): the
  * active box's tunings, port lengths, losses and passive radiator. A box volume of 0 is not repaired:
  * it is how a built project holds a chamber nothing has designed yet (`ProjectBuilder.empty()`). Each rule is the
  * field's own `NumberField.loadRepair`; this file only says where in the record each field lives.
@@ -158,19 +158,10 @@ function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
     }
 }
 
-/** Every record rule, in the order they run: the driver count and series resistance first (the
- *  drive level's own rules, run after these, read them), then the air, then the box. */
+/** Every record rule, in the order they run: the box, then the passive radiator's figures. The driver count, series
+ *  resistance and air are not repaired: a loaded one is shown as the file states it (QO972). */
 export function projectLoadRepairRules(root: SimpleField<OpenISDProjectJson>): readonly LoadRepairRule[] {
-    const embedding = focus(root, 'driverEmbedding');
-    const environment = focus(root, 'environment');
     return [
-        numberRule(NumberField.DRIVER_NDRIVERS, focus(embedding, 'nDrivers')),
-        numberRule(NumberField.SIGNAL_RS_OHM, focus(embedding, 'Rs_ohm')),
-        entryRule(NumberField.ADV_TEMP_K, focus(environment, 'temperature_K')),
-        entryRule(NumberField.ADV_HUMIDITY_PCT, focus(environment, 'humidity_pct')),
-        entryRule(NumberField.ADV_PRESSURE_KPA, focus(environment, 'pressure_Pa')),
-        entryRule(NumberField.ADV_SOUNDVELOCITY_M_PER_S, focus(environment, 'c_m_per_s')),
-        entryRule(NumberField.ADV_AIRDENSITY_KG_PER_M3, focus(environment, 'roo_kg_per_m3')),
         ...boxRules(focus(root, 'box')),
         ...radiatorFigureRules(focus(root, 'box')),
     ];
