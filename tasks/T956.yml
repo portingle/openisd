@@ -1,0 +1,10 @@
+id: T956
+release_note: internal
+repo: openisd
+owner: lead
+status: open
+goal: 'The task-contract landing check reads decisions from the questions/ folder (one file per decision) as well as a single questions file'
+why: 'John, 22 Nov 2026: ''Approve: the landing check reads the new folder'''
+done_test: bash scripts/quiet-test.sh npm run typecheck
+files:
+  - tasks/T956.yml
