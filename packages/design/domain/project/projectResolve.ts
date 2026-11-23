@@ -150,7 +150,9 @@ export function resolveProject(ctx: ProjectResolveContext): ProjectIssues {
         const p = box.passiveRadiator;
         const r = p.radiator;
         const radiator = r.spec.resolve(engine.pr, air);
+        const mechanics = p.chartMechanics();
         const pr = engine.pr.solve({
+            approximateMechanics: mechanics.warning !== null,
             addedMass_kg: p.addedMass_kg,
             tuning_goal_hz: p.tuning_goal_hz,
             resonanceWithAddedMass_hz: p.resonanceWithAddedMass_hz,

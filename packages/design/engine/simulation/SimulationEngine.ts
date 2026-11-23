@@ -60,7 +60,7 @@ export type SweepIssue =
 
 /** A stated box loss (leakage, absorption, port or interchamber) that is not greater than zero: the sweep ran with
  *  WinISD's default for it instead, and `text` says which. */
-export type ApproximateLossIssue = Extract<CalculationIssue<'Ql' | 'Qa' | 'Qp' | 'Qicl' | 'Qlr' | 'Qar' | 'Qpr' | 'Qlf' | 'Qaf' | 'Qpf' | 'Qiclfr'>, {kind: 'approximate-charts'}>;
+export type ApproximateLossIssue = Extract<CalculationIssue<'prMmd_kg' | 'Ql' | 'Qa' | 'Qp' | 'Qicl' | 'Qlr' | 'Qar' | 'Qpr' | 'Qlf' | 'Qaf' | 'Qpf' | 'Qiclfr'>, {kind: 'approximate-charts'}>;
 
 /** The unified sweep result: the curves (or null if nothing could be derived), and why. */
 export interface SweepSolveResult {

@@ -307,7 +307,8 @@ function ventSweepIssuesOf(source: ProjectSweepSource, box: 'vented' | 'bandpass
  *  simulates"), and `solvePr`'s own issues already stay empty on that terms, so there is
  *  deliberately no extra gate here, unlike `ventSweepIssuesOf`. */
 function prSweepIssuesOf(source: ProjectSweepSource): readonly PrIssue[] {
-    return source.prIssues.filter(issue => !('cause' in issue) || issue.target !== 'resonanceWithAddedMass_hz');
+    return source.prIssues.filter(issue => issue.kind !== 'approximate-charts'
+        && (!('cause' in issue) || issue.target !== 'resonanceWithAddedMass_hz'));
 }
 
 /** The active box's own sweep-level blockers, beyond what `solveBoxParams()` already reports: a
@@ -404,9 +405,12 @@ export function sweepPlanOf(source: ProjectSweepSource, P: FrequencyGrid): Sweep
     const sweep = sweepParamsOf(source, P, source.driveVoltage_V, box, Vb);
     const maxCurves = sweepParamsOf(source, P, 2.83, box, Vb);
     const checks = source.engine.issues;
-    const issues = workingLosses(checks, sweep);
+    const issues = [...workingLosses(checks, sweep)];
     workingLosses(checks, maxCurves);
     // The air, counts, series resistance, grid, losses and tunings: the engine's own rules.
+    const radiatorWarning = box === 'box-passive-radiator' ? source.box.passiveRadiator.chartMechanics().warning : null;
+    if (radiatorWarning !== null) issues.push(checks.approximateCharts('prMmd_kg', ['prMmd_kg'], radiatorWarning));
+    if (box === 'box-passive-radiator') issues.push(...source.prIssues.filter(issue => issue.kind === 'approximate-charts'));
     const settings = source.engine.simulation.solveSweepSettings(box, {...sweep, air});
     if (settings.issues.length) return {kind: 'blocked', issues: settings.issues};
     return {kind: 'ready', job: {

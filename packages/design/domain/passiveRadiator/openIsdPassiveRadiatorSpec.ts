@@ -1,5 +1,5 @@
 import type { Calculatable, Calculated, Clearable, Entered, Precise, Readable, SimpleField, Unsolvable, Writable } from '../cell.js';
-import type { Air, PrEngine, PrSpecIssue, PrSpecPrecision, PrSpecValues } from '../../engine/index.js';
+import type { Air, IssueEngine, PrEngine, PrSpecIssue, PrSpecPrecision, PrSpecValues } from '../../engine/index.js';
 import type { RadiatorDeviceJson } from '../openisdSchema.js';
 import { prSpec } from '../box/prSpec.js';
 import { radiatorSection } from '../box/radiatorSection.js';
@@ -34,14 +34,17 @@ export class OpenIsdPassiveRadiatorSpec {
     readonly OuterY_m: Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
     readonly weight_kg: Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
 
-    constructor(slot: SimpleField<RadiatorDeviceJson>, conflicts: () => readonly PrSpecIssue[] = () => []) {
+    constructor(
+        slot: SimpleField<RadiatorDeviceJson>, conflicts: () => readonly PrSpecIssue[] = () => [],
+        checkPositive?: IssueEngine['positiveValueIssue'],
+    ) {
         const section = radiatorSection(slot);
         const marks = (name: keyof PrSpecValues) => (): readonly PrSpecIssue[] =>
             conflicts().filter(issue => issue.fields.some(field => field === name));
-        this.Fs_hz = prSpec(section, 'Fs_hz', marks('Fs_hz'));
+        this.Fs_hz = prSpec(section, 'Fs_hz', marks('Fs_hz'), checkPositive);
         this.Qms = prSpec(section, 'Qms', marks('Qms'));
         this.Cms_m_per_N = prSpec(section, 'Cms_m_per_N', marks('Cms_m_per_N'));
-        this.Mms_kg = prSpec(section, 'Mms_kg', marks('Mms_kg'));
+        this.Mms_kg = prSpec(section, 'Mms_kg', marks('Mms_kg'), checkPositive);
         this.Rms_kg_per_s = prSpec(section, 'Rms_kg_per_s', marks('Rms_kg_per_s'));
         this.Sd_m2 = prSpec(section, 'Sd_m2', marks('Sd_m2'));
         this.Vas_m3 = prSpec(section, 'Vas_m3', marks('Vas_m3'));
@@ -67,12 +70,29 @@ export class OpenIsdPassiveRadiatorSpec {
     }
 
     /** The seven figures of the radiator's T/S set that were typed or loaded, nothing derived. */
-    #stated(): PrSpecValues {
+    #usableStated(): PrSpecValues {
         const stated = (f: Entered & Readable<number | null>): number | null => f.entered ? f.value : null;
         return {
-            Fs_hz: stated(this.Fs_hz), Qms: stated(this.Qms), Vas_m3: stated(this.Vas_m3), Sd_m2: stated(this.Sd_m2),
-            Mms_kg: stated(this.Mms_kg), Cms_m_per_N: stated(this.Cms_m_per_N), Rms_kg_per_s: stated(this.Rms_kg_per_s),
+            Fs_hz: this.hasInvalidFs ? null : stated(this.Fs_hz),
+            Mms_kg: this.hasInvalidMms ? null : stated(this.Mms_kg),
+            Qms: stated(this.Qms), Vas_m3: stated(this.Vas_m3), Sd_m2: stated(this.Sd_m2),
+            Cms_m_per_N: stated(this.Cms_m_per_N), Rms_kg_per_s: stated(this.Rms_kg_per_s),
         };
+    }
+
+    get hasInvalidFs(): boolean {
+        const value = this.Fs_hz.value;
+        return value !== null && (!Number.isFinite(value) || value <= 0);
+    }
+
+    get hasInvalidMms(): boolean {
+        const value = this.Mms_kg.value;
+        return value !== null && (!Number.isFinite(value) || value <= 0);
+    }
+
+    /** Work out usable figures without using an impossible stated resonance or moving mass. */
+    solveUsable(pr: PrEngine, air: Air): PrSpecValues {
+        return pr.solveSpec(this.#usableStated(), air);
     }
 
     /** Each stated figure's own half-width, 0 for one not stated. */
@@ -88,15 +108,16 @@ export class OpenIsdPassiveRadiatorSpec {
     /** Write every figure the stated ones derive onto its field as calculated, `air` being the
      *  project's, and return the stated figures that contradict each other. A stated figure is
      *  never touched; one nothing derives reads not-available. */
-    resolve(pr: PrEngine, air: Air): PrSpecIssue[] {
-        const stated = this.#stated();
+    resolve(pr: PrEngine, air: Air, preserveReadouts = false): PrSpecIssue[] {
+        const stated = this.#usableStated();
         const solved = pr.solveSpec(stated, air);
         const write = (field: Entered & Calculatable<number> & Unsolvable, value: number | null): void => {
             if (field.entered) return;
             if (value === null) field.setNotAvailable(); else field.setCalculated(value);
         };
-        write(this.Fs_hz, solved.Fs_hz); write(this.Qms, solved.Qms); write(this.Vas_m3, solved.Vas_m3);
-        write(this.Sd_m2, solved.Sd_m2); write(this.Mms_kg, solved.Mms_kg);
+        if (!this.hasInvalidFs && !(preserveReadouts && this.Fs_hz.calculated)) write(this.Fs_hz, solved.Fs_hz);
+        if (!this.hasInvalidMms && !(preserveReadouts && this.Mms_kg.calculated)) write(this.Mms_kg, solved.Mms_kg);
+        write(this.Qms, solved.Qms); write(this.Vas_m3, solved.Vas_m3); write(this.Sd_m2, solved.Sd_m2);
         write(this.Cms_m_per_N, solved.Cms_m_per_N); write(this.Rms_kg_per_s, solved.Rms_kg_per_s);
         return pr.checkSpec(stated, this.#precisions(), air).map(withDisagreementNote);
     }

@@ -1,5 +1,5 @@
 import type { SimpleField } from '../cell.js';
-import type { PrSpecIssue } from '../../engine/index.js';
+import type { IssueEngine, PrSpecIssue } from '../../engine/index.js';
 import type { RadiatorDeviceJson } from '../openisdSchema.js';
 import { OpenISDPassiveRadiator } from './openISDPassiveRadiator.js';
 import { OpenISDPassiveRadiatorStandalone } from './openISDPassiveRadiatorStandalone.js';
@@ -18,8 +18,11 @@ import { OpenISDPassiveRadiatorStandalone } from './openISDPassiveRadiatorStanda
 
 export class OpenISDPassiveRadiatorEmbedded extends OpenISDPassiveRadiator {
 
-    constructor(slot: SimpleField<RadiatorDeviceJson>, conflicts?: () => readonly PrSpecIssue[]) {
-        super(slot, conflicts);
+    constructor(
+        slot: SimpleField<RadiatorDeviceJson>, conflicts: () => readonly PrSpecIssue[],
+        private readonly checkPositive: IssueEngine['positiveValueIssue'],
+    ) {
+        super(slot, conflicts, checkPositive);
     }
 
     /** Adopt the chosen radiator into this box. The box owns its radiator from here on, so later
@@ -32,6 +35,6 @@ export class OpenISDPassiveRadiatorEmbedded extends OpenISDPassiveRadiator {
      *  inverse of `update()`. Deep-copies, so editing the box afterwards leaves the saved
      *  radiator alone, exactly as `OpenISDDriver.detach()` does for a driver. */
     detach(): OpenISDPassiveRadiatorStandalone {
-        return OpenISDPassiveRadiatorStandalone.wrap(structuredClone(this.slot.value));
+        return OpenISDPassiveRadiatorStandalone.wrap(structuredClone(this.slot.value), this.checkPositive);
     }
 }

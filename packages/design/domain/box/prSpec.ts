@@ -14,6 +14,7 @@ export function prSpec(
     section: SimpleField<PassiveRadiatorSpecsSection>,
     key: PassiveRadiatorFieldName,
     marks?: () => readonly DqIssue[],
+    check?: (value: number) => DqIssue | null,
 ): Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable {
     const slot: SimpleField<SpecEntryJson | undefined> = {
         get value() { return section.value[key]; },
@@ -22,5 +23,5 @@ export function prSpec(
             section.set(entry === undefined ? rest : {...section.value, [key]: entry});
         },
     };
-    return entryField(slot, key, marks);
+    return entryField(slot, key, marks, check);
 }

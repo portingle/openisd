@@ -12,7 +12,7 @@ import type {DriverWorkingSet} from '../solvers/driverQuantities.js';
 import type {PrParams} from '../types.js';
 import {combinedOfN} from '../array/driverWiring.js';
 import type {PrSolverParams, SolverField} from '../solverTypes.js';
-import {isPositiveGeometry, missingDependencies, targetUnreachable, tuningGoalIssue} from '../consistency.js';
+import {approximateCharts, isPositiveGeometry, missingDependencies, targetUnreachable, tuningGoalIssue} from '../consistency.js';
 import type {CalculationIssue, TargetUnreachableIssue} from '../consistency.js';
 import {nonFiniteResult} from '../../calculatedResult.js';
 
@@ -83,7 +83,7 @@ export interface PrEngine {
    *  entered value is never overwritten; an underivable member becomes `not-available`. With `air`
    *  not available, a value that needs it stays `not-available` and its issue names `c_m_per_s`
    *  and `roo_kg_per_m3`. */
-  solve(params: PrSolverParams, air: Air): PrIssue[];
+  solve(params: PrSolverParams & {readonly approximateMechanics?: boolean}, air: Air): PrIssue[];
   /** The formulas `solveSpec` works a radiator's figures out by: one per route among its own figures, with its text and
    *  inputs, in the order it tries them. The radiator editor's formula panel shows these (T902). */
   routeFormulas(): RouteFormulas;
@@ -209,7 +209,7 @@ export class PrEngineImpl implements PrEngine {
     };
   }
 
-  solve(params: PrSolverParams, air: Air): PrIssue[] {
+  solve(params: PrSolverParams & {readonly approximateMechanics?: boolean}, air: Air): PrIssue[] {
     const addedMass = params.addedMass_kg.value;
     const tuning = params.tuning_goal_hz.value;
     const Vb = params.Vb_m3.value;
@@ -254,7 +254,11 @@ export class PrEngineImpl implements PrEngine {
       if (geometryComplete && tuning > 0) {
         const totalMass = this.massForFp({ Vb, prMmd, prMadd: 0, prSd, prCms, prNum }, tuning, air);
         const addedMassResult = totalMass - prMmd;
-        if (addedMassResult < 0) {
+        if (addedMassResult < 0 && params.approximateMechanics) {
+          write('addedMass_kg', 'Passive radiator added mass', params.addedMass_kg, 0);
+          issues.push(approximateCharts('addedMass_kg', ['addedMass_kg', 'tuning_goal_hz'],
+            'The stated tuning would require removing mass with these radiator figures. Charts are calculated with 0 g of added mass.'));
+        } else if (addedMassResult < 0) {
           params.addedMass_kg.setNotAvailable();
           const ceiling = this.tuning({ Vb, prMmd, prMadd: 0, prSd, prCms, prNum }, air);
           issues.push(nonFiniteResult('addedMass_kg', 'Passive radiator added mass', ceiling)

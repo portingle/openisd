@@ -61,10 +61,10 @@ function ventedChamberRules(chamber: SimpleField<ChamberJson>, vent: SimpleField
     ];
 }
 
-/** The radiator figures a record states, each with the field that names it (T930). */
+/** The radiator figures a record states that are repaired on load, each with the field that names it. Fs and Mms are kept as the file states them. */
 const RADIATOR_FIGURES = [
-    ['Fs_hz', NumberField.PR_FS_HZ], ['Qms', NumberField.PR_QMS], ['Vas_m3', NumberField.PR_VAS_L],
-    ['Sd_m2', NumberField.PR_SD_CM2], ['Mms_kg', NumberField.MMS_KG], ['Cms_m_per_N', NumberField.CMS_M_PER_N],
+    ['Qms', NumberField.PR_QMS], ['Vas_m3', NumberField.PR_VAS_L],
+    ['Sd_m2', NumberField.PR_SD_CM2], ['Cms_m_per_N', NumberField.CMS_M_PER_N],
     ['Rms_kg_per_s', NumberField.RMS_KG_PER_S],
 ] as const;
 
