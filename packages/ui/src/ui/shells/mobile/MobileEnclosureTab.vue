@@ -85,7 +85,7 @@ const {
 
     <section class="mob-csection">
     <PhoneBand :section="PhoneHelp.USER_OPTIONS" />
-    <UIFixedField class="mob-ui-field" input-id="mob-pr-count" :field="NumberField.PR_NUM" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" />
+    <UIFixedField class="mob-ui-field" input-id="mob-pr-count" :field="NumberField.PR_NUM" :dq="project.box.passiveRadiator.countDq" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" />
     <UIField class="mob-ui-field" :field="NumberField.PR_MADD_G" :label="PhoneLabels.PR_ADDED_MASS" :cell="project.box.passiveRadiator.addedMass_kg" stepper />
     <UIFixedField class="mob-ui-field" :field="NumberField.PR_FSMASS_HZ" :label="PhoneLabels.PR_FPR_MASS" :value="prFsMass_hz" :dq="prResonanceMassDq.dq" readonly plain />
     </section>

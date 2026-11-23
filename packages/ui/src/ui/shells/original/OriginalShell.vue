@@ -516,7 +516,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
               <div>
                 <DesktopBand :section="userOptionsHelp" @help="openSectionHelp" />
                 <div class="field-row" style="margin-bottom:3px;">
-                  <UIFixedField class="field" input-id="og-pr-count" :field="NumberField.PR_NUM" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" :deviation="prNprDeviationShown ? WinisdDeviation.PR_NPR_RESONANCE : undefined" />
+                  <UIFixedField class="field" input-id="og-pr-count" :field="NumberField.PR_NUM" :dq="project.box.passiveRadiator.countDq" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" :deviation="prNprDeviationShown ? WinisdDeviation.PR_NPR_RESONANCE : undefined" />
                 </div>
                 <div class="field-row" style="margin-bottom:3px;">
                   <UIField class="field" input-id="og-pr-fp" :field="NumberField.PR_FP_HZ" :cell="project.box.passiveRadiator.tuning_goal_hz" />

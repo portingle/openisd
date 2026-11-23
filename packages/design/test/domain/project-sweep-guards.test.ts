@@ -72,17 +72,19 @@ describe('OpenISDProject sweep guards', () => {
       }
     });
 
-    it('a vented project with an inconsistent (negative) tuning_goal_hz reports the cached solveVent issue on both sweep() and maxCurves()', () => {
+    it('a vented project with a negative tuning_goal_hz keeps it, carries its warning and sweeps and maxCurves at a working tuning with an approximate-charts issue', () => {
       const p = project('vented');
       p.box.vented.tuning_goal_hz.set(-5);
+      expect(p.box.vented.tuning_goal_hz.value).toBe(-5);
+      expect(p.box.vented.tuning_goal_hz.dq.length).toBeGreaterThan(0);
 
       const sw = p.sweep({ fmin: 10, fmax: 100, N: 10 });
-      expect(sw.values).toBeNull();
-      expect(sw.issues.length).toBeGreaterThan(0);
+      expect(sw.values).not.toBeNull();
+      expect(sw.issues).toContainEqual(expect.objectContaining({ kind: 'approximate-charts', target: 'Fb' }));
 
       const mx = p.maxCurves({ fmin: 10, fmax: 100, N: 10 });
-      expect(mx.values).toBeNull();
-      expect(mx.issues.length).toBeGreaterThan(0);
+      expect(mx.values).not.toBeNull();
+      expect(mx.issues).toContainEqual(expect.objectContaining({ kind: 'approximate-charts', target: 'Fb' }));
     });
 
     it('ventAchievedFb/ventMaxReachableFb answer not-available when the box is not vented', () => {

@@ -1,12 +1,9 @@
 /**
- * QO972: a loaded air value, driver count or series resistance is shown exactly as the
- * file states it, never repaired, with the usual data-quality mark; the charts stay finite and nothing
- * crashes. A project file whose box holds a value no design can use is still repaired automatically on
- * opening: a passive radiator count below 1, a negative added mass, a loss Q or port tuning at or below 0, a
- * negative port length. The box shows the repaired value with NO data-quality mark, the opening
- * message names each repair once, and the charts draw. Impossible values are refused and odd ones warned (QO953.c14); a 0 counts as clearing the value (QO953.c28); there
- * is no dq flag on a repair, as the dq always relates to the value the user can see (QO953.c30);
- * "all you can do is show a toast" (QO953.c31). Task T924.
+ * QO972: a loaded value is shown exactly as the file states it, never repaired, with the usual
+ * data-quality mark where it is impossible; the charts stay finite and nothing crashes. This covers the air,
+ * the driver count, the series resistance, the box losses, the port tunings and lengths, the
+ * passive-radiator count and added mass, and the connecting-port length. Where the charts need a value the file's
+ * cannot give, they use a working value and report an approximate-charts issue.
  */
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '../../engine/Engine.js';
@@ -133,7 +130,7 @@ describe('the air boxes warn outside their normal band, keeping and using the va
   });
 });
 
-describe('the driver count and series resistance stay as the file states them; the other loaded impossible values are repaired on opening, unmarked, named once (QO953.c28, QO972)', () => {
+describe('the driver count, series resistance, box tunings, port lengths, losses and radiator count and added mass stay as the file states them (QO972)', () => {
   it('driver count 0 and series resistance -2 Ω stay as the file states them; the sweep says so with its existing refusal, nothing is non-finite', () => {
     const {project, loadRepairs} = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, nDrivers: 0, Rs_ohm: -2}})));
     expect(project.nDrivers.value).toBe(0);
@@ -185,18 +182,52 @@ describe('the driver count and series resistance stay as the file states them; t
     expectCharts(project);
   });
 
-  it('a vented box whose tuning was entered as 0 Hz opens with the tuning worked out from the port length the file gave', () => {
-    const before = loadProject('vented');
-    const length = before.box.vented.vent.length_m.value;
-    expect(length).not.toBeNull();
+  it('a vented box saved with tuning 0 Hz and a port length of 0.2 m keeps both and charts at the tuning that length gives', () => {
     const {project, loadRepairs} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
-      ...r.box.vented, chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: 0}},
+      ...r.box.vented,
+      chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: 0}},
+      vent: {...r.box.vented.vent, length_m: {state: 'E', value: 0.2}},
     }}})));
-    expect(loadRepairs.map(n => n.text)).toEqual(['Tuning freq (Fb) 0 Hz in the file: emptied, so the box shows the tuning worked out from the port']);
-    expect(project.box.vented.tuning_goal_hz.value).toBeCloseTo(38, 6);
-    expect(project.box.vented.vent.length_m.value).toBe(length);
-    expect(project.box.vented.vent.length_m.entered).toBe(true);
-    expect(project.box.vented.tuning_goal_hz.dq).toEqual([]);
+    expect(loadRepairs).toEqual([]);
+    expect(project.box.vented.tuning_goal_hz.value).toBe(0);
+    expect(project.box.vented.tuning_goal_hz.entered).toBe(true);
+    expect(project.box.vented.vent.length_m.value).toBe(0.2);
+    expect(project.box.vented.tuning_goal_hz.dq.length).toBeGreaterThan(0);
+    const fromLength = project.box.vented.vent.tuningIn_hz(project.box.vented.volume_m3.value);
+    const plan = project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind).toBe('ready');
+    if (plan.kind === 'ready') {
+      expect(plan.job.sweep.Fb).toBeCloseTo(fromLength ?? NaN, 9);
+      expect(plan.job.sweep.Leff).toBeCloseTo(project.box.vented.vent.effectiveLength_m() ?? NaN, 9);
+    }
+    expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts', target: 'Fb'}));
+    expectCharts(project);
+  });
+
+  it('a vented box saved with tuning 0 Hz and no usable port length keeps the 0 Hz and charts at 35 Hz', () => {
+    const {project, loadRepairs} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
+      ...r.box.vented,
+      chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: 0}},
+      vent: {...r.box.vented.vent, length_m: undefined},
+    }}})));
+    expect(loadRepairs).toEqual([]);
+    expect(project.box.vented.tuning_goal_hz.value).toBe(0);
+    expect(project.box.vented.tuning_goal_hz.dq.length).toBeGreaterThan(0);
+    const plan = project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind === 'ready' && plan.job.sweep.Fb).toBe(35);
+    expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts', target: 'Fb'}));
+    expectCharts(project);
+  });
+
+  it('a 4th-order bandpass saved with Ffc -3 Hz keeps it and charts at 35 Hz', () => {
+    const {project} = opened(owprWith('bandpass4', r => ({...r, box: {...r.box, bandpass4: {...r.box.bandpass4,
+      front: {...r.box.bandpass4.front, tuning_goal_hz: {state: 'E', value: -3}},
+      frontVent: {...r.box.bandpass4.frontVent, length_m: undefined},
+    }}})));
+    expect(project.box.bandpass4.chambers.front.tuning_goal_hz.value).toBe(-3);
+    const plan = project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind === 'ready' && plan.job.sweep.Ff).toBe(35);
+    expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts', target: 'Ff'}));
     expectCharts(project);
   });
 
@@ -222,23 +253,47 @@ describe('the driver count and series resistance stay as the file states them; t
     expect(record.box.vented.vent.length_m).toEqual({state: 'E', value: -0.05});
   });
 
-  it('a 6th-order bandpass rear tuning (Frc) entered as 0 Hz opens worked out from the rear port', () => {
+  it('a 6th-order bandpass saved with Frc 0 Hz keeps it and charts the rear chamber at 35 Hz', () => {
     const {project, loadRepairs} = opened(owprWith('bandpass6', r => ({...r, box: {...r.box, bandpass6: {...r.box.bandpass6,
       rear: {...r.box.bandpass6.rear, tuning_goal_hz: {state: 'E', value: 0}},
+      rearVent: {...r.box.bandpass6.rearVent, length_m: undefined},
     }}})));
-    expect(loadRepairs.map(n => n.text)).toEqual(['Tuning freq (Frc) 0 Hz in the file: emptied, so the box shows the tuning worked out from the port']);
-    expect(project.box.bandpass6.chambers.rear.tuning_goal_hz.value).toBeCloseTo(42, 6);
+    expect(loadRepairs).toEqual([]);
+    expect(project.box.bandpass6.chambers.rear.tuning_goal_hz.value).toBe(0);
+    expect(project.box.bandpass6.chambers.rear.tuning_goal_hz.dq.length).toBeGreaterThan(0);
+    const plan = project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind === 'ready' && plan.job.sweep.Fr).toBe(35);
+    expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts', target: 'Fr'}));
     expectCharts(project);
   });
 
-  it('a passive radiator count of 0 opens as 1 and an added mass of -0.01 kg as 0 g', () => {
+  it('a passive radiator count of 0 and an added mass of -0.01 kg open as saved and chart with 1 radiator and 0 g', () => {
     const pr = opened(owprWith('passive radiator', r => ({...r, box: {...r.box, passiveRadiator: {...r.box.passiveRadiator,
       count: 0, addedMass_kg: {state: 'E', value: -0.01}}}})));
-    expect(pr.loadRepairs.map(n => n.text)).toEqual([
-      'Num. of PRs 0 in the file: set to 1, the fewest',
-      'Added mass to cone -10 g in the file: set to 0 g, no added mass',
-    ]);
+    expect(pr.loadRepairs).toEqual([]);
+    expect(pr.project.box.passiveRadiator.count.value).toBe(0);
+    expect(pr.project.box.passiveRadiator.addedMass_kg.value).toBe(-0.01);
+    expect(pr.project.box.passiveRadiator.countDq.length).toBe(1);
+    expect(pr.project.box.passiveRadiator.addedMass_kg.dq).toContainEqual(expect.objectContaining({kind: 'negative-value'}));
+    const plan = pr.project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind === 'ready' && [plan.job.sweep.prNum, plan.job.sweep.prMadd]).toEqual([1, 0]);
+    expect(pr.project.sweep(DEFAULT_GRID).issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({kind: 'approximate-charts', target: 'prNum'}),
+      expect.objectContaining({kind: 'approximate-charts', target: 'prMadd'}),
+    ]));
     expectCharts(pr.project);
+  });
+
+  it('an ABC connecting port length of -0.01 m opens as saved and charts with the 5 cm starting length', () => {
+    const {project, loadRepairs} = opened(owprWith('abc', r => ({...r, box: {...r.box, abc: {...r.box.abc,
+      intraVent: {...r.box.abc.intraVent, length_m: {state: 'E', value: -0.01}}}}})));
+    expect(loadRepairs).toEqual([]);
+    expect(project.box.abc.vents.intra.length_m.value).toBe(-0.01);
+    expect(project.box.abc.vents.intra.length_m.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value'}));
+    const plan = project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind === 'ready' && plan.job.sweep.LeffIntra).toBeCloseTo(0.05 + (project.box.abc.vents.intra.endCorrectionLength_m() ?? NaN), 9);
+    expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts', target: 'LeffIntra'}));
+    expectCharts(project);
   });
 
   it('a 4th-order bandpass Qicl of 0 opens as the file states it, with the warning on the field and approximate charts', () => {
