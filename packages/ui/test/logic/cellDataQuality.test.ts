@@ -74,7 +74,7 @@ describe('cellDataQuality', () => {
     });
   });
 
-  describe('marksOfCell / marksReason — a band warning is a warning, not a conflict (QO953.c14 "warn odd")', () => {
+  describe('marksOfCell / marksReason — a band warning is a warning, not a conflict (QO953.c14)', () => {
     const SAYS = 'Air pressure 5000 Pa is outside the sane range for air (30000 Pa to 110000 Pa). It is kept and used; check it.';
 
     it('an entered air pressure of 5000 Pa is a warning only: no flag, and the ⚠ says it without the conflict prefix', () => {

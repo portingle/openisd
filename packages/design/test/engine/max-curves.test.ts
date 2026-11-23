@@ -64,7 +64,7 @@ describe('maxCurves', () => {
 
     it('neither Pe nor Xmax stated → maxspl/maxpwr are genuinely unbounded, reported as a '
      + "driverPrerequisites advisory naming both fields — never as a blocking issue (QO143: "
-     + "Infinity here is a correct answer, not a gap)", () => {
+     + "an infinite result is a valid answer)", () => {
       const drvNeither = solveConsistencyGroup({
         Fs_hz: 37, Qts: 0.38, Qes: 0.40, Qms: 7.0,
         Vas_m3: 0.030, Sd_m2: 0.0133, Re_ohm: 5.6,

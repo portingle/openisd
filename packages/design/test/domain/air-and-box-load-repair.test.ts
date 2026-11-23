@@ -96,7 +96,7 @@ describe('a loaded impossible air value is shown as the file states it, with its
   });
 });
 
-describe('the air boxes warn outside their normal band, keeping and using the value (QO953.c14 "warn odd")', () => {
+describe('the air boxes warn outside their normal band, keeping and using the value (QO953.c14)', () => {
   for (const {field, set, value, says} of [
     {field: NumberField.ADV_PRESSURE_KPA, set: (p: OpenISDProject) => p.envPressurePa, value: 1000, says: 'Air pressure 1000 Pa is outside the sane range for air (30000 Pa to 110000 Pa). It is kept and used; check it.'},
     {field: NumberField.ADV_SOUNDVELOCITY_M_PER_S, set: (p: OpenISDProject) => p.envC_m_per_s, value: 1000, says: 'Sound velocity 1000.00 m/s is outside the sane range for air (260.00 m/s to 500.00 m/s). It is kept and used; check it.'},

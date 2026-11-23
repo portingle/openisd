@@ -37,7 +37,7 @@ Result: 0 tests pin a defect as correct. 1 stale FIXME removed. 0 skips found.
 | ui/test/logic/provenance.test.ts:31 | ok | coverage note: 31 fields not yet held to the check; no wrong value asserted |
 | ui/test/scripts/round-trip-gate.test.ts:82 | ok | asserts the record passes (right); comment is history |
 | ui/test/ui/cloudSync.original.browser.spec.ts:19 | ok | "as today": toolbar button count, a layout fact |
-| architecture-no-casts.test.ts:36,85,122 | unclear | "passes for now / exempt for now, QO100": an exemption allowlist in a gate, owned by QO100 |
+| architecture-no-casts.test.ts:36,85,122 | unclear | an exemption allowlist in a gate, owned by QO100 |
 | architecture-no-record-types-in-barrel:45, architecture-notify:33,136, architecture.test.ts:679,687, driver-editor-template:379,381, driver-browser/field-cursor/num-input/original-box-tab (currently rendered/shipped) | ok | descriptive wording, nothing wrong asserted |
 
 ## toThrow / rejects / null on product actions

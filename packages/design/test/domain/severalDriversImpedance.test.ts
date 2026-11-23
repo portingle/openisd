@@ -66,7 +66,7 @@ describe('several drivers', () => {
     return back;
   };
 
-  it('the project\'s saved wiring is kept exactly as saved, and changes nothing (QO946.c23: "the project VcCon is preserved as is")', () => {
+  it('the project\'s saved wiring is kept exactly as saved, and changes nothing (QO946.c23)', () => {
     for (const wiring of ['series', 'parallel'] as const) {
       const back = saved(wiring);
       expect(back.toOwprText()).toContain(`"VCCon": "${wiring}"`);

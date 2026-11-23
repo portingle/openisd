@@ -572,7 +572,7 @@ function specLayer(fromFile: string, spec: string): string | null {
   return null;
 }
 
-describe('layering — nothing outside ui imports from ui (QO80: "ui modules are at the top of the tree")', () => {
+describe('layering — nothing outside ui imports from ui (QO80: ui modules sit at the top of the dependency tree)', () => {
   it('no file in logic, persistence, model, winisd, or engine imports a ui/ module or a .vue file', () => {
     const offences: string[] = [];
     for (const f of ALL_SRC_FILES) {
