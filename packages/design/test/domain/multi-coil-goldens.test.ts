@@ -400,7 +400,7 @@ describe('Bliesma W137A-854-4 (3 independent coils, configuration as published, 
     // The USPL line is the sensitivity check of QO962 (20 Nov 2026): 88 dB at 2.83 V/1 m into Re 3.4 is 84.3 dB at 1 W,
     // and Fs/Vas/Qes imply 87.0 dB; it is about the sensitivity, not Qes or the motor.
     // The warning uses the labels USPL and η₀:
-    // The expectations below are the correct warnings; the test does not pin a known defect.
+    // The expectations below are the correct warnings for this input.
     expect(texts).toHaveLength(2);
     expect(texts).toEqual(expect.arrayContaining([
       expect.stringContaining('Rms differs by 2.7%. Using Fs, Mms and Qms gives 0.72975 Ns/m. The box shows 0.75 Ns/m.'),
