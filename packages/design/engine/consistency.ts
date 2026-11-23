@@ -56,7 +56,7 @@ export type CalculationIssue<Q extends string> =
     };
 
 /** A stated value outside its field's normal band (`NumberField.plausible`): odd but possible, so
- *  it is kept and used. A warning, not a conflict (QO953.c14, "refuse impossible, warn odd"). */
+ *  it is kept and used. A warning, not a conflict (QO953.c14). */
 export interface NormalBandIssue<Q extends string> {
   readonly kind: 'outside-normal-band';
   readonly target: Q;

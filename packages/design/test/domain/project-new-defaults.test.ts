@@ -8,10 +8,7 @@ import {fixedAppContext, ignoredIssue, wooferOf} from '../fixtures/domainBuilder
 
 describe('OpenISDProject new-project defaults', () => {
   describe('a new project, every section present and nothing stated', () => {
-    // QO125: "The data structure in emptyProject(eng) calls emptyDriver(eng)
-    // and empty pr(eng) and then UI proceeds to fill it out in the wizard screens including
-    // picking a real driver to repopulate the embedded driver section from and if it's a pr box
-    // then the pr gets repopulated from a picked pr."
+    // QO125: emptyProject builds empty driver and radiator sections; the wizard screens fill them in afterwards.
     //
     // So a new project invents no physics. Every section EXISTS — the wizard writes into a live
     // project rather than assembling a spec and building at the end — and every stated value is

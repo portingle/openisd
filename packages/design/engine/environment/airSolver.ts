@@ -307,8 +307,7 @@ const AIR_FIELDS: Readonly<Record<AirQuantityName, NumberField>> = Object.freeze
 });
 
 /** A stated air quantity inside its field's limits but outside its normal band
- *  (`NumberField.plausible`): kept and used, with a warning that names the band (QO953.c14, "refuse
- *  impossible, warn odd"). Empty inside the band, and outside the limits, where the solver's own
+ *  (`NumberField.plausible`): kept and used, with a warning that names the band (QO953.c14). Empty inside the band, and outside the limits, where the solver's own
  *  range issue or the temperature issue already speaks. */
 export function airBandIssues(name: AirQuantityName, value: number): readonly AirIssue[] {
   const field = AIR_FIELDS[name];

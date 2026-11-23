@@ -409,8 +409,8 @@ export class OpenIsdDriverSpec {
 
     /** T11: every driver quantity `solveDriver` can derive is written back into the record as a
      *  `'C'` entry — the record is a CACHE the solver keeps current, never a value computed
-     *  fresh at read time and left unstored (supersedes the earlier QO127 "stated-only, nothing
-     *  writes back" framing). Runs the engine over this window's own 44 handles, caches the
+     *  fresh at read time and left unstored (supersedes the earlier QO127 stated-only design, where nothing
+     *  was written back). Runs the engine over this window's own 44 handles, caches the
      *  issues, and returns them; `air` is the driver's own resolved `{ rho, c }`. */
     resolve(air: Air): readonly DriverIssue[] {
         const wiringIssues = this.#resolveWiring();

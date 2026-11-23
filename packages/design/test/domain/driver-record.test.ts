@@ -418,7 +418,7 @@ describe('OpenISDDriver record', () => {
   });
 
   describe('a spec field the record does not state resolves on write', () => {
-    // T11 (2026-09-16) supersedes the earlier QO127 "stated-only" ruling: a driver's own writes
+    // T11 (2026-09-16) supersedes the earlier QO127 stated-only design: a driver's own writes
     // now trigger a resolve that writes every derivable field back into the record as `'C'` —
     // the record itself is a cache the solver keeps current, not a value computed fresh at read
     // time and never stored.

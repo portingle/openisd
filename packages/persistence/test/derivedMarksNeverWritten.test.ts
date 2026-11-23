@@ -1,6 +1,6 @@
 /**
- * QO414: "dont write DQ stuff anywhere - its all meant to be dynamic"; "if there
- * are any warnings in my driver then they should be silently dropped". Data-quality marks
+ * QO414: data-quality marks are derived, never stored, and warnings carried by a saved driver are dropped
+ * silently on load. Data-quality marks
  * (`dq_calculated`, `dq_scraper`) are worked out live and shown on screen only: My Drivers and
  * exported driver files never hold them, and a saved record that carries them still loads.
  */

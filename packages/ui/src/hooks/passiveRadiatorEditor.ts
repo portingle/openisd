@@ -1,6 +1,5 @@
 /**
- * The passive-radiator editor (11:05 UTC QO946.c115; 11:42 "the same select info edit setup and workflow as
- * the driver"; 12:46 "looks ok"): one editor, both skins, for the radiator's own figures (name, Vas, Qms, Fs, Sd, Mms, Cms, Rms,
+ * The passive-radiator editor (QO946.c115), with the same select, info and edit setup and workflow as the driver editor: one editor, both skins, for the radiator's own figures (name, Vas, Qms, Fs, Sd, Mms, Cms, Rms,
  * Xmax), with the driver editor's tools. It edits a copy: OK hands the copy to whoever opened it (the project's radiator, or the
  * New Project wizard's), Cancel drops it, Reset puts back what it opened with, Copy to My PRs files a copy in My passive
  * radiators and leaves the editor open, Export and Import write and read an `.owdr` file, Auto calculate unknowns fills the

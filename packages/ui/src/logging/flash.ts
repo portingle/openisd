@@ -7,7 +7,7 @@ import {ref, type Ref} from 'vue';
 const VISIBLE_MS = 2000;
 /** How much longer a flash stays for each line after its first: a line per value the opening
  *  repaired ("Series resistance -2 Ω in the file: set to 0 Ω, the least") must stay
- *  long enough to read (QO953.c31, "all you can do is show a toast"). */
+ *  long enough to read (QO953.c31). */
 const EXTRA_LINE_MS = 4000;
 
 /** How long `msg` stays on screen: 2 s, and 4 s more for each line after the first. */
