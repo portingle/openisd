@@ -159,14 +159,29 @@ describe('the driver count and series resistance stay as the file states them; t
     expect(n.sweep(DEFAULT_GRID).issues.map(i => i.text)).toEqual(['Num. of drivers must be at least 1.']);
   });
 
-  it("a sealed box's Ql 0 and Qa -1 open at WinISD's defaults 10 and 100 (not yet changed: no mark exists for a loss factor)", () => {
+  it("a sealed box keeps Ql 0 and Qa -1 and labels the chart calculation with Ql 10 and Qa 100", () => {
     const {project, loadRepairs} = opened(owprWith('sealed', r => ({...r, box: {...r.box, sealed: {...r.box.sealed, losses: {Ql: 0, Qa: -1}}}})));
-    expect(project.box.sealed.losses.Ql.value).toBe(10);
-    expect(project.box.sealed.losses.Qa.value).toBe(100);
-    expect(loadRepairs.map(n => n.text)).toEqual([
-      "Leakage Ql 0 in the file: set to 10, WinISD's default",
-      "Absorption Qa -1 in the file: set to 100, WinISD's default",
-    ]);
+    expect(project.box.sealed.losses.Ql.value).toBe(0);
+    expect(project.box.sealed.losses.Qa.value).toBe(-1);
+    expect(loadRepairs).toEqual([]);
+    const plan = project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind === 'ready' && [plan.job.sweep.Ql, plan.job.sweep.Qa]).toEqual([10, 100]);
+    expect(project.sweep(DEFAULT_GRID).issues).toEqual(expect.arrayContaining([
+      expect.objectContaining({kind: 'approximate-charts', target: 'Ql'}),
+      expect.objectContaining({kind: 'approximate-charts', target: 'Qa'}),
+    ]));
+    expectCharts(project);
+  });
+
+  it('a vented box keeps port Qp -1 and calculates the charts with Qp 100', () => {
+    const {project, loadRepairs} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
+      ...r.box.vented, chamber: {...r.box.vented.chamber, losses: {...r.box.vented.chamber.losses, Qp: -1}},
+    }}})));
+    expect(loadRepairs).toEqual([]);
+    expect(project.box.vented.losses.Qp.value).toBe(-1);
+    const plan = project.sweepPlan(DEFAULT_GRID);
+    expect(plan.kind === 'ready' && plan.job.sweep.Qp).toBe(100);
+    expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts', target: 'Qp'}));
     expectCharts(project);
   });
 
@@ -200,11 +215,11 @@ describe('the driver count and series resistance stay as the file states them; t
     expectCharts(project);
   });
 
-  it('the record repair empties a negative entered port length, so the resolve works it out from the tuning', () => {
+  it('the record repair leaves a negative entered port length as the file states it', () => {
     const r = loadProject('vented').cloneSession().saved;
     const {record, notes} = repairedRecord({...r, box: {...r.box, vented: {...r.box.vented, vent: {...r.box.vented.vent, length_m: {state: 'E', value: -0.05}}}}});
-    expect(notes.map(n => n.text)).toEqual(['Vent length -5 cm in the file: emptied, so the box shows the length worked out from the tuning']);
-    expect(record.box.vented.vent.length_m).toBeUndefined();
+    expect(notes).toEqual([]);
+    expect(record.box.vented.vent.length_m).toEqual({state: 'E', value: -0.05});
   });
 
   it('a 6th-order bandpass rear tuning (Frc) entered as 0 Hz opens worked out from the rear port', () => {

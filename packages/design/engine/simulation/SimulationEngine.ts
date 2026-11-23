@@ -36,7 +36,7 @@ import type {BoxType, DriverError, EnclosureParams, MaxCurvesResult, SweepParams
 import type {DriverValues, SweepDriver} from '../solverTypes.js';
 import type {BoxParamsIssue, BoxParamsQuantityName, BoxParamsSolveResult, SweepSettingIssue, SweepSettingsSolveResult} from '../params.js';
 import {requiredParamsFor, sweepSettingRules} from '../params.js';
-import type {SolveRoute} from '../consistency.js';
+import type {CalculationIssue, SolveRoute} from '../consistency.js';
 import type {SignalIssue} from '../signal/SignalEngine.js';
 import {DEFAULT_SWEEP_POINTS} from '../../fields/defaults.js';
 import {NumberField} from '../../fields/field.js';
@@ -55,8 +55,12 @@ import {nonFiniteResult, type NonFiniteResultIssue} from '../../calculatedResult
  *  instead), or a calculated output refused at publication. */
 export type SweepIssue =
   | DriverIssue | DriverCircuitIssue | AirIssue | BoxParamsIssue | SweepSettingIssue
-  | VentIssue | PrIssue | SignalIssue
+  | VentIssue | PrIssue | SignalIssue | ApproximateLossIssue
   | NonFiniteResultIssue<keyof SweepResult | `maxCurves:${keyof MaxCurvesResult}`>;
+
+/** A stated box loss (leakage, absorption, port or interchamber) that is not greater than zero: the sweep ran with
+ *  WinISD's default for it instead, and `text` says which. */
+export type ApproximateLossIssue = Extract<CalculationIssue<'Ql' | 'Qa' | 'Qp' | 'Qicl' | 'Qlr' | 'Qar' | 'Qpr' | 'Qlf' | 'Qaf' | 'Qpf' | 'Qiclfr'>, {kind: 'approximate-charts'}>;
 
 /** The unified sweep result: the curves (or null if nothing could be derived), and why. */
 export interface SweepSolveResult {

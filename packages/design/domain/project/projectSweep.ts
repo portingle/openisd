@@ -9,6 +9,7 @@ import type { Calculated, Readable, SimpleField } from '../cell.js';
 import type { Box } from '../box/box.js';
 import type { Bandpass6Box } from '../box/bandpass6Box.js';
 import type { FrequencyGrid } from '../box/frequencyGrid.js';
+import {boxLossInput} from '../box/boxLossInput.js';
 import { engineCircuitModel } from '../driver/engineCircuitModel.js';
 import type { OpenISDDriverEmbedded } from '../driver/openISDDriverEmbedded.js';
 
@@ -320,6 +321,31 @@ function boxSweepIssuesOf(source: ProjectSweepSource, box: SimulatableBoxType): 
     return [];
 }
 
+const SWEEP_LOSSES = Object.freeze({
+    Ql: 'Ql', Qa: 'Qa', Qp: 'Qp',
+    Qlr: 'Ql', Qar: 'Qa', Qpr: 'Qp',
+    Qlf: 'Ql', Qaf: 'Qa', Qpf: 'Qp', Qiclfr: 'Qicl',
+} satisfies Partial<Record<keyof SweepParams, Parameters<typeof boxLossInput>[1]>>);
+
+/** Replace each stated loss that is not greater than zero with WinISD's default in the sweep, and
+ *  say so as an approximate-charts issue; the stated value itself stays on the box. */
+function workingLosses(checks: Engine['issues'], sweep: SweepJobParams): readonly SweepIssue[] {
+    const issues: SweepIssue[] = [];
+    for (const [key, loss] of Object.entries(SWEEP_LOSSES)) {
+        if (!isSweepLoss(key)) continue;
+        const stated = sweep[key];
+        if (stated === undefined) continue;
+        const {value, dq} = boxLossInput(checks, loss, stated);
+        sweep[key] = value;
+        for (const issue of dq) issues.push(checks.approximateCharts(key, [key], issue.text));
+    }
+    return issues;
+}
+
+function isSweepLoss(key: string): key is keyof typeof SWEEP_LOSSES {
+    return Object.hasOwn(SWEEP_LOSSES, key);
+}
+
 /** A sweep's settings without its air: the job carries the air once, as plain numbers. */
 export type SweepJobParams = Omit<SweepParams, 'air' | 'driverWiring' | 'winisdOneDriverImpedance'> & Required<Pick<SweepParams, 'driverWiring' | 'winisdOneDriverImpedance'>>;
 
@@ -335,18 +361,21 @@ export interface SweepJob {
     readonly sweep: SweepJobParams;
     /** At the 2.83 V reference: the engine runs max curves there whatever `eg` it is handed. */
     readonly maxCurves: SweepJobParams;
+    readonly issues: readonly SweepIssue[];
 }
 
 /** The job's frequency response, impedance and excursion. */
 export function runSweepJob(simulation: SimulationEngine, job: SweepJob): SweepSolveResult {
     const result = simulation.sweep(job.driver, job.Le_H, job.box, {...job.sweep, air: new FixedAir(job.air)});
-    return simulation.publishSweep(result);
+    const published = simulation.publishSweep(result);
+    return {...published, issues: [...job.issues, ...published.issues]};
 }
 
 /** The job's excursion- and power-limited maximum SPL curves. */
 export function runMaxCurvesJob(simulation: SimulationEngine, job: SweepJob): MaxCurvesSolveResult {
     const result = simulation.maxCurves(job.driver, job.Le_H, job.box, {...job.maxCurves, air: new FixedAir(job.air)});
-    return simulation.publishMaxCurves(result);
+    const published = simulation.publishMaxCurves(result);
+    return {...published, issues: [...job.issues, ...published.issues]};
 }
 
 /** The job this project's sweep runs, or the issues that stop it. */
@@ -373,6 +402,10 @@ export function sweepPlanOf(source: ProjectSweepSource, P: FrequencyGrid): Sweep
     const Vb = boxVolume_m3Of(source, box);
     if (paramIssues.length || Vb === null) return {kind: 'blocked', issues: paramIssues};
     const sweep = sweepParamsOf(source, P, source.driveVoltage_V, box, Vb);
+    const maxCurves = sweepParamsOf(source, P, 2.83, box, Vb);
+    const checks = source.engine.issues;
+    const issues = workingLosses(checks, sweep);
+    workingLosses(checks, maxCurves);
     // The air, counts, series resistance, grid, losses and tunings: the engine's own rules.
     const settings = source.engine.simulation.solveSweepSettings(box, {...sweep, air});
     if (settings.issues.length) return {kind: 'blocked', issues: settings.issues};
@@ -382,7 +415,8 @@ export function sweepPlanOf(source: ProjectSweepSource, P: FrequencyGrid): Sweep
         box,
         air: {c: air.c(), rho: air.rho()},
         sweep,
-        maxCurves: sweepParamsOf(source, P, 2.83, box, Vb),
+        maxCurves,
+        issues,
     }};
 }
 

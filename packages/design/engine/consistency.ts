@@ -200,7 +200,7 @@ export function inconsistentInputs<Q extends string>(
 }
 
 /** The charts are drawn, but from a fallback standing in for values the driver does not state. */
-export function approximateCharts<Q extends string>(target: Q, fields: readonly Q[], text: string): CalculationIssue<Q> {
+export function approximateCharts<Q extends string>(target: Q, fields: readonly Q[], text: string): Extract<CalculationIssue<Q>, {kind: 'approximate-charts'}> {
   return {kind: 'approximate-charts', target, fields, text};
 }
 
