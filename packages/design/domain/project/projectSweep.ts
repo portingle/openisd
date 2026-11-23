@@ -288,12 +288,14 @@ function unusableTuningPorts(b: Box, box: 'vented' | 'bandpass4' | 'bandpass6' |
     return tunings.filter(isUnusableTuning).length;
 }
 
-/** The resolve's warnings about a port tuning stated at or below zero. They do not stop the sweep, which runs at a
- *  working tuning, and are reported with it. */
-function statedTuningIssues(source: ProjectSweepSource, box: SimulatableBoxType): readonly VentIssue[] {
+/** The resolve's sentence about a port tuning stated at or below zero, reported with the sweep, which runs at a working
+ *  tuning: an approximate-charts issue, so the chart is drawn and the sentence shown beside it. */
+function statedTuningIssues(source: ProjectSweepSource, box: SimulatableBoxType): readonly SweepIssue[] {
     if (box !== 'vented' && box !== 'bandpass4' && box !== 'bandpass6' && box !== 'abc') return [];
     if (unusableTuningPorts(source.box, box) === 0) return [];
-    return [...source.rearVentIssues, ...source.ventIssues].filter(issue => issue.kind === 'inconsistent-inputs' && issue.target === 'tuning_goal_hz');
+    return [...source.rearVentIssues, ...source.ventIssues]
+        .filter(issue => issue.kind === 'inconsistent-inputs' && issue.target === 'tuning_goal_hz')
+        .map(issue => source.engine.issues.approximateCharts('tuning_goal_hz', ['tuning_goal_hz'], issue.text));
 }
 
 function ventSweepIssuesOf(source: ProjectSweepSource, box: 'vented' | 'bandpass4' | 'bandpass6' | 'abc'): readonly VentIssue[] {

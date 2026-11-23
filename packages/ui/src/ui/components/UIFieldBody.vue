@@ -18,6 +18,7 @@ import {computed, onBeforeUnmount, ref, useId, watch} from 'vue';
 import {ChartInputs, NumberEditor, PhoneRowColumns} from '@openisd/design/fields';
 import NumInput from './NumInput.vue';
 import {selectedOption} from '../../logic/domEvents.js';
+import {withStatedOption} from '../../logic/statedOption.js';
 import NumReadout from './NumReadout.vue';
 import UnitToggle from './UnitToggle.vue';
 import WinisdDeviationCue from './WinisdDeviationCue.vue';
@@ -98,6 +99,12 @@ const view = computed(() => {
     }
     default: { const unhandled: never = binding; return unhandled; }
   }
+});
+
+/** The drop-down's options; a count a file states that the list does not offer (0 radiators) is added so it shows as stated. */
+const countChoices = computed(() => {
+  if (props.field.editor !== NumberEditor.CountSelect) return [];
+  return withStatedOption(props.field.countOptions(), view.value.value, stated => ({value: stated, label: String(stated)}));
 });
 
 /** Whether the popup is shown: a click on the glyph toggles it, a new refusal opens it; a click
@@ -181,7 +188,7 @@ function write(v: number | null, precision?: number): void {
         <NumReadout v-if="readonly" :id="id" :class="['calculated', 'greyed', view.dqClasses]" :value="view.value" :field="field" :format="format" />
         <select v-else-if="field.editor === NumberEditor.CountSelect" :id="id" :value="view.value"
           @change="event => { const value = selectedOption(event, field.countOptions()); if (value !== null) write(value); }">
-          <option v-for="option in field.countOptions()" :key="option.value" :value="option.value">{{ option.label }}</option>
+          <option v-for="option in countChoices" :key="option.value" :value="option.value">{{ option.label }}</option>
         </select>
         <NumInput v-else :id="id" :class="[view.provenanceClass, view.dqClasses]" :model-value="view.value" :field="field"
           :half-width="view.precision" :mandatory="view.mandatory" :min="min" :max="max" :allow-out-of-range="allowOutOfRange" :stepper="stepper" :spin="spin" :blank-refused="binding.kind === 'fixed'"

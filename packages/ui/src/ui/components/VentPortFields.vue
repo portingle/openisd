@@ -5,6 +5,7 @@
 // is writing (in the What-if layer while one is open).
 import {END_CORRECTION_OPTIONS, NumberField, VENT_SHAPE_OPTIONS} from '@openisd/design/fields';
 import {selectedOption} from '../../logic/domEvents.js';
+import {endCorrectionChoices} from '../../logic/statedOption.js';
 import {VENT_GEOMETRY_TIP} from '../../hooks/ventReadouts.js';
 import type {PortFieldsView} from '../../hooks/portFieldsView.js';
 import UIField from './UIField.vue';
@@ -32,7 +33,7 @@ const VENT_COUNT_OPTIONS = NumberField.VENT_COUNT.countOptions();
     <label class="vpf-label">End Correction</label>
     <select class="vpf-select" :value="port.endCorrection"
             @change="e => { const k = selectedOption(e, END_CORRECTION_OPTIONS); if (k !== null) port.setEndCorrection(k); }">
-      <option v-for="o in END_CORRECTION_OPTIONS" :key="o.value" :value="o.value">{{ o.label }} ({{ o.value }})</option>
+      <option v-for="o in endCorrectionChoices(port.endCorrection)" :key="o.value" :value="o.value">{{ o.label }} ({{ o.value }})</option>
     </select>
   </div>
   <template v-if="port.shape === 'slotted'">

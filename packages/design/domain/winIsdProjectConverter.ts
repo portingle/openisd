@@ -35,7 +35,7 @@ import {WINISD_MAX_FILTER_ORDER} from '../fields/filterLimits.js';
 import {openIsdDriverToWinIsdDriver} from './driverRecordConverter.js';
 import {WinISDDriver} from '../winisd/winisdDriver.js';
 import {WinISDProject} from '../winisd/winisdProject.js';
-import {type RadiatorDeviceJson, type SpecEntryJson} from './openisdSchema.js';
+import {type OpenISDProjectJson, type OpenISDProjectSessionJson, type RadiatorDeviceJson, type SpecEntryJson} from './openisdSchema.js';
 import {winISDDriverToOpenISDDeviceJson} from './winIsdDriverImport.js';
 import {dateStamp} from './appContext.js';
 
@@ -260,6 +260,19 @@ function keepSavedLengthWithoutTuning(wpr: WinISDProject, section: string, vent:
   if (!tuningDecides) vent.length_m.set(length);
 }
 
+/** `session` with the vented box's tuning and port length both stated, as a file that states both is read. */
+function withVentedTuningAndLength(session: OpenISDProjectSessionJson, tuning_hz: number, length_m: number): OpenISDProjectSessionJson {
+  const stated = (record: OpenISDProjectJson): OpenISDProjectJson => ({
+    ...record,
+    box: {...record.box, vented: {
+      ...record.box.vented,
+      chamber: {...record.box.vented.chamber, tuning_goal_hz: {state: 'E', value: tuning_hz}},
+      vent: {...record.box.vented.vent, length_m: {state: 'E', value: length_m}},
+    }},
+  });
+  return {...session, saved: stated(session.saved), edited: session.edited === null ? null : stated(session.edited)};
+}
+
 /** A `.wpr` imported: the project (null when it could not be read), what was wrong with the file,
  *  and every value the load repaired, one line each for the opening message (QO953.c31). */
 export interface ImportedWinIsdProject {
@@ -276,6 +289,15 @@ export class WinIsdProjectConverter {
     private readonly engine: Engine,
     private readonly driverFromRecord: DriverFromRecord = OpenISDDriver.fromConformingRecord,
   ) {}
+
+  /** A vented tuning the file states that no design can use (0 Hz) is kept beside the saved port length: writing the
+   *  length through the project's fields takes the tuning's entry, so both are stated through the saved record. */
+  #keepUnusableTuningBesideLength(project: OpenISDProject, wpr: WinISDProject, tuning_hz: number): OpenISDProject {
+    const length = wpr.number('VentRear', 'len');
+    if (length == null || (Number.isFinite(tuning_hz) && tuning_hz > 0) || !(Number.isFinite(length) && length > 0)) return project;
+    if (project.box.vented.vent.length_m.value !== length) return project;
+    return OpenISDProject.wrapSession(withVentedTuningAndLength(project.cloneSession(), tuning_hz, length), this.engine);
+  }
 
   /**
    * `OpenISDProject` -> a `WinISDProject` ready to render as `.wpr` text.
@@ -441,6 +463,7 @@ export class WinIsdProjectConverter {
         const Num = wpr.number('VentRear', 'Num');
         if (Num != null) project.box.vented.vent.count.set(Num);
         keepSavedLengthWithoutTuning(wpr, 'VentRear', project.box.vented.vent);
+        project = this.#keepUnusableTuningBesideLength(project, wpr, Fr);
         break;
       }
       case 2: {

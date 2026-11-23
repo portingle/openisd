@@ -13,6 +13,7 @@ import {createVentReadouts, FB_TARGET_TIP, VENT_GEOMETRY_TIP} from './ventReadou
 import {createPassiveRadiatorActions} from './passiveRadiatorActions.js';
 import {useRadiatorPicks} from './telemetryContext.js';
 import {computed} from 'vue';
+import {marksOfCell, type FieldMarks} from '../logic/cellDataQuality.js';
 import {END_CORRECTION_OPTIONS, PhoneBoxText, PhoneHelp, VENT_SHAPE_OPTIONS} from '@openisd/design/fields';
 
 
@@ -52,6 +53,13 @@ export function useMobileEnclosureTab() {
     };
   });
 
+  /** The marks each Key figure carries, read from the radiator's own cell so the phone shows the warning the desktop field shows. */
+  const prKeyFigureMarks = computed<Readonly<Record<'Fs_hz' | 'Mms_kg', FieldMarks>>>(() => {
+    void projectChanged.value;
+    const spec = project.value.box.passiveRadiator.radiator.spec;
+    return {Fs_hz: marksOfCell(spec.Fs_hz), Mms_kg: marksOfCell(spec.Mms_kg)};
+  });
+
   /** The "2×" rule line under the radiator's Key figures: what the radiators need and how many of
    *  this radiator give it, from the engine; null when a displacement is missing. */
   const prTwoTimesRule = computed<string | null>(() => {
@@ -74,7 +82,7 @@ export function useMobileEnclosureTab() {
     project, selectedBox,
     activeVent, activeTuning, ventPorts, portPipeResonance_hz, fbUnreachable, fbUnreachableMsg, tuningField,
     prResonanceMassDq, prFsMass_hz, prNaturalFh,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prTwoTimesRule,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule,
     VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
     FB_TARGET_TIP, VENT_GEOMETRY_TIP,
   };
