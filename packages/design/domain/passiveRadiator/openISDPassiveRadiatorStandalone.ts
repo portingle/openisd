@@ -3,7 +3,7 @@ import type { AppServices } from '../appContext.js';
 import { asRadiatorDevice } from '../openisdSchema.js';
 import { OpenISDDeviceJson } from '../openIsdDeviceJsonIo.js';
 import type { RadiatorDeviceJson } from '../openisdSchema.js';
-import type { Air, PrEngine, PrSpecIssue } from '../../engine/index.js';
+import type { Air, IssueEngine, PrEngine, PrSpecIssue } from '../../engine/index.js';
 import { blankDeviceRecord } from '../driver/blankDeviceRecord.js';
 import { OpenISDPassiveRadiator } from './openISDPassiveRadiator.js';
 import { CURRENT_SCHEMA_VERSION } from '../schemaVersion.js';
@@ -50,18 +50,19 @@ export class OpenISDPassiveRadiatorStandalone extends OpenISDPassiveRadiator {
         set: (json: RadiatorDeviceJson) => void,
         conflicts: () => readonly PrSpecIssue[],
         private readonly noteConflicts: (issues: readonly PrSpecIssue[]) => void,
+        checkPositive?: IssueEngine['positiveValueIssue'],
     ) {
-        super({get value() { return read(); }, set}, conflicts);
+        super({get value() { return read(); }, set}, conflicts, checkPositive);
     }
 
-    static wrap(json: RadiatorDeviceJson): OpenISDPassiveRadiatorStandalone {
+    static wrap(json: RadiatorDeviceJson, checkPositive?: IssueEngine['positiveValueIssue']): OpenISDPassiveRadiatorStandalone {
         let current = json;
         let issues: readonly PrSpecIssue[] = [];
         return new OpenISDPassiveRadiatorStandalone(() => current, (j) => {
             current = j;
         }, () => issues, (found) => {
             issues = found;
-        });
+        }, checkPositive);
     }
 
     /** Fill every figure the stated ones give and mark the stated ones that contradict each other,

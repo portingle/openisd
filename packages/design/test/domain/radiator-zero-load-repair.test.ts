@@ -1,9 +1,8 @@
 /**
- * A passive radiator a project file holds with Sd 0, Cms 0, Mmd (Mms) 0, or Fs, Qms, Vas, Rms 0 (all
- * impossible) is repaired on opening: the loaded 0 counts as an empty box, so a figure the app can
- * calculate from the others is recalculated and shown as a calculated value, any other stays empty;
- * no data-quality mark on the box; the opening message names each repair; no readout is NaN or
- * Infinity. QO953.c10-c26: a repair is automatic; the dq must match the value shown. Task T930, ultra review finding 8.
+ * A passive radiator a project file holds with Fs or Mms of 0 opens exactly as the file states it, with the invalid-value
+ * warning on that figure and finite charts drawn from the other figures. A Sd, Cms, Qms, Vas or Rms of 0 is repaired on
+ * opening: it counts as an empty box, so a figure the app can calculate from the others is recalculated and shown as
+ * calculated, any other stays empty, and the opening message names each repair.
  */
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '@openisd/design/engine';
@@ -11,7 +10,7 @@ import {ProjectBuilder} from '../../domain/openisdTransforms.js';
 import {OpenISDProject} from '../../domain/project/openISDProject.js';
 import type {OpenedProject} from '../../domain/project/openISDProject.js';
 import {driverFromSpec} from '../fixtures/recordBuilders.js';
-import {wprText} from '../fixtures/inputLimitsSweep.js';
+import {DEFAULT_GRID, projectFindings, wprText} from '../fixtures/inputLimitsSweep.js';
 import {WinIsdProjectConverter} from '../../domain/winIsdProjectConverter.js';
 
 const engine = createEngine();
@@ -20,7 +19,9 @@ type Figure = 'Sd_m2' | 'Cms_m_per_N' | 'Mms_kg' | 'Fs_hz' | 'Qms' | 'Vas_m3' | 
 
 /** A saved passive-radiator project whose radiator states Sd, Mms and Cms (and Qms), with `zeroed` set to 0 in the file. */
 function owprWithZero(zeroed: Figure): string {
-  const driver = driverFromSpec(engine, {Fs_hz: 30, Qes: 0.4, Qms: 4, Sd_m2: 0.02, Cms_m_per_N: 0.0005, Re_ohm: 6});
+  const driver = driverFromSpec(engine, {
+    Fs_hz: 30, Qes: 0.4, Qms: 4, Sd_m2: 0.02, Cms_m_per_N: 0.0005, Re_ohm: 6, Pe_W: 100, Xmax_m: 0.006,
+  });
   const p = new ProjectBuilder(driver, engine).sealed().volume_m3(0.03).build();
   p.box.boxType.set('box-passive-radiator');
   const spec = p.box.passiveRadiator.radiator.spec;
@@ -41,8 +42,37 @@ function opened(text: string): OpenedProject {
   return result;
 }
 
-describe('a radiator figure of 0 in a project file is repaired on opening (T930)', () => {
-  for (const figure of ['Sd_m2', 'Cms_m_per_N', 'Mms_kg'] as const) {
+describe('passive-radiator figures in project files', () => {
+  for (const figure of ['Fs_hz', 'Mms_kg'] as const) {
+    it.each(['E', 'C'] as const)(`keeps ${figure} of zero as %s with a warning and finite charts`, state => {
+      const first = opened(owprWithZero(figure)).project.cloneSession();
+      const {box} = first.saved;
+      const pr = box.passiveRadiator;
+      const {component} = pr;
+      const specs = {'passive-radiator': {...component.specs['passive-radiator'], [figure]: {state, value: 0}}};
+      const saved = {...first.saved, box: {...box, passiveRadiator: {...pr, component: {...component, specs}}}};
+      const {project, loadRepairs} = opened(JSON.stringify({...first, saved}));
+      const field = project.box.passiveRadiator.radiator.spec[figure];
+      expect(field.value).toBe(0);
+      expect(field.entered).toBe(state === 'E');
+      expect(field.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
+      expect(loadRepairs).toEqual([]);
+      expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
+      expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts'}));
+      expect(opened(project.toOwprText()).project.box.passiveRadiator.radiator.spec[figure].value).toBe(0);
+    });
+  }
+
+  it('keeps an invalid resonance on a radiator held by a sealed project', () => {
+    const session = opened(owprWithZero('Fs_hz')).project.cloneSession();
+    const saved = {...session.saved, box: {...session.saved.box, boxType: 'sealed'}};
+    const {project, loadRepairs} = opened(JSON.stringify({...session, saved}));
+    expect(loadRepairs).toEqual([]);
+    expect(project.box.passiveRadiator.radiator.spec.Fs_hz.value).toBe(0);
+    expect(project.box.passiveRadiator.radiator.spec.Fs_hz.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value'}));
+  });
+
+  for (const figure of ['Sd_m2', 'Cms_m_per_N'] as const) {
     it(`${figure} 0: the box is repaired automatically, unmarked, named once, and no readout is NaN or Infinity`, () => {
       const {project, loadRepairs} = opened(owprWithZero(figure));
       const pr = project.box.passiveRadiator;
@@ -51,7 +81,7 @@ describe('a radiator figure of 0 in a project file is repaired on opening (T930)
       // No mark about a shown value: no stated figure contradicts another.
       expect(spec[figure].dq.filter(d => d.kind === 'inconsistent-inputs')).toEqual([]);
       if (figure !== 'Sd_m2') {
-        expect(spec[figure].value, 'recalculated from Fs and the other one').toBeCloseTo(figure === 'Mms_kg' ? 0.01 : 0.0008, 6);
+        expect(spec[figure].value, 'recalculated from Fs and moving mass').toBeCloseTo(0.0008, 6);
         expect(spec[figure].calculated).toBe(true);
       }
       const named = loadRepairs.filter(r => r.text.includes('in the file'));
@@ -75,8 +105,36 @@ describe('a radiator figure of 0 in a project file is repaired on opening (T930)
   });
 });
 
-describe('a radiator figure of 0 in a WinISD .wpr is repaired on opening the same way (T930)', () => {
-  for (const key of ['Sd', 'Fs', 'Vas', 'Qms']) {
+describe('passive-radiator figures in WinISD files', () => {
+  it('keeps Fs of 0 Hz and labels the reference moving mass on finite charts', () => {
+    const plain = wprText('passive radiator');
+    const text = plain.replace(/(\[PassiveRadiator\][^\[]*?\nFs=)[^\r\n]*/, '$10');
+    expect(text).not.toBe(plain);
+    const {value: project, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+    if (project === null) throw new Error(errors.map(e => e.message).join(', '));
+    const spec = project.box.passiveRadiator.radiator.spec;
+    expect(spec.Fs_hz.value).toBe(0);
+    expect(spec.Fs_hz.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
+    expect(loadRepairs).toEqual([]);
+    expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
+    expect(project.sweep(DEFAULT_GRID).issues.some(issue =>
+      issue.kind === 'approximate-charts' && issue.text.includes('50 g moving mass'))).toBe(true);
+  });
+
+  it('keeps a tuning that the reference radiator cannot reach and draws its zero-ballast response', () => {
+    const text = wprText('passive radiator').replace(/(\[PassiveRadiator\][^\[]*?\nFs=)[^\r\n]*/, '$10')
+      .replace(/^Me=.*$/m, '').replace(/^Fr=.*$/m, 'Fr=1000');
+    const {value: project, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+    if (project === null) throw new Error(errors.map(e => e.message).join(', '));
+    expect(project.box.passiveRadiator.radiator.spec.Fs_hz.value).toBe(0);
+    expect(project.box.passiveRadiator.tuning_goal_hz.value).toBe(1000);
+    expect(loadRepairs).toEqual([]);
+    expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
+    expect(project.sweep(DEFAULT_GRID).issues.some(issue =>
+      issue.kind === 'approximate-charts' && issue.text.includes('0 g of added mass'))).toBe(true);
+  });
+
+  for (const key of ['Sd', 'Vas', 'Qms']) {
     it(`[PassiveRadiator] ${key}=0: the figure is emptied and named, and no readout is NaN or Infinity`, () => {
       const plain = wprText('passive radiator');
       const text = plain.replace(new RegExp(`(\\[PassiveRadiator\\][^\\[]*?\\n${key}=)[^\\r\\n]*`), '$10');

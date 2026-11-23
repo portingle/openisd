@@ -1,4 +1,5 @@
 import type { Engine } from '../../engine/index.js';
+import {boxLossInput} from '../box/boxLossInput.js';
 import type { DqIssue, PrIssue, PrSpecIssue, SealedAlignmentIssue, VentIssue } from '../../engine/index.js';
 import { focus, inputOf } from '../cell.js';
 import type { DefaultingFieldImpl, DualWriteFieldImpl, SimpleField } from '../cell.js';
@@ -149,7 +150,9 @@ export function resolveProject(ctx: ProjectResolveContext): ProjectIssues {
         const p = box.passiveRadiator;
         const r = p.radiator;
         const radiator = r.spec.resolve(engine.pr, air);
+        const mechanics = p.chartMechanics();
         const pr = engine.pr.solve({
+            approximateMechanics: mechanics.warning !== null,
             addedMass_kg: p.addedMass_kg,
             tuning_goal_hz: p.tuning_goal_hz,
             resonanceWithAddedMass_hz: p.resonanceWithAddedMass_hz,
@@ -167,14 +170,15 @@ export function resolveProject(ctx: ProjectResolveContext): ProjectIssues {
         // The feed the Box tab's readout uses: the driver as the chart runs it (the chart's Mms, Cms, Rms and BL, "Chart from Fs, Vas,
         // Qms (WinISD's way)" followed), Rg-loaded and coil-heated, all the project's drivers in the one box.
         const winisdWay = ProjectAdvanced.wrap(focus(directRoot, 'advanced'), focus(directRoot, 'filters')).winisdChartFromFsVasQms.value;
-        const feed = driver.chartSealedFeed(driveLoadOf(directRoot, driver),
-            {Ql: box.sealed.losses.Ql.value, Qa: box.sealed.losses.Qa.value}, air, winisdWay);
+        const lossQl = boxLossInput(engine.issues, 'Ql', box.sealed.losses.Ql.value).value;
+        const lossQa = boxLossInput(engine.issues, 'Qa', box.sealed.losses.Qa.value).value;
+        const feed = driver.chartSealedFeed(driveLoadOf(directRoot, driver), {Ql: lossQl, Qa: lossQa}, air, winisdWay);
         const sealed = engine.sealed.solve({
             Qts: inputOf(() => feed?.Qts ?? null),
             Vas_m3: inputOf(() => feed?.Vas ?? null),
             Fs_hz: inputOf(() => feed?.Fs ?? null),
-            Ql: inputOf(() => box.sealed.losses.Ql.value),
-            Qa: inputOf(() => box.sealed.losses.Qa.value),
+            Ql: inputOf(() => lossQl),
+            Qa: inputOf(() => lossQa),
             Qtc: box.sealed.q_tc,
             Vb_m3: sealedVolumeAsSolverField(box.sealed.volume_m3),
         });

@@ -9,7 +9,7 @@ import type {
   TargetUnreachableIssue, WiringInferredIssue, WiringNotStatedIssue, MultiCoilWithoutNumVCIssue,
 } from '../consistency.js';
 import {
-  inconsistentInputs, issueFormula, missingDependencies, nonNegativeValueIssue, outOfRange,
+  approximateCharts, inconsistentInputs, issueFormula, missingDependencies, nonNegativeValueIssue, outOfRange,
   multiCoilWithoutNumVC, positiveValueIssue, requiredPositiveIssue, targetUnreachable, wiringInferred, wiringNotStated,
 } from '../consistency.js';
 import type {Wiring} from '../types.js';
@@ -22,6 +22,7 @@ export interface IssueEngine {
   plainNames(text: string): string;
   /** How far apart two values are, as the percentage text a sentence quotes (fraction of the larger). */
   percentApart(expected: number, actual: number): string;
+  approximateCharts<Q extends string>(target: Q, fields: readonly Q[], text: string): Extract<CalculationIssue<Q>, {kind: 'approximate-charts'}>;
   /** A target no route can reach yet, naming every blocked route and what it still needs. */
   missingDependencies<Q extends string>(target: Q, routes: readonly SolveRoute<Q>[]): CalculationIssue<Q>;
   /** Stated values that contradict the formula relating them — every field in the group is marked. */
@@ -65,6 +66,7 @@ export class IssueEngineImpl implements IssueEngine {
   percentApart(expected: number, actual: number): string {
     return pct(relativeGap(expected, actual));
   }
+  readonly approximateCharts = approximateCharts;
   readonly missingDependencies = missingDependencies;
   readonly inconsistentInputs = inconsistentInputs;
   readonly outOfRange = outOfRange;

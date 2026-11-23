@@ -13,7 +13,7 @@ import {enteredEntry} from '../specEntry.js';
 import {focus, simpleField} from '../cell.js';
 import type {SimpleField} from '../cell.js';
 import type {
-    ChamberJson, OpenISDBoxJson, OpenISDProjectJson, SealedLossesJson, SpecEntryJson, VentedLossesJson, VentJson,
+    ChamberJson, OpenISDBoxJson, OpenISDProjectJson, SpecEntryJson, VentJson,
 } from '../openisdSchema.js';
 import {fieldLoadRule, loadEmptiedText, repairLoaded} from './loadRepair.js';
 import type {LoadRepairNote, LoadRepairRule} from './loadRepair.js';
@@ -37,17 +37,6 @@ function entryRule(field: NumberField, slot: SimpleField<SpecEntryJson | undefin
         v => slot.set(v === null ? undefined : enteredEntry(v)));
 }
 
-function sealedLossRules(losses: SimpleField<SealedLossesJson>): LoadRepairRule[] {
-    return [numberRule(NumberField.LOSS_QL, focus(losses, 'Ql')), numberRule(NumberField.LOSS_QA, focus(losses, 'Qa'))];
-}
-
-function ventedLossRules(losses: SimpleField<VentedLossesJson>): LoadRepairRule[] {
-    return [
-        numberRule(NumberField.LOSS_QL, focus(losses, 'Ql')), numberRule(NumberField.LOSS_QA, focus(losses, 'Qa')),
-        numberRule(NumberField.LOSS_QP, focus(losses, 'Qp')),
-    ];
-}
-
 /** A chamber's tuning (`tuning`: Fb, Ffc or Frc), paired with its port's length: an emptied tuning
  *  is worked out from the length the file gave, which becomes the entered side of the pair. */
 function tuningRule(tuning: NumberField, goal: SimpleField<SpecEntryJson | undefined>, vent: SimpleField<VentJson>): LoadRepairRule {
@@ -68,20 +57,14 @@ function tuningRule(tuning: NumberField, goal: SimpleField<SpecEntryJson | undef
  *  length runs first, so a negative one is emptied before the tuning could be worked out from it. */
 function ventedChamberRules(chamber: SimpleField<ChamberJson>, vent: SimpleField<VentJson>, tuning: NumberField): LoadRepairRule[] {
     return [
-        ...ventRules(vent),
         tuningRule(tuning, focus(chamber, 'tuning_goal_hz'), vent),
-        ...ventedLossRules(focus(chamber, 'losses')),
     ];
 }
 
-function ventRules(vent: SimpleField<VentJson>): LoadRepairRule[] {
-    return [entryRule(NumberField.VENT_L_CM, focus(vent, 'length_m'))];
-}
-
-/** The radiator figures a record states, each with the field that names it (T930). */
+/** The radiator figures a record states that are repaired on load, each with the field that names it. Fs and Mms are kept as the file states them. */
 const RADIATOR_FIGURES = [
-    ['Fs_hz', NumberField.PR_FS_HZ], ['Qms', NumberField.PR_QMS], ['Vas_m3', NumberField.PR_VAS_L],
-    ['Sd_m2', NumberField.PR_SD_CM2], ['Mms_kg', NumberField.MMS_KG], ['Cms_m_per_N', NumberField.CMS_M_PER_N],
+    ['Qms', NumberField.PR_QMS], ['Vas_m3', NumberField.PR_VAS_L],
+    ['Sd_m2', NumberField.PR_SD_CM2], ['Cms_m_per_N', NumberField.CMS_M_PER_N],
     ['Rms_kg_per_s', NumberField.RMS_KG_PER_S],
 ] as const;
 
@@ -112,19 +95,14 @@ function radiatorFigureRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[]
 function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
     const type = box.value.boxType;
     switch (type) {
-        case 'sealed': {
-            const sealed = focus(box, 'sealed');
-            return sealedLossRules(focus(sealed, 'losses'));
-        }
+        case 'sealed': return [];
         case 'vented': {
             const vented = focus(box, 'vented');
             return ventedChamberRules(focus(vented, 'chamber'), focus(vented, 'vent'), NumberField.BOX_FB_HZ);
         }
         case 'bandpass4': {
             const bp = focus(box, 'bandpass4');
-            const rear = focus(bp, 'rear');
             return [
-                ...sealedLossRules(focus(rear, 'losses')),
                 ...ventedChamberRules(focus(bp, 'front'), focus(bp, 'frontVent'), NumberField.BOX_FFC_HZ),
                 numberRule(NumberField.LOSS_QICL, focus(bp, 'Qiclfr')),
             ];
@@ -142,7 +120,7 @@ function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
             return [
                 ...ventedChamberRules(focus(abc, 'rear'), focus(abc, 'rearVent'), NumberField.BOX_FRC_HZ),
                 ...ventedChamberRules(focus(abc, 'front'), focus(abc, 'frontVent'), NumberField.BOX_FFC_HZ),
-                ...ventRules(focus(abc, 'intraVent')),
+                entryRule(NumberField.VENT_L_CM, focus(focus(abc, 'intraVent'), 'length_m')),
                 numberRule(NumberField.LOSS_QICL, focus(abc, 'Qiclfr')),
             ];
         }
@@ -151,7 +129,6 @@ function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
             return [
                 numberRule(NumberField.PR_NUM, focus(pr, 'count')),
                 entryRule(NumberField.PR_MADD_G, focus(pr, 'addedMass_kg')),
-                ...sealedLossRules(focus(pr, 'losses')),
             ];
         }
     }

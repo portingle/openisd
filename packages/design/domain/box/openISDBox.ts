@@ -1,5 +1,5 @@
 import {type Engine} from '../../engine/index.js';
-import type { Air, BoxType, DqIssue, DriveLoad, RadiatorMechanics, SealedParams, VentedAlignment } from '../../engine/index.js';
+import type { Air, BoxType, DqIssue, DriveLoad, SealedParams, VentedAlignment } from '../../engine/index.js';
 import { CalculatedFieldImpl, DerivableFieldImpl, DualWriteFieldImpl, absentCell, enteredCell, calculatedCell, defaultedField, entryField, focus, nullableField, pairedField, settlingNullableField, simpleField } from '../cell.js';
 import type { Clearable, Entered, Precise, Readable, SimpleField, Writable } from '../cell.js';
 import type { SealedLosses } from '../losses.js';
@@ -418,7 +418,7 @@ export class OpenISDBox implements Box {
         const pr = focus(lens, 'passiveRadiator');
         const prSlot = focus(pr, 'component');
         const getRadiator = (): OpenISDPassiveRadiatorEmbedded => {
-            return new OpenISDPassiveRadiatorEmbedded(prSlot, () => issues().radiator);
+            return new OpenISDPassiveRadiatorEmbedded(prSlot, () => issues().radiator, engine.issues.positiveValueIssue);
         };
         const prVolume = settlingNullableField(pr, 'volume_m3', () => STARTING_SHARED_VOLUME_M3, (v) => engine.issues.requiredPositiveIssue('Box volume', v));
         const prFieldDq = (target: string): readonly DqIssue[] => groupDq(issues().pr.filter(
@@ -458,12 +458,35 @@ export class OpenISDBox implements Box {
             get radiator() {
                 return getRadiator();
             },
-            chartMechanics: (): RadiatorMechanics => {
+            chartMechanics: () => {
                 const spec = getRadiator().spec;
                 const stated = {Mms_kg: spec.Mms_kg.value, Cms_m_per_N: spec.Cms_m_per_N.value, Rms_kg_per_s: spec.Rms_kg_per_s.value};
-                if (!this.#chartFromFsVasQms()) return stated;
-                return this.#engine.driver.winisdRadiatorMechanics(
-                    {...stated, Fs_hz: spec.Fs_hz.value, Vas_m3: spec.Vas_m3.value, Sd_m2: spec.Sd_m2.value, Qms: spec.Qms.value}, air());
+                const invalid = [...(spec.hasInvalidFs ? ['Fs'] : []), ...(spec.hasInvalidMms ? ['Mms'] : [])];
+                const ready = air();
+                if (invalid.length === 0) {
+                    const mechanics = this.#chartFromFsVasQms() ? this.#engine.driver.winisdRadiatorMechanics(
+                        {...stated, Fs_hz: spec.Fs_hz.value, Vas_m3: spec.Vas_m3.value, Sd_m2: spec.Sd_m2.value, Qms: spec.Qms.value}, ready) : stated;
+                    return {...mechanics, warning: null};
+                }
+                // An impossible Fs or Mms is left out; the charts use the other figures, and the starting
+                // moving mass and compliance stand in for any the others do not give.
+                let figures = spec.solveUsable(this.#engine.pr, ready);
+                const reference = [
+                    ...(figures.Mms_kg === null ? [`${STARTING.radiatorMms_kg * 1000} g moving mass`] : []),
+                    ...(figures.Cms_m_per_N === null ? [`${STARTING.radiatorCms_m_per_N * 1000} mm/N compliance`] : []),
+                ];
+                if (reference.length > 0) {
+                    figures = this.#engine.pr.solveSpec({
+                        ...figures,
+                        Mms_kg: figures.Mms_kg ?? STARTING.radiatorMms_kg,
+                        Cms_m_per_N: figures.Cms_m_per_N ?? STARTING.radiatorCms_m_per_N,
+                    }, ready);
+                }
+                const {Mms_kg, Cms_m_per_N, Rms_kg_per_s} = this.#chartFromFsVasQms()
+                    ? this.#engine.driver.winisdRadiatorMechanics(figures, ready) : figures;
+                const basis = reference.length > 0 ? `the placeholder radiator's ${reference.join(' and ')}` : 'the other radiator figures';
+                return {Mms_kg, Cms_m_per_N, Rms_kg_per_s,
+                    warning: `Passive radiator ${invalid.join(' and ')} must be greater than zero. Charts are calculated using ${basis}.`};
             },
             // OUTPUTS of the solved pair (S2-7d2): plain entry-backed slots the `solvePr` cascade
             // in `OpenISDProject#resolve()` writes as 'C' entries — never entered by a user, never

@@ -1,5 +1,5 @@
 import type { SimpleField } from '../cell.js';
-import type { PrSpecIssue } from '../../engine/index.js';
+import type { IssueEngine, PrSpecIssue } from '../../engine/index.js';
 import type { RadiatorDeviceJson } from '../openisdSchema.js';
 import { OpenISDDevice } from '../driver/openISDDevice.js';
 import { OpenIsdPassiveRadiatorSpec } from './openIsdPassiveRadiatorSpec.js';
@@ -26,10 +26,13 @@ export abstract class OpenISDPassiveRadiator extends OpenISDDevice {
     // is, so a field list that differed between them was describing nothing real. The six identity
     // fields are not here: every device has those, so they live on `OpenISDDevice`.
 
-    protected constructor(slot: SimpleField<RadiatorDeviceJson>, conflicts?: () => readonly PrSpecIssue[]) {
+    protected constructor(
+        slot: SimpleField<RadiatorDeviceJson>, conflicts?: () => readonly PrSpecIssue[],
+        checkPositive?: IssueEngine['positiveValueIssue'],
+    ) {
         super(slot);
         this.slot = slot;
-        this.spec = new OpenIsdPassiveRadiatorSpec(slot, conflicts);
+        this.spec = new OpenIsdPassiveRadiatorSpec(slot, conflicts, checkPositive);
     }
 
     /**
