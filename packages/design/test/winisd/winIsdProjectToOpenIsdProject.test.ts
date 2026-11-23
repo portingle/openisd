@@ -419,6 +419,29 @@ describe('winIsdProjectToOpenIsdProject', () => {
       if (!project) throw new Error('expected a project');
       assert.equal(project.box.vented.tuning_goal_hz.value, Number(goldenField(join(GOLDENS_DIR, 'vented-small.wpr'), 'Box', 'Fr')));
     });
+
+    it("vented: a saved length that disagrees with the tuning loads as the tuning's length, with no warning", () => {
+      const file = join(GOLDENS_DIR, 'vented-small.wpr');
+      const plain = readFileSync(file, 'utf8');
+      const text = plain.replace(/(\[VentRear\][^\[]*?\nlen=)[^\r\n]*/, '$10.25');
+      const converter = new WinIsdProjectConverter(createEngine());
+      const {value: project} = converter.winIsdProjectToOpenIsdProject(text);
+      const original = converter.winIsdProjectToOpenIsdProject(plain).value;
+      if (!project || !original) throw new Error('expected a project');
+      assert.notEqual(project.box.vented.vent.length_m.value, 0.25);
+      assert.ok(Math.abs((project.box.vented.vent.length_m.value ?? NaN) - (original.box.vented.vent.length_m.value ?? 0)) < 1e-9);
+      assert.ok(!project.box.vented.vent.length_m.dq.some(issue => issue.kind === 'inconsistent-inputs'));
+    });
+
+    for (const fr of ['0', '1000']) {
+      it(`vented: a saved 0.25 m length is kept when the tuning (Fr=${fr}) gives no finite positive length`, () => {
+        const text = readFileSync(join(GOLDENS_DIR, 'vented-small.wpr'), 'utf8')
+          .replace(/(\[VentRear\][^\[]*?\nlen=)[^\r\n]*/, '$10.25').replace(/^Fr=.*$/m, `Fr=${fr}`);
+        const {value: project, errors} = new WinIsdProjectConverter(createEngine()).winIsdProjectToOpenIsdProject(text);
+        assert.ok(project, JSON.stringify(errors));
+        assert.equal(project.box.vented.vent.length_m.value, 0.25);
+      });
+    }
   });
 
   describe('bandpass6 and ABC boxes', () => {
