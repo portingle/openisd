@@ -6,9 +6,12 @@ import { FixedAir } from '../../engine/index.js';
 import type { Filter, EnclosureParams } from '../../engine/index.js';
 import { CalculatedFieldImpl, absentCell, calculatedCell } from '../cell.js';
 import type { Calculated, Readable, SimpleField } from '../cell.js';
-import type { Box } from '../box/box.js';
+import type { Box, TuningField } from '../box/box.js';
+import type { Vent } from '../vent.js';
+import {STARTING_ABC_INTRA_VENT_LENGTH_M, startingChambersOf} from '../box/startingChambers.js';
 import type { Bandpass6Box } from '../box/bandpass6Box.js';
 import type { FrequencyGrid } from '../box/frequencyGrid.js';
+import {NumberField} from '../../fields/field.js';
 import {boxLossInput} from '../box/boxLossInput.js';
 import { engineCircuitModel } from '../driver/engineCircuitModel.js';
 import type { OpenISDDriverEmbedded } from '../driver/openISDDriverEmbedded.js';
@@ -189,7 +192,7 @@ function boxSpecificParamsOf(source: ProjectSweepSource, boxType: SimulatableBox
             const mech = box.passiveRadiator.chartMechanics();
             return {
                 prSd: undefinedIfNull(mech.Sd_m2),
-                prNum: box.passiveRadiator.count.value,
+                prNum: box.passiveRadiator.workingCount(),
                 prMmd: undefinedIfNull(mech.Mms_kg),
                 prMadd: undefinedIfNull(box.passiveRadiator.addedMass_kg.value),
                 prCms: undefinedIfNull(mech.Cms_m_per_N),
@@ -277,10 +280,32 @@ function portTuningIssuesOf(
  *  is active, so this is a thin read, not a second solve) plus `portTuningIssuesOf`'s own guard —
  *  `vented`'s single port, `bandpass4`'s front, or BOTH of `bandpass6`/`abc`'s (their rear port is
  *  vented too, unlike `bandpass4`'s sealed rear chamber). */
+function unusableTuningPorts(b: Box, box: 'vented' | 'bandpass4' | 'bandpass6' | 'abc'): number {
+    const tunings: readonly TuningField[] = box === 'vented' ? [b.vented.tuning_goal_hz]
+        : box === 'bandpass4' ? [b.bandpass4.chambers.front.tuning_goal_hz]
+            : box === 'bandpass6' ? [b.bandpass6.chambers.rear.tuning_goal_hz, b.bandpass6.chambers.front.tuning_goal_hz]
+                : [b.abc.chambers.rear.tuning_goal_hz, b.abc.chambers.front.tuning_goal_hz];
+    return tunings.filter(isUnusableTuning).length;
+}
+
+/** The resolve's warnings about a port tuning stated at or below zero. They do not stop the sweep, which runs at a
+ *  working tuning, and are reported with it. */
+function statedTuningIssues(source: ProjectSweepSource, box: SimulatableBoxType): readonly VentIssue[] {
+    if (box !== 'vented' && box !== 'bandpass4' && box !== 'bandpass6' && box !== 'abc') return [];
+    if (unusableTuningPorts(source.box, box) === 0) return [];
+    return [...source.rearVentIssues, ...source.ventIssues].filter(issue => issue.kind === 'inconsistent-inputs' && issue.target === 'tuning_goal_hz');
+}
+
 function ventSweepIssuesOf(source: ProjectSweepSource, box: 'vented' | 'bandpass4' | 'bandpass6' | 'abc'): readonly VentIssue[] {
-    const solved = box === 'bandpass6' || box === 'abc' ? [...source.rearVentIssues, ...source.ventIssues] : source.ventIssues;
-    if (solved.length) return solved;
     const b = source.box;
+    const unusable = unusableTuningPorts(b, box);
+    // A port tuning stated at or below zero is charted with a working tuning (`workingTuning`), so what the
+    // resolve reports about that tuning and the length it could not give does not stop the sweep.
+    const stops = (issue: VentIssue): boolean => unusable === 0
+        || !((issue.kind === 'inconsistent-inputs' && issue.target === 'tuning_goal_hz')
+            || (issue.kind === 'missing-dependencies' && issue.target === 'length_m'));
+    const solved = (box === 'bandpass6' || box === 'abc' ? [...source.rearVentIssues, ...source.ventIssues] : source.ventIssues).filter(stops);
+    if (solved.length) return solved;
     switch (box) {
         case 'vented':
             return portTuningIssuesOf(source.engine, b.vented.tuning_goal_hz, b.vented.vent, b.vented.volume_m3.value);
@@ -319,6 +344,93 @@ function boxSweepIssuesOf(source: ProjectSweepSource, box: SimulatableBoxType): 
     }
     if (box === 'box-passive-radiator') return prSweepIssuesOf(source);
     return [];
+}
+
+/** A port tuning the sweep cannot use: stated, and not a finite number above zero. */
+function isUnusableTuning(tuning: TuningField): boolean {
+    const stated = tuning.value;
+    return tuning.entered && stated !== null && !(Number.isFinite(stated) && stated > 0);
+}
+
+/** A port tuning stated at or below zero is kept on the box as stated. The sweep takes the tuning the
+ *  port length gives when that length is stated and above zero, else `fallback_hz`, and reports it as an
+ *  approximate-charts issue. */
+function workingTuning(
+    checks: Engine['issues'], key: 'Fb' | 'Ff' | 'Fr', label: string,
+    tuning: TuningField, vent: Vent, Vb: number | null, fallback_hz: number,
+): {readonly tuning_hz: number; readonly Leff_m: number | undefined; readonly issue: SweepIssue} | null {
+    if (!isUnusableTuning(tuning)) return null;
+    const length = vent.length_m.value;
+    const lengthUsable = vent.length_m.entered && length !== null && Number.isFinite(length) && length > 0;
+    const fromLength = lengthUsable ? vent.tuningIn_hz(Vb) : null;
+    const tuning_hz = fromLength !== null && Number.isFinite(fromLength) && fromLength > 0 ? fromLength : fallback_hz;
+    const end = vent.endCorrectionLength_m();
+    const length_m = fromLength === tuning_hz && length !== null ? length : vent.lengthForTuning_m(Vb, tuning_hz);
+    const Leff_m = end === null || length_m === null ? undefined : Math.max(0, length_m) + end;
+    const basis = fromLength === tuning_hz ? `the port length (${tuning_hz.toFixed(1)} Hz)` : `${tuning_hz} Hz`;
+    return {tuning_hz, Leff_m, issue: checks.approximateCharts(key, [key],
+        `${label} must be greater than zero. Charts are calculated using ${basis}.`)};
+}
+
+/** Replace the working values a stated port tuning, passive-radiator count or added mass, or intra-port length, that no design can
+ *  use, and say so as an approximate-charts issue; the stated value itself stays on the box. */
+function workingBoxInputs(checks: Engine['issues'], source: ProjectSweepSource, boxType: SimulatableBoxType, sweep: SweepJobParams): readonly SweepIssue[] {
+    const box = source.box;
+    const issues: SweepIssue[] = [];
+    const apply = (found: ReturnType<typeof workingTuning>, key: 'Fb' | 'Ff' | 'Fr', leff: boolean): void => {
+        if (found === null) return;
+        sweep[key] = found.tuning_hz;
+        if (leff) sweep.Leff = found.Leff_m;
+        issues.push(found.issue);
+    };
+    switch (boxType) {
+        case 'vented':
+            apply(workingTuning(checks, 'Fb', NumberField.BOX_FB_HZ.label, box.vented.tuning_goal_hz, box.vented.vent,
+                box.vented.volume_m3.value, startingChambersOf('bandpass4').frontTuning_hz), 'Fb', true);
+            break;
+        case 'bandpass4': {
+            const front = box.bandpass4.chambers.front;
+            apply(workingTuning(checks, 'Ff', NumberField.BOX_FFC_HZ.label, front.tuning_goal_hz, box.bandpass4.vents.front,
+                front.volume_m3.value, startingChambersOf('bandpass4').frontTuning_hz), 'Ff', true);
+            break;
+        }
+        case 'bandpass6':
+        case 'abc': {
+            const two = boxType === 'abc' ? box.abc : box.bandpass6;
+            const starting = startingChambersOf(boxType);
+            apply(workingTuning(checks, 'Fr', NumberField.BOX_FRC_HZ.label, two.chambers.rear.tuning_goal_hz, two.vents.rear,
+                two.chambers.rear.volume_m3.value, starting.rearTuning_hz ?? starting.frontTuning_hz), 'Fr', false);
+            apply(workingTuning(checks, 'Ff', NumberField.BOX_FFC_HZ.label, two.chambers.front.tuning_goal_hz, two.vents.front,
+                two.chambers.front.volume_m3.value, starting.frontTuning_hz), 'Ff', false);
+            if (boxType === 'abc') {
+                const intra = box.abc.vents.intra;
+                const length = intra.length_m.value;
+                const end = intra.endCorrectionLength_m();
+                if (intra.length_m.entered && length !== null && !(Number.isFinite(length) && length > 0) && end !== null) {
+                    sweep.LeffIntra = STARTING_ABC_INTRA_VENT_LENGTH_M + end;
+                    issues.push(checks.approximateCharts('LeffIntra', ['LeffIntra'],
+                        `${NumberField.VENT_L_CM.label} (connecting port) must be greater than zero. Charts are calculated using ${STARTING_ABC_INTRA_VENT_LENGTH_M * 100} cm.`));
+                }
+            }
+            break;
+        }
+        case 'box-passive-radiator': {
+            const pr = box.passiveRadiator;
+            const count = pr.count.value;
+            if (!(count >= 1)) {
+                sweep.prNum = pr.workingCount();
+                issues.push(checks.approximateCharts('prNum', ['prNum'], `${NumberField.PR_NUM.label} must be at least 1. Charts are calculated using 1.`));
+            }
+            const mass = pr.addedMass_kg.value;
+            if (pr.addedMass_kg.entered && mass !== null && !(mass >= 0)) {
+                sweep.prMadd = 0;
+                issues.push(checks.approximateCharts('prMadd', ['prMadd'], `${NumberField.PR_MADD_G.label} must not be negative. Charts are calculated using 0 g.`));
+            }
+            break;
+        }
+        case 'sealed': break;
+    }
+    return issues;
 }
 
 const SWEEP_LOSSES = Object.freeze({
@@ -404,8 +516,9 @@ export function sweepPlanOf(source: ProjectSweepSource, P: FrequencyGrid): Sweep
     const sweep = sweepParamsOf(source, P, source.driveVoltage_V, box, Vb);
     const maxCurves = sweepParamsOf(source, P, 2.83, box, Vb);
     const checks = source.engine.issues;
-    const issues = [...workingLosses(checks, sweep)];
+    const issues = [...workingLosses(checks, sweep), ...statedTuningIssues(source, box), ...workingBoxInputs(checks, source, box, sweep)];
     workingLosses(checks, maxCurves);
+    workingBoxInputs(checks, source, box, maxCurves);
     // The air, counts, series resistance, grid, losses and tunings: the engine's own rules.
     const radiatorWarning = box === 'box-passive-radiator' ? source.box.passiveRadiator.chartMechanics().warning : null;
     if (radiatorWarning !== null) issues.push(checks.approximateCharts('prMmd_kg', ['prMmd_kg'], radiatorWarning));

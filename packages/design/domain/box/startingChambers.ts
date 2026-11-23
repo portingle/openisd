@@ -39,3 +39,6 @@ export function takesChamberTunings(type: BoxType): boolean {
       return false;
   }
 }
+
+/** The starting length of an ABC box's connecting port, m (50 mm). */
+export const STARTING_ABC_INTRA_VENT_LENGTH_M = 0.05;

@@ -12,6 +12,10 @@ export interface PassiveRadiatorBox {
     readonly volume_m3: Readable<number | null> & Entered & Precise & Writable<number> & Clearable;
     readonly tuning_goal_hz: TuningField;     // WinISD: Fp
     readonly count: SimpleField<number> & Clearable;   // no solve relation, dimensionless; a clear is 1
+    /** The warning for a saved count below 1, which stays as saved. */
+    readonly countDq: readonly string[];
+    /** The count the charts use: the saved count, or 1 when it is below 1. */
+    workingCount(): number;
     readonly addedMass_kg: Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
     readonly losses: SealedLosses;
 

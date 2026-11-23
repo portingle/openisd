@@ -1,8 +1,6 @@
 /**
- * A value the load still repairs (here a passive-radiator count of 0) in a stored project is repaired when the
- * project is opened from browser storage, and the repair is reported for the toast, one line per
- * repair. File > Open reports its own
- * repairs to its caller (`openProjectText`), never twice; a listing opens nothing and reports nothing.
+ * A stored project opens as its text states it (here a passive-radiator count of 0): nothing is repaired on load,
+ * so no repair is reported by any way of opening it.
  */
 import {describe, expect, it, vi} from 'vitest';
 import {createProjectRepo, type LoadRepairReport} from '../src/repos/projectRepo.js';
@@ -23,9 +21,7 @@ const noFiles: FileStorage = {
   forget: () => { throw new Error('no test here writes a file'); },
 };
 
-const LINE = 'Num. of PRs 0 in the file: set to 1, the fewest';
-
-/** A saved project named `name` whose stored text holds a passive-radiator count of 0 (a leakage, tuning, drive level, driver count, series resistance and air are never repaired: QO972). */
+/** A saved project named `name` whose stored text holds a passive-radiator count of 0. */
 function zeroPrCountText(name: string): {id: string; text: string} {
   const p = ProjectBuilder.empty(engine);
   p.name.set(name);
@@ -48,46 +44,46 @@ function repoOver(seed: Record<string, string>, onLoadRepaired: (report: LoadRep
   return createProjectRepo(engine, noFiles, storage, 'http://localhost', backupOn(storage), exportedFilesOn(), () => undefined, () => undefined, onLoadRepaired);
 }
 
-describe('a value repaired on opening a stored project is reported for the toast (QO953.c31)', () => {
-  it('restoring the open projects at start-up reports the repair, and the project shows 1 radiator', () => {
+describe('a stored project opens as its text states it and reports no repair (QO972)', () => {
+  it('restoring the open projects at start-up keeps a passive-radiator count of 0 and reports nothing', () => {
     const {id, text} = zeroPrCountText('old build');
     const told = vi.fn<(report: LoadRepairReport) => void>();
     const session = repoOver({[OPENISD_OPEN_SESSIONS_KEY]: JSON.stringify({entries: [{id, text, modified: '', traceHidden: false}], focusedId: id})}, told)
       .loadOpenProjects();
     if (session === null || Array.isArray(session)) throw new Error('expected a session');
-    expect(session.projects[0]?.box.passiveRadiator.count.value).toBe(1);
-    expect(told).toHaveBeenCalledWith({projectName: 'old build', lines: [LINE]});
-    expect(told).toHaveBeenCalledTimes(1);
+    expect(session.projects[0]?.box.passiveRadiator.count.value).toBe(0);
+    expect(session.projects[0]?.box.passiveRadiator.countDq).toEqual([expect.stringContaining('Num. of PRs')]);
+    expect(told).not.toHaveBeenCalled();
   });
 
-  it('opening a saved project from the projects list reports the repair; listing them reports nothing', () => {
+  it('opening a saved project from the projects list keeps the count of 0 and reports nothing', () => {
     const {id, text} = zeroPrCountText('saved one');
     const told = vi.fn<(report: LoadRepairReport) => void>();
     const repo = repoOver({[OPENISD_PROJECTS_KEY]: JSON.stringify({version: 1, entries: [{id, text, modified: '2026-01-01T00:00:00Z'}]})}, told);
     expect(repo.listStoredProjects()).toHaveLength(1);
-    expect(told).not.toHaveBeenCalled();
     const project = repo.loadStoredProject(id);
     if (project === null || Array.isArray(project)) throw new Error('expected a project');
-    expect(project.box.passiveRadiator.count.value).toBe(1);
-    expect(told).toHaveBeenCalledWith({projectName: 'saved one', lines: [LINE]});
+    expect(project.box.passiveRadiator.count.value).toBe(0);
+    expect(told).not.toHaveBeenCalled();
   });
 
-  it('File > Open hands the repair to its caller and does not report it a second time', () => {
+  it('File > Open keeps the count of 0 and hands its caller no repair', () => {
     const {text} = zeroPrCountText('a file');
     const told = vi.fn<(report: LoadRepairReport) => void>();
     const opened = repoOver({}, told).openProjectText(text);
     if (Array.isArray(opened)) throw new Error(opened.join('; '));
-    expect(opened.loadRepairs.map(r => r.text)).toEqual([LINE]);
+    expect(opened.project.box.passiveRadiator.count.value).toBe(0);
+    expect(opened.loadRepairs).toEqual([]);
     expect(told).not.toHaveBeenCalled();
   });
 
-  it('a backup or archive entry read as project text (restore) reports the repair', () => {
+  it('a backup or archive entry read as project text (restore) keeps the count of 0 and reports nothing', () => {
     const {text} = zeroPrCountText('restored');
     const told = vi.fn<(report: LoadRepairReport) => void>();
     const project = repoOver({}, told).readProjectText(text);
     if (Array.isArray(project)) throw new Error(project.join('; '));
-    expect(project.box.passiveRadiator.count.value).toBe(1);
-    expect(told).toHaveBeenCalledWith({projectName: 'restored', lines: [LINE]});
+    expect(project.box.passiveRadiator.count.value).toBe(0);
+    expect(told).not.toHaveBeenCalled();
   });
 
   it('a stored project whose series resistance is -2 Ω opens with -2 Ω and reports nothing (QO972)', () => {

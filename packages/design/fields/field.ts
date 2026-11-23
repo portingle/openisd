@@ -458,7 +458,6 @@ export class NumberField extends Field {
     display: {kind: 'switchable', group: 'freq', base: 'Hz'},
     limits: {min: 0, max: 1000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: 'the tuning worked out from the port'},
     precision: 2,
     description: "Box Tuning Frequency (Fb)\nHelmholtz resonance of the vented enclosure, set by port dimensions and box volume. Enter the tuning frequency to calculate port length, or enter port length to calculate the tuning frequency. An unbuildable port is flagged.",
   });
@@ -469,7 +468,6 @@ export class NumberField extends Field {
     display: {kind: 'switchable', group: 'freq', base: 'Hz'},
     limits: {min: 0, max: 1000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: 'the tuning worked out from the port'},
     precision: 2,
     description: "Front Chamber Tuning Frequency (Ffc)\nHelmholtz resonance of the front, vented chamber of a 4th-order bandpass, 6th-order bandpass or ABC box, set by port dimensions and chamber volume. Enter the tuning frequency to calculate port length, or enter port length to calculate the tuning frequency. An unbuildable port is flagged.",
   });
@@ -515,7 +513,6 @@ export class NumberField extends Field {
     display: {kind: 'switchable', group: 'length', base: 'cm'},
     limits: {min: 0.001, max: 10},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: 'the length worked out from the tuning'},
     precision: 2,
     description: "Vent Length\nPhysical length of the port tube.\nLonger ports lower the tuning frequency for a fixed box volume.",
   });
@@ -572,7 +569,6 @@ export class NumberField extends Field {
     label: "Num. of PRs",
     display: {kind: 'fixed', symbol: ''},
     limits: {min: 1, max: 4},
-    loadRepair: {breaks: 'min', to: 1, described: '1, the fewest'},
     spin: INTEGER_SPIN,
     precision: 0,
     description: "Passive Radiator Count\nNumber of identical passive radiators in the enclosure.",
@@ -582,7 +578,6 @@ export class NumberField extends Field {
     label: "Added mass to cone",
     display: {kind: 'switchable', group: 'mass', base: 'g'},
     limits: {min: 0, max: 5000},
-    loadRepair: {breaks: 'min', to: 0, described: '0 g, no added mass'},
     precision: 3,
     description: "PR Added Mass\nBallast mass attached to the passive radiator cone to lower its tuning frequency.",
   });
@@ -1344,7 +1339,6 @@ export class NumberField extends Field {
     display: {kind: 'switchable', group: 'freq', base: 'Hz'},
     limits: {min: 0, max: 20000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: 'empty', described: 'the tuning worked out from the port'},
     precision: 2,
     description: "Rear Chamber Tuning Frequency (Frc)\nHelmholtz tuning frequency of the vented rear chamber in a 6th-order bandpass or ABC box. Enter the tuning frequency to calculate port length, or enter port length to calculate the tuning frequency. An unbuildable port is flagged.",
   });

@@ -23,7 +23,7 @@ import type { Vent } from '../vent.js';
 import type { PassiveRadiatorBox } from './passiveRadiatorBox.js';
 import type { SealedBox } from './sealedBox.js';
 import { SealedLossesWindow } from './sealedLossesWindow.js';
-import { STARTING_SHARED_VOLUME_M3, startingChambersOf } from './startingChambers.js';
+import { STARTING_ABC_INTRA_VENT_LENGTH_M, STARTING_SHARED_VOLUME_M3, startingChambersOf } from './startingChambers.js';
 import { VentWindow, type VentStart } from './ventWindow.js';
 import type { VentedBox } from './ventedBox.js';
 import { VentedChamberWindow } from './ventedChamberWindow.js';
@@ -45,7 +45,7 @@ const STARTING = Object.freeze({
      *  30 L rear chamber at 35 Hz, a 20 L front chamber at 25 Hz, round vents 102 mm across, and an
      *  ABC connecting vent 50 mm long. */
     twoPortVentDiameter_m: 0.102,
-    abcIntraVentLength_m: 0.05,
+    abcIntraVentLength_m: STARTING_ABC_INTRA_VENT_LENGTH_M,
     /** A chart-ready radiator (BUG_20260912: Fh must resolve instead of "--"), named so it reads
      *  as a stand-in, never a spec sheet: Sd the driver's own when known, Xmax
      *  twice the driver's — a radiator has no motor, so it needs more excursion than the driver. */
@@ -427,7 +427,8 @@ export class OpenISDBox implements Box {
             vents: {
                 rear: new VentWindow(abcRearVent, engine.vent, air, abcRearPair.length, ventStart),
                 front: new VentWindow(abcFrontVent, engine.vent, air, abcFrontPair.length, ventStart),
-                intra: new VentWindow(focus(abc, 'intraVent'), engine.vent, air, undefined, ventStart),
+                intra: new VentWindow(focus(abc, 'intraVent'), engine.vent, air,
+                    entryField(focus(focus(abc, 'intraVent'), 'length_m'), 'length_m', undefined, engine.issues.positiveValueIssue), ventStart),
             },
             Qiclfr: defaultedField(focus(abc, 'Qiclfr'), WINISD_BOX_LOSSES.Qicl),
         };
@@ -441,7 +442,7 @@ export class OpenISDBox implements Box {
         const prFieldDq = (target: string): readonly DqIssue[] => groupDq(issues().pr.filter(
             issue => !('cause' in issue) || issue.target === target,
         ));
-        const prAddedMassEntry = entryField(focus(pr, 'addedMass_kg'), 'addedMass_kg', () => prFieldDq('addedMass_kg'));
+        const prAddedMassEntry = entryField(focus(pr, 'addedMass_kg'), 'addedMass_kg', () => prFieldDq('addedMass_kg'), engine.issues.nonNegativeValueIssue);
         const prTuningEntry = entryField(focus(pr, 'tuning_goal_hz'), 'tuning_goal_hz', () => prFieldDq('tuning_goal_hz'));
         // A cleared member keeps the other as entered; with nothing to calculate from, both are N.
         const prTuningField: ReturnType<typeof pairedField> = pairedField(
@@ -461,6 +462,15 @@ export class OpenISDBox implements Box {
             tuning_goal_hz: prTuningField,
             // A cleared count goes back to one radiator.
             count: defaultedField(focus(pr, 'count'), 1),
+            get countDq(): readonly string[] {
+                const count = focus(pr, 'count').value;
+                return count >= 1 ? [] : [engine.issues.outOfRange(NumberField.PR_NUM.label, count, 1, 'below').text];
+            },
+            // The count the charts use: a saved count below 1 is shown as saved and charted as one radiator.
+            workingCount: (): number => {
+                const count = focus(pr, 'count').value;
+                return count >= 1 ? count : 1;
+            },
             addedMass_kg: prAddedMassField,
             losses: new SealedLossesWindow(focus(pr, 'losses')),
             // The embedded radiator adopts the chosen one — a radiator reading another radiator's
@@ -516,7 +526,7 @@ export class OpenISDBox implements Box {
                 const Vb = prVolume.value;
                 const mech = this.passiveRadiator.chartMechanics();
                 const prSd = mech.Sd_m2;
-                const prNum = this.passiveRadiator.count.value || 1;
+                const prNum = this.passiveRadiator.workingCount();
                 const nowAir = air();
                 if (!(Vb != null && Vb > 0 && mech.Mms_kg !== null && mech.Mms_kg > 0 && prSd !== null && prSd > 0
                     && mech.Cms_m_per_N !== null && mech.Cms_m_per_N > 0 && prNum > 0)) {
@@ -537,7 +547,7 @@ export class OpenISDBox implements Box {
                 const prMmd = mech.Mms_kg;
                 const prSd = mech.Sd_m2;
                 const prCms = mech.Cms_m_per_N;
-                const prNum = this.passiveRadiator.count.value || 1;
+                const prNum = this.passiveRadiator.workingCount();
                 const nowAir = air();
                 const positive = this.#engine.pr.isPositiveGeometry;
                 if (!(positive(Vb) && positive(prMmd) && positive(prSd) && positive(prCms) && fp_hz > 0)) {

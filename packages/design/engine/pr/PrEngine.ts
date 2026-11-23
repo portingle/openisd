@@ -210,13 +210,16 @@ export class PrEngineImpl implements PrEngine {
   }
 
   solve(params: PrSolverParams & {readonly approximateMechanics?: boolean}, air: Air): PrIssue[] {
-    const addedMass = params.addedMass_kg.value;
+    // A stated added mass below 0 is kept as stated; the calculation uses 0 g.
+    const usable = (mass: number | null): number | null => mass !== null && !(mass >= 0) ? 0 : mass;
+    const addedMass = usable(params.addedMass_kg.value);
     const tuning = params.tuning_goal_hz.value;
     const Vb = params.Vb_m3.value;
     const prMmd = params.prMmd_kg.value;
     const prSd = params.prSd_m2.value;
     const prCms = params.prCms_m_per_N.value;
-    const prNum = params.prNum.value || 1;
+    const statedNum = params.prNum.value;
+    const prNum = statedNum !== null && statedNum >= 1 ? statedNum : 1;
 
     const issues: PrIssue[] = [];
     const write = (target: keyof PrSolverParams, label: string, field: SolverField, value: number): void => {
@@ -274,7 +277,7 @@ export class PrEngineImpl implements PrEngine {
       }
     }
 
-    const resolvedMass = params.addedMass_kg.value;
+    const resolvedMass = usable(params.addedMass_kg.value);
     if (resolvedMass != null && isPositiveGeometry(prMmd) && isPositiveGeometry(prCms)) {
       write('resonanceWithAddedMass_hz', 'Passive radiator resonance with added mass',
         params.resonanceWithAddedMass_hz, this.fsWithMass(prMmd, resolvedMass, prCms));

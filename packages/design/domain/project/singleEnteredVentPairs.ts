@@ -1,7 +1,8 @@
 /**
  * A vent's tuning and length state one fact, so a project states at most one of them as entered.
  * A file that marks both entered (hand-edited or foreign-written) keeps the tuning entered and
- * loses the length entry, so the solver calculates the length from it (QO178). Applies to the
+ * loses the length entry, so the solver calculates the length from it (QO178). An entered tuning that is
+ * not a finite number above zero decides nothing, so both entries stay as the file states them (QO972). Applies to the
  * vented box, the bandpass4 front vent, and both vents of bandpass6 and ABC; the ABC
  * connecting vent has no tuning.
  */
@@ -12,10 +13,12 @@ interface TuningSide {readonly tuning_goal_hz?: SpecEntryJson | undefined}
 interface LengthSide {readonly length_m?: SpecEntryJson | undefined}
 
 const isEntered = (entry: SpecEntryJson | undefined): boolean => entry !== undefined && entry.state === 'E';
+const isUsableTuning = (entry: SpecEntryJson | undefined): boolean =>
+    entry !== undefined && entry.state === 'E' && Number.isFinite(entry.value) && entry.value > 0;
 
-/** `vent` without its length entry when `chamber` and `vent` both state an entered value. */
+/** `vent` without its length entry when `chamber` states a usable entered tuning and `vent` an entered length. */
 function pairResolved<V extends LengthSide>(chamber: TuningSide, vent: V): {vent: V; dropped: boolean} {
-    if (!isEntered(chamber.tuning_goal_hz) || !isEntered(vent.length_m)) return {vent, dropped: false};
+    if (!isUsableTuning(chamber.tuning_goal_hz) || !isEntered(vent.length_m)) return {vent, dropped: false};
     return {vent: {...vent, length_m: undefined}, dropped: true};
 }
 
