@@ -42,6 +42,7 @@ function outcomeOfIssue(issue: DriverIssue): IssueOutcome {
     case 'missing-dependencies':
     case 'approximate-charts':
     case 'result-refused':
+    case 'outside-normal-band':
       return {kind: issue.kind, fields: issue.fields, text: issue.text};
     case 'inconsistent-inputs':
       return {

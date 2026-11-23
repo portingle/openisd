@@ -39,7 +39,7 @@ describe('sweepIssueMessage — SweepIssue projected to a DriverError for the ex
     assert.match(error.message, /Qts/);
     assert.match(error.message, /Qes/);
     assert.match(error.message, /Qms/);
-    assert.match(error.message, /disagree by 24\.0%/);
+    assert.match(error.message, /Qts differs by 24\.0%\. Using Qes and Qms gives/);
   });
 });
 

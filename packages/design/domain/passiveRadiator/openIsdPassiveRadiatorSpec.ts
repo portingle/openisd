@@ -3,6 +3,7 @@ import type { Air, PrEngine, PrSpecIssue, PrSpecPrecision, PrSpecValues } from '
 import type { RadiatorDeviceJson } from '../openisdSchema.js';
 import { prSpec } from '../box/prSpec.js';
 import { radiatorSection } from '../box/radiatorSection.js';
+import { withDisagreementNote } from '../driver/disagreementNote.js';
 
 /**
  * ONE PASSIVE-RADIATOR SPEC SECTION, PUBLISHED — the radiator's counterpart to `DriverSpec`.
@@ -97,20 +98,13 @@ export class OpenIsdPassiveRadiatorSpec {
         write(this.Fs_hz, solved.Fs_hz); write(this.Qms, solved.Qms); write(this.Vas_m3, solved.Vas_m3);
         write(this.Sd_m2, solved.Sd_m2); write(this.Mms_kg, solved.Mms_kg);
         write(this.Cms_m_per_N, solved.Cms_m_per_N); write(this.Rms_kg_per_s, solved.Rms_kg_per_s);
-        return pr.checkSpec(stated, this.#precisions(), air);
+        return pr.checkSpec(stated, this.#precisions(), air).map(withDisagreementNote);
     }
 
-    /** A record just adopted into a project: its Xlim becomes its Xmax when it has none; each of Cms, Mms and Rms is dropped (reads N, and
-     *  `resolve` fills it) when the record states its other half - Vas, Fs, Qms - so the four
-     *  WinISD figures drive it; one whose other half is absent stays entered. Nothing is ever
-     *  copied and then flipped to calculated (BUG_20261031_phone-pr-p173-cms-display). */
+    /** A record just adopted into a project: its Xlim becomes its Xmax when it has none. Every figure the datasheet states stays
+     *  entered, Cms, Mms and Rms included, and the charts use them as the boxes show them (an entered value is never
+     *  overwritten with a calculated value). Where they disagree with each other, every box in the disagreeing set is marked. */
     adoptDatasheetFigures(): void {
-        const drop = (field: Entered & Clearable, otherHalf: Entered): void => {
-            if (field.entered && otherHalf.entered) field.clear();
-        };
-        drop(this.Cms_m_per_N, this.Vas_m3);
-        drop(this.Mms_kg, this.Fs_hz);
-        drop(this.Rms_kg_per_s, this.Qms);
         const picked = this.pickedXmax_m;
         if (!this.Xmax_m.entered && picked !== null) this.Xmax_m.set(picked, this.Xlim_m.precision ?? undefined);
     }

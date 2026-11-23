@@ -2,7 +2,7 @@ import {mkdirSync, readFileSync, renameSync, writeFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {z} from 'zod';
-import {type AppContext, createEngine, OpenISDDriver, ProjectBuilder, realAppContext} from '@openisd/design';
+import {type AppServices, createEngine, OpenISDDriver, ProjectBuilder, realAppContext} from '@openisd/design';
 import {DEFAULT_SOURCE_RESISTANCE_OHM} from '@openisd/design/fields';
 import {COMPLETE_DRIVER_PROJECT_OWPR, FIXTURE_DATE, OLD_BASKET_PROJECT_OWPR, SAMPLE_PROJECT_OWPR} from './sampleProject.js';
 
@@ -31,7 +31,7 @@ const __dirname = dirname(__filename);
 /** The ids and the clock a fixture is built with: the same every time it is generated (T834). A random id made a stored backup of the
  *  project pack to a different size from run to run, and a picture of "4.7 KB" and "4.8 KB" cannot be the same. Each fixture has its
  *  own `series`, so the sample and the complete project never share an id. */
-function fixtureContext(series: number): AppContext {
+function fixtureContext(series: number): AppServices {
   let n = 0;
   return {...realAppContext, now: () => FIXTURE_DATE, newId: () => `00000000-0000-4000-${String(series).padStart(4, '0')}-${String(++n).padStart(12, '0')}`};
 }

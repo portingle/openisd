@@ -2,6 +2,7 @@ import {decimal, pct, plainNames, relativeGap} from './issueText.js';
 import type {MaxCurvesResult, SweepResult, Wiring} from './types.js';
 import type {VentedPlausibilityIssue} from './plausibility.js';
 import type {NonFiniteResultIssue} from '../calculatedResult.js';
+import {disagreementText} from '../fields/disagreementText.js';
 
 /** One route to a derivable quantity: the formula, everything it needs, and whatever of that
  *  is still absent. `missing` is empty exactly when the route is usable. */
@@ -35,6 +36,8 @@ export type CalculationIssue<Q extends string> =
       readonly expected: number;
       readonly actual: number;
       readonly relative: number;
+      /** The real gap between the stated and the implied value, as printed: "7.7%". */
+      readonly gap: string;
       readonly text: string;
     }
   | {
@@ -192,11 +195,8 @@ export function inconsistentInputs<Q extends string>(
   target: Q, fields: readonly Q[], formula: string, expected: number, actual: number,
   relative: number,
 ): CalculationIssue<Q> {
-  return {
-    kind: 'inconsistent-inputs', target, fields, formula, expected, actual, relative,
-    text: plainNames(`${fields.join(', ')} disagree by ${pct(relativeGap(expected, actual))}: ${formula}. Every field in the `
-      + 'group is marked - correct one of them, or clear one to let it be calculated.'),
-  };
+  const details = {target, fields, formula, expected, actual, relative, gap: pct(relativeGap(expected, actual))};
+  return {kind: 'inconsistent-inputs', ...details, text: disagreementText(details)};
 }
 
 /** The charts are drawn, but from a fallback standing in for values the driver does not state. */

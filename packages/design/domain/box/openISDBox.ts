@@ -1,5 +1,5 @@
 import {type Engine} from '../../engine/index.js';
-import type { Air, BoxType, DqIssue, DriveLoad, VentedAlignment } from '../../engine/index.js';
+import type { Air, BoxType, DqIssue, DriveLoad, RadiatorMechanics, SealedParams, VentedAlignment } from '../../engine/index.js';
 import { CalculatedFieldImpl, DerivableFieldImpl, DualWriteFieldImpl, absentCell, enteredCell, calculatedCell, defaultedField, entryField, focus, nullableField, pairedField, settlingNullableField, simpleField } from '../cell.js';
 import type { Clearable, Entered, Precise, Readable, SimpleField, Writable } from '../cell.js';
 import type { SealedLosses } from '../losses.js';
@@ -123,6 +123,22 @@ function chamberLossGroups(
     ];
 }
 
+/** What the project builds its box with, besides the lens onto its `box` slot: each is resolved at CALL time where it is a
+ *  closure, because it lives on the project, not the box. */
+export interface OpenISDBoxParts {
+    readonly driver: OpenISDDriverEmbedded;
+    readonly engine: Engine;
+    /** The amplifier's source impedance `Rg`, which loads the driver's Qts the way WinISD's readout does, and the driver
+     *  count and loading that scale its Vas. */
+    readonly load: () => DriveLoad;
+    readonly issues: () => ProjectIssues;
+    readonly ventTuningExtra: () => DqIssue | null;
+    /** The project's own resolved air. */
+    readonly air: () => Air;
+    /** Whether "Chart from Fs, Vas, Qms (WinISD's way)" is ticked on the project (QO539). */
+    readonly chartFromFsVasQms: () => boolean;
+}
+
 export class OpenISDBox implements Box {
     readonly boxType: SimpleField<BoxType>;
 
@@ -144,16 +160,12 @@ export class OpenISDBox implements Box {
     readonly #load: () => DriveLoad;
     /** The project's own resolved air, injected: the starting radiator's Vas is worked out in it. */
     readonly #air: () => Air;
+    /** Whether "Chart from Fs, Vas, Qms (WinISD's way)" is ticked on the project (QO539). */
+    readonly #chartFromFsVasQms: () => boolean;
 
-    private constructor(
-        lens: SimpleField<OpenISDBoxJson>,
-        driver: OpenISDDriverEmbedded,
-        engine: Engine,
-        load: () => DriveLoad,
-        issues: () => ProjectIssues,
-        ventTuningExtra: () => DqIssue | null,
-        air: () => Air,
-    ) {
+    private constructor(lens: SimpleField<OpenISDBoxJson>, parts: OpenISDBoxParts) {
+        const {driver, engine, load, issues, ventTuningExtra, air, chartFromFsVasQms} = parts;
+        this.#chartFromFsVasQms = chartFromFsVasQms;
         this.#driver = driver;
         this.#engine = engine;
         this.#load = load;
@@ -446,6 +458,13 @@ export class OpenISDBox implements Box {
             get radiator() {
                 return getRadiator();
             },
+            chartMechanics: (): RadiatorMechanics => {
+                const spec = getRadiator().spec;
+                const stated = {Mms_kg: spec.Mms_kg.value, Cms_m_per_N: spec.Cms_m_per_N.value, Rms_kg_per_s: spec.Rms_kg_per_s.value};
+                if (!this.#chartFromFsVasQms()) return stated;
+                return this.#engine.driver.winisdRadiatorMechanics(
+                    {...stated, Fs_hz: spec.Fs_hz.value, Vas_m3: spec.Vas_m3.value, Sd_m2: spec.Sd_m2.value, Qms: spec.Qms.value}, air());
+            },
             // OUTPUTS of the solved pair (S2-7d2): plain entry-backed slots the `solvePr` cascade
             // in `OpenISDProject#resolve()` writes as 'C' entries — never entered by a user, never
             // recomputed at read time here.
@@ -454,7 +473,7 @@ export class OpenISDBox implements Box {
             naturalTuning_hz: new CalculatedFieldImpl<number | null>(() => {
                 const Vb = prVolume.value;
                 const r = getRadiator();
-                const mech = {Mms_kg: r.spec.Mms_kg.value, Cms_m_per_N: r.spec.Cms_m_per_N.value};
+                const mech = this.passiveRadiator.chartMechanics();
                 const prSd = r.spec.Sd_m2.value;
                 const prNum = this.passiveRadiator.count.value || 1;
                 const nowAir = air();
@@ -474,9 +493,10 @@ export class OpenISDBox implements Box {
             addedMassForTuning_kg: (fp_hz: number) => new CalculatedFieldImpl<number | null>(() => {
                 const Vb = prVolume.value;
                 const r = getRadiator();
-                const prMmd = r.spec.Mms_kg.value;
+                const mech = this.passiveRadiator.chartMechanics();
+                const prMmd = mech.Mms_kg;
                 const prSd = r.spec.Sd_m2.value;
-                const prCms = r.spec.Cms_m_per_N.value;
+                const prCms = mech.Cms_m_per_N;
                 const prNum = this.passiveRadiator.count.value || 1;
                 const nowAir = air();
                 const positive = this.#engine.pr.isPositiveGeometry;
@@ -631,7 +651,8 @@ export class OpenISDBox implements Box {
         if (spec.Qms.value === null) spec.Qms.set(STARTING.radiatorQms);
         if (spec.Fs_hz.value === null) spec.Fs_hz.set(this.#engine.pr.fsWithMass(STARTING.radiatorMms_kg, 0, STARTING.radiatorCms_m_per_N));
         const air = this.#air();
-        if (spec.Vas_m3.value === null && sd !== null) spec.Vas_m3.set(this.#engine.pr.vas(STARTING.radiatorCms_m_per_N, sd, air));
+        const startingVas = sd === null ? null : this.#startingVas(sd, air);
+        if (spec.Vas_m3.value === null && startingVas !== null) spec.Vas_m3.set(startingVas);
     }
 
     /** Give the active box type its starting values where nothing is entered yet: sealed gets the
@@ -650,7 +671,8 @@ export class OpenISDBox implements Box {
             case 'sealed': {
                 if (isStated(this.sealed.volume_m3.value)) return;
                 const losses = this.sealed.losses;
-                const Vb = this.#driver.sealedVolumeForQtc(STARTING.sealedQtc, this.#load(), {Ql: losses.Ql.value, Qa: losses.Qa.value});
+                const feed = this.#sealedFeed({Ql: losses.Ql.value, Qa: losses.Qa.value});
+                const Vb = feed === null ? null : this.#engine.sealed.volumeForLossyQtc(feed, STARTING.sealedQtc);
                 if (Vb !== null && Vb > 0) this.sealed.volume_m3.set(Vb);
                 return;
             }
@@ -683,9 +705,8 @@ export class OpenISDBox implements Box {
                     spec.Fs_hz.set(this.#engine.pr.fsWithMass(STARTING.radiatorMms_kg, 0, STARTING.radiatorCms_m_per_N));
                 }
                 const startAir = this.#air();
-                if (spec.Vas_m3.value === null && startSd !== null) {
-                    spec.Vas_m3.set(this.#engine.pr.vas(STARTING.radiatorCms_m_per_N, startSd, startAir));
-                }
+                const startVas = startSd === null ? null : this.#startingVas(startSd, startAir);
+                if (spec.Vas_m3.value === null && startVas !== null) spec.Vas_m3.set(startVas);
                 return;
             }
             case 'bandpass4': {
@@ -746,24 +767,23 @@ export class OpenISDBox implements Box {
         }
     }
 
-/** Takes the lens onto the project's `box` slot. The project owns that slot and builds the
+    /** Takes the lens onto the project's `box` slot. The project owns that slot and builds the
      *  lens, so the box needs no reference back to the project. */
-    static wrap(
-        slot: SimpleField<OpenISDBoxJson>,
-        driver: OpenISDDriverEmbedded,
-        engine: Engine,
-        load: () => DriveLoad,
-        issues: () => ProjectIssues,
-        ventTuningExtra: () => DqIssue | null,
-        air: () => Air,
-    ): OpenISDBox {
-        return new OpenISDBox(slot, driver, engine, load, issues, ventTuningExtra, air);
+    static wrap(slot: SimpleField<OpenISDBoxJson>, parts: OpenISDBoxParts): OpenISDBox {
+        return new OpenISDBox(slot, parts);
     }
 
-    /** The Vas the sealed readout sees: all the project's drivers in the one box (the engine's rule). */
-    #arrayVas(Vas_m3: number): number {
-        const load = this.#load();
-        return this.#engine.sealed.arrayVas(Vas_m3, load.nDrivers, load.loading);
+    /** The Vas of the starting radiator's compliance on `sd`, in `air`: the engine's solve works it out (the Vas-from-Cms route). */
+    #startingVas(sd: number, air: Air): number | null {
+        return this.#engine.pr.solveSpec({
+            Fs_hz: null, Qms: null, Vas_m3: null, Sd_m2: sd, Mms_kg: null, Cms_m_per_N: STARTING.radiatorCms_m_per_N, Rms_kg_per_s: null,
+        }, air).Vas_m3;
+    }
+
+    /** What the sealed readout runs on: the driver as the CHART runs it (the same Mms, Cms, Rms and BL, "Chart from Fs, Vas, Qms
+     *  (WinISD's way)" included), with all the project's drivers in the one box. Null while the driver states too little. */
+    #sealedFeed(losses: {Ql: number; Qa: number}): Omit<SealedParams, 'Vb'> | null {
+        return this.#driver.chartSealedFeed(this.#load(), losses, this.#air(), this.#chartFromFsVasQms());
     }
 
     /** The sealed volume an entered Qtc or an entered Fsc gives; null with neither entered or when no box reaches it. */
@@ -773,17 +793,11 @@ export class OpenISDBox implements Box {
         const entered = qtc.entered && qtc.value !== null ? {kind: 'Qtc', value: qtc.value} as const
             : fsc.entered && fsc.value !== null ? {kind: 'Fsc', value: fsc.value} as const : null;
         if (entered === null) return null;
-        if (entered.kind === 'Qtc') {
-            return this.#driver.sealedVolumeForQtc(entered.value, this.#load(), {Ql: losses.Ql.value, Qa: losses.Qa.value});
-        }
-        const ts = this.#driver.specs;
-        const Fs = ts.Fs_hz.value;
-        const Vas = ts.Vas_m3.value;
-        const Qts = this.#driver.heatedSourceLoadedQts(this.#load());
-        if (Fs === null || Vas === null || Qts === null) return null;
-        // The same lossy model the Box tab reads Fsc from, so the volume gives back the value typed.
-        const feed = {Fs, Vas: this.#arrayVas(Vas), Qts, Ql: losses.Ql.value, Qa: losses.Qa.value};
-        return this.#engine.sealed.volumeForResonance(feed, entered.value);
+        const feed = this.#sealedFeed({Ql: losses.Ql.value, Qa: losses.Qa.value});
+        if (feed === null) return null;
+        // The same feed and lossy model the Box tab reads Fsc and Qtc from, so the volume gives back the value typed.
+        return entered.kind === 'Qtc' ? this.#engine.sealed.volumeForLossyQtc(feed, entered.value)
+            : this.#engine.sealed.volumeForResonance(feed, entered.value);
     }
 
     /**
@@ -807,20 +821,15 @@ export class OpenISDBox implements Box {
     #sealedResonance(volume_m3: number | null, losses: SealedLosses,
                      form: 'lossy' | 'lossless'): { Fsc: number; Qtc: number } | null {
         if (volume_m3 === null || !(volume_m3 > 0)) return null;
-        const ts = this.#driver.specs;
-        const Fs_hz = ts.Fs_hz.value;
-        const Vas = ts.Vas_m3.value;
-        const QtsLoaded = this.#driver.heatedSourceLoadedQts(this.#load());
-        if (Fs_hz === null || Vas === null || QtsLoaded === null) return null;
+        const feed = this.#sealedFeed({Ql: losses.Ql.value, Qa: losses.Qa.value});
+        if (feed === null) return null;
         // WinISD displays and saves the LOSSY figure by default
         // and it MOVES with the chamber's losses: measured, `Fr` shifts 5.8 Hz
         // for a `Ql` change at fixed volume (winisd_research FINDING-007). Ql and Qa at or above
         // the lossless limit give the lossless figure. The bandpass4 rear chamber asks for
         // 'lossless' outright: that is WinISD's own fixed behaviour for that chamber.
-        const feed = {
-            Fs: Fs_hz, Vas: this.#arrayVas(Vas), Qts: QtsLoaded, Vb: volume_m3, Ql: losses.Ql.value, Qa: losses.Qa.value,
-        };
-        return form === 'lossless' ? this.#engine.sealed.losslessResonance(feed) : this.#engine.sealed.resonance(feed);
+        const resonanceFeed = {...feed, Vb: volume_m3};
+        return form === 'lossless' ? this.#engine.sealed.losslessResonance(resonanceFeed) : this.#engine.sealed.resonance(resonanceFeed);
     }
 
 }

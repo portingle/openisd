@@ -13,6 +13,8 @@
  */
 
 import type {Air} from '../air.js';
+import {WHAT_IF_FIGURES, whatIfMoves} from './whatIfMoves.js';
+import type {WhatIfFigure, WhatIfFigures, WhatIfMoves} from './whatIfMoves.js';
 import {
     referenceEfficiency,
     splFromEfficiency
@@ -24,21 +26,33 @@ import type {
     SolverInput,
 } from '../solverTypes.js';
 import {approximateCharts, missingDependencies, resultRefused} from '../consistency.js';
-import type {CalculationIssue, CalculationPrerequisite, OutOfRangeIssue, WiringIssue} from '../consistency.js';
+import type {CalculationIssue, CalculationPrerequisite, NormalBandIssue, OutOfRangeIssue, WiringIssue} from '../consistency.js';
 import {geometryRefusal} from '../dvolRelation.js';
-import {basketRangeWarning, checkRange, isPhysicallyPlausible, rangeIssue} from '../physicalRange.js';
+import {basketRangeWarning, checkRange, isPhysicallyPlausible, rangeIssue, whatIfRangeWarning} from '../physicalRange.js';
 import type {DriverWorkingSet} from '../solvers/driverQuantities.js';
 import {coilAlfaVC_per_K, convertWiring, hotRe, perCoilResistanceFactor} from '../solvers/driverQuantities.js';
 import type {WiringConversion, WiredMotor} from '../solvers/driverQuantities.js';
 import type {EbpSuitability, SweepResult, Wiring} from '../types.js';
 import {
-  CMS_FROM_VAS_SD_ROUTE, ConsistencyCheck, DRIVER_RELATIONS, DRIVER_ROUTE_FORMULAS, DRIVER_ROUTES, EBP_AFTER_FIXED_POINT_ROUTE,
-  efficiencyBandwidthProduct, MMS_FROM_FS_CMS_ROUTE,
-  RMS_FROM_FS_MMS_QMS_ROUTE, RouteGroup, withQuantity,
+  BL_FROM_QES_CMS_ROUTE, CMS_FROM_VAS_SD_ROUTE, ConsistencyCheck, DRIVER_RELATIONS, DRIVER_ROUTE_FORMULAS, DRIVER_ROUTES, EBP_AFTER_FIXED_POINT_ROUTE,
+  efficiencyBandwidthProduct, FS_FROM_MASS_CMS_ROUTE, MMS_FROM_FS_CMS_ROUTE, QES_FROM_FS_MMS_RE_BL_ROUTE, QMS_FROM_FS_MMS_RMS_ROUTE,
+  QTS_FROM_QES_QMS_ROUTE, RMS_FROM_FS_MMS_QMS_ROUTE, RouteGroup, VAS_FROM_CMS_SD_ROUTE, withQuantity,
 } from './routes/index.js';
 import {driverCircuitFieldIssues} from './circuitDiagnostics.js';
 import type {DriverCircuitFieldIssue} from './circuitDiagnostics.js';
 import type {DriverRoute, RouteFormulas} from './routes/index.js';
+
+/** The small-signal figures the sealed Box readout runs on: what the chart's circuit values (`chartValues`) imply, so the readout and the
+ *  chart's impedance peak are the same resonance. Fs from Mms and Cms, Vas from Cms and Sd, Qms from Fs, Mms and Rms, Qes from Fs, Mms, Re
+ *  and BL, Qts from those two. */
+export interface ChartResonanceFigures {
+  readonly Fs_hz: number;
+  readonly Vas_m3: number;
+  readonly Qms: number;
+  readonly Qes: number;
+  readonly Qts: number;
+  readonly Re_ohm: number;
+}
 
 /** WinISD's fallback for a driver with a Qts and neither Qes nor Qms (decompile `fr_45e090`: `+0x4c8 = 2*Qts`):
  *  both Q's are twice Qts, which makes the total Q equal Qts. */
@@ -46,8 +60,26 @@ const WINISD_Q_FALLBACK_FACTOR = 2;
 
 export type DriverQuantityName = keyof DriverSolverParams;
 /** `WiringIssue`s are the domain's: the engine's own solve never raises one. */
-export type DriverIssue = CalculationIssue<DriverQuantityName> | OutOfRangeIssue | WiringIssue;
+export type DriverIssue = CalculationIssue<DriverQuantityName> | NormalBandIssue<DriverQuantityName> | OutOfRangeIssue | WiringIssue;
 export type DriverPrerequisite = CalculationPrerequisite<DriverQuantityName>;
+
+/** The radiator figures WinISD charts a passive radiator from, and its stated Mms, Cms and Rms; null where not stated. */
+export interface RadiatorFigures {
+  readonly Fs_hz: number | null;
+  readonly Vas_m3: number | null;
+  readonly Sd_m2: number | null;
+  readonly Qms: number | null;
+  readonly Mms_kg: number | null;
+  readonly Cms_m_per_N: number | null;
+  readonly Rms_kg_per_s: number | null;
+}
+
+/** The mechanical figures a radiator's circuit runs on; null where neither stated nor worked out. */
+export interface RadiatorMechanics {
+  readonly Mms_kg: number | null;
+  readonly Cms_m_per_N: number | null;
+  readonly Rms_kg_per_s: number | null;
+}
 
 // ---------------------------------------------------------------------------------------------
 // DRIVER CONSISTENCY — moved from consistency.ts (S2-10): `checkConsistency` needs
@@ -135,13 +167,32 @@ export interface DriverEngine {
    *  stated `c_m_per_s`/`roo_kg_per_m3`, which come back as `air`'s. The handle solve above runs
    *  this same group. */
   solveValues(stated: DriverWorkingSet, air: Air): DriverWorkingSet;
-  /** `values` as the circuit takes them, the way WinISD builds its simulation (decompile `fr_45e090`):
-   *  Cms from Vas and Sd, Mms from Fs and that Cms, Rms from Fs, that Mms and Qms, and the
-   *  terminal BL from Re, Fs, Qes and that Cms. The entered Cms, Mms and Rms are not read.
-   *  A driver with a Qts but neither Qes nor Qms gets WinISD's fallback, Qes = Qms = 2·Qts.
-   *  Each is replaced only where its own inputs are positive and the result is positive;
-   *  otherwise the stated value stands. `air` is the project's. */
-  circuitValues(values: DriverValues, air: Air): DriverValues;
+  /** `values` as the circuit takes them: the figures the boxes show, Cms, Mms, Rms and BL included, never worked out again
+   *  from Fs, Vas and the Q's (QO534).
+   *  The one exception is WinISD's fallback for a driver with a Qts and neither Qes nor Qms (decompile `fr_45e090`):
+   *  Qes = Qms = 2·Qts, and an Rms or terminal BL the boxes leave empty is worked out from those. */
+  circuitValues(values: DriverValues): DriverValues;
+  /** `values` as WinISD's circuit takes them ("Chart from Fs, Vas, Qms (WinISD's way)" ticked, QO539; decompile `fr_45e090`):
+   *  Cms derived from Vas and Sd, then Mms derived from Fs and that Cms, Rms from Fs, that Mms and Qms, and the terminal BL from Re, Fs, Qes and that
+   *  Cms. The stated Cms, Mms and Rms are not read. A driver with a Qts but neither Qes nor Qms gets WinISD's fallback,
+   *  Qes = Qms = 2·Qts. Each is replaced only where its own inputs are positive and the result is positive; otherwise the
+   *  stated value stands. `air` is the project's. */
+  winisdCircuitValues(values: DriverValues, air: Air): DriverValues;
+  /** The values the chart's circuit runs on: `winisdCircuitValues` with "Chart from Fs, Vas, Qms (WinISD's way)" ticked
+   *  (`winisdWay`), else `circuitValues`. The one place that chooses; the chart sweep and the sealed Box readout both ask it. */
+  chartValues(values: DriverValues, air: Air, winisdWay: boolean): DriverValues;
+  /** The resonance figures `chart` (from `chartValues`) implies, for the sealed readout to run on. Null while Mms, Cms, Rms, Sd,
+   *  Re or BL is not positive, which is also when the chart cannot run. `air` is the project's. */
+  chartResonanceFigures(chart: DriverValues, air: Air): ChartResonanceFigures | null;
+  /** A passive radiator's Mms, Cms and Rms as WinISD's circuit takes them ("Chart from Fs, Vas, Qms (WinISD's way)" ticked,
+   *  QO539): Cms derived from Vas and Sd, then Mms derived from Fs and that Cms, Rms from Fs, that Mms and Qms, by the same routes as the driver's.
+   *  Each stated value stands where its inputs are missing or give no positive value. `air` is the project's. */
+  winisdRadiatorMechanics(radiator: RadiatorFigures, air: Air): RadiatorMechanics;
+  /** The figures the What-if panel moves when `figure` is typed as `value`, from the boxes as they show now (QO535), the
+   *  sensitivity read in `air` (the driver's). Pure. */
+  whatIfMoves(figure: WhatIfFigure, value: number, shown: WhatIfFigures, air: Air): WhatIfMoves;
+  /** Every figure the What-if rule moves or is typed into, once. */
+  readonly whatIfFigures: readonly WhatIfFigure[];
   /** Missing circuit values that have a box in the driver editor. */
   circuitFieldIssues(values: DriverValues, air: Air): readonly DriverCircuitFieldIssue[];
   /** Efficiency bandwidth product — Fs/Qes, the sealed-vs-vented indicator. */
@@ -183,12 +234,16 @@ export interface DriverEngine {
   rangeIssue(field: string, value: number): OutOfRangeIssue | undefined;
   /** The warning for a basket diameter outside its normal range. */
   basketRangeWarning: typeof basketRangeWarning;
+  /** A What-if value inside its entry limits but outside the normal range, as a warning. */
+  whatIfRangeWarning: typeof whatIfRangeWarning;
   /** Sealed resonance and Qtc read off a swept impedance curve, rather than computed. */
   findImpedancePeak(result: SweepResult | null, Re: number): { Fsc: number; Qtc: number } | null;
   /** The formulas `solve` works quantities out by: one per route, with its text and inputs, in the order it tries them.
    *  The Driver Editor's formula panel shows these (T902). */
   routeFormulas(): RouteFormulas;
 }
+
+const isPositive = (x: number | null | undefined): x is number => typeof x === 'number' && Number.isFinite(x) && x > 0;
 
 export class DriverEngineImpl implements DriverEngine {
   constructor(
@@ -209,37 +264,82 @@ export class DriverEngineImpl implements DriverEngine {
   readonly coilAlfaVC_per_K = coilAlfaVC_per_K;
   readonly isPhysicallyPlausible = isPhysicallyPlausible;
   readonly rangeIssue = rangeIssue;
+  readonly whatIfMoves = whatIfMoves;
+  readonly whatIfFigures = WHAT_IF_FIGURES;
   readonly basketRangeWarning = basketRangeWarning;
+  readonly whatIfRangeWarning = whatIfRangeWarning;
 
-  circuitValues(values: DriverValues, air: Air): DriverValues {
-    const positive = (x: number | null | undefined): x is number => typeof x === 'number' && Number.isFinite(x) && x > 0;
-    const {Fs_hz, Vas_m3, Sd_m2, Qts} = values;
-    const fallback = !positive(values.Qes) && !positive(values.Qms) && positive(Qts) ? WINISD_Q_FALLBACK_FACTOR * Qts : null;
+  circuitValues(values: DriverValues): DriverValues {
+    const fallback = this.qFallback(values);
+    if (fallback === null) return values;
+    const {Mms_kg, Fs_hz, Cms_m_per_N, Re_terminal_ohm} = values;
+    const Rms = values.Rms_kg_per_s === null && isPositive(Fs_hz) && isPositive(Mms_kg)
+      ? RMS_FROM_FS_MMS_QMS_ROUTE.value({Fs_hz, Mms_kg, Qms: fallback}) : values.Rms_kg_per_s;
+    const BL = values.BL_terminal_Tm === null && isPositive(Re_terminal_ohm) && isPositive(Fs_hz) && isPositive(Cms_m_per_N)
+      ? BL_FROM_QES_CMS_ROUTE.value({Re_ohm: Re_terminal_ohm, Fs_hz, Qes: fallback, Cms_m_per_N}) : values.BL_terminal_Tm;
+    return {...values, Qes: fallback, Qms: fallback, Rms_kg_per_s: Rms, BL_terminal_Tm: BL};
+  }
+
+  chartValues(values: DriverValues, air: Air, winisdWay: boolean): DriverValues {
+    return winisdWay ? this.winisdCircuitValues(values, air) : this.circuitValues(values);
+  }
+
+  chartResonanceFigures(chart: DriverValues, air: Air): ChartResonanceFigures | null {
+    const {Sd_m2, Mms_kg, Re_terminal_ohm, Cms_m_per_N, Rms_kg_per_s, BL_terminal_Tm} = chart;
+    if (!isPositive(Mms_kg) || !isPositive(Cms_m_per_N) || !isPositive(Rms_kg_per_s) || !isPositive(Sd_m2)
+      || !isPositive(Re_terminal_ohm) || !isPositive(BL_terminal_Tm) || !isPositive(air.c()) || !isPositive(air.rho())) return null;
+    const Fs_hz = FS_FROM_MASS_CMS_ROUTE.value({Mms_kg, Cms_m_per_N});
+    const Vas_m3 = VAS_FROM_CMS_SD_ROUTE.value({Cms_m_per_N, Sd_m2, roo_kg_per_m3: air.rho(), c_m_per_s: air.c()});
+    const Qms = isPositive(Fs_hz) ? QMS_FROM_FS_MMS_RMS_ROUTE.value({Fs_hz, Mms_kg, Rms_kg_per_s}) : null;
+    const Qes = isPositive(Fs_hz) ? QES_FROM_FS_MMS_RE_BL_ROUTE.value({Fs_hz, Mms_kg, Re_ohm: Re_terminal_ohm, BL_Tm: BL_terminal_Tm}) : null;
+    const Qts = isPositive(Qes) && isPositive(Qms) ? QTS_FROM_QES_QMS_ROUTE.value({Qes, Qms}) : null;
+    return isPositive(Fs_hz) && isPositive(Vas_m3) && isPositive(Qms) && isPositive(Qes) && isPositive(Qts)
+      ? {Fs_hz, Vas_m3, Qms, Qes, Qts, Re_ohm: Re_terminal_ohm} : null;
+  }
+
+  winisdCircuitValues(values: DriverValues, air: Air): DriverValues {
+    const {Fs_hz} = values;
+    const fallback = this.qFallback(values);
     const Qes = fallback ?? values.Qes;
     const Qms = fallback ?? values.Qms;
-    const routeValue = (route: DriverRoute, working: DriverWorkingSet): number | null => {
-      const v = route.value(working);
-      return positive(v) ? v : null;
-    };
-    const Cms = positive(air.c()) && positive(air.rho()) && positive(Vas_m3) && positive(Sd_m2)
-      ? routeValue(CMS_FROM_VAS_SD_ROUTE, {Vas_m3, Sd_m2, c_m_per_s: air.c(), roo_kg_per_m3: air.rho()}) : null;
-    const Cms_m_per_N = Cms ?? values.Cms_m_per_N;
-    const Mms = positive(Fs_hz) && positive(Cms_m_per_N)
-      ? routeValue(MMS_FROM_FS_CMS_ROUTE, {Fs_hz, Cms_m_per_N}) : null;
-    const Mms_kg = Mms ?? values.Mms_kg;
-    const Rms = positive(Fs_hz) && positive(Qms) && positive(Mms_kg)
-      ? routeValue(RMS_FROM_FS_MMS_QMS_ROUTE, {Fs_hz, Qms, Mms_kg}) : null;
+    const mech = this.winisdRadiatorMechanics({...values, Qms}, air);
+    const Cms_m_per_N = mech.Cms_m_per_N;
     const Re_terminal_ohm = values.Re_terminal_ohm;
-    const BL = positive(Re_terminal_ohm) && positive(Fs_hz) && positive(Qes) && positive(Cms_m_per_N)
-      ? Math.sqrt(Re_terminal_ohm / (2 * Math.PI * Fs_hz * Qes * Cms_m_per_N)) : null;
+    const BL = isPositive(Re_terminal_ohm) && isPositive(Fs_hz) && isPositive(Qes) && isPositive(Cms_m_per_N)
+      ? BL_FROM_QES_CMS_ROUTE.value({Re_ohm: Re_terminal_ohm, Fs_hz, Qes, Cms_m_per_N}) : null;
     return {
-      ...values, Qes, Qms, Cms_m_per_N, Mms_kg, Rms_kg_per_s: Rms ?? values.Rms_kg_per_s,
-      BL_terminal_Tm: positive(BL) ? BL : values.BL_terminal_Tm,
+      ...values, Qes, Qms, Cms_m_per_N, Mms_kg: mech.Mms_kg, Rms_kg_per_s: mech.Rms_kg_per_s,
+      BL_terminal_Tm: isPositive(BL) ? BL : values.BL_terminal_Tm,
     };
   }
 
+  /** WinISD's Cms derived from Vas and Sd, then Mms derived from Fs and that Cms, Rms from Fs, that Mms and Qms; each stated value stands where its
+   *  own inputs are missing or the result is not positive. Shared by the driver (`winisdCircuitValues`) and the passive radiator. */
+  winisdRadiatorMechanics(f: RadiatorFigures, air: Air): RadiatorMechanics {
+    const {Fs_hz, Vas_m3, Sd_m2, Qms} = f;
+    const routeValue = (route: DriverRoute, working: DriverWorkingSet): number | null => {
+      const v = route.value(working);
+      return isPositive(v) ? v : null;
+    };
+    const Cms = isPositive(air.c()) && isPositive(air.rho()) && isPositive(Vas_m3) && isPositive(Sd_m2)
+      ? routeValue(CMS_FROM_VAS_SD_ROUTE, {Vas_m3, Sd_m2, c_m_per_s: air.c(), roo_kg_per_m3: air.rho()}) : null;
+    const Cms_m_per_N = Cms ?? f.Cms_m_per_N;
+    const Mms = isPositive(Fs_hz) && isPositive(Cms_m_per_N)
+      ? routeValue(MMS_FROM_FS_CMS_ROUTE, {Fs_hz, Cms_m_per_N}) : null;
+    const Mms_kg = Mms ?? f.Mms_kg;
+    const Rms = isPositive(Fs_hz) && isPositive(Qms) && isPositive(Mms_kg)
+      ? routeValue(RMS_FROM_FS_MMS_QMS_ROUTE, {Fs_hz, Qms, Mms_kg}) : null;
+    return {Mms_kg, Cms_m_per_N, Rms_kg_per_s: Rms ?? f.Rms_kg_per_s};
+  }
+
+  /** WinISD's Qes = Qms = 2·Qts for a driver stating a Qts and neither Qes nor Qms; null otherwise. */
+  private qFallback(values: DriverValues): number | null {
+    const {Qts} = values;
+    return !isPositive(values.Qes) && !isPositive(values.Qms) && isPositive(Qts) ? WINISD_Q_FALLBACK_FACTOR * Qts : null;
+  }
+
   circuitFieldIssues(values: DriverValues, air: Air): readonly DriverCircuitFieldIssue[] {
-    const resolved = this.circuitValues(values, air);
+    const resolved = this.circuitValues(values);
     return driverCircuitFieldIssues({...resolved, c_m_per_s: air.c(), roo_kg_per_m3: air.rho()});
   }
 

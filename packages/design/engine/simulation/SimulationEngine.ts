@@ -233,10 +233,14 @@ function oneDriverOfArray(P: SweepParams, box: BoxType, n: number, drive: Driver
 /** `q` is the driver the circuit runs on (the pair under Iso-Barik loading); `one` is one driver of
  *  it, whose BL is the motor's push when no BL is typed. */
 function circuitQuantities(q: ReturnType<typeof withAddedMass> & ReadyCircuitReadings, one: ReturnType<typeof withAddedMass>, Le_H: number | undefined, BL_typed_Tm: number | null, pushScale: number): CircuitQuantities {
+  const BL_Qes_Tm = blFromQes(q.Re_terminal_ohm, q.Cms_m_per_N, q.Fs_hz, q.Qes);
+  // "Two-BL driver" (WinISD's bug, BL_typed_Tm given): the damping runs on the BL Qes implies, the push on the typed BL.
+  // Otherwise there is one BL, the Bl box's (QO534).
+  const twoBL = BL_typed_Tm !== null && BL_typed_Tm > 0 && BL_Qes_Tm !== undefined;
   return {
-    Sd_m2: q.Sd_m2, Re_terminal_ohm: q.Re_terminal_ohm, BL_terminal_Tm: q.BL_terminal_Tm,
+    Sd_m2: q.Sd_m2, Re_terminal_ohm: q.Re_terminal_ohm, BL_terminal_Tm: twoBL ? BL_Qes_Tm : q.BL_terminal_Tm,
     Cms_m_per_N: q.Cms_m_per_N, Mms_kg: q.Mms_kg, Rms_kg_per_s: q.Rms_kg_per_s, Le_H,
-    BL_Qes_Tm: blFromQes(q.Re_terminal_ohm, q.Cms_m_per_N, q.Fs_hz, q.Qes),
+    BL_Qes_Tm,
     BL_entered_Tm: enteredTerminalBL_Tm(one, BL_typed_Tm) * pushScale,
   };
 }
@@ -523,8 +527,9 @@ export class SimulationEngineImpl implements SimulationEngine {
     }
     // Driver-side added mass (docs/research/WINISD_PARITY.md) shifts Mms/Fs/Q's before the circuit sees it.
     // 0/absent → withAddedMass returns the driver unchanged, so goldens are byte-identical.
-    // The circuit runs on Fs, Vas, Qes, Qms, Re, Sd, BL and Le as WinISD's does; the stated Cms, Mms and Rms are not read.
-    const resolved = this.driver.circuitValues(drv.values, P.air);
+    // The circuit runs on the boxes as they show (QO534); "Chart from Fs, Vas, Qms (WinISD's way)" ticked, on Fs, Vas, Qes, Qms,
+    // Re, Sd, BL and Le as WinISD's does, the stated Cms, Mms and Rms not read (QO539).
+    const resolved = this.driver.chartValues(drv.values, P.air, P.winisdChartFromFsVasQms === true);
     const single = withAddedMass(driverValues(resolved), P.driverAddedMass ?? 0);
     const wiring = physicalPairWiring(P);
     const d = wiring !== null ? wiredIsobarikPair(single, wiring) : P.loading === 'isobaric' ? isobarikPair(single) : single;

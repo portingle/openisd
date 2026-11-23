@@ -7,8 +7,9 @@ import type { DqIssue } from '../../engine/index.js';
 type PassiveRadiatorFieldName = keyof PassiveRadiatorSpecsSection;
 
 /** One field of a radiator's section, entry-backed like a driver's: absent reads not-available,
- *  `E` reads entered, `C` reads calculated. Mms, Cms and Rms are written `C` by the project's
- *  resolve (`OpenIsdPassiveRadiatorSpec.resolve`). */
+ *  `E` reads entered, `C` reads calculated. A typed figure moves no other figure: the box keeps
+ *  what was typed and the charts use it (QO534). Mms, Cms and Rms not stated are written `C` by
+ *  the project's resolve (`OpenIsdPassiveRadiatorSpec.resolve`). */
 export function prSpec(
     section: SimpleField<PassiveRadiatorSpecsSection>,
     key: PassiveRadiatorFieldName,

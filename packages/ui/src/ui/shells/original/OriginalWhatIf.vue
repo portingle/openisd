@@ -5,7 +5,7 @@
  * Escape) ends the What-if; Reset puts the project's values back. Behaviour in
  * `OriginalWhatIf-hooks.ts`.
  */
-import {computed, ref} from 'vue';
+import {computed, provide, ref} from 'vue';
 import {useApp} from '../../../logic/app.js';
 import type {NumericDriverSpecFieldName} from '@openisd/design';
 import {NumberField} from '@openisd/design/fields';
@@ -13,13 +13,14 @@ import ProvenanceLegend from '../../components/ProvenanceLegend.vue';
 import UIField from '../../components/UIField.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import WhatIfBoxField from '../../components/WhatIfBoxField.vue';
-import {provideCellScope} from '../../components/cellScope.js';
+import {provideCellScope, RESTORE_REFUSED_ENTRY} from '../../components/cellScope.js';
 import {useEscToClose} from '../../../logic/useEscToClose.js';
 import {useOriginalWhatIf} from '../../../hooks/OriginalWhatIf-hooks.js';
 const {appState, presentation: presentationState} = useApp();
 const {projectChanged} = appState;
 
 provideCellScope({ revision: projectChanged, written: () => {} });
+provide(RESTORE_REFUSED_ENTRY, true);
 
 const whatIf = useOriginalWhatIf();
 const collapsed = ref(false);
@@ -74,13 +75,13 @@ const OPTIONAL: PanelField[] = [
   { key: 'Xmax_m', def: NumberField.XMAX_M, label: 'Xmax' },
   { key: 'Pe_W', def: NumberField.PE_W,   label: 'Pe' },
 ];
-// Bl and Mms are ordinary driver fields, not outputs: the ADT derives them when they are not
-// entered and honours them when they are (Driver.enter → state E → fixed-E override), exactly
-// as the driver editor already treats them. So they are edited here like any other field, and
-// the E/C colour says which of the two is happening.
+// The parts the charts use. Typing one keeps the other parts and moves the results that follow it; typing a result above
+// keeps the other results and moves these (QO535, the engine's What-if rule).
 const DERIVED: PanelField[] = [
   { key: 'BL_Tm', def: NumberField.BL_TM,  label: 'Bl' },
   { key: 'Mms_kg', def: NumberField.MMS_KG, label: 'Mms' },
+  { key: 'Cms_m_per_N', def: NumberField.CMS_M_PER_N, label: 'Cms' },
+  { key: 'Rms_kg_per_s', def: NumberField.RMS_KG_PER_S, label: 'Rms' },
 ];
 
 const ebpVal = whatIf.ebp;
@@ -127,7 +128,7 @@ useEscToClose(() => presentationState.editDriver, close);
 
     <div class="what-if-subsect">Derived</div>
     <div class="what-if-grid">
-      <UIField v-for="f in DERIVED" :key="f.key" class="what-if-fld" :title="`${f.label} is calculated from the parameters above until you type one — then it overrides them. Clear the field to hand it back to the calculation.`" :field="f.def" :label="f.label" :cell="whatIf.specCell(f.key)" />
+      <UIField v-for="f in DERIVED" :key="f.key" class="what-if-fld" :title="`Type ${f.label} to try a different part: the other parts stay and Fs, Vas and the Qs follow it.`" :field="f.def" :label="f.label" :cell="whatIf.specCell(f.key)" />
       <!-- EBP is NOT a driver field: the ADT does not derive it and has no slot to override
            (it is ebp() = Fs/Qes, computed in the engine). Making it editable means choosing
            which of Fs or Qes an entered EBP solves backwards — a decision for the human, not
@@ -136,19 +137,21 @@ useEscToClose(() => presentationState.editDriver, close);
     </div>
 
     <div class="what-if-btns">
+      <ProvenanceLegend class="what-if-legend" />
       <button title="Back to the design's values" @click="reset">Reset</button>
       <button class="footer-buttons-pri" title="Close. Your project will not be updated." @click="close">Close</button>
     </div>
-      <ProvenanceLegend class="what-if-legend" />
     </div>
   </div>
 </template>
 
 <style scoped>
 /* Width follows its content (two columns of label, input, stepper, dq mark and unit), so no unit runs past the edge. */
+/* It sits 16px off the window's top and bottom: with the four What-if inputs (QO535) the ABC panel is 682px tall,
+   which fits a 1280 x 720 window (688px) without scrolling. */
 .what-if-panel {
-  position: fixed; right: 24px; bottom: 24px; z-index: 60;
-  width: max-content; max-width: calc(100vw - 32px); max-height: calc(100vh - 48px); overflow-y: auto;
+  position: fixed; right: 24px; bottom: 16px; z-index: 60;
+  width: max-content; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); overflow-y: auto;
   background: #f7f7f7; border: 1px solid #888; border-radius: 8px;
   box-shadow: 0 6px 24px rgba(0,0,0,.35); padding: 10px 14px 14px; font-size: 13px;
 }
@@ -160,7 +163,9 @@ useEscToClose(() => presentationState.editDriver, close);
 .what-if-titlebar .close-btn:hover { background: #e64545; color: #fff; }
 .what-if-panel-collapsed { max-height:none; overflow:visible; padding-bottom:8px; }
 .what-if-panel-collapsed .what-if-titlebar { margin-bottom:0; }
-.what-if-legend { margin-top: 10px; border: 1px solid var(--line); border-radius: 4px; }
+/* The colour legend shares the footer row with Reset and Close, so the four What-if inputs (QO535)
+   still fit a 1280 x 720 window without the panel scrolling. */
+.what-if-legend { margin-right: auto; border: 1px solid var(--line); border-radius: 4px; }
 /* The content is a grid, where margins add up instead of merging. The hint keeps the spacing it had
    as a block: 1em above it counting the title bar's 6px, and below it only the next heading's 10px. */
 .what-if-hint { width:0; min-width:100%; color: #777; font-style: italic; font-size: 11.5px; margin: calc(1em - 6px) 0 0; }
@@ -184,19 +189,27 @@ useEscToClose(() => presentationState.editDriver, close);
   .what-if-content { grid-template-columns:max-content var(--what-if-box-w) max-content var(--what-if-cue-w); }
   .what-if-grid > :nth-child(even), .what-if-box-line > :nth-child(even) { grid-column:1 / 5; }
 }
-.what-if-panel :deep(.ui-field.ui-field[data-field]) {
+.what-if-panel .what-if-content :deep(.ui-field.ui-field[data-field]) {
   grid-template-columns:subgrid !important; width:auto !important; max-width:none !important;
   --joined-chip:var(--what-if-chip-w);
 }
-/* The common field's chip is at least 34px; the What-if's narrower boxes take a narrower chip. */
-.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit:not(.unit-toggle)) { min-width:var(--what-if-chip-w); }
+/* A 29px chip, 7px left inset and two 1px borders leave 55px for the number. */
+.what-if-panel .what-if-content :deep(.ui-field.ui-field:is([data-field="Cms_m_per_N"], [data-field="Rms_kg_per_s"])) {
+  --joined-inset:7px;
+}
+.what-if-panel :deep(.ui-field.ui-field:is([data-field="Cms_m_per_N"], [data-field="Rms_kg_per_s"]) .ui-field-unit) {
+  font-size:10px; letter-spacing:-0.5px;
+}
+.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit:not(.unit-toggle)) { min-width:var(--joined-chip); }
+/* Let the centred, switchable symbols use the full chip around the divider and outer border. */
+.what-if-panel :deep(.ui-field.ui-field[data-field] .ui-field-unit.unit-toggle) { padding-inline:0; }
 /* The label track is the longest label plus the desktop's 22px warning slot after every label (kept
    so a warning never moves the boxes). */
 .what-if-panel .what-if-content :deep(.ui-field.ui-field[data-field] > .ui-field-label) {
   grid-column:1; grid-row:1; white-space:nowrap; overflow-wrap:normal; text-align:left; padding-right:0;
 }
-.what-if-subsect { color: #7d9fc9; font-weight: 600; font-size: 12px; margin: 10px 0 2px; }
-.what-if-btns { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid #ddd; margin-top: 10px; }
+.what-if-subsect { color: #7d9fc9; font-weight: 600; font-size: 12px; margin: 8px 0 2px; }
+.what-if-btns { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid #ddd; margin-top: 6px; }
 .what-if-btns button { border: 1px solid #999; background: #f0f0f0; border-radius: 3px; padding: 6px 12px; cursor: pointer; }
 .what-if-btns button:hover { background: #dbeaff; border-color: #7fb3ff; }
 .what-if-btns button.footer-buttons-pri { background: #1868d1; color: #fff; border-color: #1868d1; }

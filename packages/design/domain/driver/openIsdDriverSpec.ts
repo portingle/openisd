@@ -1,4 +1,5 @@
-import type {Air, DqIssue, DriverEngine, DriverIssue, DriverQuantityName, DriverSolverParams, DriverValues, IssueEngine, SolverInput, SweepDriver, Wiring, WiringIssue} from '../../engine/index.js';
+import type {Air, DqIssue, DriverEngine, DriverIssue, DriverQuantityName, DriverSolverParams, DriverValues, IssueEngine, SolverInput, SweepDriver, WhatIfFigure, WhatIfFigures, Wiring, WiringIssue} from '../../engine/index.js';
+import {numberEntryProblem} from '../../fields/entryRefusal.js';
 import {NumberField} from '../../fields/field.js';
 import type {ValueFloor} from '../../fields/field.js';
 import type {
@@ -16,6 +17,8 @@ import {absentCell, calculatedCell, DualWriteFieldImpl, enteredCell, entryField}
 import type {DriverDeviceJson, SpecEntryJson, WiringEntryJson} from '../openisdSchema.js';
 import {calculatedWiring, enteredWiring, VoiceCoilWiring} from '../voiceCoilWiring.js';
 import {inferMeasuredWiring, titleNamesSeveralCoils} from './wiringInference.js';
+import type {DriverContext} from './driverContext.js';
+import {withDisagreementNote} from './disagreementNote.js';
 import {computedSlot} from './computedSlot.js';
 import {driverSection} from './driverSection.js';
 import type {DriverSpecFieldName, NumericDriverSpecFieldName} from './driverSpecFieldName.js';
@@ -131,6 +134,9 @@ void _assertDriverQuantityNamesComplete;
  *
  * Fields are constructed eagerly to preserve object identity for reactivity.
  */
+/** One numeric spec field, as every field of the spec is published. */
+type SpecNumberField = Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
+
 /** The wiring-dependent figures, null where the record states none. */
 export interface TerminalMotor {
     readonly Re_ohm: number | null;
@@ -218,6 +224,7 @@ export class OpenIsdDriverSpec {
     readonly DVol_m3: Readable<number | null> & Entered & Calculated & Precise & Writable<number> & Clearable & Calculatable<number> & Unsolvable;
 
     readonly #driver: DriverEngine;
+    readonly #context: DriverContext;
     readonly #issueEngine: IssueEngine;
     /** The record's title, which may print a per-coil nominal impedance. */
     readonly #title: () => string;
@@ -231,8 +238,8 @@ export class OpenIsdDriverSpec {
         section: 'woofer' | 'tweeter',
         driver: DriverEngine,
         issues: IssueEngine,
-        /** The driver's air: what a not-entered `c_m_per_s`/`roo_kg_per_m3` reads as. */
-        air: () => Air,
+        /** The driver's air (what a not-entered `c_m_per_s`/`roo_kg_per_m3` reads as) and whether the What-if panel is editing it. */
+        context: DriverContext,
         /** Where a field's dq is read from when THIS spec object cannot be relied on to still
          *  exist between the resolve that produced it and the read that wants it — the project's
          *  embedded driver, rebuilt fresh on every access, which discards `entryField`'s own
@@ -247,6 +254,7 @@ export class OpenIsdDriverSpec {
         this.#myWiring = myWiring;
         this.#coilWiringReBlOnly = coilWiringReBlOnly;
         this.#driver = driver;
+        this.#context = context;
         this.#issueEngine = issues;
         this.#title = () => record.value.model.value;
 
@@ -260,7 +268,17 @@ export class OpenIsdDriverSpec {
             set: (v) => {
                 const spec = sectionLens.value;
                 const {[key]: _removed, ...rest} = spec;
-                sectionLens.set(v === undefined ? rest : {...spec, [key]: v});
+                if (v === undefined) { sectionLens.set(rest); return; }
+                if (v.state === 'E' && context.inWhatIf()) {
+                    const field = NumberField.named(key);
+                    if (field !== undefined && numberEntryProblem(field.floor, field.limits, v.value) !== null) return;
+                    // A What-if edit moves its dependent figures in the same write, preserving their states (QO535).
+                    const figure = this.#driver.whatIfFigures.find(name => name === key);
+                    const moved = figure === undefined ? {} : this.#whatIfEntries(figure, v.value);
+                    sectionLens.set({...spec, ...moved, [key]: v});
+                    return;
+                }
+                sectionLens.set({...spec, [key]: v});
             },
         });
         /** The `VCCon` slot: a wiring entry, not a numeric one. */
@@ -288,24 +306,15 @@ export class OpenIsdDriverSpec {
          *  BUG_20260927_driver-bad-value-decided-in-ui.md's follow-up), computed fresh from the
          *  CURRENT value on every read so it shows up immediately on `.set()`, not only after
          *  the next `resolve()`. */
-        const f =
-            (key: NumericDriverSpecFieldName, rangeIssue?: (value: number) => DqIssue | null | undefined):
-                Readable<number | null> &
-                Entered & Calculated &
-                Precise &
-                Writable<number> &
-                Clearable &
-                Calculatable<number> &
-                Unsolvable =>
-
-                entryField(
-                    sectionSlot(key),
-                    key,
-                    dqFor(key),
-                    v => floorIssue(key, v, issues) ?? rangeIssue?.(v) ?? null
-                );
+        const fieldWithRangeCheck = (
+            key: NumericDriverSpecFieldName,
+            check: ((value: number) => DqIssue | null | undefined) | null,
+        ): SpecNumberField =>
+            entryField(sectionSlot(key), key, dqFor(key), v => floorIssue(key, v, issues) ?? check?.(v) ?? null);
+        const f = (key: NumericDriverSpecFieldName): SpecNumberField => fieldWithRangeCheck(key, null);
         // Descriptive dimensions need their own range check because the solver does not read them.
-        const descriptiveDimension = (key: NumericDriverSpecFieldName) => f(key, v => driver.rangeIssue(key, v));
+        const descriptiveDimension = (key: NumericDriverSpecFieldName) =>
+            fieldWithRangeCheck(key, v => driver.rangeIssue(key, v));
 
         /** The wiring field — `entryField` in every respect but the value's type, which is a
          *  NAME rather than one of `DriverSpecsSection`'s numbers, so it cannot go through `f()`.
@@ -391,7 +400,7 @@ export class OpenIsdDriverSpec {
         this.Depth_m = f('Depth_m');
         this.MagDepth_m = f('MagDepth_m');
         this.Magnet_m = f('Magnet_m');
-        this.Basket_m = f('Basket_m', v => driver.basketRangeWarning(v));
+        this.Basket_m = fieldWithRangeCheck('Basket_m', v => driver.basketRangeWarning(v));
         this.Outer_m = descriptiveDimension('Outer_m');
         this.OuterX_m = descriptiveDimension('OuterX_m');
         this.OuterY_m = descriptiveDimension('OuterY_m');
@@ -420,9 +429,35 @@ export class OpenIsdDriverSpec {
             Re_terminal_ohm: NO_SLOT, BL_terminal_Tm: NO_SLOT, numVC: this.numVC,
             wiring: this.VCCon,
         } satisfies DriverSolverParams;
-        this.#issues = [...this.#driver.solve(params, air), ...wiringIssues];
+        const solved = this.#driver.solve(params, air);
+        // What-if suppresses disagreement marks and warns when a kept value is outside its normal range.
+        const shown = this.#context.inWhatIf()
+            ? solved.filter(issue => issue.kind !== 'inconsistent-inputs').map(issue => {
+                if (issue.kind !== 'out-of-range') return issue;
+                const target = DRIVER_QUANTITY_NAMES.find(key => key === issue.field);
+                return target === undefined ? issue : this.#driver.whatIfRangeWarning(issue, target);
+            })
+            : solved.map(issue => issue.kind === 'inconsistent-inputs' ? withDisagreementNote(issue) : issue);
+        this.#issues = [...shown, ...wiringIssues];
         this.#markDq(params, this.#issues);
         return this.#issues;
+    }
+
+    /** The entries a What-if write of `value` into `key` moves, each keeping its own state: the engine's What-if rule over the boxes as they show now. */
+    #whatIfEntries(key: WhatIfFigure, value: number): Partial<Record<WhatIfFigure, SpecEntryJson>> {
+        const field = (name: WhatIfFigure): SpecNumberField => this[name];
+        const shown = {
+            Fs_hz: this.Fs_hz.value, Vas_m3: this.Vas_m3.value, Qes: this.Qes.value, Qms: this.Qms.value, Qts: this.Qts.value,
+            SPL_dB: this.SPL_dB.value, Mms_kg: this.Mms_kg.value, Cms_m_per_N: this.Cms_m_per_N.value,
+            Rms_kg_per_s: this.Rms_kg_per_s.value, BL_Tm: this.BL_Tm.value, Sd_m2: this.Sd_m2.value, Re_ohm: this.Re_ohm.value,
+        } satisfies WhatIfFigures;
+        const moves = this.#driver.whatIfMoves(key, value, shown, this.#context.air());
+        const out: Partial<Record<WhatIfFigure, SpecEntryJson>> = {};
+        for (const name of this.#driver.whatIfFigures) {
+            const moved = moves[name];
+            if (moved !== undefined) out[name] = {state: field(name).entered ? 'E' : 'C', value: moved};
+        }
+        return out;
     }
 
     /** No VCCon or numVC default (QO900 R1). For 2 or more coils, a wiring the record does not
@@ -483,6 +518,7 @@ export class OpenIsdDriverSpec {
      *  project (a standalone driver's own chart) uses `solverParams()`, which carries the
      *  driver's own stated pair; `solverParamsIn(air)` is the project's. */
     solverParams(): DriverSolverParams {
+        // The boxes as the charts take them: every figure as the box shows it, Re and Bl at the terminals as the wiring makes them.
         const measured = this.VCCon.value;
         const wiring: Wiring | null = measured === null ? null : measured === VoiceCoilWiring.Series ? 'series' : 'parallel';
         const wiringInput: SolverInput<Wiring> = { value: wiring, entered: this.VCCon.entered };
@@ -516,7 +552,7 @@ export class OpenIsdDriverSpec {
 
     /** `solverParams` with the circuit's air taken from `air` (the project's) instead of the driver's own pair. */
     solverParamsIn(air: Air): DriverSolverParams {
-        return { ...this.solverParams(), c_m_per_s: computedSlot(air.c()), roo_kg_per_m3: computedSlot(air.rho()) };
+        return {...this.solverParams(), c_m_per_s: computedSlot(air.c()), roo_kg_per_m3: computedSlot(air.rho())};
     }
 
     /** `solverParams`' values as plain data for `SimulationEngine.sweep`/`maxCurves`, with the

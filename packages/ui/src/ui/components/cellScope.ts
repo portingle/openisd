@@ -18,6 +18,9 @@ export interface CellScope {
 
 const CELL_SCOPE: InjectionKey<CellScope> = Symbol('CellScope');
 
+/** Field scopes can restore the prior value when a refused draft is committed, with its note intact. */
+export const RESTORE_REFUSED_ENTRY: InjectionKey<boolean> = Symbol('Restore refused number entry');
+
 /** Make `scope` the change signal for every `UIField` rendered under the calling component. */
 export function provideCellScope(scope: CellScope): void {
   provide(CELL_SCOPE, scope);

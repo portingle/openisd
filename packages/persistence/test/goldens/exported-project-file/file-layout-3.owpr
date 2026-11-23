@@ -81,7 +81,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms differs by 48.0%. Using Fs, Mms and Qms gives 3.84739 Ns/m. The box shows 2.00 Ns/m. Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box."
                 }
               ]
             },
@@ -156,7 +156,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms differs by 48.0%. Using Fs, Mms and Qms gives 3.84739 Ns/m. The box shows 2.00 Ns/m. Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box."
                 }
               ]
             },
@@ -198,7 +198,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms differs by 48.0%. Using Fs, Mms and Qms gives 3.84739 Ns/m. The box shows 2.00 Ns/m. Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box."
                 }
               ]
             },
@@ -250,7 +250,7 @@
                     "actual": 2,
                     "relative": 0.0614017214466211
                   },
-                  "detail": "Rms_kg_per_s, Fs_hz, Mms_kg, Qms disagree by 6.1%: Rms = 2π·Fs·Mms/Qms. Every field in the group is marked - correct one of them, or clear one to let it be calculated."
+                  "detail": "Rms differs by 48.0%. Using Fs, Mms and Qms gives 3.84739 Ns/m. The box shows 2.00 Ns/m. Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box."
                 }
               ]
             },

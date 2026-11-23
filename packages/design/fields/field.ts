@@ -442,7 +442,7 @@ export class NumberField extends Field {
     value: "box_Vb_l",
     label: "Volume",
     display: {kind: 'switchable', group: 'volume', base: 'L'},
-    // 10 m3 = 10,000 L: far beyond any speaker box, and it fits the phone Box tab's box in every unit (QO946.c187, lead).
+    // 10 m3 = 10,000 L: far beyond any speaker box, and it fits the phone Box tab's box in every unit.
     limits: {min: 0.0001, max: 10},
     precision: 2,
     description: "Net Enclosure Volume\nThe air volume inside the box. This air acts as a spring the cone pushes against.",
@@ -1004,7 +1004,8 @@ export class NumberField extends Field {
     value: "Vd_m3",
     label: "Vd",
     display: {kind: 'switchable', group: 'volume', base: 'cm3'},
-    limits: {min: 0, max: 100000},
+    // 10,000 cm3: far beyond any driver, and it fits the phone driver editor's box in every unit.
+    limits: {min: 0, max: 0.01},
     floor: "positive",
     precision: 0,
     description: "Peak Displacement Volume (Vd)\nAir displaced by the cone at full excursion (Vd = Sd × Xmax).",
@@ -1726,6 +1727,12 @@ export class ToggleField extends Field {
     label: "Simplified ABC intra-port velocity",
     description: "Simplified ABC intra-port velocity: WinISD works out the air speed in an ABC box's inner port without a small leak term, Zf·jωMai/Ricl, but that term is part of the real current through the port mass. So its chart is slightly off: by up to 1.35 dB and 4.6° near 110 Hz, and under 0.1 dB elsewhere (W5-1138SMF). OpenISD drops the same term by default, so it matches WinISD. Untick this to use the exact port-mass current. It changes the ABC box's Intra port velocity chart only.",
   }, null, 'intra-port');
+  // Unticked in a new project: charts read the Mms, Cms and Rms boxes.
+  static readonly ADV_WINISDCHARTFROMFSVASQMS = new ToggleField({
+    value: "adv_WinisdChartFromFsVasQms",
+    label: "Chart with Fs, Vas, Qms (WinISD)",
+    description: "WinISD calculates Cms, Mms and Rms for its charts using Fs, Vas and Qms. It displays manually entered values for Cms, Mms and Rms but uses its calculated values in the charts. Datasheets often give conflicting sets of values. With the E150HE-44, the curves from the two sets differ by up to 6.8 dB. OpenISD charts the displayed Sd, Mms, Cms, Rms, BL, Re and Le and flags disagreements. Tick this to use the WinISD calculation.",
+  }, null, 'Qms');
   static readonly PROJECT_WINISDISOBARIK = new ToggleField({
     value: "project_winisdIsobarik",
     label: "WinISD's Iso-Barik numbers",

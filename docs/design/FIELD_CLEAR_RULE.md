@@ -68,3 +68,26 @@ Bold marks what changed.
 | Port count | count E | count | **count C, 1** | 3: default |
 | Rg | Rg E | Rg | **Rg C, 0.1 ohm** | 3: default |
 | Filter | frequency E | frequency | **frequency N**<br>shown red | 4: no source, no default |
+
+## Typed T/S values: the boxes the charts read (QO534, QO535)
+
+A value the user entered is not replaced by a computed one, the editor and radiator settings use the values on screen,
+and when the boxes disagree every box in the group gets the mark.
+
+- Driver editor, Driver tab and radiator settings: the charts use the boxes Sd, Mms, Cms, Rms, Bl, Re and Le (radiator: Sd, Mms,
+  Cms, Rms) as they show. Those boxes are accented (QO532; the list is `ChartInputs` in `packages/design/fields/chartInputs.ts`).
+- A typed value moves no other box. An empty box is calculated and shown.
+- When the boxes disagree, every box in the group carries the warning mark. The popup names the target and the other boxes
+  (W5-1138SMF: Fs is 7.8% off from what Mms and Cms give: they give 48.83 Hz, the box says 45.00 Hz; the popup ends by saying
+  to fix either value or clear one box).
+- Clearing a box lets the others work it out.
+
+The What-if panel is for trying figures a different driver would have, to learn from; it only adds inputs.
+
+- What-if panel: typing a result (Fs, Vas, Qts, Qes, Qms, Sensitivity) leaves the other results unchanged and recomputes the parts. Qts and
+  Sensitivity move Qes via Bl; Qms stays.
+- Typing a part (Mms, Cms, Rms, Bl, Sd, Re) keeps the other parts and moves the results that depend on it. Mms moves Fs and the Qs,
+  not Vas.
+- No warning marks in the What-if panel; it never writes to the project.
+- Code: `packages/design/engine/driver/whatIfMoves.ts`. Tests: `packages/design/test/domain/on-screen-values.test.ts`,
+  `packages/design/test/engine/what-if-moves.test.ts`, `packages/design/test/domain/what-if-driver.test.ts`.
