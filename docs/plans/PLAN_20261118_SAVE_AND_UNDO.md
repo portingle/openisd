@@ -5,7 +5,7 @@ Status: draft. Nothing here is built except step 1.
 ## Decided (questions.yml, card topic-1118-032402)
 - QO946.c248, "a": Cloud sync sends the whole project, unsaved edits included, a few seconds after editing stops. The save bar and
   the "not on your other devices yet" list (T886) go.
-- QO946.c249: "we do need a plan for save and I think it's ok as it is for now, one level cross machine undo". Save stays one
+- QO946.c249: a save plan with one level of cross-machine undo. Save stays one
   checkpoint; every machine shares it; Revert goes back to it on any device.
 - Earlier, same card: "save might have a benefit if we had and undo q" (c242); "maybe the save button can mutste into a snapshot
   button" (c245); "so undo to checkpoint".

@@ -9,7 +9,7 @@ export interface DqReadout {
 
 /** A field's marks with its warnings apart: `dq` the conflicts and flags, `warnings` the odd but
  *  kept values (an air pressure outside the normal band). A warning conflicts with nothing, so it
- *  is never said as a conflict and never drawn red (QO953.c14: "refuse impossible, warn odd"). */
+ *  is never said as a conflict and never drawn red (QO953.c14). */
 export interface FieldMarks extends DqReadout {
   readonly warnings: readonly string[];
 }

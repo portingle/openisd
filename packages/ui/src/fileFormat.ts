@@ -1,9 +1,9 @@
 /**
  * The file formats OpenISD reads and writes — DRIVER and PROJECT formats stay two distinct
- * models (QO67 ruling: "distinct pathways for project and driver... no not unified"), but the
+ * models (QO67), but the
  * code common to both — extension classification, the legacy-classic-WinISD test that gates
  * QO62's CP1252 fallback, MIME/label plumbing — lives together in this ONE file, so the set of
- * known extensions is written down once (QO67: "dedupe to the greatest extent").
+ * known extensions is written down once (QO67).
  *
  * Each format is a Java-style enum in the same shape as `driverType.ts`: the extension, the
  * label the save picker shows, and the MIME type, all carried ON the member. No caller compares

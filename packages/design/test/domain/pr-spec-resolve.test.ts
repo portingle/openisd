@@ -51,8 +51,8 @@ describe('radiator Mms, Cms and Rms are calculated', () => {
     for (const f of [spec.Fs_hz, spec.Vas_m3, spec.Qms]) expect(f.dq.length).toBeGreaterThan(0);
   });
 
-  // "PR Vas is disconnected" — an edit is never silent. A catalogue radiator (ND140-PR) states Mms and Cms; QO534
-  // keeps them. A typed Vas marks Vas and Cms; clearing Cms lets the Vas drive it and the charts.
+  // An edit is never silent: a typed Vas must visibly reach the radiator's other figures. A catalogue radiator (ND140-PR)
+  // states Mms and Cms; QO534 keeps them. A typed Vas marks Vas and Cms; clearing Cms lets the Vas drive it and the charts.
   it('a project built with a radiator stating Mms and Cms: a typed Vas marks Vas and Cms, and clearing Cms lets Vas drive', () => {
     const engine = createEngine();
     const driver = driverFromSpec(engine, {
