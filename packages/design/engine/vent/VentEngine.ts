@@ -113,7 +113,9 @@ export class VentEngineImpl implements VentEngine {
             this.tuningFromLength(Vb, 0, area, count, air, endCorrection)));
         }
       } else {
-        params.length_m.setNotAvailable();
+        // A saved calculated length stays when only the tuning is at or below zero: the sweep takes its working tuning from it.
+        const keepsSavedLength = geometryComplete && tuning <= 0 && length !== null && Number.isFinite(length) && length > 0;
+        if (!keepsSavedLength) params.length_m.setNotAvailable();
         // Either the geometry is incomplete, and every way it can be — Vb or area null/≤0 — is also
         // a way VENT_GEOMETRY's own >0 filter counts that same field.
         issues.push(missingDependencies('length_m',

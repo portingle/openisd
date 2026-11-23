@@ -50,12 +50,11 @@ describe('passive-radiator figures in project files', () => {
       const {component} = pr;
       const specs = {'passive-radiator': {...component.specs['passive-radiator'], [figure]: {state, value: 0}}};
       const saved = {...first.saved, box: {...box, passiveRadiator: {...pr, component: {...component, specs}}}};
-      const {project, loadRepairs} = opened(JSON.stringify({...first, saved}));
+      const {project} = opened(JSON.stringify({...first, saved}));
       const field = project.box.passiveRadiator.radiator.spec[figure];
       expect(field.value).toBe(0);
       expect(field.entered).toBe(state === 'E');
       expect(field.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
-      expect(loadRepairs).toEqual([]);
       expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
       expect(project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts'}));
       expect(opened(project.toOwprText()).project.box.passiveRadiator.radiator.spec[figure].value).toBe(0);
@@ -65,8 +64,7 @@ describe('passive-radiator figures in project files', () => {
   it('keeps an invalid resonance on a radiator held by a sealed project', () => {
     const session = opened(owprWithZero('Fs_hz')).project.cloneSession();
     const saved = {...session.saved, box: {...session.saved.box, boxType: 'sealed'}};
-    const {project, loadRepairs} = opened(JSON.stringify({...session, saved}));
-    expect(loadRepairs).toEqual([]);
+    const {project} = opened(JSON.stringify({...session, saved}));
     expect(project.box.passiveRadiator.radiator.spec.Fs_hz.value).toBe(0);
     expect(project.box.passiveRadiator.radiator.spec.Fs_hz.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value'}));
   });
@@ -76,7 +74,6 @@ describe('passive-radiator figures in project files', () => {
     const p = new ProjectBuilder(driver, engine).sealed().volume_m3(0.03).build();
     p.box.boxType.set('box-passive-radiator');
     p.save();
-    expect(opened(p.toOwprText()).loadRepairs).toEqual([]);
   });
 });
 
@@ -85,12 +82,11 @@ describe('passive-radiator figures in WinISD files', () => {
     const plain = wprText('passive radiator');
     const text = plain.replace(/(\[PassiveRadiator\][^\[]*?\nFs=)[^\r\n]*/, '$10');
     expect(text).not.toBe(plain);
-    const {value: project, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+    const {value: project, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
     if (project === null) throw new Error(errors.map(e => e.message).join(', '));
     const spec = project.box.passiveRadiator.radiator.spec;
     expect(spec.Fs_hz.value).toBe(0);
     expect(spec.Fs_hz.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
-    expect(loadRepairs).toEqual([]);
     expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
     expect(project.sweep(DEFAULT_GRID).issues.some(issue =>
       issue.kind === 'approximate-charts' && issue.text.includes('50 g moving mass'))).toBe(true);
@@ -99,11 +95,10 @@ describe('passive-radiator figures in WinISD files', () => {
   it('keeps a tuning that the reference radiator cannot reach and draws its zero-ballast response', () => {
     const text = wprText('passive radiator').replace(/(\[PassiveRadiator\][^\[]*?\nFs=)[^\r\n]*/, '$10')
       .replace(/^Me=.*$/m, '').replace(/^Fr=.*$/m, 'Fr=1000');
-    const {value: project, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+    const {value: project, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
     if (project === null) throw new Error(errors.map(e => e.message).join(', '));
     expect(project.box.passiveRadiator.radiator.spec.Fs_hz.value).toBe(0);
     expect(project.box.passiveRadiator.tuning_goal_hz.value).toBe(1000);
-    expect(loadRepairs).toEqual([]);
     expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
     expect(project.sweep(DEFAULT_GRID).issues.some(issue =>
       issue.kind === 'approximate-charts' && issue.text.includes('0 g of added mass'))).toBe(true);
@@ -114,9 +109,8 @@ describe('passive-radiator figures in WinISD files', () => {
       const plain = wprText('passive radiator');
       const text = plain.replace(new RegExp(`(\\[PassiveRadiator\\][^\\[]*?\\n${key}=)[^\\r\\n]*`), '$10');
       expect(text, `the PR .wpr states ${key}`).not.toBe(plain);
-      const {value, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+      const {value, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
       if (value === null) throw new Error(errors.map(e => e.message).join('; '));
-      expect(loadRepairs).toEqual([]);
       const spec = value.box.passiveRadiator.radiator.spec;
       expect(spec[field].value).toBe(0);
       expect(spec[field].dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));

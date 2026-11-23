@@ -4,7 +4,7 @@
  */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createLogging, visibleMsOf} from '../../src/logging/flash.js';
-import {createLoadRepairNotice} from '../../src/logic/loadRepairNotice.js';
+import {createOpenNotice} from '../../src/logic/openNotice.js';
 
 const LINE = 'Driver input voltage (each) -6 V in the file: set to the 10 mV minimum';
 
@@ -36,7 +36,7 @@ describe('the toast for values repaired on opening', () => {
   it('projects restored together give one toast naming each project and its repairs', () => {
     const shown: string[] = [];
     const turnEnds: (() => void)[] = [];
-    const notice = createLoadRepairNotice(m => shown.push(m), show => turnEnds.push(show));
+    const notice = createOpenNotice(m => shown.push(m), show => turnEnds.push(show));
     notice({projectName: 'first', lines: [LINE]});
     notice({projectName: 'second', lines: [LINE]});
     expect(shown).toEqual([]);

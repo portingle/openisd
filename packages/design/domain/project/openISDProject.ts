@@ -37,10 +37,7 @@ import { ProjectListeners } from './projectListeners.js';
 import { resolveProject, usableRe } from './projectResolve.js';
 import { PROJECT_DEFAULT_DRIVER_WIRING } from './driverWiringDefault.js';
 import { ProjectSignal } from './projectSignal.js';
-import { repairLoaded } from './loadRepair.js';
-import { projectLoadRepairRules, repairedRecord } from './projectLoadRepairRules.js';
 import { enteredEntry } from '../specEntry.js';
-import type { LoadRepairNote } from './loadRepair.js';
 import { TuneLimits } from './tuneLimits.js';
 import { tuneViewOf } from './tuneView.js';
 import type { TuneView } from './tuneView.js';
@@ -65,11 +62,9 @@ import { calculationOpenNote } from './calculationOpenNote.js';
 // this class hands it, never held as a stored collaborator — `cursorF`/`pinnedF`/`cursorLocked`/
 // `dragRange` are the one documented exception, staying as this class's own private fields.
 
-/** A project as it opened, with every value the load repaired (`loadRepair.ts`), one line each for
- *  the opening message. A repaired value carries no mark on its box (QO953.c30, c31). */
+/** A project as it opened. */
 export interface OpenedProject {
     readonly project: OpenISDProject;
-    readonly loadRepairs: readonly LoadRepairNote[];
     readonly calculationNote?: string;
 }
 
@@ -115,17 +110,6 @@ export class OpenISDProject {
         this.#engine = engine;
         this.#appContext = appContext;
         this.#resolve();
-    }
-
-    /** The one load repair pass (`loadRepair.ts`) over the current layer, written directly like a
-     *  resolve's own writes (opening a project is not an edit), then resolved again. Returns the
-     *  repairs made, for the opening message only: a repaired value is a good value, with no mark on
-     *  its box (QO953.c26, c30, c31). The drive level is not repaired: a loaded one stays as stated, marked (QO972). Every door a record enters by runs it. */
-    #repairOnLoad(): readonly LoadRepairNote[] {
-        const root = this.#directRoot();
-        const notes = repairLoaded([...projectLoadRepairRules(root)]);
-        if (notes.length > 0) this.#resolve();
-        return notes;
     }
 
     /** A window onto a driver embedded in `root`'s whole record — `get driver()` below is
@@ -572,9 +556,7 @@ export class OpenISDProject {
      * (the driver precedent, QO81).
      */
     static wrapWithIdentity(json: OpenISDProjectJson, uuid: string, engine: Engine, appContext: AppServices = realAppContext): OpenISDProject {
-        const project = new OpenISDProject(repairedRecord(json).record, uuid, engine, appContext);
-        project.#repairOnLoad();
-        return project;
+        return new OpenISDProject(json, uuid, engine, appContext);
     }
 
     /** Wrap a stored session (saved and edited states) under an adopted identity. */
@@ -582,8 +564,7 @@ export class OpenISDProject {
         return OpenISDProject.#restoreSession(session, engine, appContext).project;
     }
 
-    /** `wrapSession`, with what the load repaired in either layer, one line each for the opening
-     *  message ("Driver input voltage (each) -6 V in the file: set to the 10 mV minimum"). */
+    /** `wrapSession`, with the note the opening carries (`calculationNote`). */
     static openSession(session: OpenISDProjectSessionJson, engine: Engine, appContext: AppServices): OpenedProject {
         const opened = OpenISDProject.#restoreSession(session, engine, appContext);
         const record = opened.project.#current();
@@ -596,23 +577,14 @@ export class OpenISDProject {
     }
 
     static #restoreSession(session: OpenISDProjectSessionJson, engine: Engine, appContext: AppServices): OpenedProject {
-        // The record's own values are repaired before the first resolve, which would otherwise work
-        // a port out from a 0 Hz tuning and lose the length the file gave.
-        const saved = repairedRecord(withNullEmbeddedDriverId(session.saved));
-        const project = new OpenISDProject(saved.record, session.id, engine, appContext);
-        const repairs = [...saved.notes, ...project.#repairOnLoad()];
+        const project = new OpenISDProject(withNullEmbeddedDriverId(session.saved), session.id, engine, appContext);
         if (session.edited) {
-            const edited = repairedRecord(withNullEmbeddedDriverId(session.edited));
-            project.#edited = edited.record;
-            const seenEdited = new Set(repairs.map(n => n.text));
-            repairs.push(...edited.notes.filter(n => !seenEdited.has(n.text)));
+            project.#edited = withNullEmbeddedDriverId(session.edited);
             // The constructor's own resolve() only reached `#saved`, set just above — the
             // edited layer just assigned needs its own (S7-d: recompute on load).
             project.#resolve();
-            const seen = new Set(repairs.map(n => n.text));
-            repairs.push(...project.#repairOnLoad().filter(n => !seen.has(n.text)));
         }
-        return {project, loadRepairs: repairs};
+        return {project};
     }
 
     /** A project text from before ids as the text this build writes for the same project, carrying
@@ -801,7 +773,7 @@ export class OpenISDProject {
 
     /** Like `fromOwprText`, but a field that fails the schema is removed so its default applies
      *  instead of refusing the project; `repaired` names every field that was reset, for the
-     *  user to be told; `loadRepairs` every value the load repair pass set (`openSession`). Refused only when the text is not a project at all. */
+     *  user to be told. Refused only when the text is not a project at all. */
     static fromOwprTextRepairing(text: string, engine: Engine, appContext: AppServices = realAppContext): OpenedProject & { repaired: readonly FieldPath[] } | string[] {
         const parsed = parseOwprSessionRepairing(text, () => appContext.newId());
         if (Array.isArray(parsed)) return parsed;
@@ -869,21 +841,11 @@ export class OpenISDProject {
 
     /** A drive power read from a WinISD `.wpr` (`[SignalSource] P`): stored exactly as the file states it,
      *  never repaired (QO972); a power of 0 W or below, or one driving below 10 mV, is marked by the
-     *  Signal tab's data-quality marks. Returns the record repairs the pass made. Needs a usable Re. */
-    /** The load repair pass, run by an importer that wrote a file's values through the project's own
-     *  fields (a WinISD `.wpr`) once it has written them all. Returns the repairs made. */
-    repairImported(): readonly LoadRepairNote[] {
-        const repairs = this.#repairOnLoad();
-        if (repairs.length > 0) this.#notify();
-        return repairs;
-    }
-
-    loadPowerDrive_W(v: number): readonly LoadRepairNote[] {
+     *  Signal tab's data-quality marks. Needs a usable Re. */
+    loadPowerDrive_W(v: number): void {
         const signal = focus(this.#root(), 'signal');
         signal.set({...signal.value, power_W: enteredEntry(v), voltage_V: undefined});
-        const repairs = this.#repairOnLoad();
         this.#notify();
-        return repairs;
     }
 
     // ── ENVIRONMENT ───────────────────────────────────────────────────────────────────────────

@@ -72,27 +72,6 @@ export type FieldKind = 'number' | 'enum' | 'text' | 'toggle' | 'date';
 export type ValueFloor = 'positive' | 'non-negative' | 'none';
 
 /**
- * What a value loaded from a file (an OpenISD project, a WinISD `.wpr`, a stored project) is
- * repaired to on opening when the field cannot hold it — the one load repair pass
- * (`domain/project/loadRepair.ts`) reads it. Typing such a value is refused with a note instead.
- * The repair is automatic (QO953.c26); it is told in
- * the opening message only, never as a mark on the box (QO953.c30, c31).
- *
- * - `breaks` — which of the field's own rules the loaded value breaks: below `limits.min`, not
- *   past `floor`, or outside `limits` (`band`: below `min` or above `max`).
- * - `to` — the value it is set to, or `'empty'`: the box is emptied, as if the file never gave it.
- *   A 0 counts as clearing the value (QO953.c28): a field
- *   the app can calculate (air density, a port's tuning) is then calculated, an air condition takes
- *   the app's own value (Options).
- * - `described` — how the opening message names that value ("the 10 mV minimum").
- */
-export interface LoadRepair {
-  readonly breaks: 'min' | 'floor' | 'band';
-  readonly to: number | 'empty';
-  readonly described: string;
-}
-
-/**
  * How a spinner press moves a number field (`spinnerStep.ts`).
  *
  * - `proportional` — steps that scale with the value (`spinnerStep.ts`), down to one unit of the
@@ -155,7 +134,6 @@ interface NumberFieldSpec extends FieldSpec {
   readonly minimumReason?: string;
   readonly plausible?: FieldLimits;
   readonly floor?: ValueFloor;
-  readonly loadRepair?: LoadRepair;
   readonly spin?: FieldSpin;
   readonly allowedEmpty?: boolean;
 }
@@ -188,8 +166,6 @@ export class NumberField extends Field {
   readonly plausible: FieldLimits;
   /** Whether zero and negatives are admissible at all. `'none'` where nobody has stated one. */
   readonly floor: ValueFloor;
-  /** What a loaded value this field cannot hold is repaired to on opening; null where nothing is. */
-  readonly loadRepair: LoadRepair | null;
   /** How a spinner press moves the value. */
   readonly spin: FieldSpin;
   /** Whether this field is allowed to stay empty when cleared (e.g. filter fields). */
@@ -206,7 +182,6 @@ export class NumberField extends Field {
     this.minimumReason = spec.minimumReason;
     this.plausible = Object.freeze(spec.plausible ?? spec.limits);
     this.floor = spec.floor ?? 'none';
-    this.loadRepair = spec.loadRepair === undefined ? null : Object.freeze(spec.loadRepair);
     this.spin = spec.spin ?? PROPORTIONAL_SPIN;
     this.allowedEmpty = spec.allowedEmpty ?? false;
   }

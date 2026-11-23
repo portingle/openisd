@@ -300,13 +300,19 @@ function statedTuningIssues(source: ProjectSweepSource, box: SimulatableBoxType)
 
 function ventSweepIssuesOf(source: ProjectSweepSource, box: 'vented' | 'bandpass4' | 'bandpass6' | 'abc'): readonly VentIssue[] {
     const b = source.box;
-    const unusable = unusableTuningPorts(b, box);
     // A port tuning stated at or below zero is charted with a working tuning (`workingTuning`), so what the
-    // resolve reports about that tuning and the length it could not give does not stop the sweep.
-    const stops = (issue: VentIssue): boolean => unusable === 0
-        || !((issue.kind === 'inconsistent-inputs' && issue.target === 'tuning_goal_hz')
-            || (issue.kind === 'missing-dependencies' && issue.target === 'length_m'));
-    const solved = (box === 'bandpass6' || box === 'abc' ? [...source.rearVentIssues, ...source.ventIssues] : source.ventIssues).filter(stops);
+    // resolve reports about that port's tuning and the length it could not give does not stop the sweep. Another
+    // port's issues are kept.
+    const tuningOf = (port: 'rear' | 'front'): TuningField => box === 'vented' ? b.vented.tuning_goal_hz
+        : box === 'bandpass4' ? b.bandpass4.chambers.front.tuning_goal_hz
+            : (box === 'bandpass6' ? b.bandpass6 : b.abc).chambers[port].tuning_goal_hz;
+    const stopping = (issues: readonly VentIssue[], port: 'rear' | 'front'): readonly VentIssue[] => !isUnusableTuning(tuningOf(port))
+        ? issues
+        : issues.filter(issue => !((issue.kind === 'inconsistent-inputs' && issue.target === 'tuning_goal_hz')
+            || (issue.kind === 'missing-dependencies' && issue.target === 'length_m')));
+    const solved = box === 'bandpass6' || box === 'abc'
+        ? [...stopping(source.rearVentIssues, 'rear'), ...stopping(source.ventIssues, 'front')]
+        : stopping(source.ventIssues, 'front');
     if (solved.length) return solved;
     switch (box) {
         case 'vented':
@@ -363,7 +369,7 @@ function workingTuning(
 ): {readonly tuning_hz: number; readonly Leff_m: number | undefined; readonly issue: SweepIssue} | null {
     if (!isUnusableTuning(tuning)) return null;
     const length = vent.length_m.value;
-    const lengthUsable = vent.length_m.entered && length !== null && Number.isFinite(length) && length > 0;
+    const lengthUsable = length !== null && Number.isFinite(length) && length > 0;
     const fromLength = lengthUsable ? vent.tuningIn_hz(Vb) : null;
     const tuning_hz = fromLength !== null && Number.isFinite(fromLength) && fromLength > 0 ? fromLength : fallback_hz;
     const end = vent.endCorrectionLength_m();
