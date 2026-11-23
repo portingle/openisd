@@ -13,7 +13,7 @@ import {NumberField} from '../../fields/field.js';
 import {soundSpeedAt} from '../../engine/air.js';
 import type {OpenISDProjectJson} from '../../domain/openisdSchema.js';
 import {WinIsdProjectConverter} from '../../domain/winIsdProjectConverter.js';
-import {DEFAULT_GRID, loadProject, projectFindings, wprText} from '../fixtures/inputLimitsSweep.js';
+import {DEFAULT_GRID, importWprText, loadProject, projectFindings, wprText} from '../fixtures/inputLimitsSweep.js';
 import type {ProjectName} from '../fixtures/inputLimitsSweep.js';
 
 const engine = createEngine();
@@ -295,5 +295,18 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
       if (key === loss) expect(group.dq[key]).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
       else expect(group.dq[key]).toEqual([]);
     }
+  });
+});
+
+describe('a .wpr that states tuning 0 Hz beside a port length (QO972)', () => {
+  const wpr = wprText('vented').replace(/^Fr=.*$/m, 'Fr=0').replace(/^(\[VentRear\][^[]*?)Fb=.*$/m, '$1Fb=0').replace(/^(\[VentRear\][^[]*?)len=.*$/m, '$1len=0.2');
+
+  it('opens with the 0 Hz and the 0.2 m both as the file states them, the 0 Hz marked', () => {
+    const project = importWprText('vented tuning 0 with a port length', wpr);
+    expect(project.box.vented.tuning_goal_hz.value).toBe(0);
+    expect(project.box.vented.tuning_goal_hz.entered).toBe(true);
+    expect(project.box.vented.tuning_goal_hz.dq.length).toBeGreaterThan(0);
+    expect(project.box.vented.vent.length_m.value).toBe(0.2);
+    expect(project.box.vented.vent.length_m.entered).toBe(true);
   });
 });

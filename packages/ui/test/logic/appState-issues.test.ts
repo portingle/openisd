@@ -237,7 +237,7 @@ it('an unsized vent port surfaces a tuning_goal_hz/length_m error through appSta
     assert.ok(appState.curvesData.value, 'stating a tuning must yield a sweep again');
   });
 
-  it('a vent sweep error reads the identical sentence the cell itself carries as DQ (S2-11)', async () => {
+  it('a vent sweep issue reads the identical sentence the cell itself carries as DQ (S2-11)', async () => {
     appState.newProject();
     appState.requireFocusedProject().box.boxType.set('vented');
     appState.requireFocusedProject().box.vented.volume_m3.set(0.030);
@@ -246,13 +246,13 @@ it('an unsized vent port surfaces a tuning_goal_hz/length_m error through appSta
     // chosen yet" sweep-only guard `#ventSweepIssues` adds on top of an empty cascade result),
     // so the SAME issue instance reaches both the sweep channel and the cell's own DQ.
     appState.requireFocusedProject().box.vented.tuning_goal_hz.set(0);
-    await awaitSweep(() => appState.allIssues.value.some(e => e.field === 'tuning_goal_hz' && e.level === 'error'),
+    await awaitSweep(() => appState.allIssues.value.some(e => e.field === 'tuning_goal_hz' && e.level === 'warn'),
       'the non-physical tuning is reported');
 
     const tuningCell = appState.requireFocusedProject().box.vented.tuning_goal_hz;
     assert.ok(tuningCell.dq.length > 0, 'precondition: the cell must actually carry a DQ');
-    const swept = appState.allIssues.value.find(e => e.field === 'tuning_goal_hz' && e.level === 'error');
-    assert.ok(swept, `appState.allIssues must carry the tuning_goal_hz error; got: ${appState.allIssues.value.map(e => e.field).join(', ')}`);
+    const swept = appState.allIssues.value.find(e => e.field === 'tuning_goal_hz' && e.level === 'warn');
+    assert.ok(swept, `appState.allIssues must carry the tuning_goal_hz warning; got: ${appState.allIssues.value.map(e => e.field).join(', ')}`);
     // The cell may carry further marks of its own (a plausibility mark is appended after the
     // solver's); the sweep channel's sentence must be one of them, verbatim.
     const tuningCellMessages = tuningCell.dq.map(issue => issue.text);

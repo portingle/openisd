@@ -5,6 +5,7 @@
 // (src/hooks/MobileEnclosureTab-hooks.ts). PRBrowser is the app's existing overlay, reused unchanged.
 import {ChartInputs, NumberField, PhoneBoxText, PhoneHelp, PhoneLabels, WinisdDeviation} from '@openisd/design/fields';
 import {selectedOption} from '../../../logic/domEvents.js';
+import {endCorrectionChoices} from '../../../logic/statedOption.js';
 import UIField from '../../components/UIField.vue';
 import UIFixedField from '../../components/UIFixedField.vue';
 import PRBrowser from '../../components/PRBrowser.vue';
@@ -17,7 +18,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prTwoTimesRule,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
 } = useMobileEnclosureTab();
@@ -40,7 +41,7 @@ const {
       <label class="mob-crow-label">End Correction</label>
       <select class="mob-cselect" :value="section.vent.endCorrection_m.value"
               @change="e => { const k = selectedOption(e, END_CORRECTION_OPTIONS); if (k !== null) section.vent.endCorrection_m.set(k); }">
-        <option v-for="o in END_CORRECTION_OPTIONS" :key="o.value" :value="o.value">{{ o.label }} ({{ o.value }})</option>
+        <option v-for="o in endCorrectionChoices(section.vent.endCorrection_m.value)" :key="o.value" :value="o.value">{{ o.label }} ({{ o.value }})</option>
       </select>
     </div>
     <template v-if="section.vent.shape.value === 'slotted'">
@@ -75,8 +76,8 @@ const {
     <section class="mob-csection">
     <PhoneBand :section="PhoneHelp.PR_KEY_FIGURES" />
     <!-- Tapping a key figure opens the editor, as on the Driver tab. -->
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-fs" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_FS_HZ" :value="prKeyFigures.Fs_hz" readonly plain />
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-mms" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.MMS_KG" :value="prKeyFigures.Mms_kg" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-fs" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_FS_HZ" :value="prKeyFigures.Fs_hz" :dq="prKeyFigureMarks.Fs_hz.dq" :dq-warnings="prKeyFigureMarks.Fs_hz.warnings" :dq-state="prKeyFigureMarks.Fs_hz.dqState" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-mms" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.MMS_KG" :value="prKeyFigures.Mms_kg" :dq="prKeyFigureMarks.Mms_kg.dq" :dq-warnings="prKeyFigureMarks.Mms_kg.warnings" :dq-state="prKeyFigureMarks.Mms_kg.dqState" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-sd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_SD_CM2" :value="prKeyFigures.Sd_m2" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-xmax" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_XMAX_MM" :value="prKeyFigures.Xmax_m" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-vd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.VD_M3" :value="prKeyFigures.Vd_m3" readonly plain />

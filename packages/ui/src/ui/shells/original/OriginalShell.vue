@@ -9,6 +9,7 @@
 import {APP_UPDATE_TEXT, ChartInputs, CompatSwitchGroup, DesktopLabels, NO_PROJECT_OPEN, NumberField, ReadoutFormat, TextField, ToggleField, WinisdDeviation} from '@openisd/design/fields';
 import ProvenanceLegend from '../../components/ProvenanceLegend.vue';
 import UIField from '../../components/UIField.vue';
+import {endCorrectionChoices} from '../../../logic/statedOption.js';
 import PortShapeToggle from '../../components/PortShapeToggle.vue';
 import DriverConsistencyList from '../../components/DriverConsistencyList.vue';
 import DriverCoilWiring from '../../components/DriverCoilWiring.vue';
@@ -564,7 +565,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
                   <div class="field">
                     <label>{{ DesktopLabels.VENT_END_CORRECTION }}</label>
                     <select :value="port.vent.endCorrection_m.value" @change="e => { const k = selectedOption(e, END_CORRECTION_OPTIONS); if (k !== null) port.vent.endCorrection_m.set(k); }">
-                      <option v-for="o in END_CORRECTION_OPTIONS" :key="o.value" :value="o.value" :title="o.label">{{ o.compactLabel }} ({{ o.value }})</option>
+                      <option v-for="o in endCorrectionChoices(port.vent.endCorrection_m.value)" :key="o.value" :value="o.value" :title="o.label">{{ o.compactLabel }} ({{ o.value }})</option>
                     </select>
                   </div>
                 </div>

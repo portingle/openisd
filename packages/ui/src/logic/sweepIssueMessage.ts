@@ -9,7 +9,8 @@ import type {DriverError, DriverPrerequisite, SweepIssue} from '@openisd/design/
  */
 export function sweepIssueMessage(issue: SweepIssue): DriverError {
   return {
-    level: 'error',
+    // An approximate-charts issue means the chart is drawn from working values, so it warns and does not block.
+    level: issue.kind === 'approximate-charts' ? 'warn' : 'error',
     // Every `SweepIssue` variant but one names its field `target`; `OutOfRangeIssue` (D14) names
     // it `field` instead, since a range breach describes ONE entered value, never a computed
     // target several fields feed.
