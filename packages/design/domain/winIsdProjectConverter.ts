@@ -26,7 +26,6 @@ import {OpenISDDriver} from './driver/openISDDriver.js';
 import {type DriverFromRecord} from './driverRoundTripDiffs.js';
 import {OpenISDPassiveRadiatorStandalone} from './passiveRadiator/openISDPassiveRadiatorStandalone.js';
 import {OpenISDProject} from './project/openISDProject.js';
-import type {LoadRepairNote} from './project/loadRepair.js';
 import {ProjectBuilder} from './openisdTransforms.js';
 import {type DriverError, type Engine, type Filter} from '../engine/index.js';
 import {ToggleField} from '../fields/field.js';
@@ -260,12 +259,10 @@ function keepSavedLengthWithoutTuning(wpr: WinISDProject, section: string, vent:
   if (!tuningDecides) vent.length_m.set(length);
 }
 
-/** A `.wpr` imported: the project (null when it could not be read), what was wrong with the file,
- *  and every value the load repaired, one line each for the opening message (QO953.c31). */
+/** A `.wpr` imported: the project (null when it could not be read), what was wrong with the file, and notes for the user. */
 export interface ImportedWinIsdProject {
   readonly value: OpenISDProject | null;
   readonly errors: DriverError[];
-  readonly loadRepairs: readonly LoadRepairNote[];
   readonly notes?: readonly string[];
 }
 
@@ -389,7 +386,7 @@ export class WinIsdProjectConverter {
     const driverOrErrors = this.driverFromRecord(record, this.engine);
     if (Array.isArray(driverOrErrors)) {
       for (const problem of driverOrErrors) errors.push({level: 'error', field: 'driver', message: problem});
-      return {value: null, errors, loadRepairs: []};
+      return {value: null, errors};
     }
     const driver: OpenISDDriver = driverOrErrors;
 
@@ -402,14 +399,14 @@ export class WinIsdProjectConverter {
     // read yet.
     if (bTypeRaw == null) {
       errors.push({level: 'error', field: 'BType', message: unsupportedBType(bTypeRaw)});
-      return {value: null, errors, loadRepairs: []};
+      return {value: null, errors};
     }
     switch (bTypeRaw) {
       case 0: {
         const Vr = wpr.number('Box', 'Vr');
         if (Vr == null) {
           errors.push({level: 'error', field: 'Vr', message: 'Closed box: [Box] Vr is missing or not numeric'});
-          return {value: null, errors, loadRepairs: []};
+          return {value: null, errors};
         }
         project = builder.sealed().volume_m3(Vr).build();
         const Qlr = wpr.number('Box', 'Qlr');
@@ -426,7 +423,7 @@ export class WinIsdProjectConverter {
             level: 'error', field: 'Vr/Fr',
             message: 'Vented box: [Box] Vr and/or Fr is missing or not numeric',
           });
-          return {value: null, errors, loadRepairs: []};
+          return {value: null, errors};
         }
         project = builder.vented().volume_m3(Vr).tuning_goal_hz(Fr).build();
         const Qlr = wpr.number('Box', 'Qlr');
@@ -452,7 +449,7 @@ export class WinIsdProjectConverter {
             level: 'error', field: 'Vr/Vf/Ff',
             message: '4th Order Bandpass box: [Box] Vr, Vf and/or Ff is missing or not numeric',
           });
-          return {value: null, errors, loadRepairs: []};
+          return {value: null, errors};
         }
         project = builder.bandpass4().rearVolume_m3(Vr).frontVolume_m3(Vf).frontTuning_hz(Ff).build();
         const rearLosses = project.box.bandpass4.chambers.rear.losses;
@@ -489,7 +486,7 @@ export class WinIsdProjectConverter {
             level: 'error', field: 'Vr/Fr',
             message: 'Passive Radiator box: [Box] Vr and/or Fr is missing or not numeric',
           });
-          return {value: null, errors, loadRepairs: []};
+          return {value: null, errors};
         }
         const manual = (v: number): SpecEntryJson => ({state: 'E', value: v});
         // The .wpr states only Vas/Qms/Fs/Sd/Xmax; the project's resolve derives Mms, Cms and Rms.
@@ -519,9 +516,7 @@ export class WinIsdProjectConverter {
         // check involved — lets `systemTuning_hz` recompute Fr as the OUTPUT it already is, self-
         // consistently, instead of fighting the pair the other way.
         project = builder.passiveRadiator().volume_m3(Vr).tuning_goal_hz(Fr).radiator(radiator).build();
-        // The file's count is written after the build, like the other loaded values, so the repair
-        // pass at the end (`repairImported`) names a count it repairs; the builder's own repair is
-        // silent (T928).
+        // The file's count is written after the build, like the other loaded values.
         project.box.passiveRadiator.count.set(Npr);
         const me = wpr.number('PassiveRadiator', 'Me');
         if (me != null) project.box.passiveRadiator.addedMass_kg.set(me);
@@ -541,7 +536,7 @@ export class WinIsdProjectConverter {
             level: 'error', field: 'Vr/Fr/Vf/Ff',
             message: '6th Order Bandpass box: [Box] Vr, Fr, Vf and/or Ff is missing or not numeric',
           });
-          return {value: null, errors, loadRepairs: []};
+          return {value: null, errors};
         }
         project = builder.bandpass6()
           .rearVolume_m3(Vr).rearTuning_hz(Fr).frontVolume_m3(Vf).frontTuning_hz(Ff).build();
@@ -571,7 +566,7 @@ export class WinIsdProjectConverter {
             level: 'error', field: 'Vr/Fr/Vf/Ff',
             message: 'ABC box: [Box] Vr, Fr, Vf and/or Ff is missing or not numeric',
           });
-          return {value: null, errors, loadRepairs: []};
+          return {value: null, errors};
         }
         project = builder.abc()
           .rearVolume_m3(Vr).rearTuning_hz(Fr).frontVolume_m3(Vf).frontTuning_hz(Ff).build();
@@ -603,7 +598,7 @@ export class WinIsdProjectConverter {
       }
       default: {
         errors.push({level: 'error', field: 'BType', message: unsupportedBType(bTypeRaw)});
-        return {value: null, errors, loadRepairs: []};
+        return {value: null, errors};
       }
     }
 
@@ -639,7 +634,7 @@ export class WinIsdProjectConverter {
     const P = wpr.number('SignalSource', 'P');
     // P can be stated only against a usable Re; without one the voltage stands alone.
     const Re_ohm = project.driver.specs.Re_ohm.value;
-    const powerRepairs = P != null && Re_ohm !== null && Re_ohm > 0 ? project.loadPowerDrive_W(P) : [];
+    if (P != null && Re_ohm !== null && Re_ohm > 0) project.loadPowerDrive_W(P);
     const description = wpr.value('ProjectInfo', 'Description');
     const creator = wpr.value('ProjectInfo', 'Creator');
     const created = wpr.value('ProjectInfo', 'CreateDate');
@@ -650,14 +645,11 @@ export class WinIsdProjectConverter {
     if (modified != null) project.modified.set(modified);
 
     project.filters.set(this.#importFilters(wpr,  errors));
-    // Every value the file gave that a field cannot hold (an air pressure of 0, a driver count of 0)
-    // is repaired as any opened project's is, and named in the opening message.
-    const loadRepairs = [...powerRepairs, ...project.repairImported()];
 
     const notes = project.loading.value === 'isobaric'
       ? [`Opened with the coils in parallel. Tick "${ToggleField.PROJECT_WINISDISOBARIK.label}" in the Driver tab to see WinISD's result: 6 dB quieter than one driver at the same voltage, with one driver's impedance.`]
       : [];
-    return {value: project, errors, loadRepairs, notes};
+    return {value: project, errors, notes};
   }
 
   /** `[Filters]` values: `Count`, plus `filter<i>type`/`filter<i>params` renumbered sequentially

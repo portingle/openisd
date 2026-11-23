@@ -66,8 +66,7 @@ export interface ProjectRepo {
   /** A design parsed from opened file TEXT — File → Open's JSON branch. Project only (QO90);
    *  same validator every other door uses, so a payload another door wrote loads identically. */
   readProjectText(text: string): OpenISDProject | string[];
-  /** `readProjectText`, with every value the load repaired, one line each for the opening message
-   *  (QO953.c31): File → Open of a project file. */
+  /** `readProjectText`, with the note the opening carries (`calculationNote`): File → Open of a project file. */
   openProjectText(text: string): OpenedProject | string[];
   /** Write to the previously-picked file (first save prompts). `naming` carries the
    *  suggested filename and the picker's format bits. */
@@ -162,16 +161,15 @@ export interface ProjectRepairReport {
   readonly backupKey: string | null;
 }
 
-/** A project whose values the load repaired on opening (a series resistance below 0 Ω set to 0 Ω,
- *  `OpenISDProject.openSession`): the user is told by a toast, one line per repair (QO953.c31). */
-export interface LoadRepairReport {
+/** A project opened with something to tell the user (its readouts now calculated from the typed driver values): shown as a toast, one line per note. */
+export interface OpenNoticeReport {
   readonly projectName: string;
   readonly lines: readonly string[];
 }
 
-/** Who tells the user about a load repair: this repo ('tell'), the caller that shows them itself
+/** Who tells the user what opening a project has to say: this repo ('tell'), the caller that shows it itself
  *  ('caller'), or nobody, for a read that opens nothing ('silent'). */
-type LoadRepairTelling = 'tell' | 'caller' | 'silent';
+type OpenNoticeTelling = 'tell' | 'caller' | 'silent';
 
 /** One project saved in browser storage, as the Open project list shows it. An entry whose text
  *  would not read even after repair is `unreadable`: it has a name but no summary. */
@@ -332,7 +330,7 @@ export function createProjectRepo(
   exportedFiles: ExportedFiles,
   onRepaired: (report: ProjectRepairReport) => void,
   onSaved: () => void,
-  onLoadRepaired: (report: LoadRepairReport) => void,
+  onOpenNotice: (report: OpenNoticeReport) => void,
 ): ProjectRepo {
   const upgrade = createProjectSchemaUpgrade(engine);
   let lastSavedAt = 0;
@@ -340,16 +338,15 @@ export function createProjectRepo(
   /** Upgrade and parse `text`, resetting any field the schema refuses. When a field was reset,
    *  the stored record it came from is backed up (before anything can write over it) and the
    *  repair is reported. `source` is null for a file or a link, which still hold the original. */
-  function readRepairing(text: string, source: StoredSource | null, tell: LoadRepairTelling): OpenISDProject | string[] {
+  function readRepairing(text: string, source: StoredSource | null, tell: OpenNoticeTelling): OpenISDProject | string[] {
     const opened = openRepairing(text, source, tell);
     return Array.isArray(opened) ? opened : opened.project;
   }
 
-  /** `readRepairing`, with every value the load repair pass set (`OpenISDProject.openSession`). With
-   *  `tell` 'tell', those repairs are reported through `onLoadRepaired` (QO953.c31: a repair on opening is
-   *  told by a toast); 'caller' leaves them to the caller, which shows them itself; 'silent' is for a read
+  /** `readRepairing`, with the opened project's notes. With `tell` 'tell', the notes are reported through
+   *  `onOpenNotice` (a toast); 'caller' leaves them to the caller, which shows them itself; 'silent' is for a read
    *  that opens nothing (a listing, an id check). */
-  function openRepairing(text: string, source: StoredSource | null, tell: LoadRepairTelling): OpenedProject | string[] {
+  function openRepairing(text: string, source: StoredSource | null, tell: OpenNoticeTelling): OpenedProject | string[] {
     let parsed: unknown;
     try { parsed = JSON.parse(text); } catch { return ['not valid JSON']; }
     // The same upgrade every door applies, so a design saved by an older build opens anywhere.
@@ -367,15 +364,13 @@ export function createProjectRepo(
       });
     }
     if (tell === 'tell') {
-      const lines = result.loadRepairs.map(repair => repair.text);
-      if (result.calculationNote !== undefined) lines.push(result.calculationNote);
-      if (lines.length > 0) onLoadRepaired({projectName: result.project.name.value, lines});
+      if (result.calculationNote !== undefined) onOpenNotice({projectName: result.project.name.value, lines: [result.calculationNote]});
     }
     return result;
   }
 
   /** A design read from opened file text (a file, a backup being restored, an archive entry). */
-  function openExportedText(text: string, tell: LoadRepairTelling): OpenedProject | string[] {
+  function openExportedText(text: string, tell: OpenNoticeTelling): OpenedProject | string[] {
     const opened = exportedFiles.open(text);
     if (opened.kind === 'newer') {
       return [`this file was saved by a newer OpenISD (its layout ${opened.layout}; this OpenISD reads up to layout ${opened.reads}). The file is unchanged: reload this page to get the latest OpenISD, then open it again`];

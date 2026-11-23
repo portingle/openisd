@@ -41,13 +41,12 @@ function openBoth(woofer: DriverSpecsSection) {
 
 describe('Driver dimensions on opening', () => {
   it.each(dimensions)('keeps and flags an out-of-range %s in .owdr and .owpr files', (key, value) => {
-    const {driver, project: {project, loadRepairs}} = openBoth({[key]: {state: 'E', value}});
+    const {driver, project: {project}} = openBoth({[key]: {state: 'E', value}});
     for (const {specs} of [driver, project.driver]) {
       expect(specs[key].value).toBe(value);
       expect(specs[key].entered).toBe(true);
       expect(specs[key].dq).toContainEqual(expect.objectContaining({kind: 'out-of-range', field: key}));
     }
-    expect(loadRepairs).toEqual([]);
     expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
   });
 
@@ -61,7 +60,6 @@ describe('Driver dimensions on opening', () => {
       expect(specs.MagDepth_m.entered).toBe(true);
       expect(specs.MagDepth_m.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
     }
-    expect(project.loadRepairs).toEqual([]);
     expect(projectFindings(project.project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
 
     const empty = openBoth({...magnetGeometry, MagDepth_m: {state: 'N'}});
@@ -85,7 +83,6 @@ describe('Driver dimensions on opening', () => {
           expect(loaded.specs[key].dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value}));
         }
       }
-      expect(project.loadRepairs).toEqual([]);
       expect(projectFindings(project.project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
     }
   });
@@ -100,7 +97,6 @@ describe('Driver dimensions on opening', () => {
       .toEqual({state: 'E', value: 0});
     expect(opened.project.driver.specs.MagDepth_m.value).toBe(66);
     expect(opened.project.driver.specs.MagDepth_m.dq).toContainEqual(expect.objectContaining({kind: 'out-of-range'}));
-    expect(opened.loadRepairs).toEqual([]);
     expect(projectFindings(opened.project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
 
     await opened.project.cancel(async () => true);

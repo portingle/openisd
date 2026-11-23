@@ -32,24 +32,22 @@ function wprWithNpr(n: string): OpenedProject {
   const plain = wprText('passive radiator');
   const text = plain.replace('\nNpr=1\n', `\nNpr=${n}\n`);
   expect(text, 'the passive-radiator W5 file states Npr=1').not.toBe(plain);
-  const {value, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+  const {value, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
   if (value === null) throw new Error(errors.map(e => e.message).join('; '));
-  return {project: value, loadRepairs};
+  return {project: value};
 }
 
 describe('a passive-radiator count below 1 in a file opens as saved (QO972)', () => {
-  it('the Num. of PRs field states no load repair', () => {
-    expect(NumberField.PR_NUM.loadRepair).toBeNull();
+  it('the Num. of PRs field has a minimum of 1', () => {
     expect(NumberField.PR_NUM.limits.min).toBe(1);
   });
 
   for (const count of [0, -2]) {
     it(`a project file with ${count} radiators opens with ${count}, the warning on the count, and charts drawn with 1`, () => {
-      const {project, loadRepairs} = opened(owprWithCount(count));
+      const {project} = opened(owprWithCount(count));
       expect(project.box.passiveRadiator.count.value).toBe(count);
       expect(project.box.passiveRadiator.workingCount()).toBe(1);
       expect(project.box.passiveRadiator.countDq).toEqual([expect.stringContaining(PRS)]);
-      expect(loadRepairs).toEqual([]);
       const result = projectFindings(project, DEFAULT_GRID);
       expect(result.findings).toEqual([]);
       expect(result.refused).toBe(false);
@@ -60,18 +58,16 @@ describe('a passive-radiator count below 1 in a file opens as saved (QO972)', ()
   }
 
   it('a WinISD file with Npr=0 opens with 0 radiators, no repair named, and charts drawn with 1', () => {
-    const {project, loadRepairs} = wprWithNpr('0');
+    const {project} = wprWithNpr('0');
     expect(project.box.passiveRadiator.count.value).toBe(0);
-    expect(loadRepairs).toEqual([]);
     const result = projectFindings(project, DEFAULT_GRID);
     expect(result.findings).toEqual([]);
     expect(result.refused).toBe(false);
   });
 
   it('a project file with 2 radiators opens unchanged with no warning', () => {
-    const {project, loadRepairs} = opened(owprWithCount(2));
+    const {project} = opened(owprWithCount(2));
     expect(project.box.passiveRadiator.count.value).toBe(2);
     expect(project.box.passiveRadiator.countDq).toEqual([]);
-    expect(loadRepairs).toEqual([]);
   });
 });

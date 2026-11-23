@@ -12,7 +12,6 @@ import type {OpenedProject} from '../../domain/project/openISDProject.js';
 import {NumberField} from '../../fields/field.js';
 import {soundSpeedAt} from '../../engine/air.js';
 import type {OpenISDProjectJson} from '../../domain/openisdSchema.js';
-import {repairedRecord} from '../../domain/project/projectLoadRepairRules.js';
 import {WinIsdProjectConverter} from '../../domain/winIsdProjectConverter.js';
 import {DEFAULT_GRID, loadProject, projectFindings, wprText} from '../fixtures/inputLimitsSweep.js';
 import type {ProjectName} from '../fixtures/inputLimitsSweep.js';
@@ -58,12 +57,11 @@ describe('a loaded impossible air value is shown as the file states it, with its
 
   for (const c of cases) {
     it(`${c.key} ${c.value} in a project file stays ${c.value}, entered, marked, nothing repaired, and the charts are finite`, () => {
-      const {project, loadRepairs} = opened(owprWith('sealed', withAir(c.key, c.value)));
+      const {project} = opened(owprWith('sealed', withAir(c.key, c.value)));
       const field = c.read(project);
       expect(field.value).toBe(c.value);
       expect(field.entered).toBe(true);
       expect(field.dq.length).toBeGreaterThan(0);
-      expect(loadRepairs).toEqual([]);
       const result = projectFindings(project, DEFAULT_GRID);
       expect(result.findings).toEqual([]);
     });
@@ -73,9 +71,8 @@ describe('a loaded impossible air value is shown as the file states it, with its
     const plain = wprText('sealed');
     const text = plain.replace('T=293.15\n', 'T=0\n').replace('p=101325\n', 'p=0\n').replace('phi=0.3\n', 'phi=2\n');
     expect(text, 'the sealed W5 file states T, p and phi').not.toBe(plain);
-    const {value, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+    const {value, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
     if (value === null) throw new Error(errors.map(e => e.message).join('; '));
-    expect(loadRepairs).toEqual([]);
     expect(value.envTempK.value).toBe(0);
     expect(value.envPressurePa.value).toBe(0);
     expect(value.envHumidityPct.value).toBe(200);
@@ -83,8 +80,7 @@ describe('a loaded impossible air value is shown as the file states it, with its
   });
 
   it('odd but possible air in a file (pressure 5000 Pa, 330 K, 60 %) is kept as it is and nothing is repaired', () => {
-    const {project, loadRepairs} = opened(owprWith('sealed', r => withAir('temperature_K', 330)(withAir('humidity_pct', 60)(withAir('pressure_Pa', 5000)(r)))));
-    expect(loadRepairs).toEqual([]);
+    const {project} = opened(owprWith('sealed', r => withAir('temperature_K', 330)(withAir('humidity_pct', 60)(withAir('pressure_Pa', 5000)(r)))));
     expect(project.envPressurePa.value).toBe(5000);
     expect(project.envPressurePa.entered).toBe(true);
     expect(project.envTempK.value).toBe(330);
@@ -132,10 +128,9 @@ describe('the air boxes warn outside their normal band, keeping and using the va
 
 describe('the driver count, series resistance, box tunings, port lengths, losses and radiator count and added mass stay as the file states them (QO972)', () => {
   it('driver count 0 and series resistance -2 Ω stay as the file states them; the sweep says so with its existing refusal, nothing is non-finite', () => {
-    const {project, loadRepairs} = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, nDrivers: 0, Rs_ohm: -2}})));
+    const {project} = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, nDrivers: 0, Rs_ohm: -2}})));
     expect(project.nDrivers.value).toBe(0);
     expect(project.Rs_ohm.value).toBe(-2);
-    expect(loadRepairs).toEqual([]);
     const swept = project.sweep(DEFAULT_GRID);
     expect(swept.values).toBeNull();
     expect(swept.issues.map(i => [i.kind, i.text])).toEqual(expect.arrayContaining([
@@ -157,10 +152,9 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
   });
 
   it("a sealed box keeps Ql 0 and Qa -1 and labels the chart calculation with Ql 10 and Qa 100", () => {
-    const {project, loadRepairs} = opened(owprWith('sealed', r => ({...r, box: {...r.box, sealed: {...r.box.sealed, losses: {Ql: 0, Qa: -1}}}})));
+    const {project} = opened(owprWith('sealed', r => ({...r, box: {...r.box, sealed: {...r.box.sealed, losses: {Ql: 0, Qa: -1}}}})));
     expect(project.box.sealed.losses.Ql.value).toBe(0);
     expect(project.box.sealed.losses.Qa.value).toBe(-1);
-    expect(loadRepairs).toEqual([]);
     const plan = project.sweepPlan(DEFAULT_GRID);
     expect(plan.kind === 'ready' && [plan.job.sweep.Ql, plan.job.sweep.Qa]).toEqual([10, 100]);
     expect(project.sweep(DEFAULT_GRID).issues).toEqual(expect.arrayContaining([
@@ -171,10 +165,9 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
   });
 
   it('a vented box keeps port Qp -1 and calculates the charts with Qp 100', () => {
-    const {project, loadRepairs} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
+    const {project} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
       ...r.box.vented, chamber: {...r.box.vented.chamber, losses: {...r.box.vented.chamber.losses, Qp: -1}},
     }}})));
-    expect(loadRepairs).toEqual([]);
     expect(project.box.vented.losses.Qp.value).toBe(-1);
     const plan = project.sweepPlan(DEFAULT_GRID);
     expect(plan.kind === 'ready' && plan.job.sweep.Qp).toBe(100);
@@ -183,12 +176,11 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
   });
 
   it('a vented box saved with tuning 0 Hz and a port length of 0.2 m keeps both and charts at the tuning that length gives', () => {
-    const {project, loadRepairs} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
+    const {project} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
       ...r.box.vented,
       chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: 0}},
       vent: {...r.box.vented.vent, length_m: {state: 'E', value: 0.2}},
     }}})));
-    expect(loadRepairs).toEqual([]);
     expect(project.box.vented.tuning_goal_hz.value).toBe(0);
     expect(project.box.vented.tuning_goal_hz.entered).toBe(true);
     expect(project.box.vented.vent.length_m.value).toBe(0.2);
@@ -205,12 +197,11 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
   });
 
   it('a vented box saved with tuning 0 Hz and no usable port length keeps the 0 Hz and charts at 35 Hz', () => {
-    const {project, loadRepairs} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
+    const {project} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
       ...r.box.vented,
       chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: 0}},
       vent: {...r.box.vented.vent, length_m: undefined},
     }}})));
-    expect(loadRepairs).toEqual([]);
     expect(project.box.vented.tuning_goal_hz.value).toBe(0);
     expect(project.box.vented.tuning_goal_hz.dq.length).toBeGreaterThan(0);
     const plan = project.sweepPlan(DEFAULT_GRID);
@@ -235,30 +226,21 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
     const before = loadProject('vented');
     const Fb = before.box.vented.tuning_goal_hz.value;
     expect(Fb).not.toBeNull();
-    const {project, loadRepairs} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
+    const {project} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
       chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: Fb ?? 0}},
       vent: {...r.box.vented.vent, length_m: {state: 'E', value: -0.05}},
     }}})));
     // The project file reader's own repair (`repaired`) already drops a negative entry; the load
     // repair pass is the same rule for a record that reaches it another way (a stored session).
-    expect(loadRepairs).toEqual([]);
     expect(project.box.vented.vent.length_m.value).toBe(before.box.vented.vent.length_m.value);
     expectCharts(project);
   });
 
-  it('the record repair leaves a negative entered port length as the file states it', () => {
-    const r = loadProject('vented').cloneSession().saved;
-    const {record, notes} = repairedRecord({...r, box: {...r.box, vented: {...r.box.vented, vent: {...r.box.vented.vent, length_m: {state: 'E', value: -0.05}}}}});
-    expect(notes).toEqual([]);
-    expect(record.box.vented.vent.length_m).toEqual({state: 'E', value: -0.05});
-  });
-
   it('a 6th-order bandpass saved with Frc 0 Hz keeps it and charts the rear chamber at 35 Hz', () => {
-    const {project, loadRepairs} = opened(owprWith('bandpass6', r => ({...r, box: {...r.box, bandpass6: {...r.box.bandpass6,
+    const {project} = opened(owprWith('bandpass6', r => ({...r, box: {...r.box, bandpass6: {...r.box.bandpass6,
       rear: {...r.box.bandpass6.rear, tuning_goal_hz: {state: 'E', value: 0}},
       rearVent: {...r.box.bandpass6.rearVent, length_m: undefined},
     }}})));
-    expect(loadRepairs).toEqual([]);
     expect(project.box.bandpass6.chambers.rear.tuning_goal_hz.value).toBe(0);
     expect(project.box.bandpass6.chambers.rear.tuning_goal_hz.dq.length).toBeGreaterThan(0);
     const plan = project.sweepPlan(DEFAULT_GRID);
@@ -270,7 +252,6 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
   it('a passive radiator count of 0 and an added mass of -0.01 kg open as saved and chart with 1 radiator and 0 g', () => {
     const pr = opened(owprWith('passive radiator', r => ({...r, box: {...r.box, passiveRadiator: {...r.box.passiveRadiator,
       count: 0, addedMass_kg: {state: 'E', value: -0.01}}}})));
-    expect(pr.loadRepairs).toEqual([]);
     expect(pr.project.box.passiveRadiator.count.value).toBe(0);
     expect(pr.project.box.passiveRadiator.addedMass_kg.value).toBe(-0.01);
     expect(pr.project.box.passiveRadiator.countDq.length).toBe(1);
@@ -285,9 +266,8 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
   });
 
   it('an ABC connecting port length of -0.01 m opens as saved and charts with the 5 cm starting length', () => {
-    const {project, loadRepairs} = opened(owprWith('abc', r => ({...r, box: {...r.box, abc: {...r.box.abc,
+    const {project} = opened(owprWith('abc', r => ({...r, box: {...r.box, abc: {...r.box.abc,
       intraVent: {...r.box.abc.intraVent, length_m: {state: 'E', value: -0.01}}}}})));
-    expect(loadRepairs).toEqual([]);
     expect(project.box.abc.vents.intra.length_m.value).toBe(-0.01);
     expect(project.box.abc.vents.intra.length_m.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value'}));
     const plan = project.sweepPlan(DEFAULT_GRID);
@@ -298,7 +278,6 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
 
   it('a 4th-order bandpass Qicl of 0 opens as the file states it, with the warning on the field and approximate charts', () => {
     const bp4 = opened(owprWith('bandpass4', r => ({...r, box: {...r.box, bandpass4: {...r.box.bandpass4, Qiclfr: 0}}})));
-    expect(bp4.loadRepairs).toEqual([]);
     expect(bp4.project.box.bandpass4.Qiclfr.value).toBe(0);
     const [group] = bp4.project.box.lossGroupsOf('bandpass4');
     expect(group.dq.Qicl).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
@@ -316,11 +295,5 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
       if (key === loss) expect(group.dq[key]).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
       else expect(group.dq[key]).toEqual([]);
     }
-  });
-
-  it('a project opened from a repaired file (an emptied tuning) copies with nothing left to repair', () => {
-    const {project} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {...r.box.vented, chamber: {...r.box.vented.chamber, tuning_goal_hz: {state: 'E', value: 0}}}}})));
-    expect(opened(project.toOwprText()).loadRepairs).toEqual([]);
-    expect(opened(project.toStoredText()).loadRepairs).toEqual([]);
   });
 });

@@ -24,7 +24,7 @@ function owprWithSignal(signal: OpenISDProjectJson['signal']): string {
   return JSON.stringify({...session, saved: {...(session.edited ?? session.saved), signal}, edited: null}, null, 2);
 }
 
-/** An `.owpr` text opened as File > Open opens it: the project and what the load repaired. */
+/** An `.owpr` text opened as File > Open opens it: the project. */
 function opened(text: string): OpenedProject {
   const result = OpenISDProject.fromOwprTextRepairing(text, engine);
   if (Array.isArray(result)) throw new Error(`the project did not open: ${result.join('; ')}`);
@@ -36,9 +36,9 @@ function wprWithPower(P: string): OpenedProject {
   const plain = wprText('sealed');
   const text = plain.replace('[SignalSource]\nRg=0.1\nP=1.0\n', `[SignalSource]\nRg=0.1\nP=${P}\n`);
   expect(text, 'the sealed W5 file states P=1.0').not.toBe(plain);
-  const {value, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
+  const {value, errors} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
   if (value === null) throw new Error(errors.map(e => e.message).join('; '));
-  return {project: value, loadRepairs};
+  return {project: value};
 }
 
 
@@ -50,26 +50,23 @@ function expectFiniteCharts(project: OpenISDProject): void {
 }
 
 describe('a drive voltage a file states is kept as stated, with its mark (QO972)', () => {
-  it('the Driver input voltage field states no load repair any more', () => {
-    expect(NumberField.SIGNAL_DRIVEV_V.loadRepair).toBeNull();
+  it('the Driver input voltage field has a 10 mV minimum', () => {
     expect(NumberField.SIGNAL_DRIVEV_V.limits.min).toBe(0.01);
   });
 
   it('a project file with Driver input voltage 5 mV stays 5 mV, marked outside-normal-band, nothing repaired, the charts draw', () => {
-    const {project, loadRepairs} = opened(owprWithSignal({voltage_V: {state: 'E', value: 0.005}}));
+    const {project} = opened(owprWithSignal({voltage_V: {state: 'E', value: 0.005}}));
     expect(project.driveVoltage_V.value).toBe(0.005);
     expect(project.driveVoltage_V.entered).toBe(true);
     expect(project.driveVoltage_V.dq.map(i => i.kind)).toEqual(['outside-normal-band']);
-    expect(loadRepairs).toEqual([]);
     expectFiniteCharts(project);
   });
 
   for (const V of [-6, 0]) {
     it(`a project file with Driver input voltage ${V} V stays ${V} V, marked invalid-value, nothing repaired, the charts draw at the reference drive`, () => {
-      const {project, loadRepairs} = opened(owprWithSignal({voltage_V: {state: 'E', value: V}}));
+      const {project} = opened(owprWithSignal({voltage_V: {state: 'E', value: V}}));
       expect(project.driveVoltage_V.value).toBe(V);
       expect(project.driveVoltage_V.dq.map(i => i.kind)).toEqual(['invalid-value']);
-      expect(loadRepairs).toEqual([]);
       expect(project.signal.sweepVoltage_V).toBe(REFERENCE_DRIVE_VOLTAGE_V);
       expect(project.driveVoltage_V.value, 'the reference never lands in the field').toBe(V);
       expectFiniteCharts(project);
@@ -86,49 +83,43 @@ describe('a drive voltage a file states is kept as stated, with its mark (QO972)
     if (Array.isArray(reopened)) throw new Error(reopened.join('; '));
     expect(reopened.project.driveVoltage_V.value).toBe(-6);
     expect(reopened.project.driveVoltage_V.dq.map(i => i.kind)).toEqual(['invalid-value']);
-    expect(reopened.loadRepairs).toEqual([]);
     expectFiniteCharts(reopened.project);
   });
 
   it('a file within the limits opens unchanged, with no mark and nothing repaired', () => {
-    const {project, loadRepairs} = opened(owprWithSignal({voltage_V: {state: 'E', value: 2}}));
+    const {project} = opened(owprWithSignal({voltage_V: {state: 'E', value: 2}}));
     expect(project.driveVoltage_V.value).toBe(2);
     expect(project.driveVoltage_V.dq).toEqual([]);
-    expect(loadRepairs).toEqual([]);
-    expect(wprWithPower('2').loadRepairs).toEqual([]);
   });
 });
 
 describe('a system input power a file states is kept as stated, with its mark (QO972)', () => {
   it('a positive power that drives below 10 mV stays as stated, marked outside-normal-band, and the sweep runs at its voltage', () => {
     // 6.25 uW into the sealed W5's Re: the amplifier voltage is under 10 mV.
-    const {project, loadRepairs} = opened(owprWithSignal({power_W: {state: 'E', value: 6.25e-6}}));
+    const {project} = opened(owprWithSignal({power_W: {state: 'E', value: 6.25e-6}}));
     expect(project.powerDrive_W.value).toBe(6.25e-6);
     expect(project.powerDrive_W.entered).toBe(true);
     expect(project.driveVoltage_V.value).toBeLessThan(0.01);
     expect(project.powerDrive_W.dq.map(i => i.kind)).toEqual(['outside-normal-band']);
-    expect(loadRepairs).toEqual([]);
     expectFiniteCharts(project);
   });
 
   for (const P of [0, -6]) {
     it(`a project file with System input power ${P} W stays ${P} W, marked invalid-value, never square-rooted, the charts draw`, () => {
-      const {project, loadRepairs} = opened(owprWithSignal({power_W: {state: 'E', value: P}}));
+      const {project} = opened(owprWithSignal({power_W: {state: 'E', value: P}}));
       expect(project.powerDrive_W.value).toBe(P);
       expect(project.powerDrive_W.entered).toBe(true);
       expect(project.powerDrive_W.dq.map(i => i.kind)).toEqual(['invalid-value']);
       expect(Number.isFinite(project.driveVoltage_V.value)).toBe(true);
-      expect(loadRepairs).toEqual([]);
       expectFiniteCharts(project);
     });
   }
 
   for (const P of ['0', '-6']) {
     it(`a WinISD .wpr with P=${P} keeps ${P} W, marked invalid-value, nothing repaired, and the charts draw`, () => {
-      const {project, loadRepairs} = wprWithPower(P);
+      const {project} = wprWithPower(P);
       expect(project.powerDrive_W.value).toBe(Number(P));
       expect(project.powerDrive_W.dq.map(i => i.kind)).toEqual(['invalid-value']);
-      expect(loadRepairs).toEqual([]);
       expectFiniteCharts(project);
     });
   }
@@ -164,8 +155,6 @@ describe('a typed drive level is unchanged: below 10 mV is refused, the old valu
 describe('Duplicate, What-if and a snapshot copy a loaded drive level exactly as stated (QO972)', () => {
   it('a project opened from a -6 V file copies as -6 V, and opening the copy repairs nothing', () => {
     const {project} = opened(owprWithSignal({voltage_V: {state: 'E', value: -6}}));
-    expect(opened(project.toOwprText()).loadRepairs).toEqual([]);
-    expect(opened(project.toStoredText()).loadRepairs).toEqual([]);
     expect(project.committedSnapshot().driveVoltage_V.value).toBe(-6);
     project.beginWhatIf();
     expect(project.driveVoltage_V.value).toBe(-6);
