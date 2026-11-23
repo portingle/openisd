@@ -160,7 +160,7 @@ export function resolveProject(ctx: ProjectResolveContext): ProjectIssues {
             Vb_m3: inputOf(() => p.volume_m3.value || box.vented.volume_m3.value),
             // The figures the charts use (QO534; QO539 ticked: as WinISD works them out), so no readout contradicts its chart.
             prMmd_kg: inputOf(() => p.chartMechanics().Mms_kg),
-            prSd_m2: inputOf(() => r.spec.Sd_m2.value),
+            prSd_m2: inputOf(() => p.chartMechanics().Sd_m2),
             prCms_m_per_N: inputOf(() => p.chartMechanics().Cms_m_per_N),
             prNum: inputOf(() => p.count.value),
         }, air);

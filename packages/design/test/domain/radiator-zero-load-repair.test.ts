@@ -1,8 +1,7 @@
 /**
- * A passive radiator a project file holds with Fs or Mms of 0 opens exactly as the file states it, with the invalid-value
- * warning on that figure and finite charts drawn from the other figures. A Sd, Cms, Qms, Vas or Rms of 0 is repaired on
- * opening: it counts as an empty box, so a figure the app can calculate from the others is recalculated and shown as
- * calculated, any other stays empty, and the opening message names each repair.
+ * A passive radiator a project file holds with Fs, Mms, Sd, Cms, Qms, Vas or Rms of 0 opens exactly as the file states it,
+ * with the invalid-value warning on that figure and finite charts drawn from the other figures (reference values stand in
+ * for a moving mass, compliance or area the others do not give, and the approximate-charts issue says so).
  */
 import {describe, expect, it} from 'vitest';
 import {createEngine} from '@openisd/design/engine';
@@ -43,7 +42,7 @@ function opened(text: string): OpenedProject {
 }
 
 describe('passive-radiator figures in project files', () => {
-  for (const figure of ['Fs_hz', 'Mms_kg'] as const) {
+  for (const figure of ['Fs_hz', 'Mms_kg', 'Sd_m2', 'Cms_m_per_N', 'Qms', 'Vas_m3', 'Rms_kg_per_s'] as const) {
     it.each(['E', 'C'] as const)(`keeps ${figure} of zero as %s with a warning and finite charts`, state => {
       const first = opened(owprWithZero(figure)).project.cloneSession();
       const {box} = first.saved;
@@ -71,30 +70,6 @@ describe('passive-radiator figures in project files', () => {
     expect(project.box.passiveRadiator.radiator.spec.Fs_hz.value).toBe(0);
     expect(project.box.passiveRadiator.radiator.spec.Fs_hz.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value'}));
   });
-
-  for (const figure of ['Sd_m2', 'Cms_m_per_N'] as const) {
-    it(`${figure} 0: the box is repaired automatically, unmarked, named once, and no readout is NaN or Infinity`, () => {
-      const {project, loadRepairs} = opened(owprWithZero(figure));
-      const pr = project.box.passiveRadiator;
-      const spec = pr.radiator.spec;
-      expect(spec[figure].entered).toBe(false);
-      // No mark about a shown value: no stated figure contradicts another.
-      expect(spec[figure].dq.filter(d => d.kind === 'inconsistent-inputs')).toEqual([]);
-      if (figure !== 'Sd_m2') {
-        expect(spec[figure].value, 'recalculated from Fs and moving mass').toBeCloseTo(0.0008, 6);
-        expect(spec[figure].calculated).toBe(true);
-      }
-      const named = loadRepairs.filter(r => r.text.includes('in the file'));
-      expect(named).toHaveLength(1);
-      expect(named[0].text).toMatch(/ 0 .* in the file: /);
-      for (const f of [pr.systemTuning_hz, pr.tuning_goal_hz, pr.addedMass_kg, pr.systemTuning_hz]) {
-        expect(f.value === null || Number.isFinite(f.value), `${f.value}`).toBe(true);
-      }
-      expect(spec.Sd_m2.value === null || spec.Sd_m2.value > 0).toBe(true);
-      expect(spec.Cms_m_per_N.value === null || spec.Cms_m_per_N.value > 0).toBe(true);
-      expect(spec.Mms_kg.value === null || spec.Mms_kg.value > 0).toBe(true);
-    });
-  }
 
   it('a clean radiator project opens with nothing repaired', () => {
     const driver = driverFromSpec(engine, {Fs_hz: 30, Qes: 0.4, Qms: 4, Sd_m2: 0.02, Cms_m_per_N: 0.0005, Re_ohm: 6});
@@ -134,19 +109,22 @@ describe('passive-radiator figures in WinISD files', () => {
       issue.kind === 'approximate-charts' && issue.text.includes('0 g of added mass'))).toBe(true);
   });
 
-  for (const key of ['Sd', 'Vas', 'Qms']) {
-    it(`[PassiveRadiator] ${key}=0: the figure is emptied and named, and no readout is NaN or Infinity`, () => {
+  for (const [key, field] of [['Sd', 'Sd_m2'], ['Vas', 'Vas_m3'], ['Qms', 'Qms']] as const) {
+    it(`[PassiveRadiator] ${key}=0: the figure is kept with the invalid-value warning, and no readout is NaN or Infinity`, () => {
       const plain = wprText('passive radiator');
       const text = plain.replace(new RegExp(`(\\[PassiveRadiator\\][^\\[]*?\\n${key}=)[^\\r\\n]*`), '$10');
       expect(text, `the PR .wpr states ${key}`).not.toBe(plain);
       const {value, errors, loadRepairs} = new WinIsdProjectConverter(engine).winIsdProjectToOpenIsdProject(text);
       if (value === null) throw new Error(errors.map(e => e.message).join('; '));
-      const radiatorLines = loadRepairs.filter(r => r.text.startsWith('Passive radiator '));
-      expect(radiatorLines).toHaveLength(1);
+      expect(loadRepairs).toEqual([]);
+      const spec = value.box.passiveRadiator.radiator.spec;
+      expect(spec[field].value).toBe(0);
+      expect(spec[field].dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
       const pr = value.box.passiveRadiator;
       for (const f of [pr.systemTuning_hz, pr.tuning_goal_hz, pr.addedMass_kg]) {
         expect(f.value === null || Number.isFinite(f.value), `${f.value}`).toBe(true);
       }
+      expect(projectFindings(value, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
     });
   }
 });

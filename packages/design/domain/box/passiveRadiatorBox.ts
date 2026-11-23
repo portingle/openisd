@@ -33,7 +33,7 @@ export interface PassiveRadiatorBox {
 
     /** The radiator's Mms, Cms and Rms as the charts and the tuning readouts take them: the boxes as they show (QO534), or, with
      *  "Chart from Fs, Vas, Qms (WinISD's way)" ticked, worked out from its Fs, Vas, Sd and Qms as WinISD does (QO539). */
-    chartMechanics(): RadiatorMechanics & {readonly warning: string | null};
+    chartMechanics(): RadiatorMechanics & {readonly Sd_m2: number | null; readonly warning: string | null};
 
     /** WinISD's "Fp" — the tuning this box and this radiator ACTUALLY produce together, which is
      *  a different thing from the `tuning_goal_hz` field above: that is the target the user asked for,

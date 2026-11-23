@@ -181,7 +181,6 @@ function boxSpecificParamsOf(source: ProjectSweepSource, boxType: SimulatableBox
             };
         }
         case 'box-passive-radiator': {
-            const r = box.passiveRadiator.radiator.spec;
             // Fr for circuit.ts's winisd-lossy Ral/Raa (fixed at the box's own tuning, never
             // per-frequency). Null only when the volume/radiator/tuning-pair is itself unsolved,
             // which prSweepIssuesOf already refuses the sweep over before this is read.
@@ -189,7 +188,7 @@ function boxSpecificParamsOf(source: ProjectSweepSource, boxType: SimulatableBox
             // The radiator's Mms, Cms and Rms as the charts take them (QO534; QO539 ticked: as WinISD works them out).
             const mech = box.passiveRadiator.chartMechanics();
             return {
-                prSd: undefinedIfNull(r.Sd_m2.value),
+                prSd: undefinedIfNull(mech.Sd_m2),
                 prNum: box.passiveRadiator.count.value,
                 prMmd: undefinedIfNull(mech.Mms_kg),
                 prMadd: undefinedIfNull(box.passiveRadiator.addedMass_kg.value),

@@ -5,6 +5,12 @@ import { prSpec } from '../box/prSpec.js';
 import { radiatorSection } from '../box/radiatorSection.js';
 import { withDisagreementNote } from '../driver/disagreementNote.js';
 
+/** The figures whose stated value must be above zero. */
+const INVALID_CHECKED: readonly {readonly key: keyof PrSpecValues; readonly label: string}[] = Object.freeze([
+    {key: 'Fs_hz', label: 'Fs'}, {key: 'Mms_kg', label: 'Mms'}, {key: 'Qms', label: 'Qms'}, {key: 'Vas_m3', label: 'Vas'},
+    {key: 'Sd_m2', label: 'Sd'}, {key: 'Cms_m_per_N', label: 'Cms'}, {key: 'Rms_kg_per_s', label: 'Rms'},
+]);
+
 /**
  * ONE PASSIVE-RADIATOR SPEC SECTION, PUBLISHED — the radiator's counterpart to `DriverSpec`.
  *
@@ -42,12 +48,12 @@ export class OpenIsdPassiveRadiatorSpec {
         const marks = (name: keyof PrSpecValues) => (): readonly PrSpecIssue[] =>
             conflicts().filter(issue => issue.fields.some(field => field === name));
         this.Fs_hz = prSpec(section, 'Fs_hz', marks('Fs_hz'), checkPositive);
-        this.Qms = prSpec(section, 'Qms', marks('Qms'));
-        this.Cms_m_per_N = prSpec(section, 'Cms_m_per_N', marks('Cms_m_per_N'));
+        this.Qms = prSpec(section, 'Qms', marks('Qms'), checkPositive);
+        this.Cms_m_per_N = prSpec(section, 'Cms_m_per_N', marks('Cms_m_per_N'), checkPositive);
         this.Mms_kg = prSpec(section, 'Mms_kg', marks('Mms_kg'), checkPositive);
-        this.Rms_kg_per_s = prSpec(section, 'Rms_kg_per_s', marks('Rms_kg_per_s'));
-        this.Sd_m2 = prSpec(section, 'Sd_m2', marks('Sd_m2'));
-        this.Vas_m3 = prSpec(section, 'Vas_m3', marks('Vas_m3'));
+        this.Rms_kg_per_s = prSpec(section, 'Rms_kg_per_s', marks('Rms_kg_per_s'), checkPositive);
+        this.Sd_m2 = prSpec(section, 'Sd_m2', marks('Sd_m2'), checkPositive);
+        this.Vas_m3 = prSpec(section, 'Vas_m3', marks('Vas_m3'), checkPositive);
         this.Vd_m3 = prSpec(section, 'Vd_m3');
         this.Xmax_m = prSpec(section, 'Xmax_m');
         this.Xlim_m = prSpec(section, 'Xlim_m');
@@ -69,28 +75,36 @@ export class OpenIsdPassiveRadiatorSpec {
         return this.Xmax_m.entered ? this.Xmax_m.value : (this.Xlim_m.entered ? this.Xlim_m.value : null);
     }
 
-    /** The seven figures of the radiator's T/S set that were typed or loaded, nothing derived. */
+    /** The seven figures of the radiator's T/S set that were typed or loaded, without any that is not greater than zero. */
     #usableStated(): PrSpecValues {
-        const stated = (f: Entered & Readable<number | null>): number | null => f.entered ? f.value : null;
+        const invalid = new Set(this.invalidFigures.map(f => f.key));
+        const stated = (key: keyof PrSpecValues): number | null => {
+            const field = this[key];
+            return field.entered && !invalid.has(key) ? field.value : null;
+        };
         return {
-            Fs_hz: this.hasInvalidFs ? null : stated(this.Fs_hz),
-            Mms_kg: this.hasInvalidMms ? null : stated(this.Mms_kg),
-            Qms: stated(this.Qms), Vas_m3: stated(this.Vas_m3), Sd_m2: stated(this.Sd_m2),
-            Cms_m_per_N: stated(this.Cms_m_per_N), Rms_kg_per_s: stated(this.Rms_kg_per_s),
+            Fs_hz: stated('Fs_hz'), Mms_kg: stated('Mms_kg'), Qms: stated('Qms'), Vas_m3: stated('Vas_m3'),
+            Sd_m2: stated('Sd_m2'), Cms_m_per_N: stated('Cms_m_per_N'), Rms_kg_per_s: stated('Rms_kg_per_s'),
         };
     }
 
+    /** The T/S figures whose value, entered or calculated, is not a number above zero, each with its name for a sentence. */
+    get invalidFigures(): readonly {readonly key: keyof PrSpecValues; readonly label: string}[] {
+        return INVALID_CHECKED.filter(({key}) => {
+            const value = this[key].value;
+            return value !== null && (!Number.isFinite(value) || value <= 0);
+        });
+    }
+
     get hasInvalidFs(): boolean {
-        const value = this.Fs_hz.value;
-        return value !== null && (!Number.isFinite(value) || value <= 0);
+        return this.invalidFigures.some(f => f.key === 'Fs_hz');
     }
 
     get hasInvalidMms(): boolean {
-        const value = this.Mms_kg.value;
-        return value !== null && (!Number.isFinite(value) || value <= 0);
+        return this.invalidFigures.some(f => f.key === 'Mms_kg');
     }
 
-    /** Work out usable figures without using an impossible stated resonance or moving mass. */
+    /** Work out usable figures without using a stated figure that is not above zero. */
     solveUsable(pr: PrEngine, air: Air): PrSpecValues {
         return pr.solveSpec(this.#usableStated(), air);
     }
@@ -111,14 +125,15 @@ export class OpenIsdPassiveRadiatorSpec {
     resolve(pr: PrEngine, air: Air, preserveReadouts = false): PrSpecIssue[] {
         const stated = this.#usableStated();
         const solved = pr.solveSpec(stated, air);
-        const write = (field: Entered & Calculatable<number> & Unsolvable, value: number | null): void => {
-            if (field.entered) return;
+        const invalid = new Set<keyof PrSpecValues>(this.invalidFigures.map(f => f.key));
+        const write = (key: keyof PrSpecValues): void => {
+            const field = this[key];
+            if (field.entered || invalid.has(key)) return;
+            if (preserveReadouts && field.calculated && (key === 'Fs_hz' || key === 'Mms_kg')) return;
+            const value = solved[key];
             if (value === null) field.setNotAvailable(); else field.setCalculated(value);
         };
-        if (!this.hasInvalidFs && !(preserveReadouts && this.Fs_hz.calculated)) write(this.Fs_hz, solved.Fs_hz);
-        if (!this.hasInvalidMms && !(preserveReadouts && this.Mms_kg.calculated)) write(this.Mms_kg, solved.Mms_kg);
-        write(this.Qms, solved.Qms); write(this.Vas_m3, solved.Vas_m3); write(this.Sd_m2, solved.Sd_m2);
-        write(this.Cms_m_per_N, solved.Cms_m_per_N); write(this.Rms_kg_per_s, solved.Rms_kg_per_s);
+        for (const {key} of INVALID_CHECKED) write(key);
         return pr.checkSpec(stated, this.#precisions(), air).map(withDisagreementNote);
     }
 

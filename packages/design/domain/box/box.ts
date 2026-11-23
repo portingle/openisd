@@ -1,4 +1,4 @@
-import type { BoxType, VentedAlignment } from '../../engine/index.js';
+import type { BoxType, DqIssue, VentedAlignment } from '../../engine/index.js';
 import type { Calculatable, Calculated, Clearable, Entered, Precise, Readable, SimpleField, Unsolvable, Writable } from '../cell.js';
 import type { AbcBox } from './abcBox.js';
 import type { Bandpass4Box } from './bandpass4Box.js';
@@ -91,4 +91,6 @@ export interface BoxLossGroup {
     /** The interchamber Qicl, one value shared by every set of a two-chamber type; null where the
      *  type has one chamber. */
     readonly Qicl: (SimpleField<number> & Clearable) | null;
+    /** The data-quality warning of each stated loss that is not greater than zero (empty for a usable one or a loss the type lacks). */
+    readonly dq: {readonly Ql: readonly DqIssue[]; readonly Qa: readonly DqIssue[]; readonly Qp: readonly DqIssue[]; readonly Qicl: readonly DqIssue[]};
 }
