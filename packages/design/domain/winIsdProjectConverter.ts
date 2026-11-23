@@ -249,6 +249,17 @@ function importVentGeometry(
   if (endcorrection != null) vent.endCorrection_m.set(endcorrection);
 }
 
+/** WinISD tunes from the chamber's tuning on load and writes `len` only as a read-out, so a usable
+ *  tuning decides the length and the saved `len` is dropped. The saved length is kept when the tuning
+ *  gives no finite positive length (0.25 m saved at Fr = 1000 Hz, or Fr = 0). */
+function keepSavedLengthWithoutTuning(wpr: WinISDProject, section: string, vent: Vent): void {
+  const length = wpr.number(section, 'len');
+  if (length == null) return;
+  const derived = vent.length_m.value;
+  const tuningDecides = derived !== null && Number.isFinite(derived) && derived > 0;
+  if (!tuningDecides) vent.length_m.set(length);
+}
+
 /** A `.wpr` imported: the project (null when it could not be read), what was wrong with the file,
  *  and every value the load repaired, one line each for the opening message (QO953.c31). */
 export interface ImportedWinIsdProject {
@@ -429,6 +440,7 @@ export class WinIsdProjectConverter {
         importVentGeometry(wpr, 'VentRear', project.box.vented.vent, errors);
         const Num = wpr.number('VentRear', 'Num');
         if (Num != null) project.box.vented.vent.count.set(Num);
+        keepSavedLengthWithoutTuning(wpr, 'VentRear', project.box.vented.vent);
         break;
       }
       case 2: {
