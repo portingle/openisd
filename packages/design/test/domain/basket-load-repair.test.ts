@@ -26,7 +26,6 @@ describe('Basket Diameter on opening', () => {
     expect(basket.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
     expect(opened.project.cloneSession().saved.driverEmbedding.device.specs.woofer.Basket_m)
       .toEqual({state: 'E', value: 0});
-    expect(opened.loadRepairs).toEqual([]);
     expect(opened.project.sweep(DEFAULT_GRID).values?.tfMag.length).toBeGreaterThan(0);
     expect(projectFindings(opened.project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
   });
@@ -60,7 +59,6 @@ describe('Basket Diameter on opening', () => {
       expect(project.driver.specs.Basket_m.dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: Infinity}));
       expect(projectFindings(project, DEFAULT_GRID)).toMatchObject({findings: [], refused: false});
     }
-    expect(opened.loadRepairs).toEqual([]);
     expect(opened.repaired).toEqual([]);
     const reloaded = OpenISDProject.fromOwprText(opened.project.toOwprText(), engine);
     if (Array.isArray(reloaded)) throw new Error(reloaded.join('\n'));
@@ -93,7 +91,6 @@ describe('Basket Diameter on opening', () => {
     expect(basket.dq).toContainEqual(expect.objectContaining({kind: 'outside-normal-band'}));
     expect(opened.project.cloneSession().saved.driverEmbedding.device.specs.woofer.Basket_m)
       .toEqual({state: 'E', value: 55});
-    expect(opened.loadRepairs).toEqual([]);
     expect(opened.project.sweep(DEFAULT_GRID).values?.tfMag.length).toBeGreaterThan(0);
     const charts = projectFindings(opened.project, DEFAULT_GRID);
     expect(charts.findings).toEqual([]);

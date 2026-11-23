@@ -3,7 +3,7 @@
  * so no repair is reported by any way of opening it.
  */
 import {describe, expect, it, vi} from 'vitest';
-import {createProjectRepo, type LoadRepairReport} from '../src/repos/projectRepo.js';
+import {createProjectRepo, type OpenNoticeReport} from '../src/repos/projectRepo.js';
 import type {FileStorage} from '../src/storage/fileStorage.js';
 import {createMemoryStorage} from '../src/storage/keyValueStorage.js';
 import {OPENISD_OPEN_SESSIONS_KEY, OPENISD_PROJECTS_KEY} from '../src/repos/storageKeys.js';
@@ -39,15 +39,15 @@ function minusTwoOhmText(name: string): {id: string; text: string} {
   return {id: session.id, text: JSON.stringify({...session, saved: {...session.saved, driverEmbedding: {...session.saved.driverEmbedding, Rs_ohm: -2}}})};
 }
 
-function repoOver(seed: Record<string, string>, onLoadRepaired: (report: LoadRepairReport) => void) {
+function repoOver(seed: Record<string, string>, onOpenNotice: (report: OpenNoticeReport) => void) {
   const storage = createMemoryStorage(seed);
-  return createProjectRepo(engine, noFiles, storage, 'http://localhost', backupOn(storage), exportedFilesOn(), () => undefined, () => undefined, onLoadRepaired);
+  return createProjectRepo(engine, noFiles, storage, 'http://localhost', backupOn(storage), exportedFilesOn(), () => undefined, () => undefined, onOpenNotice);
 }
 
 describe('a stored project opens as its text states it and reports no repair (QO972)', () => {
   it('restoring the open projects at start-up keeps a passive-radiator count of 0 and reports nothing', () => {
     const {id, text} = zeroPrCountText('old build');
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const session = repoOver({[OPENISD_OPEN_SESSIONS_KEY]: JSON.stringify({entries: [{id, text, modified: '', traceHidden: false}], focusedId: id})}, told)
       .loadOpenProjects();
     if (session === null || Array.isArray(session)) throw new Error('expected a session');
@@ -58,7 +58,7 @@ describe('a stored project opens as its text states it and reports no repair (QO
 
   it('opening a saved project from the projects list keeps the count of 0 and reports nothing', () => {
     const {id, text} = zeroPrCountText('saved one');
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const repo = repoOver({[OPENISD_PROJECTS_KEY]: JSON.stringify({version: 1, entries: [{id, text, modified: '2026-01-01T00:00:00Z'}]})}, told);
     expect(repo.listStoredProjects()).toHaveLength(1);
     const project = repo.loadStoredProject(id);
@@ -69,17 +69,16 @@ describe('a stored project opens as its text states it and reports no repair (QO
 
   it('File > Open keeps the count of 0 and hands its caller no repair', () => {
     const {text} = zeroPrCountText('a file');
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const opened = repoOver({}, told).openProjectText(text);
     if (Array.isArray(opened)) throw new Error(opened.join('; '));
     expect(opened.project.box.passiveRadiator.count.value).toBe(0);
-    expect(opened.loadRepairs).toEqual([]);
     expect(told).not.toHaveBeenCalled();
   });
 
   it('a backup or archive entry read as project text (restore) keeps the count of 0 and reports nothing', () => {
     const {text} = zeroPrCountText('restored');
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const project = repoOver({}, told).readProjectText(text);
     if (Array.isArray(project)) throw new Error(project.join('; '));
     expect(project.box.passiveRadiator.count.value).toBe(0);
@@ -88,7 +87,7 @@ describe('a stored project opens as its text states it and reports no repair (QO
 
   it('a stored project whose series resistance is -2 Ω opens with -2 Ω and reports nothing (QO972)', () => {
     const {id, text} = minusTwoOhmText('negative rs');
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const repo = repoOver({[OPENISD_PROJECTS_KEY]: JSON.stringify({version: 1, entries: [{id, text, modified: '2026-01-01T00:00:00Z'}]})}, told);
     const project = repo.loadStoredProject(id);
     if (project === null || Array.isArray(project)) throw new Error('expected a project');
@@ -112,7 +111,7 @@ describe('projects saved before Chart from Fs, Vas, Qms', () => {
     return project;
   }
 
-  function openSavedAlpha(text: string, tell: (report: LoadRepairReport) => void): OpenISDProject {
+  function openSavedAlpha(text: string, tell: (report: OpenNoticeReport) => void): OpenISDProject {
     const id = '00000000-0000-4000-8000-000000000004';
     const storage = {[OPENISD_PROJECTS_KEY]: JSON.stringify({entries: [{id, text, modified: '2026-01-01T00:00:00Z'}]})};
     const repo = repoOver(storage, tell);
@@ -122,7 +121,7 @@ describe('projects saved before Chart from Fs, Vas, Qms', () => {
   }
 
   it.each([5, 6])('opens layout-%i Alpha with the typed parts and tells the user which readouts moved', (layout) => {
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const recorded = oldAlphaText(layout);
     expect(recorded).toContain('0.7101774159567577');
     const opened = openSavedAlpha(recorded, told);
@@ -142,7 +141,7 @@ describe('projects saved before Chart from Fs, Vas, Qms', () => {
     project.driver.specs.Rms_kg_per_s.set(4.635220849600864);
     project.driver.specs.BL_Tm.set(12.77340103128178);
     project.save();
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const opened = openSavedAlpha(project.toOwprText(), told);
 
     expect(opened.winisdChartFromFsVasQms.value).toBe(false);
@@ -155,7 +154,7 @@ describe('projects saved before Chart from Fs, Vas, Qms', () => {
     const project = alphaFromOldSave();
     project.winisdChartFromFsVasQms.set(true);
     project.save();
-    const told = vi.fn<(report: LoadRepairReport) => void>();
+    const told = vi.fn<(report: OpenNoticeReport) => void>();
     const opened = openSavedAlpha(project.toOwprText(), told);
 
     expect(opened.winisdChartFromFsVasQms.value).toBe(true);
