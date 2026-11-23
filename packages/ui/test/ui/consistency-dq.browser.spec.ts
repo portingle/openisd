@@ -68,7 +68,7 @@ test('driver editor: an inconsistent group marks every one of its members, with 
 
   // The tooltip names the group and how far out it is; "inconsistent" alone is not actionable.
   const note = await editorField(page, 'Fs').locator('.ui-field-dq-btn').getAttribute('title');
-  expect(note).toMatch(/^Fs differs by [0-9.]+%\. Using Mms and Cms gives [0-9.]+ Hz\. The box shows [0-9.]+ Hz\./);
+  expect(note).toMatch(/^Conflicts with other values: Fs differs by [0-9.]+%\. Using Mms and Cms gives [0-9.]+ Hz\. The box shows [0-9.]+ Hz\./);
   expect(note).toContain('Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box.');
 
   // A field outside the group is NOT marked.
@@ -80,10 +80,12 @@ test('driver editor: an inconsistent group marks every one of its members, with 
 });
 
 // ── The Original skin's docked What-if panel ──────────────────────────────────────────────
-test('What-if: the same mark appears on every member of the group as the driver is scrubbed', async ({ page }) => {
+// A typed Mms moves Fs, Qes, Qms, Qts and SPL (whatIfMoves.ts), so the group stays consistent and no mark appears.
+test('What-if: a typed Mms moves Fs, so no mark appears and the group stays consistent', async ({ page }) => {
   await openWhatIf(page);
 
   await expect(page.locator('.what-if-panel .ui-field-dq-btn')).toHaveCount(0);
+  const fsBefore = await whatIfField(page, 'Fs').locator('input').inputValue();
 
   const mms = whatIfField(page, 'Mms').locator('input');
   await mms.click();
@@ -91,44 +93,33 @@ test('What-if: the same mark appears on every member of the group as the driver 
   await mms.pressSequentially(IMPOSSIBLE_MMS_G);
   await mms.blur();
 
-  // Fs and Mms are both on this panel and both carry it. (Cms is a member too, but the What-if?
-  // panel does not show Cms — a mark can only appear beside a field that is on screen.)
-  await expect(whatIfField(page, 'Fs').locator('.ui-field-dq-btn')).toHaveCount(1);
-  await expect(whatIfField(page, 'Mms').locator('.ui-field-dq-btn')).toHaveCount(1);
-  await expect(whatIfField(page, 'Re').locator('.ui-field-dq-btn')).toHaveCount(0);
-
-  // The ⚠ opens the reason under the field (the shared field row's note), not a hover popup.
-  const note = whatIfField(page, 'Mms').locator('.ui-field-note');
-  await whatIfField(page, 'Mms').locator('.ui-field-dq-btn').click();
-  await expect(note).toBeVisible();
-  expect(await note.textContent()).toMatch(/differs by [0-9.]+%\. Using/);
-
-  // Withdrawing the override hands Mms back to the calculation, and the group reconciles again.
-  await mms.click();
-  await mms.press('Control+a');
-  await mms.press('Delete');
-  await mms.blur();
+  await expect(whatIfField(page, 'Fs').locator('input')).not.toHaveValue(fsBefore);
   await expect(page.locator('.what-if-panel .ui-field-dq-btn')).toHaveCount(0);
 });
 
+// A typed Fs below the field's limits is refused by the rule (whatIfMoves.ts returns no moves), and the box still carries the alert icon with the range as its reason.
+const REFUSED_FS = '0.0001';
 
-test('What-if: clicking the alert icon shows the reason in a popup and clicking it again hides it', async ({ page }) => {
+test('What-if: a refused Fs keeps its alert icon, which opens the range reason and closes again', async ({ page }) => {
   await openWhatIf(page);
 
-  const mms = whatIfField(page, 'Mms').locator('input');
-  await mms.click();
-  await mms.press('Control+a');
-  await mms.pressSequentially(IMPOSSIBLE_MMS_G);
-  await mms.blur();
+  await expect(page.locator('.what-if-panel .ui-field-dq-btn')).toHaveCount(0);
 
-  const dqIcon = whatIfField(page, 'Mms').locator('.ui-field-dq-btn');
-  await expect(dqIcon).toBeVisible();
-  const note = whatIfField(page, 'Mms').locator('.ui-field-note');
+  const fs = whatIfField(page, 'Fs').locator('input');
+  await fs.click();
+  await fs.press('Control+a');
+  await fs.pressSequentially(REFUSED_FS);
+  await fs.blur();
+
+  const mark = whatIfField(page, 'Fs').locator('.ui-field-dq-btn');
+  await expect(mark).toHaveCount(1);
+  await expect(whatIfField(page, 'Re').locator('.ui-field-dq-btn')).toHaveCount(0);
+
+  const note = whatIfField(page, 'Fs').locator('.ui-field-note');
   await expect(note).toBeHidden();
-
-  await dqIcon.click();
+  await mark.click();
   await expect(note).toBeVisible();
-  await expect(note).toContainText(/differs by [0-9.]+%\. Using/);
+  await expect(note).toContainText(/below its minimum/);
 
   // The note is a popup: it is read inside the window, never off its edge.
   const inside = await note.evaluate(el => {
@@ -137,8 +128,15 @@ test('What-if: clicking the alert icon shows the reason in a popup and clicking 
   });
   expect(inside).toBe(true);
 
-  await dqIcon.click();
+  await mark.click();
   await expect(note).toBeHidden();
+
+  // Emptying the box withdraws the entry and the icon goes.
+  await fs.click();
+  await fs.press('Control+a');
+  await fs.press('Delete');
+  await fs.blur();
+  await expect(page.locator('.what-if-panel .ui-field-dq-btn')).toHaveCount(0);
 });
 
 test('chart failure lists the missing circuit values returned by the sweep', async ({ page }) => {
