@@ -265,6 +265,15 @@ describe('boxFields', () => {
       expect(g!.Qp).toBeNull();
       expect(g!.Qicl).toBeNull();
     });
+    it('a loss that is not above zero carries a warning for its field, and a usable one carries none', () => {
+      const {project, projectChanged, hook} = losses('sealed');
+      hook.lossesOpen.value = 'whole';
+      expect(hook.openLossGroup.value!.dq.Ql).toEqual([]);
+      project.box.sealed.losses.Ql.set(0);
+      projectChanged.value++;
+      expect(hook.openLossGroup.value!.dq.Ql).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
+      expect(hook.openLossGroup.value!.dq.Qa).toEqual([]);
+    });
     it('bandpass6: the rear link shows the Rear chamber set only, the front link the Front set only', () => {
       const {hook} = losses('bandpass6');
       hook.lossesOpen.value = 'rear';

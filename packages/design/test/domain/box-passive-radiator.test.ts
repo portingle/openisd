@@ -232,7 +232,7 @@ describe('the passive radiator a box holds', () => {
     expect(p.box.passiveRadiator.addedMassForTuning_kg(15).value).toBeNull();
   });
 
-  it.each(['Sd_m2', 'Cms_m_per_N'] as const)('addedMassForTuning_kg is not available, never NaN, when the radiator %s is 0', (field) => {
+  it.each(['Sd_m2', 'Cms_m_per_N'] as const)('a radiator %s of 0 is kept with the warning and addedMassForTuning_kg is finite, from the reference figure', (field) => {
     const p = project();
     const library = OpenISDPassiveRadiatorStandalone.fromConformingRecord(prJson());
     if (Array.isArray(library)) throw new Error(`fixture radiator is invalid: ${library.join(', ')}`);
@@ -244,10 +244,10 @@ describe('the passive radiator a box holds', () => {
     p.box.passiveRadiator.radiator.spec[field].set(0);
 
     const answer = p.box.passiveRadiator.addedMassForTuning_kg(15);
-    expect(Number.isNaN(answer.value)).toBe(false);
-    expect(answer.value).toBeNull();
-    // Absent, not a calculated answer: nothing is claimed as calculated from a radiator with no geometry.
-    expect(answer.calculated).toBe(false);
+    expect(Number.isFinite(answer.value)).toBe(true);
+    expect(p.box.passiveRadiator.radiator.spec[field].value).toBe(0);
+    expect(p.box.passiveRadiator.radiator.spec[field].dq).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
+    expect(p.box.passiveRadiator.chartMechanics().warning).toContain('must be greater than zero');
   });
 
   // Regression for bugs/archive/BUG_20261003*.md

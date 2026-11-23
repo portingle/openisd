@@ -231,7 +231,7 @@ describe('the driver count and series resistance stay as the file states them; t
     expectCharts(project);
   });
 
-  it('a passive radiator count of 0 opens as 1, an added mass of -0.01 kg as 0 g, a 4th-order bandpass Qicl 0 at 100', () => {
+  it('a passive radiator count of 0 opens as 1 and an added mass of -0.01 kg as 0 g', () => {
     const pr = opened(owprWith('passive radiator', r => ({...r, box: {...r.box, passiveRadiator: {...r.box.passiveRadiator,
       count: 0, addedMass_kg: {state: 'E', value: -0.01}}}})));
     expect(pr.loadRepairs.map(n => n.text)).toEqual([
@@ -239,9 +239,28 @@ describe('the driver count and series resistance stay as the file states them; t
       'Added mass to cone -10 g in the file: set to 0 g, no added mass',
     ]);
     expectCharts(pr.project);
+  });
+
+  it('a 4th-order bandpass Qicl of 0 opens as the file states it, with the warning on the field and approximate charts', () => {
     const bp4 = opened(owprWith('bandpass4', r => ({...r, box: {...r.box, bandpass4: {...r.box.bandpass4, Qiclfr: 0}}})));
-    expect(bp4.loadRepairs.map(n => n.text)).toEqual(["Interchamber Qicl 0 in the file: set to 100, WinISD's default"]);
+    expect(bp4.loadRepairs).toEqual([]);
+    expect(bp4.project.box.bandpass4.Qiclfr.value).toBe(0);
+    const [group] = bp4.project.box.lossGroupsOf('bandpass4');
+    expect(group.dq.Qicl).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
+    expect(group.dq.Ql).toEqual([]);
     expectCharts(bp4.project);
+    expect(bp4.project.sweep(DEFAULT_GRID).issues).toContainEqual(expect.objectContaining({kind: 'approximate-charts'}));
+  });
+
+  it.each(['Ql', 'Qa', 'Qp'] as const)('a vented box with a saved %s of 0 shows the warning on that loss only', loss => {
+    const {project} = opened(owprWith('vented', r => ({...r, box: {...r.box, vented: {
+      ...r.box.vented, chamber: {...r.box.vented.chamber, losses: {...r.box.vented.chamber.losses, [loss]: 0}}}}})));
+    const [group] = project.box.lossGroupsOf('vented');
+    expect(group[loss]?.value).toBe(0);
+    for (const key of ['Ql', 'Qa', 'Qp', 'Qicl'] as const) {
+      if (key === loss) expect(group.dq[key]).toContainEqual(expect.objectContaining({kind: 'invalid-value', value: 0}));
+      else expect(group.dq[key]).toEqual([]);
+    }
   });
 
   it('a project opened from a repaired file (an emptied tuning) copies with nothing left to repair', () => {

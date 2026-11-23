@@ -15,7 +15,7 @@ import type {SimpleField} from '../cell.js';
 import type {
     ChamberJson, OpenISDBoxJson, OpenISDProjectJson, SpecEntryJson, VentJson,
 } from '../openisdSchema.js';
-import {fieldLoadRule, loadEmptiedText, repairLoaded} from './loadRepair.js';
+import {fieldLoadRule, repairLoaded} from './loadRepair.js';
 import type {LoadRepairNote, LoadRepairRule} from './loadRepair.js';
 
 /** A rule over a plain number slot: the field's repair always sets a number there. */
@@ -61,36 +61,6 @@ function ventedChamberRules(chamber: SimpleField<ChamberJson>, vent: SimpleField
     ];
 }
 
-/** The radiator figures a record states that are repaired on load, each with the field that names it. Fs and Mms are kept as the file states them. */
-const RADIATOR_FIGURES = [
-    ['Qms', NumberField.PR_QMS], ['Vas_m3', NumberField.PR_VAS_L],
-    ['Sd_m2', NumberField.PR_SD_CM2], ['Cms_m_per_N', NumberField.CMS_M_PER_N],
-    ['Rms_kg_per_s', NumberField.RMS_KG_PER_S],
-] as const;
-
-/** The passive radiator the box holds, whichever box type is active: an entered figure of 0 or
- *  below is no radiator figure, so it counts as an empty box: calculated from the radiator's other
- *  figures when they give it, else left empty (a box the datasheet never states stays empty). */
-function radiatorFigureRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
-    const component = focus(focus(focus(box, 'passiveRadiator'), 'component'), 'specs');
-    const section = focus(component, 'passive-radiator');
-    return RADIATOR_FIGURES.map(([key, field]): LoadRepairRule => {
-        return {
-            field,
-            loaded: () => {
-                const entry = section.value[key];
-                return entry?.state === 'E' ? entry.value : null;
-            },
-            breaks: v => !Number.isFinite(v) || v <= 0,
-            fix: v => ({value: null, text: `Passive radiator ${loadEmptiedText(field, v, "the value worked out from the radiator's other figures, or empty when they do not give it")}`}),
-            write: () => {
-                const {[key]: _removed, ...rest} = section.value;
-                section.set(rest);
-            },
-        };
-    });
-}
-
 /** The rules of the box type the project is set to; the other types' records are not shown. */
 function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
     const type = box.value.boxType;
@@ -104,7 +74,6 @@ function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
             const bp = focus(box, 'bandpass4');
             return [
                 ...ventedChamberRules(focus(bp, 'front'), focus(bp, 'frontVent'), NumberField.BOX_FFC_HZ),
-                numberRule(NumberField.LOSS_QICL, focus(bp, 'Qiclfr')),
             ];
         }
         case 'bandpass6': {
@@ -112,7 +81,6 @@ function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
             return [
                 ...ventedChamberRules(focus(bp, 'rear'), focus(bp, 'rearVent'), NumberField.BOX_FRC_HZ),
                 ...ventedChamberRules(focus(bp, 'front'), focus(bp, 'frontVent'), NumberField.BOX_FFC_HZ),
-                numberRule(NumberField.LOSS_QICL, focus(bp, 'Qiclfr')),
             ];
         }
         case 'abc': {
@@ -121,7 +89,6 @@ function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
                 ...ventedChamberRules(focus(abc, 'rear'), focus(abc, 'rearVent'), NumberField.BOX_FRC_HZ),
                 ...ventedChamberRules(focus(abc, 'front'), focus(abc, 'frontVent'), NumberField.BOX_FFC_HZ),
                 entryRule(NumberField.VENT_L_CM, focus(focus(abc, 'intraVent'), 'length_m')),
-                numberRule(NumberField.LOSS_QICL, focus(abc, 'Qiclfr')),
             ];
         }
         case 'box-passive-radiator': {
@@ -134,12 +101,11 @@ function boxRules(box: SimpleField<OpenISDBoxJson>): LoadRepairRule[] {
     }
 }
 
-/** Every record rule, in the order they run: the box, then the passive radiator's figures. The driver count, series
+/** Every record rule, in the order they run. The driver count, series
  *  resistance and air are not repaired: a loaded one is shown as the file states it (QO972). */
 export function projectLoadRepairRules(root: SimpleField<OpenISDProjectJson>): readonly LoadRepairRule[] {
     return [
         ...boxRules(focus(root, 'box')),
-        ...radiatorFigureRules(focus(root, 'box')),
     ];
 }
 

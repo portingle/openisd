@@ -17,6 +17,7 @@ import type { ProjectIssues } from '../project/projectIssues.js';
 import type { AbcBox } from './abcBox.js';
 import type { Bandpass4Box } from './bandpass4Box.js';
 import type { Bandpass6Box } from './bandpass6Box.js';
+import { boxLossInput } from './boxLossInput.js';
 import type { Box, BoxLossGroup, LossChamber, TuningField, VentGroup, VentPort } from './box.js';
 import type { Vent } from '../vent.js';
 import type { PassiveRadiatorBox } from './passiveRadiatorBox.js';
@@ -113,14 +114,30 @@ function isStated(volume_m3: number | null): volume_m3 is number {
 /** The Box losses popup of a two-chamber box: one set per chamber, as WinISD gives each chamber
  *  panel its own Advanced-> losses. Both sets carry the box's one Qiclfr. */
 function chamberLossGroups(
+    issues: Engine['issues'],
     rear: SealedLosses, rearQp: (SimpleField<number> & Clearable) | null,
     front: SealedLosses, frontQp: SimpleField<number> & Clearable,
     Qicl: SimpleField<number> & Clearable,
 ): readonly BoxLossGroup[] {
     return [
-        {chamber: 'rear', heading: 'Rear chamber', Ql: rear.Ql, Qa: rear.Qa, Qp: rearQp, Qicl},
-        {chamber: 'front', heading: 'Front chamber', Ql: front.Ql, Qa: front.Qa, Qp: frontQp, Qicl},
+        lossGroup(issues, 'rear', 'Rear chamber', rear.Ql, rear.Qa, rearQp, Qicl),
+        lossGroup(issues, 'front', 'Front chamber', front.Ql, front.Qa, frontQp, Qicl),
     ];
+}
+
+type LossSlot = SimpleField<number> & Clearable;
+
+/** One loss set with the warning each of its stated losses carries. */
+function lossGroup(
+    issues: Engine['issues'], chamber: LossChamber, heading: string | null,
+    Ql: LossSlot, Qa: LossSlot, Qp: LossSlot | null, Qicl: LossSlot | null,
+): BoxLossGroup {
+    const dq = (key: 'Ql' | 'Qa' | 'Qp' | 'Qicl', slot: LossSlot | null): readonly DqIssue[] =>
+        slot === null ? [] : boxLossInput(issues, key, slot.value).dq;
+    return {
+        chamber, heading, Ql, Qa, Qp, Qicl,
+        dq: {Ql: dq('Ql', Ql), Qa: dq('Qa', Qa), Qp: dq('Qp', Qp), Qicl: dq('Qicl', Qicl)},
+    };
 }
 
 /** What the project builds its box with, besides the lens onto its `box` slot: each is resolved at CALL time where it is a
@@ -461,31 +478,33 @@ export class OpenISDBox implements Box {
             chartMechanics: () => {
                 const spec = getRadiator().spec;
                 const stated = {Mms_kg: spec.Mms_kg.value, Cms_m_per_N: spec.Cms_m_per_N.value, Rms_kg_per_s: spec.Rms_kg_per_s.value};
-                const invalid = [...(spec.hasInvalidFs ? ['Fs'] : []), ...(spec.hasInvalidMms ? ['Mms'] : [])];
+                const invalid = spec.invalidFigures.map(f => f.label);
                 const ready = air();
                 if (invalid.length === 0) {
                     const mechanics = this.#chartFromFsVasQms() ? this.#engine.driver.winisdRadiatorMechanics(
                         {...stated, Fs_hz: spec.Fs_hz.value, Vas_m3: spec.Vas_m3.value, Sd_m2: spec.Sd_m2.value, Qms: spec.Qms.value}, ready) : stated;
-                    return {...mechanics, warning: null};
+                    return {...mechanics, Sd_m2: spec.Sd_m2.value, warning: null};
                 }
-                // An impossible Fs or Mms is left out; the charts use the other figures, and the starting
-                // moving mass and compliance stand in for any the others do not give.
+                // A figure not above zero is left out; the charts use the other figures, and the starting
+                // moving mass, compliance and area stand in for any the others do not give.
                 let figures = spec.solveUsable(this.#engine.pr, ready);
                 const reference = [
                     ...(figures.Mms_kg === null ? [`${STARTING.radiatorMms_kg * 1000} g moving mass`] : []),
                     ...(figures.Cms_m_per_N === null ? [`${STARTING.radiatorCms_m_per_N * 1000} mm/N compliance`] : []),
+                    ...(figures.Sd_m2 === null ? [`${STARTING.radiatorSd_m2 * 10000} cm² area`] : []),
                 ];
                 if (reference.length > 0) {
                     figures = this.#engine.pr.solveSpec({
                         ...figures,
                         Mms_kg: figures.Mms_kg ?? STARTING.radiatorMms_kg,
                         Cms_m_per_N: figures.Cms_m_per_N ?? STARTING.radiatorCms_m_per_N,
+                        Sd_m2: figures.Sd_m2 ?? STARTING.radiatorSd_m2,
                     }, ready);
                 }
                 const {Mms_kg, Cms_m_per_N, Rms_kg_per_s} = this.#chartFromFsVasQms()
                     ? this.#engine.driver.winisdRadiatorMechanics(figures, ready) : figures;
                 const basis = reference.length > 0 ? `the placeholder radiator's ${reference.join(' and ')}` : 'the other radiator figures';
-                return {Mms_kg, Cms_m_per_N, Rms_kg_per_s,
+                return {Mms_kg, Cms_m_per_N, Rms_kg_per_s, Sd_m2: figures.Sd_m2,
                     warning: `Passive radiator ${invalid.join(' and ')} must be greater than zero. Charts are calculated using ${basis}.`};
             },
             // OUTPUTS of the solved pair (S2-7d2): plain entry-backed slots the `solvePr` cascade
@@ -495,9 +514,8 @@ export class OpenISDBox implements Box {
             resonanceWithAddedMass_hz: entryField(focus(pr, 'resonanceWithAddedMass_hz'), 'resonanceWithAddedMass_hz', () => prFieldDq('resonanceWithAddedMass_hz')),
             naturalTuning_hz: new CalculatedFieldImpl<number | null>(() => {
                 const Vb = prVolume.value;
-                const r = getRadiator();
                 const mech = this.passiveRadiator.chartMechanics();
-                const prSd = r.spec.Sd_m2.value;
+                const prSd = mech.Sd_m2;
                 const prNum = this.passiveRadiator.count.value || 1;
                 const nowAir = air();
                 if (!(Vb != null && Vb > 0 && mech.Mms_kg !== null && mech.Mms_kg > 0 && prSd !== null && prSd > 0
@@ -515,10 +533,9 @@ export class OpenISDBox implements Box {
              *  null answer, which the not-available branch below already reports with no DQ to lose). */
             addedMassForTuning_kg: (fp_hz: number) => new CalculatedFieldImpl<number | null>(() => {
                 const Vb = prVolume.value;
-                const r = getRadiator();
                 const mech = this.passiveRadiator.chartMechanics();
                 const prMmd = mech.Mms_kg;
-                const prSd = r.spec.Sd_m2.value;
+                const prSd = mech.Sd_m2;
                 const prCms = mech.Cms_m_per_N;
                 const prNum = this.passiveRadiator.count.value || 1;
                 const nowAir = air();
@@ -620,21 +637,22 @@ export class OpenISDBox implements Box {
     }
 
     lossGroupsOf(type: BoxType): readonly BoxLossGroup[] {
+        const issues = this.#engine.issues;
         switch (type) {
-            case 'sealed': return [{chamber: 'whole', heading: null, Ql: this.sealed.losses.Ql, Qa: this.sealed.losses.Qa, Qp: null, Qicl: null}];
-            case 'vented': return [{chamber: 'whole', heading: null, Ql: this.vented.losses.Ql, Qa: this.vented.losses.Qa, Qp: this.vented.losses.Qp, Qicl: null}];
+            case 'sealed': return [lossGroup(issues, 'whole', null, this.sealed.losses.Ql, this.sealed.losses.Qa, null, null)];
+            case 'vented': return [lossGroup(issues, 'whole', null, this.vented.losses.Ql, this.vented.losses.Qa, this.vented.losses.Qp, null)];
             case 'bandpass4': {
                 const {rear, front} = this.bandpass4.chambers;
-                return chamberLossGroups(rear.losses, null, front.losses, front.losses.Qp, this.bandpass4.Qiclfr);
+                return chamberLossGroups(issues, rear.losses, null, front.losses, front.losses.Qp, this.bandpass4.Qiclfr);
             }
-            case 'box-passive-radiator': return [{chamber: 'whole', heading: null, Ql: this.passiveRadiator.losses.Ql, Qa: this.passiveRadiator.losses.Qa, Qp: null, Qicl: null}];
+            case 'box-passive-radiator': return [lossGroup(issues, 'whole', null, this.passiveRadiator.losses.Ql, this.passiveRadiator.losses.Qa, null, null)];
             case 'bandpass6': {
                 const {rear, front} = this.bandpass6.chambers;
-                return chamberLossGroups(rear.losses, rear.losses.Qp, front.losses, front.losses.Qp, this.bandpass6.Qiclfr);
+                return chamberLossGroups(issues, rear.losses, rear.losses.Qp, front.losses, front.losses.Qp, this.bandpass6.Qiclfr);
             }
             case 'abc': {
                 const {rear, front} = this.abc.chambers;
-                return chamberLossGroups(rear.losses, rear.losses.Qp, front.losses, front.losses.Qp, this.abc.Qiclfr);
+                return chamberLossGroups(issues, rear.losses, rear.losses.Qp, front.losses, front.losses.Qp, this.abc.Qiclfr);
             }
         }
     }

@@ -49,9 +49,6 @@ import {
   FILTER_BW_LIMITS, FILTER_FC_LIMITS, FILTER_GAIN_LIMITS, FILTER_ORDER_LIMITS, FILTER_Q_LIMITS,
   FILTER_T_LIMITS, PEAK_HIGHPASS_GAIN_LIMITS,
 } from './filterLimits.js';
-import {
-  DEFAULT_NEW_PROJECT_QA, DEFAULT_NEW_PROJECT_QICL, DEFAULT_NEW_PROJECT_QP, DEFAULT_NEW_PROJECT_VENTED_QL,
-} from './defaults.js';
 import type {SelectorOption} from './options.js';
 import type {SpinRule} from './spinnerStep.js';
 import {
@@ -695,7 +692,6 @@ export class NumberField extends Field {
     display: {kind: 'fixed', symbol: ''},
     limits: {min: 0.1, max: 1000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: DEFAULT_NEW_PROJECT_VENTED_QL, described: `${DEFAULT_NEW_PROJECT_VENTED_QL}, WinISD's default`},
     precision: 2,
     description: "Enclosure Leakage Loss Q\nAcoustic energy lost through cabinet seams and gaskets.",
   });
@@ -705,7 +701,6 @@ export class NumberField extends Field {
     display: {kind: 'fixed', symbol: ''},
     limits: {min: 0.1, max: 1000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: DEFAULT_NEW_PROJECT_QA, described: `${DEFAULT_NEW_PROJECT_QA}, WinISD's default`},
     precision: 2,
     description: "Enclosure Damping Loss Q\nAcoustic energy absorbed by internal damping fill.",
   });
@@ -715,7 +710,6 @@ export class NumberField extends Field {
     display: {kind: 'fixed', symbol: ''},
     limits: {min: 0.1, max: 1000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: DEFAULT_NEW_PROJECT_QP, described: `${DEFAULT_NEW_PROJECT_QP}, WinISD's default`},
     precision: 2,
     description: "Port Friction Loss Q\nAir friction and viscous boundary losses inside the vent.",
   });
@@ -725,7 +719,6 @@ export class NumberField extends Field {
     display: {kind: 'fixed', symbol: ''},
     limits: {min: 0.1, max: 1000},
     floor: "positive",
-    loadRepair: {breaks: 'floor', to: DEFAULT_NEW_PROJECT_QICL, described: `${DEFAULT_NEW_PROJECT_QICL}, WinISD's default`},
     precision: 2,
     description: "Interchamber Loss Q\nAcoustic energy lost through the wall between the two chambers; one value for both.",
   });
