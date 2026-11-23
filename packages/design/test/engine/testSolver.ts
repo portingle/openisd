@@ -1,6 +1,7 @@
 import type {
   Air,
   DriverSolverParams,
+  DriverValues,
   PrSolverParams,
   SealedAlignmentSolverParams,
   SolverField,
@@ -9,6 +10,7 @@ import type {
   VentSolverParams,
 } from '@openisd/design/engine';
 import {createEngine} from '@openisd/design/engine';
+import {BL_FROM_QES_CMS_ROUTE, CMS_FROM_VAS_SD_ROUTE, MMS_FROM_FS_CMS_ROUTE, RMS_FROM_FS_MMS_QMS_ROUTE} from '../../engine/driver/routes/index.js';
 import {REFERENCE_AIR} from '../fixtures/referenceAir.js';
 import {halfUlp} from '../../domain/precision.js';
 
@@ -107,8 +109,30 @@ function fakeInput(value: number | undefined): SolverInput<number> {
 /** The plain driver `SimulationEngine.sweep`/`maxCurves` take. A stated BL counts as entered, as
  *  `driverParams`' handles mark every stated value. */
 export function sweepDriver(d: TestSolverQuantities): SweepDriver {
+  return sweepDriverIn(d, REFERENCE_AIR);
+}
+
+/** `sweepDriver` in `air`. The boxes a WinISD-style driver leaves empty (Cms, Mms, Rms, terminal BL) are filled the way the
+ *  domain's solve fills them for such a driver: Cms derived from Vas and Sd, then Mms derived from Fs and that Cms, Rms from Qms, BL from Qes.
+ *  A stated figure is kept: the charts use the boxes as they show (QO534). */
+export function sweepDriverIn(d: TestSolverQuantities, air: Air): SweepDriver {
+  const stated = sweepValues(d);
+  const ok = (x: number | null | undefined): x is number => typeof x === 'number' && Number.isFinite(x) && x > 0;
+  const {Fs_hz, Vas_m3, Sd_m2, Qes, Qms, Re_terminal_ohm} = stated;
+  const fromVas = ok(Vas_m3) && ok(Sd_m2) ? CMS_FROM_VAS_SD_ROUTE.value({Vas_m3, Sd_m2, c_m_per_s: air.c(), roo_kg_per_m3: air.rho()}) : null;
+  const Cms = stated.Cms_m_per_N ?? fromVas;
+  const Mms = stated.Mms_kg ?? (ok(Fs_hz) && ok(Cms) ? MMS_FROM_FS_CMS_ROUTE.value({Fs_hz, Cms_m_per_N: Cms}) : null);
+  const Rms = stated.Rms_kg_per_s ?? (ok(Fs_hz) && ok(Mms) && ok(Qms) ? RMS_FROM_FS_MMS_QMS_ROUTE.value({Fs_hz, Mms_kg: Mms, Qms}) : null);
+  const BL = stated.BL_terminal_Tm ?? (ok(Re_terminal_ohm) && ok(Fs_hz) && ok(Qes) && ok(Cms)
+    ? BL_FROM_QES_CMS_ROUTE.value({Re_ohm: Re_terminal_ohm, Fs_hz, Qes, Cms_m_per_N: Cms}) : null);
   return {
-    values: {
+    values: {...stated, Cms_m_per_N: Cms, Mms_kg: Mms, Rms_kg_per_s: Rms, BL_terminal_Tm: BL},
+    winisdBL_Tm: d.BL_Tm ?? null,
+  };
+}
+
+function sweepValues(d: TestSolverQuantities): DriverValues {
+  return {
       Fs_hz: d.Fs_hz ?? null, Re_ohm: d.Re_ohm ?? null, Znom_ohm: d.Znom_ohm ?? null, Le_H: d.Le_H ?? null,
       fLe_hz: d.fLe_hz ?? null, KLe_H_sqrtHz: d.KLe_H_sqrtHz ?? null, Qes: d.Qes ?? null,
       Qms: d.Qms ?? null, Qts: d.Qts ?? null, Vas_m3: d.Vas_m3 ?? null, Sd_m2: d.Sd_m2 ?? null,
@@ -123,8 +147,6 @@ export function sweepDriver(d: TestSolverQuantities): SweepDriver {
       DVol_m3: d.DVol_m3 ?? null, c_m_per_s: d.c_m_per_s ?? null, roo_kg_per_m3: d.roo_kg_per_m3 ?? null,
       Re_terminal_ohm: d.Re_terminal_ohm ?? null, BL_terminal_Tm: d.BL_terminal_Tm ?? null,
       numVC: d.numVC ?? null, wiring: d.wiring ?? null,
-    },
-    winisdBL_Tm: d.BL_Tm ?? null,
   };
 }
 

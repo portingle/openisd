@@ -28,6 +28,16 @@ kinds of gap, and all three count against equivalence:
 | ⛔     | gap — missing: WinISD has it, OpenISD does not yet (OpenISD must be a superset)           |
 | —      | not a cell: does not exist in WinISD for that box                                         |
 
+**Driver Mms, Cms and Rms (T744; QO534).** WinISD's charts never read these three boxes: they derive Cms from Vas and Sd, then Mms from Fs and that Cms, Rms
+from Fs, Mms and Qms. OpenISD charts the boxes as they show, by default. The the WinISD-style chart option (CHART_FROM_FS_VAS_QMS)
+(under "Enable WinISD-style", unticked in a new project; QO539) charts them WinISD's way. Every chart
+cell below is measured with that option ticked (`reproduceWinisdBugs`, `packages/design/test/fixtures/domainBuilders.ts`) or with
+the three boxes holding WinISD's own figures (`useWinisdParts`). Where a file states figures that disagree with its Fs, Vas and
+Qms, OpenISD's charts with the option unticked follow the stated ones and differ from WinISD's,
+[WinISD simulation inputs](http://lap:8000/winisd/winisd_research/archive/GHIDRA_FINDINGS.md?html#L2146). Measured on the
+captures: E150HE-44 with the values in its file, up to 6.8 dB SPL; W5-1138SMF, roughly 1 dB near 1 kHz. Ticked, E150HE-44 as its file
+states it matches WinISD's sealed charts (`driver-edit-parity-e150he-44.test.ts`).
+
 Equivalence is multi-dimensional: chart × box × settings × driver. The captures use the Tang Band W5-1138SMF unless a cell names another driver (the Dayton E150HE-44,
 with the ND140-PR or SB15SFCR-00 radiator).
 

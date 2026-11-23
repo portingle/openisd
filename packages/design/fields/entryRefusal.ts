@@ -1,10 +1,5 @@
-/**
- * Whether a number typed into a box may be stored, and if not, the sentence its ⚠ shows: what is
- * wrong, then what to enter, in the unit the box is showing. ONE function answers both, so the
- * box never refuses a value without saying why, nor says why about a value it accepts.
- * bugs/BUG_20261005_no-common-ui-field-component.md (ruling "b": a refused entry stays in the box).
- */
-import type {ValueFloor} from '@openisd/design/fields';
+/** The rule for typed numeric entries and its refusal message in the box's current unit. */
+import type {ValueFloor} from './field.js';
 
 /** What a box knows about the values it accepts. `min`/`max` are SI; `show` renders an SI value
  *  in the box's current unit, unit symbol excluded. */
@@ -25,9 +20,18 @@ export type Entry =
   | { readonly kind: 'number'; readonly si: number };
 
 /** The lowest value the floor and `min` together allow, and whether it is itself allowed. */
-function lowerBound(b: EntryBounds): { readonly value: number; readonly inclusive: boolean } {
+function lowerBound(b: Pick<EntryBounds, 'floor' | 'min'>): { readonly value: number; readonly inclusive: boolean } {
   if (b.floor === 'positive' && b.min <= 0) return { value: 0, inclusive: false };
   return { value: b.floor === 'non-negative' ? Math.max(0, b.min) : b.min, inclusive: true };
+}
+
+/** What makes a typed SI value unacceptable, independent of its display unit. */
+export function numberEntryProblem(floor: ValueFloor, limits: Pick<EntryBounds, 'min' | 'max'>, si: number): 'non-finite' | 'below' | 'above' | null {
+  if (!Number.isFinite(si)) return 'non-finite';
+  const lo = lowerBound({floor, min: limits.min});
+  if (lo.inclusive ? si < lo.value : si <= lo.value) return 'below';
+  if (limits.max !== undefined && si > limits.max) return 'above';
+  return null;
 }
 
 /** Zero in the box's unit: "0", or where the unit starts elsewhere the number zero is ("-273.15" for
@@ -48,15 +52,14 @@ function allowedRange(b: EntryBounds): string {
 
 /** '' when `entry` may be stored; otherwise what is wrong and what to enter instead. */
 export function entryRefusal(b: EntryBounds, entry: Entry): string {
+  const problem = entry.kind === 'number' ? numberEntryProblem(b.floor, b, entry.si) : 'not-a-number';
+  if (problem === null) return '';
   const enter = `enter ${allowedRange(b)}.`;
-  if (entry.kind === 'not-a-number') return `${b.label} is not a number — ${enter}`;
-  const si = entry.si;
-  if (!Number.isFinite(si)) return `${b.label} must be a finite number — ${enter}`;
-  const lo = lowerBound(b);
-  if (lo.inclusive ? si < lo.value : si <= lo.value) {
+  if (problem === 'not-a-number') return `${b.label} is not a number — ${enter}`;
+  if (problem === 'non-finite') return `${b.label} must be a finite number — ${enter}`;
+  if (problem === 'below') {
     const why = b.minimumReason === undefined ? '' : ` ${b.minimumReason}`;
-    return lo.inclusive ? `${b.label} is below its minimum — ${enter}${why}` : `${b.label} must be greater than ${zeroIn(b) === '0' ? '0' : `${zeroIn(b)} ${b.unit}`} — ${enter}${why}`;
+    return lowerBound(b).inclusive ? `${b.label} is below its minimum — ${enter}${why}` : `${b.label} must be greater than ${zeroIn(b) === '0' ? '0' : `${zeroIn(b)} ${b.unit}`} — ${enter}${why}`;
   }
-  if (b.max !== undefined && si > b.max) return `${b.label} is above its maximum — ${enter}`;
-  return '';
+  return `${b.label} is above its maximum — ${enter}`;
 }

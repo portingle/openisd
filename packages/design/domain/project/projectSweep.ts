@@ -35,6 +35,7 @@ export interface ProjectSweepSource {
     readonly winisdVaModel: SimpleField<boolean>;
     readonly winisdWrapPhase: SimpleField<boolean>;
     readonly winisdFlatModel: SimpleField<boolean>;
+    readonly winisdChartFromFsVasQms: SimpleField<boolean>;
     readonly winisdAbcIntraPortVelocity: SimpleField<boolean>;
     readonly winisdPrNprResonance: SimpleField<boolean>;
     readonly winisdBesselHighpass: SimpleField<boolean>;
@@ -111,6 +112,7 @@ function sweepParamsOf(source: ProjectSweepSource, P: FrequencyGrid, eg: number,
         winisdVaModel: source.winisdVaModel.value,
         winisdWrapPhase: source.winisdWrapPhase.value,
         winisdFlatModel: source.winisdFlatModel.value,
+        winisdChartFromFsVasQms: source.winisdChartFromFsVasQms.value,
         winisdAbcIntraPortVelocity: source.winisdAbcIntraPortVelocity.value,
         winisdPrNprResonance: source.winisdPrNprResonance.value,
         winisdBesselHighpass: source.winisdBesselHighpass.value,
@@ -183,13 +185,15 @@ function boxSpecificParamsOf(source: ProjectSweepSource, boxType: SimulatableBox
             // per-frequency). Null only when the volume/radiator/tuning-pair is itself unsolved,
             // which prSweepIssuesOf already refuses the sweep over before this is read.
             const Fr = box.passiveRadiator.systemTuning_hz.value;
+            // The radiator's Mms, Cms and Rms as the charts take them (QO534; QO539 ticked: as WinISD works them out).
+            const mech = box.passiveRadiator.chartMechanics();
             return {
                 prSd: undefinedIfNull(r.Sd_m2.value),
                 prNum: box.passiveRadiator.count.value,
-                prMmd: undefinedIfNull(r.Mms_kg.value),
+                prMmd: undefinedIfNull(mech.Mms_kg),
                 prMadd: undefinedIfNull(box.passiveRadiator.addedMass_kg.value),
-                prCms: undefinedIfNull(r.Cms_m_per_N.value),
-                prRms: undefinedIfNull(r.Rms_kg_per_s.value),
+                prCms: undefinedIfNull(mech.Cms_m_per_N),
+                prRms: undefinedIfNull(mech.Rms_kg_per_s),
                 Fr: undefinedIfNull(Fr),
             };
         }
@@ -351,7 +355,7 @@ export type SweepPlan =
     | { readonly kind: 'blocked'; readonly issues: readonly SweepIssue[] };
 
 /** The driver as the sweep reads it. "Two-BL driver" ticked is WinISD's bug: the typed BL sets the motor's
- *  push while Qes sets the damping. Unticked there is one BL, the one Re, Fs, Qes and Vas imply, and a typed BL is not read. */
+ *  push while Qes sets the damping. Unticked there is one BL, the Bl box's (QO534). */
 function sweepDriverOf(source: ProjectSweepSource, air: Air): SweepDriver {
     const entered = source.driver.specs.sweepDriverIn(air);
     return source.winisdDriverModel.value ? entered : {...entered, winisdBL_Tm: null};

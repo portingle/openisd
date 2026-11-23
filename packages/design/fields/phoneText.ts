@@ -154,6 +154,7 @@ export class PhoneHelpRows {
   static readonly PR_FS: PhoneHelpRow = {label: 'Fs', text: 'the frequency at which the passive radiator vibrates most freely, out of a box.'};
   static readonly PR_QMS: PhoneHelpRow = {label: 'Qms', text: 'how sharply the passive radiator resonates, from its suspension.'};
   static readonly PR_VAS: PhoneHelpRow = {label: 'Vas', text: 'the volume of air that is as easy to compress as the passive radiator\'s suspension is to stretch.'};
+  static readonly PR_DRIVING: PhoneHelpRow = {label: 'Blue dot', text: 'The boxes with a blue dot after their name, Sd, Mms, Cms and Rms, drive the charts, as they show. A value you type is never overwritten; boxes that disagree are marked.'};
   static readonly PR_XMAX: PhoneHelpRow = {label: 'Xmax', text: 'how far the passive radiator can move each way before it distorts.'};
   static readonly PR_COUNT: PhoneHelpRow = {label: 'Num. of PRs', text: 'the number of passive radiators.'};
   static readonly PR_FP: PhoneHelpRow = {label: 'Fp (frequency, passive)', text: 'the tuning you want. The app adds mass to the radiator to reach it.'};
@@ -224,6 +225,7 @@ export class PhoneHelp {
     PhoneHelpRows.PR_SD,
     PhoneHelpRows.PR_XMAX,
     PhoneHelpRows.PR_VD,
+    PhoneHelpRows.PR_DRIVING,
   ]);
   static readonly USER_OPTIONS = new PhoneHelpSection('User options', 'The number of passive radiators and any mass added to them.', [
     PhoneHelpRows.PR_COUNT,
@@ -283,6 +285,7 @@ export class PhoneHelp {
     {label:'Core requirements', text:'Fs, Vas, Re and Sd must be available, together with enough Q information. Thick borders mark required fields; red highlights missing required data. Green numbers are entered; blue numbers are calculated.'},
     {label:'Xmax — optional', text:'Not a core requirement. It supplies the limit line on the cone-excursion chart and contributes to excursion-limited maximum-output calculations. Without it, the cone-excursion curve can still be shown, but its Xmax limit line is absent.'},
     {label:'Pe — optional', text:'The thermal power rating contributes to power-limited maximum-output calculations. A missing rating does not prevent basic response calculations.'},
+    {label:'Blue dot', text:'The boxes with a blue dot after their name, Sd, Mms, Cms, Rms, Bl, Re and Le, drive the charts, as they show. Fs, Vas and the Qs are worked out from them when they are empty; a typed one that disagrees is marked, with the boxes it disagrees with.'},
     {label:'Other fields', text:'Additional parameters support their associated calculations. Missing or conflicting data are explained by the field’s warning or provenance information.'},
   ]);
 
@@ -295,7 +298,7 @@ export class PhoneHelp {
   static readonly EDITOR_ELECTRO_MECHANICAL = new PhoneHelpSection("Electro-mechanical parameters", "Re and Sd are core simulation data. Other values describe the same physical driver and may be derived; the editor reports missing relationships rather than requiring every box to be typed.", [
     {"label": "Re — core", "text": "Voice-coil DC resistance, in ohms. Used for the electrical load and drive calculations. This is not the nominal impedance rating."},
     {"label": "Sd — core", "text": "Effective radiating cone area, normally in cm². Used to relate cone motion to air displacement and sound output."},
-    {"label": "Mms, Cms, Rms", "text": "Moving mass, suspension compliance and mechanical damping. They link to Fs, Vas and the Q values; calculated values are shown in blue."},
+    {"label": "Mms, Cms, Rms", "text": "Moving mass, suspension compliance and mechanical damping. They link to Fs, Vas and the Q values; calculated values are shown in blue. The charts use the boxes with a blue dot, Sd, Mms, Cms, Rms, Bl, Re and Le, as they show. A value you type is never overwritten; when the boxes disagree, each one in the disagreeing set has a warning that says what the maths gives."},
     {"label": "BL and Dd", "text": "BL is motor force factor. Dd is effective cone diameter and can provide Sd; it is not the outside basket diameter."},
     {"label": "Le, fLe and KLe — model-specific", "text": "Voice-coil inductance, its measurement frequency and the frequency-dependent inductance coefficient. These support inductance modelling and affect the electrical impedance/response when that model is enabled. They are not the same kind of core requirement as Re and Sd."},
   ]);
@@ -359,10 +362,11 @@ export class PhoneHelp {
     {label: ToggleField.ADV_RGATDRIVERSIDE.label, text: 'ticked: each driver gets its own series resistance Rg. Unticked: Rg sits once, at the amplifier.'},
     {label: ToggleField.ADV_SPLXMAXLIMITED.label, text: 'holds the SPL curve down where the cone would move past Xmax.'},
   ]);
-  static readonly ADVANCED_WINISD_STYLE = new PhoneHelpSection('Enable WinISD-style', 'Places where WinISD calculates in its own way. OpenISD copies it by default. Untick a switch for the other form.', [
+  static readonly ADVANCED_WINISD_STYLE = new PhoneHelpSection('Enable WinISD-style', 'Places where WinISD calculates in its own way. OpenISD copies it by default, except where a switch says it starts unticked. Untick a switch for the other form.', [
     styleLine(WinisdOption.WRAP_PHASE, 'WinISD wraps phase at ±180°, which makes smooth curves jump. OpenISD wraps by default, as WinISD does. Untick for smooth.'),
     styleLine(WinisdOption.FLAT_MODEL, 'WinISD\'s Force flat response cuts and boosts without limit, so the boost can be huge. OpenISD does the same by default. Untick for boost only, 20 dB at most.'),
     styleLine(WinisdOption.ABC_INTRA_PORT_VELOCITY, 'WinISD drops a small leak term from the ABC intra-port velocity, so it is slightly off (up to 1.35 dB). OpenISD drops it too by default. Untick for the exact velocity.'),
+    styleLine(WinisdOption.CHART_FROM_FS_VAS_QMS, ToggleField.ADV_WINISDCHARTFROMFSVASQMS.description),
     styleLine(WinisdOption.ONE_DRIVER_IMPEDANCE, 'WinISD sizes the sound for drivers in parallel but draws only ONE driver\'s impedance, not the load the amplifier sees (4 × 8 Ω is 2 Ω). OpenISD draws the load for your Driver wiring. Tick for one driver\'s, as WinISD.'),
   ]);
   static readonly ADVANCED_WINISD_BUGS = new PhoneHelpSection('Enable WinISD bugs', 'Mistakes in WinISD\'s maths. OpenISD gets them right. A yellow switch brings WinISD\'s result back. A switch greyed out does nothing for this box.', [

@@ -4,9 +4,9 @@ import {OpenISDDriver} from '../../domain/driver/openISDDriver.js';
 import {OpenISDPassiveRadiatorStandalone} from '../../domain/passiveRadiator/openISDPassiveRadiatorStandalone.js';
 import {fixedAppContext} from '../fixtures/domainBuilders.js';
 
-// A blank driver or radiator takes its id from the AppContext it is given (appContext.ts: `newUuid()` is never called around it), so a
+// A blank driver or radiator takes its id from the AppServices it is given (appContext.ts: `newUuid()` is never called around it), so a
 // caller that fixes the context gets the same record every time: the sample projects the visual baselines are drawn from (T834).
-describe('a blank device takes its id from the AppContext', () => {
+describe('a blank device takes its id from the AppServices', () => {
   it('a blank driver', () => {
     expect(OpenISDDriver.empty(createEngine(), fixedAppContext('driver-id')).uuid()).toBe('driver-id');
   });

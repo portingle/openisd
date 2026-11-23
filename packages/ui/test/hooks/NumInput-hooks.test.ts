@@ -97,6 +97,7 @@ interface SetupOptions {
   fieldEditMode?: FieldEditMode;
   stepperPin?: StepperPin;
   unitTokens?: PresentationState['ui']['unitTokens'];
+  restoreRefusedEntry?: boolean;
 }
 
 /** An event carrying the given own properties, including read-only ones such as target. */
@@ -176,7 +177,7 @@ function setup(initial: Partial<NumInputProps> = {}, attrs: Record<string, unkno
   });
   const app = renderer.createApp(defineComponent({
     setup() {
-      api = useNumInput(props, emit, {presentationState, stepperPin: options.stepperPin ?? null, fieldEditMode: options.fieldEditMode ?? null, dragClock, attrs, refusalSeen: () => undefined});
+      api = useNumInput(props, emit, {presentationState, stepperPin: options.stepperPin ?? null, fieldEditMode: options.fieldEditMode ?? null, dragClock, attrs, refusalSeen: () => undefined, restoreRefusedEntry: options.restoreRefusedEntry === true});
       return () => null;
     },
   }));
@@ -226,6 +227,23 @@ describe('useNumInput', () => {
     expect(input.value).toBe('12.00');
     expect(escape.preventDefault).toHaveBeenCalledOnce();
     expect(escape.stopPropagation).toHaveBeenCalledOnce();
+    app.unmount();
+  });
+
+  it.each(['Enter', 'blur'])('restores a refused What-if entry on %s and keeps its note', async commit => {
+    const {api, app, input, emissions} = setup({modelValue: 0.0266, field: NumberField.MMS_KG}, {}, {restoreRefusedEntry: true});
+    const before = input.value;
+    api.onFocus(focusEvent('focus'));
+    input.value = '-5';
+    api.onInput(eventTargeted('input', input));
+    await nextTick();
+
+    if (commit === 'Enter') api.onKeydown(keyEvent('keydown', 'Enter', input));
+    else api.onBlur(focusEvent('blur'));
+
+    expect(input.value).toBe(before);
+    expect(api.refusal.value).toContain('Mms must be greater than 0');
+    expect(emissions.some(event => event.event === 'update:modelValue')).toBe(false);
     app.unmount();
   });
 

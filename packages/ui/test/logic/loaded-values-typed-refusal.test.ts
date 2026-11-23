@@ -4,8 +4,7 @@
  * over the field's own floor and band, the same bounds `NumInput` builds.
  */
 import {describe, expect, it} from 'vitest';
-import {NumberField} from '@openisd/design/fields';
-import {entryRefusal, type EntryBounds} from '../../src/logic/entryRefusal.js';
+import {NumberField, entryRefusal, type EntryBounds} from '@openisd/design/fields';
 
 function boundsOf(field: NumberField, allowOutOfRange: boolean): EntryBounds {
   const bounds: EntryBounds = {

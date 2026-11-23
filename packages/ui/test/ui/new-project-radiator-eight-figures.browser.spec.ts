@@ -16,6 +16,7 @@ interface Skin {
   readonly open: (page: Page) => Promise<void>;
   readonly projectRms: (page: Page) => Promise<Locator>;
   readonly projectCms: (page: Page) => Promise<Locator>;
+  readonly projectMms: (page: Page) => Promise<Locator>;
 }
 
 const DESKTOP: Skin = {
@@ -29,6 +30,10 @@ const DESKTOP: Skin = {
   projectCms: async page => {
     await openTab(page, 'Passive Radiator');
     return page.locator('#og-pr-cms');
+  },
+  projectMms: async page => {
+    await openTab(page, 'Passive Radiator');
+    return page.locator('#og-pr-mms');
   },
 };
 
@@ -46,6 +51,15 @@ const PHONE: Skin = {
     await openTab(page, 'Box');
     await page.locator('#mob-pr-edit').click();
     return page.locator('#pr-editor-cms');
+  },
+  // The editor may already be open from the Cms read just before.
+  projectMms: async page => {
+    const mms = page.locator('#pr-editor-mms');
+    if (!(await mms.isVisible())) {
+      await openTab(page, 'Box');
+      await page.locator('#mob-pr-edit').click();
+    }
+    return mms;
   },
 };
 
@@ -93,7 +107,7 @@ for (const [name, skin] of [['desktop', DESKTOP], ['phone', PHONE]] as const) {
       const root = skin.root(p);
       await expect(root.locator('#np-pr-qms')).toHaveValue(/^4\.8/);
       await expect(root.locator('#np-pr-qms')).toHaveClass(/value-c/);
-      await expect(root.locator('#np-pr-fs')).toHaveValue(/^23\.2/);
+      await expect(root.locator('#np-pr-fs')).toHaveValue(/^23\.3/);
       await expect(root.locator('#np-pr-fs')).toHaveClass(/value-c/);
       await expect(root.locator('#np-pr-vas')).not.toHaveClass(/value-c/);
       for (const id of FIGURE_IDS.filter(i => i !== '#np-pr-xmax')) await expect.soft(root.locator(id), id).toHaveValue(/\d/);
@@ -109,20 +123,41 @@ for (const [name, skin] of [['desktop', DESKTOP], ['phone', PHONE]] as const) {
       await expect(await skin.projectRms(p)).toHaveValue(/^2\.2/);
     });
 
-    test('a Cms typed over a stated Vas reaches the project and both boxes show the mark', async ({page, appPage}) => {
+    // Typing Cms keeps the entered Vas and marks both fields with a warning.
+    test('a Cms typed over a stated Vas leaves Vas as stated, both boxes show the mark, and it reaches the project', async ({page, appPage}) => {
       const p = pageOf({page, appPage});
       await pickThenBack(p, skin, 'ASP190');
       const root = skin.root(p);
+      const vasBefore = await root.locator('#np-pr-vas').inputValue();
       // The box is in mm/N, so 2 is 0.002 m/N: Vas = rho*c^2*Sd^2*Cms = 141855 Pa * 0.0202^2 m^4 * 0.002 m/N = 0.1158 m3
       // against the stated 0.027 m3, 4.3 times apart. (1 mm/N gave 0.0579 m3, 2.1 times apart, but a typed 1 carries
       // 0.5 of precision, which alone moves Vas by 0.029 m3, so it was within the print's slack once the air may
       // differ by 2.5% (T804).)
       await root.locator('#np-pr-cms').fill('2');
       await root.locator('#np-pr-cms').press('Tab');
+      await expect(root.locator('#np-pr-vas')).toHaveValue(vasBefore);
       await expect(root.locator('#np-pr-cms')).toHaveClass(/dq-flag/);
       await expect(root.locator('#np-pr-vas')).toHaveClass(/dq-flag/);
       await createProject(p, skin);
       await expect(await skin.projectCms(p)).toHaveValue(/^2(\.0*)?$/);
+    });
+
+    // A stated 1.01 must not be replaced by other numbers; the charts use the boxes as they show.
+    test('P173: the wizard and the project show the stated Cms 1.01 and Mms 15, entered', async ({page, appPage}) => {
+      const p = pageOf({page, appPage});
+      await pickThenBack(p, skin, 'P173');
+      const root = skin.root(p);
+      await expect(root.locator('#np-pr-cms')).toHaveValue(/^1\.010*$/);
+      await expect(root.locator('#np-pr-cms')).toHaveClass(/value-e/);
+      await expect(root.locator('#np-pr-mms')).toHaveValue(/^15(\.0*)?$/);
+      await expect(root.locator('#np-pr-mms')).toHaveClass(/value-e/);
+      await createProject(p, skin);
+      const cms = await skin.projectCms(p);
+      await expect(cms).toHaveValue(/^1\.010*$/);
+      await expect(cms).toHaveClass(/value-e/);
+      const mms = await skin.projectMms(p);
+      await expect(mms).toHaveValue(/^15(\.0*)?$/);
+      await expect(mms).toHaveClass(/value-e/);
     });
 
     test('P173 gives nothing to calculate Qms from: the box stays empty', async ({page, appPage}) => {

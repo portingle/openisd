@@ -37,6 +37,13 @@ describe('SheetMode', () => {
   });
 
   describe('What-if fields', () => {
+    it('includes Qts, Sensitivity, Cms and Rms in What-if', () => {
+      for (const o of BOX_TYPE_OPTIONS) {
+        const labels = SheetMode.WHAT_IF.lines(o.value).flat().map(f => SheetMode.WHAT_IF.labelOf(f));
+        expect(labels.slice(labels.indexOf('Fs'), labels.indexOf('Rms') + 1)).toEqual(['Fs', 'Vas', 'Qes', 'Qms', 'Qts', 'Sensitivity', 'Cms', 'Rms']);
+      }
+    });
+
     it('are every box figure plus Fs, Qts and Vas, one per line', () => {
       for (const o of BOX_TYPE_OPTIONS) {
         const lines = SheetMode.WHAT_IF.lines(o.value);

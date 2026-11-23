@@ -36,6 +36,7 @@ export {
 export { knownDecimals } from './precision.js';
 
 export { type NumberBox, type NumberEdit, NUMBER_TEXT, numberInPaste, pastedEdit, typedEdit } from './numberText.js';
+export { entryRefusal, type EntryBounds } from './entryRefusal.js';
 
 export {
   type FieldLimits,
@@ -154,6 +155,7 @@ export { type AppVersion, type BuildKind, type BuildTrail, type PageAddress, for
 
 /** The bottom sheet's rows per box type and sheet modes (Tune and What-if). */
 export { SheetField, type SheetSlot } from './sheetField.js';
+export { ChartInputs } from './chartInputs.js';
 export { SheetSizes } from './sheetSizes.js';
 export { ChartPageSizes, type ChartPageSizesValues } from './chartPageSizes.js';
 export { ChartPageHelp } from './chartPageText.js';

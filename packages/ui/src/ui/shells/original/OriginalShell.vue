@@ -6,7 +6,7 @@
 // src/hooks/OriginalShell-hooks.ts (`useOriginalShell`), where it is a plain composable that
 // gets unit-tested without a DOM. This `<script setup>` is nothing but a hook call plus the
 // child-component imports; the template reads the destructured API surface only.
-import {APP_UPDATE_TEXT, CompatSwitchGroup, DesktopLabels, NO_PROJECT_OPEN, NumberField, ReadoutFormat, TextField, ToggleField, WinisdDeviation} from '@openisd/design/fields';
+import {APP_UPDATE_TEXT, ChartInputs, CompatSwitchGroup, DesktopLabels, NO_PROJECT_OPEN, NumberField, ReadoutFormat, TextField, ToggleField, WinisdDeviation} from '@openisd/design/fields';
 import ProvenanceLegend from '../../components/ProvenanceLegend.vue';
 import UIField from '../../components/UIField.vue';
 import PortShapeToggle from '../../components/PortShapeToggle.vue';
@@ -68,13 +68,8 @@ const {
   showEnclosureTab, enclosureNavLabel,
   helpPanel, closeHelp, openSectionHelp, openTabHelp, tabHelpShown, rearChamberHelp, frontChamberHelp, passiveRadiatorHelp, userOptionsHelp,
   placementHelp, advancedOptionsHelp, listeningPlaceHelp, signalSourceHelp, limitsHelp, ventHelp,
-  selectedBox, BOX_TYPE_OPTIONS, IMPLEMENTED_BOX_TYPES, abcVelocityApplies, oneDriverImpedanceApplies, errorSwitches, chartDeviations, prNprDeviationShown, projectAlfaVCDeviationShown,
-  boxVolumeCell, sealedFscCell, sealedQtcCell, sealedAlignmentEditor, sealedAlignmentOpen, sealedAlignmentDeviationShown,
-  sealedAlignmentOptions, sealedAlignmentSelected, sealedAlignmentVolume_m3, sealedAlignmentEbp,
-  sealedAlignmentSuitability, sealedAlignmentSuitabilityLabel, originalFilters,
-  ventedAlignmentEditor, ventedAlignmentOpen, ventedAlignmentOptions, ventedAlignmentSelected,
-  ventedAlignmentVolume_m3, ventedAlignmentTuning_hz, ventedAlignmentEbp, ventedAlignmentSuitability,
-  ventedAlignmentSuitabilityLabel,
+  selectedBox, BOX_TYPE_OPTIONS, IMPLEMENTED_BOX_TYPES, compatOptions, optionApplies, errorSwitches, chartDeviations, prNprDeviationShown, projectAlfaVCDeviationShown,
+  boxVolumeCell, sealedFscCell, sealedQtcCell, sealedAlignmentEditor, ventedAlignmentEditor, originalFilters,
   activeTuning, FB_TARGET_TIP, FH_TARGET_TIP, VENT_GEOMETRY_TIP,
   boxResonance, rearQtc, prSystemTuningDq,
   fbUnreachable, fbUnreachableMsg, isDual,
@@ -508,14 +503,14 @@ provideCellScope({ revision: projectChanged, written: () => {} });
               <div>
                 <DesktopBand :section="passiveRadiatorHelp" title="Passive radiator parameters" @help="openSectionHelp" />
                 <div style="display: grid; grid-template-columns: auto auto; column-gap: 5px; row-gap: 0; margin-bottom: 0;">
-                  <UIField class="field" input-id="og-pr-vas" :field="NumberField.PR_VAS_L" :cell="project.box.passiveRadiator.radiator.spec.Vas_m3" />
-                  <UIField class="field" input-id="og-pr-qms" :field="NumberField.PR_QMS" :cell="project.box.passiveRadiator.radiator.spec.Qms" />
-                  <UIField class="field" input-id="og-pr-fs" :field="NumberField.PR_FS_HZ" :cell="project.box.passiveRadiator.radiator.spec.Fs_hz" />
-                  <UIField class="field" :field="NumberField.PR_SD_CM2" :cell="project.box.passiveRadiator.radiator.spec.Sd_m2" />
-                  <UIField class="field" input-id="og-pr-mms" :field="NumberField.MMS_KG" :cell="project.box.passiveRadiator.radiator.spec.Mms_kg" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" />
-                  <UIField class="field" input-id="og-pr-cms" :field="NumberField.CMS_M_PER_N" :cell="project.box.passiveRadiator.radiator.spec.Cms_m_per_N" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" />
-                  <UIField class="field" input-id="og-pr-rms" :field="NumberField.RMS_KG_PER_S" :cell="project.box.passiveRadiator.radiator.spec.Rms_kg_per_s" />
-                  <UIField class="field" :field="NumberField.PR_XMAX_MM" :cell="project.box.passiveRadiator.radiator.spec.Xmax_m" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" input-id="og-pr-vas" :field="NumberField.PR_VAS_L" :cell="project.box.passiveRadiator.radiator.spec.Vas_m3" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" input-id="og-pr-qms" :field="NumberField.PR_QMS" :cell="project.box.passiveRadiator.radiator.spec.Qms" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" input-id="og-pr-fs" :field="NumberField.PR_FS_HZ" :cell="project.box.passiveRadiator.radiator.spec.Fs_hz" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" :field="NumberField.PR_SD_CM2" :cell="project.box.passiveRadiator.radiator.spec.Sd_m2" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" input-id="og-pr-mms" :field="NumberField.MMS_KG" :cell="project.box.passiveRadiator.radiator.spec.Mms_kg" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" input-id="og-pr-cms" :field="NumberField.CMS_M_PER_N" :cell="project.box.passiveRadiator.radiator.spec.Cms_m_per_N" :deviation="WinisdDeviation.PR_MMS_CMS_TYPING" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" input-id="og-pr-rms" :field="NumberField.RMS_KG_PER_S" :cell="project.box.passiveRadiator.radiator.spec.Rms_kg_per_s" />
+                  <UIField class="field" :chart-inputs="ChartInputs.RADIATOR" :field="NumberField.PR_XMAX_MM" :cell="project.box.passiveRadiator.radiator.spec.Xmax_m" />
                 </div>
               </div>
               <div>
@@ -635,24 +630,9 @@ provideCellScope({ revision: projectChanged, written: () => {} });
                 <div class="sim-switch-col">
                 <div class="option-switch-group" :title="CompatSwitchGroup.OPTIONS.tooltip">
                 <div class="option-switch-group-headrow"><div class="option-switch-group-head">{{ CompatSwitchGroup.OPTIONS.heading }}</div><CompatGroupHelpLink :group="CompatSwitchGroup.OPTIONS" /></div>
-                <div>
-                  <label data-field-key="winisdWrapPhase" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;" :title="ToggleField.ADV_WINISDWRAPPHASE.description">
-                    <input type="checkbox" :checked="project.winisdWrapPhase.value" @change="e => setCompatSwitch(project.winisdWrapPhase, inputChecked(e))"> {{ ToggleField.ADV_WINISDWRAPPHASE.label }}
-                  </label>
-                </div>
-                <div>
-                  <label data-field-key="winisdFlatModel" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;" :title="ToggleField.ADV_WINISDFLATMODEL.description">
-                    <input type="checkbox" :checked="project.winisdFlatModel.value" @change="e => setCompatSwitch(project.winisdFlatModel, inputChecked(e))"> {{ ToggleField.ADV_WINISDFLATMODEL.label }}
-                  </label>
-                </div>
-                <div>
-                  <label data-field-key="winisdAbcIntraPortVelocity" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;" :class="{ 'compat-switch-na': !abcVelocityApplies }" :title="ToggleField.ADV_WINISDABCINTRAPORTVELOCITY.description">
-                    <input type="checkbox" :checked="project.winisdAbcIntraPortVelocity.value" :disabled="!abcVelocityApplies" @change="e => setCompatSwitch(project.winisdAbcIntraPortVelocity, inputChecked(e))"> <ToggleLabel :field="ToggleField.ADV_WINISDABCINTRAPORTVELOCITY" />
-                  </label>
-                </div>
-                <div>
-                  <label data-field-key="winisdOneDriverImpedance" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;" :class="{ 'compat-switch-na': !oneDriverImpedanceApplies }" :title="ToggleField.ADV_WINISDONEDRIVERIMPEDANCE.description">
-                    <input type="checkbox" :checked="project.winisdOneDriverImpedance.value" :disabled="!oneDriverImpedanceApplies" @change="e => setCompatSwitch(project.winisdOneDriverImpedance, inputChecked(e))"> <ToggleLabel :field="ToggleField.ADV_WINISDONEDRIVERIMPEDANCE" />
+                <div v-for="option in compatOptions" :key="option.fieldKey">
+                  <label :data-field-key="option.fieldKey" style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px;" :class="{ 'compat-switch-na': !optionApplies(option) }" :title="option.field.description">
+                    <input type="checkbox" :checked="option.of(project).value" :disabled="!optionApplies(option)" @change="e => setCompatSwitch(option.of(project), inputChecked(e))"> <ToggleLabel :field="option.field" />
                   </label>
                 </div>
                 </div>
@@ -795,7 +775,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
     <!-- The What-if? panel (`<OriginalWhatIf>`) is rendered by App.vue, not here, so it survives a box-type
          change that re-renders this shell's enclosure pane (QO134). Its open/close state and
          refresh persistence stay on `presentationState.editDriver`, watched below. -->
-    <div v-if="sealedAlignmentOpen" class="overlay on alignment-overlay">
+    <div v-if="sealedAlignmentEditor.open.value" class="overlay on alignment-overlay">
       <div class="modal alignment-modal">
         <div class="modal-titlebar">
           <div class="tb-left"><span class="app-icon"></span><span>Choose Sealed Alignment</span></div>
@@ -804,14 +784,14 @@ provideCellScope({ revision: projectChanged, written: () => {} });
         <div class="modal-body">
           <p class="hint">WinISD uses numeric target Qtc choices. Select one to calculate the sealed box volume for the current driver.</p>
           <div class="field-row"><div class="field alignment-field"><label>Alignment</label>
-            <select class="alignment-select" :value="sealedAlignmentSelected?.value ?? ''" @change="e => { const qtc = selectedOption(e, sealedAlignmentOptions); if (qtc !== null) sealedAlignmentEditor.selectQtc(qtc); }">
-              <option v-for="option in sealedAlignmentOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+            <select class="alignment-select" :value="sealedAlignmentEditor.selectedOption.value?.value ?? ''" @change="e => { const qtc = selectedOption(e, sealedAlignmentEditor.options.value); if (qtc !== null) sealedAlignmentEditor.selectQtc(qtc); }">
+              <option v-for="option in sealedAlignmentEditor.options.value" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
-            <WinisdDeviationCue v-if="sealedAlignmentDeviationShown" :deviation="WinisdDeviation.SEALED_PICKER" />
+            <WinisdDeviationCue v-if="sealedAlignmentEditor.deviationShown.value" :deviation="WinisdDeviation.SEALED_PICKER" />
           </div></div>
-          <div class="field-row"><UIFixedField class="field" input-id="og-sealed-alignment-volume" :field="NumberField.BOX_VB_L" label="Volume" :value="sealedAlignmentVolume_m3" @update:value="v => { sealedAlignmentVolume_m3 = v; }" /></div>
-          <div class="alignment-readout"><span class="alignment-icon" :class="sealedAlignmentSuitability ?? 'unknown'">●</span>
-            <span>EBP {{ ReadoutFormat.EBP.text(sealedAlignmentEbp, '—', unitTokens) }} {{ ReadoutFormat.EBP.unitLabel(unitTokens) }} — {{ sealedAlignmentSuitabilityLabel }}</span>
+          <div class="field-row"><UIFixedField class="field" input-id="og-sealed-alignment-volume" :field="NumberField.BOX_VB_L" label="Volume" :value="sealedAlignmentEditor.volume_m3.value" @update:value="v => { sealedAlignmentEditor.volume_m3.value = v; }" /></div>
+          <div class="alignment-readout"><span class="alignment-icon" :class="sealedAlignmentEditor.ebpSuitability.value ?? 'unknown'">●</span>
+            <span>EBP {{ ReadoutFormat.EBP.text(sealedAlignmentEditor.ebp.value, '—', unitTokens) }} {{ ReadoutFormat.EBP.unitLabel(unitTokens) }} — {{ sealedAlignmentEditor.ebpSuitabilityLabel.value }}</span>
           </div>
           <p class="hint">EBP is Fs ÷ Qes. It is a rule-of-thumb suitability guide: below 50 generally favors sealed, above 100 generally favors vented, and the middle range can use either.</p>
           <p class="hint">The volume uses the driver's Qts and Vas. Editing Volume changes the resulting Qtc and selects the closest numeric alignment.</p>
@@ -820,7 +800,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
       </div>
     </div>
 
-    <div v-if="ventedAlignmentOpen" class="overlay on alignment-overlay">
+    <div v-if="ventedAlignmentEditor.open.value" class="overlay on alignment-overlay">
       <div class="modal alignment-modal">
         <div class="modal-titlebar">
           <div class="tb-left"><span class="app-icon"></span><span>Choose Vented Alignment</span></div>
@@ -829,14 +809,14 @@ provideCellScope({ revision: projectChanged, written: () => {} });
         <div class="modal-body">
           <p class="hint">Select a named vented alignment to calculate the box volume and tuning frequency for the current driver.</p>
           <div class="field-row"><div class="field alignment-field"><label>Alignment</label>
-            <select class="alignment-select" :value="ventedAlignmentSelected" @change="e => { const a = selectedOption(e, ventedAlignmentOptions); if (a !== null) ventedAlignmentEditor.selectAlignment(a); }">
-              <option v-for="option in ventedAlignmentOptions" :key="option.value" :value="option.value">{{ option.label }}</option>
+            <select class="alignment-select" :value="ventedAlignmentEditor.selectedAlignment.value" @change="e => { const a = selectedOption(e, ventedAlignmentEditor.options); if (a !== null) ventedAlignmentEditor.selectAlignment(a); }">
+              <option v-for="option in ventedAlignmentEditor.options" :key="option.value" :value="option.value">{{ option.label }}</option>
             </select>
           </div></div>
-          <div class="field-row"><UIFixedField class="field" :field="NumberField.BOX_VB_L" label="Volume" :value="ventedAlignmentVolume_m3" :format="ReadoutFormat.ALIGNMENT_VOLUME_L" readonly /></div>
-          <div class="field-row"><UIFixedField class="field" :field="NumberField.BOX_FB_HZ" label="Tuning freq (Fb)" :value="ventedAlignmentTuning_hz" :format="ReadoutFormat.TUNING_HZ" readonly /></div>
-          <div class="alignment-readout"><span class="alignment-icon" :class="ventedAlignmentSuitability ?? 'unknown'">●</span>
-            <span>EBP {{ ReadoutFormat.EBP.text(ventedAlignmentEbp, '—', unitTokens) }} {{ ReadoutFormat.EBP.unitLabel(unitTokens) }} — {{ ventedAlignmentSuitabilityLabel }}</span>
+          <div class="field-row"><UIFixedField class="field" :field="NumberField.BOX_VB_L" label="Volume" :value="ventedAlignmentEditor.volume_m3.value" :format="ReadoutFormat.ALIGNMENT_VOLUME_L" readonly /></div>
+          <div class="field-row"><UIFixedField class="field" :field="NumberField.BOX_FB_HZ" label="Tuning freq (Fb)" :value="ventedAlignmentEditor.tuning_hz.value" :format="ReadoutFormat.TUNING_HZ" readonly /></div>
+          <div class="alignment-readout"><span class="alignment-icon" :class="ventedAlignmentEditor.ebpSuitability.value ?? 'unknown'">●</span>
+            <span>EBP {{ ReadoutFormat.EBP.text(ventedAlignmentEditor.ebp.value, '—', unitTokens) }} {{ ReadoutFormat.EBP.unitLabel(unitTokens) }} — {{ ventedAlignmentEditor.ebpSuitabilityLabel.value }}</span>
           </div>
           <p class="hint">EBP is Fs ÷ Qes. It is a rule-of-thumb suitability guide: below 50 generally favors sealed, above 100 generally favors vented, and the middle range can use either.</p>
           <p class="hint">Volume and tuning are calculated from the driver's Fs, Qts, and Vas for the selected alignment.</p>

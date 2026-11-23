@@ -68,11 +68,8 @@ test('driver editor: an inconsistent group marks every one of its members, with 
 
   // The tooltip names the group and how far out it is; "inconsistent" alone is not actionable.
   const note = await editorField(page, 'Fs').locator('.ui-field-dq-btn').getAttribute('title');
-  expect(note).toContain('resonance (Fs)');
-  expect(note).toContain('moving mass (Mms)');
-  expect(note).toContain('compliance (Cms)');
-  expect(note).toMatch(/disagree by \d/);
-  expect(note).toContain('Fs = 1/(2π·√(Mms·Cms))');
+  expect(note).toMatch(/^Fs differs by [0-9.]+%\. Using Mms and Cms gives [0-9.]+ Hz\. The box shows [0-9.]+ Hz\./);
+  expect(note).toContain('Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box.');
 
   // A field outside the group is NOT marked.
   await expect(editorField(page, 'Re').locator('.ui-field-dq-btn')).toHaveCount(0);
@@ -104,7 +101,7 @@ test('What-if: the same mark appears on every member of the group as the driver 
   const note = whatIfField(page, 'Mms').locator('.ui-field-note');
   await whatIfField(page, 'Mms').locator('.ui-field-dq-btn').click();
   await expect(note).toBeVisible();
-  expect(await note.textContent()).toMatch(/disagree by \d/);
+  expect(await note.textContent()).toMatch(/differs by [0-9.]+%\. Using/);
 
   // Withdrawing the override hands Mms back to the calculation, and the group reconciles again.
   await mms.click();
@@ -131,7 +128,7 @@ test('What-if: clicking the alert icon shows the reason in a popup and clicking 
 
   await dqIcon.click();
   await expect(note).toBeVisible();
-  await expect(note).toContainText('disagree by');
+  await expect(note).toContainText(/differs by [0-9.]+%\. Using/);
 
   // The note is a popup: it is read inside the window, never off its edge.
   const inside = await note.evaluate(el => {

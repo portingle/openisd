@@ -15,7 +15,7 @@
  * bugs/BUG_20261005_no-common-ui-field-component.md
  */
 import {computed, onBeforeUnmount, ref, useId, watch} from 'vue';
-import {NumberEditor, PhoneRowColumns} from '@openisd/design/fields';
+import {ChartInputs, NumberEditor, PhoneRowColumns} from '@openisd/design/fields';
 import NumInput from './NumInput.vue';
 import {selectedOption} from '../../logic/domEvents.js';
 import NumReadout from './NumReadout.vue';
@@ -45,6 +45,7 @@ const props = withDefaults(defineProps<UIFieldCommon & {binding: UIBinding}>(), 
   dqState: undefined,
   allowOutOfRange: false,
   defaulted: undefined,
+  chartInputs: undefined,
 });
 
 const scope = useCellScope();
@@ -52,6 +53,10 @@ const generatedId = useId();
 /** The row's column widths as CSS variables, from the design constant. The label column is the page's (it follows the page's longest label). */
 const columnVars = Object.fromEntries(PhoneRowColumns.STANDARD.cssVarsWithoutLabelColumn());
 const id = computed(() => props.inputId ?? generatedId);
+/** This box is one the charts read (QO532): accented, never resized. */
+const drivesCharts = computed(() => props.chartInputs?.includes(props.field) === true);
+/** The dot's size, gap and colour, from the design constant. */
+const dotVars = Object.fromEntries(ChartInputs.dotCssVars());
 
 /** The cell read once per change of the hosting view: Vue cannot see the cell itself change. */
 const view = computed(() => {
@@ -165,7 +170,7 @@ function write(v: number | null, precision?: number): void {
 </script>
 
 <template>
-  <div ref="root" @focusout="closeOnFocusLeave" :data-field="field.value" :data-access="readonly ? 'readonly' : 'writable'" :style="columnVars" :class="['ui-field', {'ui-field-readout': readonly, 'ui-field-defaulted': defaulted === true, 'ui-field-stored': defaulted === false}]">
+  <div ref="root" @focusout="closeOnFocusLeave" :data-field="field.value" :data-access="readonly ? 'readonly' : 'writable'" :style="drivesCharts ? [columnVars, dotVars] : columnVars" :class="['ui-field', {'ui-field-readout': readonly, 'ui-field-defaulted': defaulted === true, 'ui-field-stored': defaulted === false, 'ui-field-drives-charts': drivesCharts}]">
     <label class="ui-field-label" :for="id" :title="field.description || undefined">{{ label ?? field.label }}</label>
     <span class="ui-field-dq">
       <button v-if="reason" type="button" class="ui-field-dq-btn" :title="reason" :aria-expanded="reasonOpen"
@@ -222,6 +227,14 @@ function write(v: number | null, precision?: number): void {
   background: #fff; font: inherit; text-align: left;
 }
 .ui-field-value :deep(.num-stepper) { margin-left: 0; }
+/* A box the charts read (QO532): a blue dot just right of the label text.
+   It is absolutely placed at the text's end (its static position) and centred on the label, so no box, label or column changes
+   size, padding, font or place, and the label's measured text width (labelColumns, phoneLabelColumn) leaves it out. */
+.ui-field.ui-field-drives-charts > label { position: relative; }
+.ui-field.ui-field-drives-charts > label::after {
+  content: ''; position: absolute; top: calc(50% - var(--engine-dot-size) / 2); margin-left: var(--engine-dot-gap);
+  width: var(--engine-dot-size); height: var(--engine-dot-size); border-radius: 50%; background: var(--engine-dot-colour);
+}
 .ui-field-value :deep(input.calculated) { color: var(--acc); }
 .ui-field-value :deep(input.greyed) { background: #e9e9e9; }
 .ui-field-dq { display: inline-flex; justify-content: center; width: 16px; flex: none; grid-column: 4; }

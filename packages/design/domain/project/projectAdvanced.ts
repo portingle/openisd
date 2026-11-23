@@ -197,6 +197,17 @@ export class ProjectAdvanced {
         };
     }
 
+    /** WinISD Compatibility option CHART_FROM_FS_VAS_QMS: the charts derive Cms from Vas and Sd, then Mms from Fs and that
+     *  Cms, and Rms from Fs, that Mms and Qms, as WinISD does. Off: charts read the Mms, Cms and Rms boxes as they show. Off where
+     *  a project does not say. */
+    get winisdChartFromFsVasQms(): SimpleField<boolean> {
+        const lens = focus(this.#advanced, 'winisdChartFromFsVasQms');
+        return {
+            get value() { return lens.value ?? CompatSwitch.CHART_FROM_FS_VAS_QMS.winisdValue; },
+            set: (on: boolean) => lens.set(on),
+        };
+    }
+
     /** WinISD Compatibility "Impedance of one driver": the impedance chart shows one driver, as WinISD's does. Off: the load the
      *  amplifier sees for the project's Driver wiring. Off where a project does not say (QO946.c131). Saved and loaded only. */
     get winisdOneDriverImpedance(): SimpleField<boolean> {

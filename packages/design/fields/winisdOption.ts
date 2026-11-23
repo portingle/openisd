@@ -3,7 +3,7 @@ import {ToggleField} from './field.js';
 /** A WinISD option's help text: WinISD's way of a calculation and the other valid form. */
 export interface WinisdOptionSpec {
   readonly title: string;
-  /** What WinISD does (the switch ticked, the default). */
+  /** What WinISD does (the switch ticked; the default for every option but "Chart from Fs, Vas, Qms"). */
   readonly winisd: string;
   /** What OpenISD does with the switch unticked. */
   readonly openisd: string;
@@ -15,7 +15,7 @@ export interface WinisdOptionSpec {
   readonly switchField: ToggleField;
 }
 
-/** A switch under "Enable WinISD-style": WinISD's way of a calculation (ticked, the default) or another valid form. */
+/** A switch under "Enable WinISD-style": WinISD's way of a calculation (ticked) or another valid form. */
 export class WinisdOption {
   readonly title: string;
   readonly winisd: string;
@@ -60,7 +60,16 @@ export class WinisdOption {
     switchField: ToggleField.ADV_WINISDABCINTRAPORTVELOCITY,
   });
 
-  /** The first option that is OFF by default (QO946.c131): ticked, WinISD's way. */
+  static readonly CHART_FROM_FS_VAS_QMS = new WinisdOption({
+    title: ToggleField.ADV_WINISDCHARTFROMFSVASQMS.label,
+    winisd: 'WinISD derives Cms using Vas and Sd. It then uses Fs and the calculated Cms to find Mms, and Qms to find Rms. Its charts use these results in place of any Mms, Cms or Rms entered by hand or loaded from a file.',
+    openisd: 'Unticked (the default for this one), OpenISD charts the Mms, Cms and Rms boxes as they show.',
+    seenIn: 'every chart, for a driver whose Mms, Cms or Rms disagree with its Fs, Vas and Qms.',
+    size: 'Dayton E150HE-44 as its file states: the file\'s Mms, Cms and Rms differ a little from the ones Fs, Vas and Qms give, and the curves move with them.',
+    switchField: ToggleField.ADV_WINISDCHARTFROMFSVASQMS,
+  });
+
+  /** OFF by default (QO946.c131), as "Chart from Fs, Vas, Qms" is (QO539): ticked, WinISD's way. */
   static readonly ONE_DRIVER_IMPEDANCE = new WinisdOption({
     title: 'Impedance of one driver',
     winisd: 'WinISD works out the sound as if the drivers were wired in parallel, but its impedance chart shows only ONE driver, not the load the amplifier sees (4 × 8 Ω is 2 Ω).',

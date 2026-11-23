@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {describe, expect, it} from 'vitest';
 import {
   DRIVER_VAS_EDIT, UNSTATED_ZERO_KEYS, unstatedBlankDeviations, GROUP_DELAY_BOUND_MS, SEALED_FSC, SEALED_QTC, BOX_VOLUME, VENTED_FB, VENT_CROSS_AREA, VENT_LENGTH,
-  applyEdit, assertChartMatches, assertLoadParity, assertReadout, chartRules, editorDeviations,
+  applyEdit, assertChartMatches, assertTypedPartStands, assertLoadParity, assertReadout, chartRules, editorDeviations,
   loadBase, loadEditCapture, sweepAfterEdit,
 } from '../fixtures/winisdEditCapture.js';
 import type {
@@ -15,6 +15,8 @@ import type {
 } from '../fixtures/winisdEditCapture.js';
 import type {NumericDriverSpecFieldName} from '../../domain/driver/driverSpecFieldName.js';
 import type {OpenISDProject} from '../../domain/project/openISDProject.js';
+import {CompatSwitch} from '../../domain/project/compatSwitch.js';
+import {winisdParts} from '../fixtures/domainBuilders.js';
 import {BP4_GROUP_DELAY_NOISE, boxRun, describeRun as describeRunOf, lossRun, portRun} from '../fixtures/winisdEditRuns.js';
 import type {DriverRuns, Run} from '../fixtures/winisdEditRuns.js';
 
@@ -83,6 +85,15 @@ for (const {run, field, spec} of DRIVER_EDITS) {
     expectEdit(capture, 'Driver', field);
     project.driver.specField(spec).set(capture.typed);
     const swept = sweepAfterEdit(project, capture);
+    if (spec === 'Mms_kg' || spec === 'Cms_m_per_N' || spec === 'Rms_kg_per_s') {
+      // WinISD's charts ignore a typed Mms, Cms or Rms (recorded as a bug). OpenISD's
+      // follow it (QO534) unless "Chart from Fs, Vas, Qms (WinISD's way)" is ticked (QO539); loadBase ticks it.
+      const chartFromFsVasQms = CompatSwitch.CHART_FROM_FS_VAS_QMS.of(project);
+      chartFromFsVasQms.set(false);
+      const shown = sweepAfterEdit(project, capture);
+      chartFromFsVasQms.set(true);
+      it(`"Chart from Fs, Vas, Qms" unticked: the typed ${field} is kept and moves the charts, which WinISD ignores`, () => assertTypedPartStands(project, capture, shown, rules, spec));
+    }
     chartCases(capture, swept, FULL_CHARTS);
 
     it('Box tab: Vb, Fsc and Qtc read as WinISD prints them', () => {
@@ -95,6 +106,27 @@ for (const {run, field, spec} of DRIVER_EDITS) {
     });
   });
 }
+
+describe('E150HE-44 with the values in its file (sweep-t429-e150-sealed-edit-vb): CHART_FROM_FS_VAS_QMS option', () => {
+  const capture = loadEditCapture('e150he-44', 'sealed-vb');
+  const project = loadBase(capture);
+  project.box.sealed.volume_m3.set(capture.typed);
+  const chartFromFsVasQms = CompatSwitch.CHART_FROM_FS_VAS_QMS.of(project);
+  const ticked = sweepAfterEdit(project, capture);
+  chartFromFsVasQms.set(false);
+  const unticked = sweepAfterEdit(project, capture);
+  chartFromFsVasQms.set(true);
+
+  it('the file\'s Mms, Cms and Rms disagree with the ones WinISD works out from its Fs, Vas and Qms', () => {
+    const winisd = winisdParts(project);
+    for (const part of ['Mms_kg', 'Cms_m_per_N', 'Rms_kg_per_s'] as const) expect(project.driver.specField(part).value, part).not.toBeCloseTo(winisd[part], 12);
+  });
+  it('unticked (the default): charts read the Mms, Cms and Rms boxes, so the SPL differs from WinISD\'s', () => {
+    expect(() => assertChartMatches(capture, unticked, 'spl', rules)).toThrow();
+  });
+  const charts: readonly Quantity[] = ['tfmag', 'spl', 'groupdelay', 'tfphase', 'excursion', 'impedance'];
+  for (const q of charts) it(`ticked: ${q} matches WinISD`, () => assertChartMatches(capture, ticked, q, rules));
+});
 
 describe('E150HE-44 sealed, Vb typed in the Box tab (sweep-t429-e150-sealed-edit-vb)', () => {
   const capture = loadEditCapture('e150he-44', 'sealed-vb');

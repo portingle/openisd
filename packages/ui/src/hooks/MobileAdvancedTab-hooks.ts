@@ -8,7 +8,7 @@
  */
 import {compatSwitchSetter} from './compatSwitch.js';
 import {useFeatureUse} from './telemetryContext.js';
-import {computed} from 'vue';
+import {CompatSwitch} from '@openisd/design';
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {useApp} from '../logic/app.js';
 import {createEnvironmentAir} from './OriginalShell-hooks.js';
@@ -22,21 +22,16 @@ export function useMobileAdvancedTab() {
   const air = createEnvironmentAir({ project, projectChanged });
 
   const errorSwitches = createErrorSwitches({project, projectChanged});
-  /** "Simplified ABC intra-port velocity" acts on the open box. */
-  const abcVelocityApplies = computed(() => {
+  /** Whether an option switch acts on the open box (the ABC velocity one acts on an ABC box only). */
+  const optionApplies = (option: CompatSwitch): boolean => {
     void projectChanged.value;
-    return project.value.winisdAbcIntraPortVelocityApplies;
-  });
-  /** "Impedance of one driver" acts with 2 or more drivers. */
-  const oneDriverImpedanceApplies = computed(() => {
-    void projectChanged.value;
-    return project.value.winisdOneDriverImpedanceApplies;
-  });
+    return option.appliesTo(project.value);
+  };
 
   return {
     project,
     setCompatSwitch: compatSwitchSetter(useFeatureUse()),
     ...air,
-    abcVelocityApplies, oneDriverImpedanceApplies, errorSwitches,
+    compatOptions: CompatSwitch.OPTIONS, optionApplies, errorSwitches,
   };
 }
