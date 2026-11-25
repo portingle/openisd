@@ -93,8 +93,8 @@ export class PhoneBoxText {
   /** The line under the radiator's Key figures: the "2×" rule of thumb as a count of this
    *  radiator. `required_m3` is twice the drivers' displacement; `count` the engine's smallest count reaching it. */
   static twoTimesRule(required_m3: number, count: number): string {
-    const need = `2× rule: radiators need ≥ ${Math.round(required_m3 * 1e6)} cm³`;
-    return count <= 1 ? `${need} — 1 of these is enough` : `${need} — needs ${count} of these`;
+    const need = `2× guideline at driver Xmax: radiators need ≥ ${Math.round(required_m3 * 1e6)} cm³`;
+    return `${need} — ${count} ${count === 1 ? 'radiator' : 'radiators'}`;
   }
 }
 

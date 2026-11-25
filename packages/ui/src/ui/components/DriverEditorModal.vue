@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {ChartInputs, DateField, isoDay, EnumField, NumberField, PhoneEditorText, PhoneHelp, PhoneLabels, TextField, WinisdDeviation} from '@openisd/design/fields';
 import DriverDimensionsDiagram from './DriverDimensionsDiagram.vue'
-import {computed, nextTick, onBeforeUnmount, provide, ref, watch} from 'vue';
+import {computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch} from 'vue';
 import {createPhoneLabelColumn, type PhoneLabelColumn} from '../../hooks/phoneLabelColumn.js';
 import type {NumSpecField} from '../../logic/appState.js';
 import {useFocusedProject} from '../../logic/focusedProjectContext.js';
@@ -23,6 +23,7 @@ import {provideCellScope} from './cellScope.js';
 import {provideEditedDriver} from '../../hooks/refusalSeen.js';
 import {createRefusalLedger, provideRefusalLedger} from '../../logic/refusalLedger.js';
 import {useEscToClose} from '../../logic/useEscToClose.js';
+import {driverEditorTabFor} from '../../logic/driverEditorDestination.js';
 import {DriverFileFormat} from '../../fileFormat.js';
 import EquationInspectorModal from './EquationInspectorModal.vue';
 import MobileKeyStrip from '../shells/mobile/MobileKeyStrip.vue';
@@ -70,7 +71,9 @@ const TABS: Tab[] = ['General', 'Parameters', 'Advanced', 'Dimensions'];
 // What subject is open, fixed for the dialog's whole lifetime (selection is not consulted
 // again until this dialog closes).
 const subject = selection.editSubject();
-const tab = ref<Tab>('Parameters');
+const requestedProblemField = presentationState.driverProblemField;
+const tab = ref<Tab>(requestedProblemField === null ? 'Parameters' : driverEditorTabFor(requestedProblemField));
+presentationState.driverProblemField = null;
 const project = useFocusedProject();
 
 // The title names WHICH driver is on screen, because this one dialog edits two subjects with
@@ -279,6 +282,16 @@ provide(FIELD_EDIT_MODE, {
 // beside its right edge when there is room, its left edge otherwise — so it can never cover the
 // dialog it is inspecting, at any viewport size.
 const modalRootEl = ref<HTMLElement | null>(null);
+onMounted(() => {
+  if (requestedProblemField === null) return;
+  void nextTick(() => {
+    const field = Array.from(modalRootEl.value?.querySelectorAll<HTMLElement>('[data-field-key]') ?? [])
+      .find(element => element.dataset.fieldKey === requestedProblemField);
+    field?.scrollIntoView({block: 'nearest'});
+    const input = field?.querySelector<HTMLElement>('input, select, textarea');
+    (input ?? field?.querySelector<HTMLElement>('button'))?.focus();
+  });
+});
 // On the phone the label column follows the longest label shown (the desktop skin sizes its own).
 let phoneLabelColumn: PhoneLabelColumn | null = null;
 watch(modalRootEl, el => { phoneLabelColumn?.stop(); phoneLabelColumn = el !== null && props.skin !== undefined ? createPhoneLabelColumn(el) : null; }, {flush: 'post'});

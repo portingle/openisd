@@ -8,6 +8,7 @@ import type { Calculatable, Calculated, Clearable, Entered, Precise, Readable, S
 import type { AirIssue, EnvironmentIssue } from '../../engine/index.js';
 import { airOf } from './projectAir.js';
 import { DEFAULT_SOURCE_RESISTANCE_OHM } from '../../fields/defaults.js';
+import {NumberField} from '../../fields/field.js';
 import type { OpenISDProjectJson, OpenISDProjectSessionJson } from '../openisdSchema.js';
 import type { Box } from '../box/box.js';
 import type { FrequencyGrid } from '../box/frequencyGrid.js';
@@ -28,6 +29,7 @@ import type { FieldPath } from '../schemaRepair.js';
 import { boxParamsIssuesOf, maxCurvesOf, sweepOf, sweepPlanOf, ventAchievedFbOf, ventMaxReachableFbOf } from './projectSweep.js';
 import type { ProjectSweepSource, SweepPlan } from './projectSweep.js';
 import { ProjectContext } from '../driver/driverContext.js';
+import {projectProblemsOf, type ProjectProblem} from './projectProblems.js';
 
 import { withNullEmbeddedDriverId } from './nullDriverId.js';
 import type { ProjectIssues } from './projectIssues.js';
@@ -972,6 +974,30 @@ export class OpenISDProject {
      *  project itself needs to sweep (its box volume, its drive voltage) is not yet stated. */
     sweep(P: FrequencyGrid): SweepSolveResult {
         return sweepOf(this.#sweepSource(), P);
+    }
+
+    /** Simulate the radiator at this signal and filter setting, including each suggested count. */
+    passiveRadiatorExcursionAdvice(): {readonly text: string; readonly warning: boolean} | null {
+        if (this.box.boxType.value !== 'box-passive-radiator') return null;
+        const radiator = this.box.passiveRadiator;
+        const xmax = radiator.radiator.spec.Xmax_m.value;
+        const power = this.powerDrive_W.value;
+        if (xmax === null || power === null || !Number.isFinite(power) || !(power > 0)) return null;
+        const count = radiator.count.value;
+        const assessment = this.#engine.pr.assessExcursion(count, xmax, NumberField.PR_NUM.limits.max, n => {
+            const candidate = OpenISDProject.wrapWithIdentity(structuredClone(this.#root().value), this.#uuid, this.#engine, this.#appContext);
+            candidate.box.passiveRadiator.count.set(n);
+            const result = candidate.sweep({fmin: 10, fmax: 20000, N: 400});
+            if (result.values === null || result.issues.some(issue => issue.kind === 'approximate-charts')) return null;
+            return {frequency_hz: result.values.fs, excursion_mm: result.values.excPR};
+        });
+        return assessment === null ? null : {text: this.#engine.pr.excursionAdvice(assessment, power, count),
+            warning: assessment.kind === 'exceeded'};
+    }
+
+    /** Input data-quality problems across the active project. */
+    problems(): readonly ProjectProblem[] {
+        return projectProblemsOf(this, this.#engine);
     }
 
     /** The excursion- and power-limited maximum SPL curves. Reports on the same terms as `sweep`,

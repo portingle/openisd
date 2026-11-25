@@ -15,6 +15,7 @@ import type {PrSolverParams, SolverField} from '../solverTypes.js';
 import {approximateCharts, isPositiveGeometry, missingDependencies, targetUnreachable, tuningGoalIssue} from '../consistency.js';
 import type {CalculationIssue, TargetUnreachableIssue} from '../consistency.js';
 import {nonFiniteResult} from '../../calculatedResult.js';
+import {decimal} from '../issueText.js';
 
 export type PrQuantityName = keyof PrSolverParams | AirWorkingName;
 export type PrIssue = CalculationIssue<PrQuantityName> | TargetUnreachableIssue;
@@ -35,11 +36,26 @@ export interface PrSpecValues {
  *  it was typed to; 0 for a figure not stated. */
 export type PrSpecPrecision = Readonly<Record<keyof PrSpecValues, number>>;
 
+export interface PrExcursionCurve {
+  readonly frequency_hz: readonly number[];
+  readonly excursion_mm: readonly number[];
+}
+
+export type PrExcursionAssessment =
+  | {readonly kind: 'within-limit'}
+  | {readonly kind: 'exceeded'; readonly start_hz: number; readonly end_hz: number;
+     readonly peak_hz: number; readonly peak_mm: number; readonly minimumCount: number | null};
+
 /** A stated radiator figure that contradicts the relation tying it to the others. */
 export type PrSpecIssue = CalculationIssue<RouteQuantity>;
 
 /** `air` where taken is the PROJECT's own resolved `{ rho, c }` — see `vent/VentEngine.ts`. */
 export interface PrEngine {
+  /** Check per-radiator excursion and test larger counts using their own simulated responses. */
+  assessExcursion(count: number, xmax_m: number, maxCount: number,
+    sweep: (count: number) => PrExcursionCurve | null): PrExcursionAssessment | null;
+  /** Describe the assessment at the stated input power and current filters. */
+  excursionAdvice(assessment: PrExcursionAssessment, power_W: number, count: number): string;
   /** System resonance with `prNum` radiators in parallel: PR compliance `Cap = prCms·prSd²`,
    *  `Cpar = Cab·N·Cap/(Cab+N·Cap)`, `fp = 1/(2π·√((Map/N)·Cpar))` — the Fb WinISD displays.
    *  https://en.wikipedia.org/wiki/Helmholtz_resonance#Resonant_frequency */
@@ -97,6 +113,60 @@ const PLACEHOLDER_RADIATOR_XMAX_MULTIPLE = 2;
 const PR_GEOMETRY: readonly (keyof PrSolverParams)[] = Object.freeze(['Vb_m3', 'prMmd_kg', 'prSd_m2', 'prCms_m_per_N']);
 
 export class PrEngineImpl implements PrEngine {
+  assessExcursion(count: number, xmax_m: number, maxCount: number,
+    sweep: (count: number) => PrExcursionCurve | null): PrExcursionAssessment | null {
+    if (!Number.isInteger(count) || count < 1 || !Number.isFinite(xmax_m) || !(xmax_m > 0)) return null;
+    const check = (n: number): PrExcursionCurve | null => {
+      const curve = sweep(n);
+      if (curve === null || curve.frequency_hz.length === 0 || curve.frequency_hz.length !== curve.excursion_mm.length
+        || curve.frequency_hz.some(f => !Number.isFinite(f) || !(f > 0))
+        || curve.excursion_mm.some(x => !Number.isFinite(x) || x < 0)) return null;
+      return curve;
+    };
+    const current = check(count);
+    if (current === null) return null;
+    const limit_mm = xmax_m * 1000;
+    let peak = 0;
+    for (let i = 1; i < current.excursion_mm.length; i++) {
+      if (current.excursion_mm[i] > current.excursion_mm[peak]) peak = i;
+    }
+    if (current.excursion_mm[peak] <= limit_mm) return {kind: 'within-limit'};
+    let first = peak, last = peak;
+    while (first > 0 && current.excursion_mm[first - 1] > limit_mm) first--;
+    while (last + 1 < current.excursion_mm.length && current.excursion_mm[last + 1] > limit_mm) last++;
+    let minimumCount: number | null = null;
+    // "At least N" requires every smaller candidate to fail and every larger one to pass.
+    for (let n = count + 1; n <= maxCount; n++) {
+      const candidate = check(n);
+      if (candidate === null || candidate.frequency_hz.length !== current.frequency_hz.length
+        || candidate.frequency_hz.some((f, i) => f !== current.frequency_hz[i])) {
+        minimumCount = null;
+        break;
+      }
+      if (candidate.excursion_mm.every(x => x <= limit_mm)) {
+        if (minimumCount === null) minimumCount = n;
+      } else if (minimumCount !== null) {
+        minimumCount = null;
+        break;
+      }
+    }
+    return {kind: 'exceeded', start_hz: current.frequency_hz[first], end_hz: current.frequency_hz[last],
+      peak_hz: current.frequency_hz[peak], peak_mm: current.excursion_mm[peak], minimumCount};
+  }
+
+  excursionAdvice(assessment: PrExcursionAssessment, power_W: number, count: number): string {
+    const radiator = `${count} ${count === 1 ? 'radiator' : 'radiators'}`;
+    const context = `With your ${decimal(power_W)} W signal and current filters, ${radiator}`;
+    if (assessment.kind === 'within-limit') {
+      return `${context} ${count === 1 ? 'stays' : 'stay'} within Xmax in the 10–20,000 Hz simulation.`;
+    }
+    const band = assessment.start_hz === assessment.end_hz
+      ? `at ${decimal(assessment.peak_hz)} Hz`
+      : `between ${decimal(assessment.start_hz)} and ${decimal(assessment.end_hz)} Hz`;
+    const countAdvice = assessment.minimumCount === null ? '' : `use at least ${assessment.minimumCount} radiators and/or `;
+    return `⚠ ${context} ${count === 1 ? 'exceeds' : 'exceed'} Xmax ${band}. To bring it within Xmax, ${countAdvice}reduce the signal power and/or adjust the filters.`;
+  }
+
   displacement(prSd_m2: number | null, prXmax_m: number | null): number | null {
     if (prSd_m2 === null || prXmax_m === null || !(prSd_m2 > 0) || !(prXmax_m > 0)) return null;
     return prSd_m2 * prXmax_m;

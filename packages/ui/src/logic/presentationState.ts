@@ -76,6 +76,8 @@ export interface PresentationState {
   browseOpen: boolean;
   /** The What-if? panel is open. */
   editDriver: boolean;
+  driverProblemField: string | null;
+  radiatorProblemField: string | null;
   /** The Driver Editor modal (Brand/Model/Comment/Provided by) is open. */
   editDriverInfo: boolean;
   /** The Driver Editor opens with its "values disagree" list already showing (read once by the editor). */
@@ -126,6 +128,8 @@ export function createPresentationState(): PresentationState {
     newProjectOpen: false,
     browseOpen: false,
     editDriver: false,
+    driverProblemField: null,
+    radiatorProblemField: null,
     editDriverInfo: false,
     editDriverShowDisagreements: false,
     optionsOpen: false,

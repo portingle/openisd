@@ -29,7 +29,7 @@ const shortName = (): string => PHONE_FILTER_CHIPS.find(c => c.type === f.type)?
 </script>
 
 <template>
-  <div class="mob-fcard" :class="{'mob-fcard-shut': !open}">
+  <div class="mob-fcard" :data-filter-id="f.id" :class="{'mob-fcard-shut': !open}">
     <div class="mob-fcard-head">
       <label class="mob-fcard-tick">
         <input type="checkbox" :checked="f.enabled" :aria-label="`${shortName()} on`" @change="api.setEnabled(f, inputChecked($event))">

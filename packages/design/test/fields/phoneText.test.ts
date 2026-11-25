@@ -114,8 +114,8 @@ describe('phone text', () => {
 
 describe('the passive radiator\'s 2× rule line', () => {
   it('names the displacement the radiators need and how many of this radiator give it', () => {
-    expect(PhoneBoxText.twoTimesRule(173.9e-6, 1)).toBe('2× rule: radiators need ≥ 174 cm³ — 1 of these is enough');
-    expect(PhoneBoxText.twoTimesRule(400e-6, 3)).toBe('2× rule: radiators need ≥ 400 cm³ — needs 3 of these');
+    expect(PhoneBoxText.twoTimesRule(173.9e-6, 1)).toBe('2× guideline at driver Xmax: radiators need ≥ 174 cm³ — 1 radiator');
+    expect(PhoneBoxText.twoTimesRule(400e-6, 3)).toBe('2× guideline at driver Xmax: radiators need ≥ 400 cm³ — 3 radiators');
   });
 });
 });

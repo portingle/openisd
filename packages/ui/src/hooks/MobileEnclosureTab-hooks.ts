@@ -5,6 +5,7 @@
  * Enclosure tab do", asked by both shells.
  */
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
+import {createPrExcursionAdvice} from './prExcursionAdvice.js';
 import {useFeatureUse} from './telemetryContext.js';
 import {useApp} from '../logic/app.js';
 import {appPassiveRadiatorFiles} from './passiveRadiatorEditor.js';
@@ -12,7 +13,7 @@ import {createSealedReadouts, createSelectedBox} from './boxFields.js';
 import {createVentReadouts, FB_TARGET_TIP, VENT_GEOMETRY_TIP} from './ventReadouts.js';
 import {createPassiveRadiatorActions} from './passiveRadiatorActions.js';
 import {useRadiatorPicks} from './telemetryContext.js';
-import {computed} from 'vue';
+import {computed, watch} from 'vue';
 import {marksOfCell, type FieldMarks} from '../logic/cellDataQuality.js';
 import {END_CORRECTION_OPTIONS, PhoneBoxText, PhoneHelp, VENT_SHAPE_OPTIONS} from '@openisd/design/fields';
 
@@ -30,7 +31,8 @@ export interface PassiveRadiatorKeyFigures {
 export function useMobileEnclosureTab() {
   const {boxTypeIsSimulatable, focusedProject, projectChanged} = useApp().appState;
   const project = useFocusedProject();
-  const { engine, myPassiveRadiators, bundledPassiveRadiators } = useApp();
+  const { engine, myPassiveRadiators, bundledPassiveRadiators, presentation } = useApp();
+  const {prExcursion, prCountDq} = createPrExcursionAdvice(project, projectChanged);
 
   const { selectedBox } = createSelectedBox({ focusedProject, projectChanged, isSimulatable: boxTypeIsSimulatable, featureUse: useFeatureUse() });
   const {
@@ -41,6 +43,7 @@ export function useMobileEnclosureTab() {
   const { prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo } =
     createPassiveRadiatorActions({ project, myPassiveRadiators, bundledPassiveRadiators, radiatorPicks: useRadiatorPicks(), engine,
       files: appPassiveRadiatorFiles(useApp()) });
+  watch(prEditor.cells, cells => { if (cells === null) presentation.radiatorProblemField = null; });
 
   /** The radiator's Key figures: its own Fs, Mms, Sd, Xmax and its displacement Vd, which
    *  the engine works out. Read only; tapping one opens the editor. */
@@ -82,7 +85,7 @@ export function useMobileEnclosureTab() {
     project, selectedBox,
     activeVent, activeTuning, ventPorts, portPipeResonance_hz, fbUnreachable, fbUnreachableMsg, tuningField,
     prResonanceMassDq, prFsMass_hz, prNaturalFh,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule, prExcursion, prCountDq,
     VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
     FB_TARGET_TIP, VENT_GEOMETRY_TIP,
   };
