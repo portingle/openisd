@@ -934,7 +934,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
         </div>
         <div v-if="!skin && inconsistentInputReasons.length" class="de-incomplete de-inconsistent"
              :title="reasonTitle(inconsistentInputReasons)">
-          <span class="de-incomplete-hd">⚠ Saves fine and the charts plot from the values as stated, but those values disagree because:</span>
+          <span class="de-incomplete-hd">⚠ Saves fine and the charts use the values shown, but some values disagree:</span>
           <ul class="de-incomplete-list">
             <li v-for="r in inconsistentInputReasons" :key="r.subject + r.text"><strong class="de-incomplete-subject">{{ r.subject }}</strong> {{ r.text }}</li>
           </ul>
