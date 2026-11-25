@@ -127,28 +127,45 @@ describe('the air boxes warn outside their normal band, keeping and using the va
 });
 
 describe('the driver count, series resistance, box tunings, port lengths, losses and radiator count and added mass stay as the file states them (QO972)', () => {
-  it('driver count 0 and series resistance -2 Ω stay as the file states them; the sweep says so with its existing refusal, nothing is non-finite', () => {
+  it('driver count 0 and series resistance -2 Ω stay as saved while charts use named working values', () => {
     const {project} = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, nDrivers: 0, Rs_ohm: -2}})));
     expect(project.nDrivers.value).toBe(0);
     expect(project.Rs_ohm.value).toBe(-2);
     const swept = project.sweep(DEFAULT_GRID);
-    expect(swept.values).toBeNull();
+    expectCharts(project);
+    expect(swept.values).not.toBeNull();
     expect(swept.issues.map(i => [i.kind, i.text])).toEqual(expect.arrayContaining([
-      ['result-refused', 'Num. of drivers must be at least 1.'],
-      ['result-refused', 'Series resistance must not be negative: a negative resistance is not a wire.'],
+      ['approximate-charts', 'Num. of drivers must be at least 1. Charts are calculated using 1.'],
+      ['approximate-charts', 'Series resistance must not be negative. Charts are calculated using 0 Ω.'],
     ]));
     const result = projectFindings(project, DEFAULT_GRID);
-    expect(result.findings).toEqual([]);
-    expect(result.refused).toBe(true);
+    expect(result.refused).toBe(false);
   });
 
-  it('a series resistance of -2 Ω alone is refused by the sweep with its own note, and the driver count alone likewise', () => {
+  it('each invalid input independently produces a chart and its own note', () => {
     const rs = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, Rs_ohm: -2}}))).project;
     expect(rs.Rs_ohm.value).toBe(-2);
-    expect(rs.sweep(DEFAULT_GRID).issues.map(i => i.text)).toEqual(['Series resistance must not be negative: a negative resistance is not a wire.']);
+    expectCharts(rs);
+    expect(rs.sweep(DEFAULT_GRID).issues.map(i => i.text)).toEqual(['Series resistance must not be negative. Charts are calculated using 0 Ω.']);
     const n = opened(owprWith('sealed', r => ({...r, driverEmbedding: {...r.driverEmbedding, nDrivers: 0}}))).project;
     expect(n.nDrivers.value).toBe(0);
-    expect(n.sweep(DEFAULT_GRID).issues.map(i => i.text)).toEqual(['Num. of drivers must be at least 1.']);
+    expectCharts(n);
+    expect(n.sweep(DEFAULT_GRID).issues.map(i => i.text)).toEqual(['Num. of drivers must be at least 1. Charts are calculated using 1.']);
+  });
+
+  it('invalid saved driver inputs also leave charts usable with a power signal', () => {
+    const {project} = opened(owprWith('sealed', r => ({...r, signal: {power_W: {state: 'E', value: 10}},
+      driverEmbedding: {...r.driverEmbedding, nDrivers: 0, Rs_ohm: -2}})));
+    expect(project.nDrivers.value).toBe(0);
+    expect(project.Rs_ohm.value).toBe(-2);
+    expectCharts(project);
+    const comparison = opened(owprWith('sealed', r => ({...r, signal: {power_W: {state: 'E', value: 10}},
+      driverEmbedding: {...r.driverEmbedding, nDrivers: 1, Rs_ohm: 0}}))).project;
+    const actual = project.sweepPlan(DEFAULT_GRID);
+    const expected = comparison.sweepPlan(DEFAULT_GRID);
+    if (actual.kind !== 'ready' || expected.kind !== 'ready') throw new Error('sweep not ready');
+    expect(expected.job.sweep.eg).not.toBeCloseTo(2.83, 2);
+    expect(actual.job.sweep.eg).toBeCloseTo(expected.job.sweep.eg, 8);
   });
 
   it("a sealed box keeps Ql 0 and Qa -1 and labels the chart calculation with Ql 10 and Qa 100", () => {
