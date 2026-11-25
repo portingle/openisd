@@ -11,7 +11,7 @@ import {readDriverFileText} from '../../logic/driverFileText.js';
 import {driverToWdrBytes} from '../../logic/fileImportExport.js';
 import {cellClassOf} from '../../logic/driverCells.js';
 import {dqOfCell, dqReason} from '../../logic/cellDataQuality.js';
-import {commitMyDriver, useDriverDimensionLabels, useDriverEditorHelp} from '../../hooks/DriverEditorModal-hooks.js';
+import {chartQualityOf, commitMyDriver, useDriverDimensionLabels, useDriverEditorHelp} from '../../hooks/DriverEditorModal-hooks.js';
 import {useFeatureUse} from '../../hooks/telemetryContext.js';
 import type {DqReason} from '@openisd/design';
 import type {Calculated, Clearable, Entered, Precise, Readable, Writable} from '@openisd/design';
@@ -38,7 +38,7 @@ function cellOf(field: NumSpecField): Readable<number | null> & Entered & Calcul
   return fieldOf(field);
 }
 
-const { presentation: presentationState, selection, myDrivers, logging, driverFileStorage, designFiles, driverDrafts, confirmPort, engine } = useApp();
+const { appState, presentation: presentationState, selection, myDrivers, logging, driverFileStorage, designFiles, driverDrafts, confirmPort, engine } = useApp();
 /** The formulas the engine works each field out by, as the formula panel shows them (T902). */
 const provenance = provenanceMap(engine.driver.routeFormulas());
 const featureUse = useFeatureUse();
@@ -91,6 +91,14 @@ const refusals = createRefusalLedger();
 provideRefusalLedger(refusals);
 provideEditedDriver(() => draft.driver);
 const draftDriver = computed(() => { void trigger.value; return draft.driver; });
+
+const chartQuality = computed(() => {
+  const editingProject = subject.kind !== 'myDriver';
+  void appState.projectChanged.value;
+  if (editingProject && project.value.winisdDriverModel.value) return null;
+  return chartQualityOf(draftDriver.value, editingProject && project.value.winisdChartFromFsVasQms.value,
+    editingProject ? project.value.air : undefined);
+});
 
 /** OK on a myDriver subject: save the draft under its uuid — in place, same identity. A save
  *  that would CHANGE the driver's brand/model first asks the ONE ruled question (rename in
@@ -792,6 +800,7 @@ const {helpSection, showHelp, closeHelp} = useDriverEditorHelp();
                 <UIField class="de-fld" :chart-inputs="ChartInputs.DRIVER" :class="[skin?.field, inspectClass('Fs_hz')]" data-field-key="Fs_hz" :style="getFieldStyle('Fs_hz')" :field="NumberField.FS_HZ" :cell="fieldOf('Fs_hz')" required />
                 <UIField class="de-fld" :chart-inputs="ChartInputs.DRIVER" :class="[skin?.field, inspectClass('Vas_m3')]" data-field-key="Vas_m3" :style="getFieldStyle('Vas_m3')" :field="NumberField.VAS_M3" :cell="fieldOf('Vas_m3')" required />
               </div>
+              <p v-if="chartQuality" class="de-note de-chart-quality">Chart uses Qes {{ chartQuality.qes }} and Qts {{ chartQuality.qts }}.</p>
             </div>
 
             <div class="de-group">
@@ -1273,6 +1282,7 @@ input.value-n, .de-fld.value-n input, .de-modal select.value-n { color: var(--mu
   flex-shrink: 0;
 }
 .de-note { font-size: 11px; color: var(--mut); font-style: italic; margin-top: 4px; }
+.de-chart-quality { grid-column: 1 / -1; margin: 4px 0; }
 .de-diagram { flex: 1 1 auto; display: flex; justify-content: center; align-items: center; min-width: 260px; height: 100%; }
 .de-diagram :deep(.dd-dim-svg) { width: 100%; max-width: 440px; max-height: 350px; height: auto; color: var(--fg); }
 .de-diagram :deep(text) { fill: var(--fg); }

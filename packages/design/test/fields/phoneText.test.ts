@@ -87,6 +87,16 @@ describe('phone text', () => {
     expect(twoBl?.difference).toBe(WinisdDifference.forDeviation(WinisdDeviation.DRIVER_MODEL));
   });
 
+  it('the Two-BL help identifies the typed BL as the default for the chart', () => {
+    const field = ToggleField.ADV_WINISDDRIVERMODEL;
+    const row = PhoneHelp.ADVANCED_WINISD_BUGS.rows.find(r => r.label === field.label);
+    expect(field.description).toContain('takes its motor force factor from the BL input');
+    expect(field.description).toContain('both calculations use 7.17 Tm');
+    expect(field.description).toContain('uses 7.384 Tm in this example');
+    expect(row?.text).toContain('OpenISD charts both from the typed BL');
+    expect(row?.difference?.openisd).toContain('takes its force factor from the BL input');
+  });
+
   it('the transmission line option line links to the TL port entry', () => {
     const tl = PhoneHelp.ADVANCED_SIMULATION.rows.find(r => r.label === ToggleField.ADV_TLPORTMODEL.label);
     expect(tl?.difference).toBe(WinisdDifference.forDeviation(WinisdDeviation.TL_PORT_END_CORRECTION));
