@@ -1,4 +1,5 @@
 import {inconsistentInputs} from '../../consistency.js';
+import {disagreementText} from '../../../fields/disagreementText.js';
 import type {CalculationIssue} from '../../consistency.js';
 import type {DriverWorkingSet} from '../../solvers/driverQuantities.js';
 import type {Relation, RelationValues} from './Relation.js';
@@ -91,8 +92,10 @@ export class ConsistencyCheck {
         // that gap their own half-widths already close. What is left over, the gap between the
         // two intervals' NEAREST EDGES, is the genuine, unexplained disagreement.
         const shortfall = residual - tolerance;
-        issues.push(inconsistentInputs(rel.target, rel.fields, rel.formula, expected, actual,
-          shortfall / Math.max(Math.abs(actual), Math.abs(expected))));
+        const issue = inconsistentInputs(rel.target, rel.fields, rel.formula, expected, actual,
+          shortfall / Math.max(Math.abs(actual), Math.abs(expected)));
+        issues.push(issue.kind === 'inconsistent-inputs' && entered[rel.target] == null
+          ? {...issue, text: disagreementText(issue, false)} : issue);
       }
     }
     return issues;

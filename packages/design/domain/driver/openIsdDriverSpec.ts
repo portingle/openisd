@@ -18,7 +18,6 @@ import type {DriverDeviceJson, SpecEntryJson, WiringEntryJson} from '../openisdS
 import {calculatedWiring, enteredWiring, VoiceCoilWiring} from '../voiceCoilWiring.js';
 import {inferMeasuredWiring, titleNamesSeveralCoils} from './wiringInference.js';
 import type {DriverContext} from './driverContext.js';
-import {withDisagreementNote} from './disagreementNote.js';
 import {computedSlot} from './computedSlot.js';
 import {driverSection} from './driverSection.js';
 import type {DriverSpecFieldName, NumericDriverSpecFieldName} from './driverSpecFieldName.js';
@@ -437,7 +436,7 @@ export class OpenIsdDriverSpec {
                 const target = DRIVER_QUANTITY_NAMES.find(key => key === issue.field);
                 return target === undefined ? issue : this.#driver.whatIfRangeWarning(issue, target);
             })
-            : solved.map(issue => issue.kind === 'inconsistent-inputs' ? withDisagreementNote(issue) : issue);
+            : solved;
         this.#issues = [...shown, ...wiringIssues];
         this.#markDq(params, this.#issues);
         return this.#issues;
