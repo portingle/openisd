@@ -10,7 +10,7 @@ interface DisagreementDetails {
 }
 
 /** A disagreement in the box's own labels and units. A single box carries its own guidance. */
-export function disagreementText({target, fields, formula, gap, expected, actual}: DisagreementDetails): string {
+export function disagreementText({target, fields, formula, gap, expected, actual}: DisagreementDetails, targetEntered: boolean): string {
     const others = fields.filter(name => name !== target).map(name => NumberField.named(name)?.label ?? name);
     if (others.length === 0) return formula;
     const names = others.length === 1 ? others[0] : `${others.slice(0, -1).join(', ')} and ${others[others.length - 1]}`;
@@ -20,6 +20,9 @@ export function disagreementText({target, fields, formula, gap, expected, actual
     const value = (si: number): string => field === undefined
         ? String(si)
         : `${field.format(si, null, undefined, maxSignificant)} ${field.unitLabel()}`.trim();
-    return `${field?.label ?? target} differs by ${gap}. Using ${names} gives ${value(expected)}. `
-        + `The box shows ${value(actual)}. Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box.`;
+    const actualText = targetEntered ? `The box shows ${value(actual)}.` : `The calculated value is ${value(actual)}.`;
+    const guidance = targetEntered
+        ? `Fix any incorrect value. To recalculate a value from the remaining inputs, empty its box.`
+        : `Check the entered values used in the calculations.`;
+    return `${field?.label ?? target} differs by ${gap}. Using ${names} gives ${value(expected)}. ${actualText} ${guidance}`;
 }

@@ -333,7 +333,7 @@ export abstract class OpenISDDriver extends OpenISDDevice {
                 case 'inconsistent-inputs':
                     return [{
                         subject: this.engine.issues.plainNames(issue.target),
-                        text: `stated as ${displayed(issue.target, issue.actual)}, the others imply ${displayed(issue.target, issue.expected)}, ${this.engine.issues.percentApart(issue.expected, issue.actual)} apart`,
+                        text: `${this.specs.solverParams()[issue.target].entered ? 'stated' : 'calculated'} as ${displayed(issue.target, issue.actual)}, the others imply ${displayed(issue.target, issue.expected)}, ${this.engine.issues.percentApart(issue.expected, issue.actual)} apart`,
                     }];
                 case 'missing-dependencies':
                 case 'approximate-charts':

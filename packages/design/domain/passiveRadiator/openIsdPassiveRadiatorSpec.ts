@@ -3,7 +3,6 @@ import type { Air, IssueEngine, PrEngine, PrSpecIssue, PrSpecPrecision, PrSpecVa
 import type { RadiatorDeviceJson } from '../openisdSchema.js';
 import { prSpec } from '../box/prSpec.js';
 import { radiatorSection } from '../box/radiatorSection.js';
-import { withDisagreementNote } from '../driver/disagreementNote.js';
 
 /** The figures whose stated value must be above zero. */
 const INVALID_CHECKED: readonly {readonly key: keyof PrSpecValues; readonly label: string}[] = Object.freeze([
@@ -134,7 +133,7 @@ export class OpenIsdPassiveRadiatorSpec {
             if (value === null) field.setNotAvailable(); else field.setCalculated(value);
         };
         for (const {key} of INVALID_CHECKED) write(key);
-        return pr.checkSpec(stated, this.#precisions(), air).map(withDisagreementNote);
+        return pr.checkSpec(stated, this.#precisions(), air);
     }
 
     /** A record just adopted into a project: its Xlim becomes its Xmax when it has none. Every figure the datasheet states stays

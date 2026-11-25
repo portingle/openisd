@@ -70,6 +70,23 @@ describe('OpenISDDriver.inconsistentInputReasons', () => {
     expect(reasons.some(r => r.subject === 'Qts' && /stated as 0\.9\d*, the others imply .*, .*% apart$/.test(r.text))).toBe(true);
   });
 
+  it('describes calculated values as calculated in both summary and field warnings', () => {
+    const record: unknown = JSON.parse(readFileSync(
+      new URL('../../../ui/public/drivers/accuton/c173-6-090.json', import.meta.url), 'utf-8'));
+    const driver = OpenISDDriver.fromConformingRecord(record, createEngine());
+    if (Array.isArray(driver)) throw new Error(driver.join('; '));
+    expect(driver.specs.Rme_kg_per_s.entered).toBe(false);
+    expect(driver.inconsistentInputReasons()).toContainEqual(expect.objectContaining({
+      subject: 'electrical damping (Rme)', text: expect.stringMatching(/^calculated as /),
+    }));
+    expect(driver.dataQualityWarnings()).toContainEqual(expect.objectContaining({
+      field: 'Rme_kg_per_s', message: expect.stringContaining('The calculated value is'),
+    }));
+    expect(driver.specs.Rme_kg_per_s.dq).toContainEqual(expect.objectContaining({
+      text: expect.stringContaining('The calculated value is'),
+    }));
+  });
+
   it('ignores a quantity that merely cannot be derived — that is the chart list\'s business', () => {
     const driver = OpenISDDriver.empty(createEngine());
     driver.specs.Fs_hz.set(40);

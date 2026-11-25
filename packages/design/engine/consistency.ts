@@ -196,7 +196,7 @@ export function inconsistentInputs<Q extends string>(
   relative: number,
 ): CalculationIssue<Q> {
   const details = {target, fields, formula, expected, actual, relative, gap: pct(relativeGap(expected, actual))};
-  return {kind: 'inconsistent-inputs', ...details, text: disagreementText(details)};
+  return {kind: 'inconsistent-inputs', ...details, text: disagreementText(details, true)};
 }
 
 /** The charts are drawn, but from a fallback standing in for values the driver does not state. */
