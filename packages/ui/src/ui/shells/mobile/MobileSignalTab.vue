@@ -14,8 +14,8 @@ const { project, powerLocked, rsOhm, minimumPower } = useMobileSignalTab();
 <template>
   <PhoneClassicPage class="mob-signal">
     <PhoneBand :section="PhoneHelp.SIGNAL" />
-    <UIField class="mob-ui-field" :field="NumberField.SIGNAL_PIN_W" :label="PhoneLabels.POWER" :cell="project.powerDrive_W" :min="minimumPower" :readonly="powerLocked" stepper />
-    <UIField class="mob-ui-field" :field="NumberField.SIGNAL_DRIVEV_V" :label="PhoneLabels.VOLTS" :cell="project.driveVoltage_V" stepper />
-    <UIFixedField class="mob-ui-field" :field="NumberField.SIGNAL_RS_OHM" :label="PhoneLabels.RS" :value="rsOhm" stepper @update:value="v => project.Rs_ohm.set(v)" />
+    <UIField class="mob-ui-field" input-id="mob-signal-power" :field="NumberField.SIGNAL_PIN_W" :label="PhoneLabels.POWER" :cell="project.powerDrive_W" :min="minimumPower" :readonly="powerLocked" stepper />
+    <UIField class="mob-ui-field" input-id="mob-signal-voltage" :field="NumberField.SIGNAL_DRIVEV_V" :label="PhoneLabels.VOLTS" :cell="project.driveVoltage_V" stepper />
+    <UIFixedField class="mob-ui-field" input-id="mob-signal-resistance" :field="NumberField.SIGNAL_RS_OHM" :label="PhoneLabels.RS" :value="rsOhm" stepper @update:value="v => project.Rs_ohm.set(v)" />
   </PhoneClassicPage>
 </template>

@@ -22,6 +22,7 @@ import GraphPanel from '../../components/GraphPanel.vue';
 import ExportMenu from '../../components/ExportMenu.vue';
 import ToolbarIcon from '../../components/ToolbarIcon.vue';
 import OriginalFilters from './OriginalFilters.vue';
+import ProjectProblemsPanel from '../../components/ProjectProblemsPanel.vue';
 import PRBrowser from '../../components/PRBrowser.vue';
 import PREditorDialog from '../../components/PREditorDialog.vue';
 import PRInfoDialog from '../../components/PRInfoDialog.vue';
@@ -78,7 +79,7 @@ const {
   model, startEdit, showDriverDisagreements, showDriverInfo, startWhatIf, driverConsistencyReasons,
   ventPorts, END_CORRECTION_OPTIONS, VENT_COUNT_OPTIONS,
   prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo,
-  prResonanceMassDq, prFsMass_hz, prExcursion, prCountDq,
+  prResonanceMassDq, prFsMass_hz, prExcursion, prCountDq, problemsOpen, projectProblems, goToProjectProblem, problemFilterId,
   advTemp, advHumidity, advPressure, advSoundVelocity, advAirDensity,
   envTempStored, envHumidityStored, envPressureStored, envTempDq, envHumidityDq, envPressureDq,
   envSoundVelocityStored, envAirDensityStored, envSoundVelocityDq, envAirDensityDq,
@@ -412,7 +413,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
                 <DesktopBand :section="rearChamberHelp" @help="openSectionHelp" />
                 <div class="field-row"><UIField class="field" input-id="og-box-volume" :field="NumberField.BOX_VB_L" :cell="boxVolumeCell" /></div>
                 <div class="field-row">
-                  <UIField v-if="rearTuningCell && (selectedBox === 'bandpass6' || selectedBox === 'abc')" class="field" :field="NumberField.BOX_FRC_HZ" :cell="rearTuningCell" />
+                  <UIField v-if="rearTuningCell && (selectedBox === 'bandpass6' || selectedBox === 'abc')" class="field" input-id="og-rear-tuning" :field="NumberField.BOX_FRC_HZ" :cell="rearTuningCell" />
                   <UIFixedField v-else class="field" :field="NumberField.BOX_REARRESONANCE_HZ" :label="selectedBox === 'bandpass4' ? 'Frc' : 'Tuning freq'" :value="rearResonance" readonly />
                 </div>
                 <div v-if="selectedBox === 'bandpass4'" class="field-row">
@@ -586,7 +587,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
 
         <!-- ===== Filters tab — OriginalFilters, wired to the project's filter chain ===== -->
         <section class="tab-section" :class="{ active: activeTab === 'filters' }">
-          <OriginalFilters :api="originalFilters" />
+          <OriginalFilters :api="originalFilters" :problem-filter-id="problemFilterId" />
         </section>
 
         <!-- ===== Signal tab ===== -->
@@ -600,9 +601,9 @@ provideCellScope({ revision: projectChanged, written: () => {} });
             </div>
             <div>
               <DesktopBand :section="signalSourceHelp" @help="openSectionHelp" />
-              <div class="field-row"><UIField class="field" :field="NumberField.SIGNAL_PIN_W" :cell="project.powerDrive_W" :min="minimumPower" :readonly="powerLocked" /></div>
-              <div class="field-row"><UIField class="field" :field="NumberField.SIGNAL_DRIVEV_V" :cell="project.driveVoltage_V" /></div>
-              <div class="field-row"><UIFixedField class="field" :field="NumberField.SIGNAL_RS_OHM" :value="rsOhm" @update:value="v => project.Rs_ohm.set(v)" /></div>
+              <div class="field-row"><UIField class="field" input-id="og-signal-power" :field="NumberField.SIGNAL_PIN_W" :cell="project.powerDrive_W" :min="minimumPower" :readonly="powerLocked" /></div>
+              <div class="field-row"><UIField class="field" input-id="og-signal-voltage" :field="NumberField.SIGNAL_DRIVEV_V" :cell="project.driveVoltage_V" /></div>
+              <div class="field-row"><UIFixedField class="field" input-id="og-signal-resistance" :field="NumberField.SIGNAL_RS_OHM" :value="rsOhm" @update:value="v => project.Rs_ohm.set(v)" /></div>
             </div>
           </div>
         </section>
@@ -613,13 +614,13 @@ provideCellScope({ revision: projectChanged, written: () => {} });
             <div class="adv-left-col">
               <div class="adv-air-fields">
                 <div class="adv-air-col">
-                <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_TEMP_K" :value="advTemp" @update:value="v => advTemp = v" @clear="advTemp = null" :defaulted="!envTempStored" :dq="envTempDq.dq" :dq-warnings="envTempDq.warnings" :dq-state="envTempDq.dqState" stepper allow-out-of-range /></div>
-                <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_HUMIDITY_PCT" :value="advHumidity" @update:value="v => advHumidity = v" @clear="advHumidity = null" :defaulted="!envHumidityStored" :dq="envHumidityDq.dq" :dq-warnings="envHumidityDq.warnings" :dq-state="envHumidityDq.dqState" stepper /></div>
-                <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_PRESSURE_KPA" :value="advPressure" @update:value="v => advPressure = v" @clear="advPressure = null" :defaulted="!envPressureStored" :dq="envPressureDq.dq" :dq-warnings="envPressureDq.warnings" :dq-state="envPressureDq.dqState" stepper allow-out-of-range /></div>
+                <div class="field-row"><UISettlingField class="field adv-air-field" input-id="og-air-temperature" :field="NumberField.ADV_TEMP_K" :value="advTemp" @update:value="v => advTemp = v" @clear="advTemp = null" :defaulted="!envTempStored" :dq="envTempDq.dq" :dq-warnings="envTempDq.warnings" :dq-state="envTempDq.dqState" stepper allow-out-of-range /></div>
+                <div class="field-row"><UISettlingField class="field adv-air-field" input-id="og-air-humidity" :field="NumberField.ADV_HUMIDITY_PCT" :value="advHumidity" @update:value="v => advHumidity = v" @clear="advHumidity = null" :defaulted="!envHumidityStored" :dq="envHumidityDq.dq" :dq-warnings="envHumidityDq.warnings" :dq-state="envHumidityDq.dqState" stepper /></div>
+                <div class="field-row"><UISettlingField class="field adv-air-field" input-id="og-air-pressure" :field="NumberField.ADV_PRESSURE_KPA" :value="advPressure" @update:value="v => advPressure = v" @clear="advPressure = null" :defaulted="!envPressureStored" :dq="envPressureDq.dq" :dq-warnings="envPressureDq.warnings" :dq-state="envPressureDq.dqState" stepper allow-out-of-range /></div>
                 </div>
                 <div class="adv-air-col">
-                <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_SOUNDVELOCITY_M_PER_S" :value="advSoundVelocity" @update:value="v => advSoundVelocity = v" @clear="advSoundVelocity = null" :defaulted="!envSoundVelocityStored" :dq="envSoundVelocityDq.dq" :dq-warnings="envSoundVelocityDq.warnings" :dq-state="envSoundVelocityDq.dqState" allow-out-of-range /></div>
-                <div class="field-row"><UISettlingField class="field adv-air-field" :field="NumberField.ADV_AIRDENSITY_KG_PER_M3" :value="advAirDensity" @update:value="v => advAirDensity = v" @clear="advAirDensity = null" :defaulted="!envAirDensityStored" :dq="envAirDensityDq.dq" :dq-warnings="envAirDensityDq.warnings" :dq-state="envAirDensityDq.dqState" allow-out-of-range /></div>
+                <div class="field-row"><UISettlingField class="field adv-air-field" input-id="og-air-sound-speed" :field="NumberField.ADV_SOUNDVELOCITY_M_PER_S" :value="advSoundVelocity" @update:value="v => advSoundVelocity = v" @clear="advSoundVelocity = null" :defaulted="!envSoundVelocityStored" :dq="envSoundVelocityDq.dq" :dq-warnings="envSoundVelocityDq.warnings" :dq-state="envSoundVelocityDq.dqState" allow-out-of-range /></div>
+                <div class="field-row"><UISettlingField class="field adv-air-field" input-id="og-air-air-density" :field="NumberField.ADV_AIRDENSITY_KG_PER_M3" :value="advAirDensity" @update:value="v => advAirDensity = v" @clear="advAirDensity = null" :defaulted="!envAirDensityStored" :dq="envAirDensityDq.dq" :dq-warnings="envAirDensityDq.warnings" :dq-state="envAirDensityDq.dqState" allow-out-of-range /></div>
                 <button class="reset-air-btn" @click="resetAirToAppDefaults">Reset to app levels</button>
                 </div>
               </div>
@@ -728,7 +729,9 @@ provideCellScope({ revision: projectChanged, written: () => {} });
 
     <ProvenanceLegend>
       <span v-if="isModified" class="unsaved-label" title="This project has unsaved changes."><span class="unsaved-dot"></span>Unsaved changes</span>
+      <button v-if="projectOpen" type="button" class="project-problems-button" :class="{ 'has-problems': projectProblems.length > 0 }" :aria-expanded="problemsOpen" @click="problemsOpen = !problemsOpen">{{ projectProblems.length ? '⚠ ' : '' }}{{ projectProblems.length }} {{ projectProblems.length === 1 ? 'problem' : 'problems' }}</button>
     </ProvenanceLegend>
+    <ProjectProblemsPanel v-if="projectOpen && problemsOpen" :problems="projectProblems" @close="problemsOpen = false" @go="goToProjectProblem" />
 
     <!-- ===== Box losses modal: the one chamber set whose Advanced-> opened it ===== -->
     <div class="overlay" :class="{ open: lossesOpen !== null }" @click.self="lossesOpen = null">
@@ -740,10 +743,10 @@ provideCellScope({ revision: projectChanged, written: () => {} });
         <div class="modal-body">
           <template v-for="g in openLossGroups" :key="g.chamber">
             <div v-if="g.heading !== null" class="section-header">{{ g.heading }}</div>
-            <div class="field-row"><UISettlingField class="field" :field="NumberField.LOSS_QL" :value="g.Ql.value" :dq="g.dq.Ql.map(issue => issue.text)" dq-state="E" @update:value="v => g.Ql.set(v)" @clear="g.Ql.clear()" /></div>
-            <div class="field-row"><UISettlingField class="field" :field="NumberField.LOSS_QA" :value="g.Qa.value" :dq="g.dq.Qa.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qa.set(v)" @clear="g.Qa.clear()" /></div>
-            <div class="field-row" v-if="g.Qp !== null"><UISettlingField class="field" :field="NumberField.LOSS_QP" :value="g.Qp.value" :dq="g.dq.Qp.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qp?.set(v)" @clear="g.Qp?.clear()" /></div>
-            <div class="field-row" v-if="g.Qicl !== null"><UISettlingField class="field" :field="NumberField.LOSS_QICL" :value="g.Qicl.value" :dq="g.dq.Qicl.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qicl?.set(v)" @clear="g.Qicl?.clear()" /></div>
+            <div class="field-row"><UISettlingField class="field" :input-id="`og-losses-${g.chamber}-ql`" :field="NumberField.LOSS_QL" :value="g.Ql.value" :dq="g.dq.Ql.map(issue => issue.text)" dq-state="E" @update:value="v => g.Ql.set(v)" @clear="g.Ql.clear()" /></div>
+            <div class="field-row"><UISettlingField class="field" :input-id="`og-losses-${g.chamber}-qa`" :field="NumberField.LOSS_QA" :value="g.Qa.value" :dq="g.dq.Qa.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qa.set(v)" @clear="g.Qa.clear()" /></div>
+            <div class="field-row" v-if="g.Qp !== null"><UISettlingField class="field" :input-id="`og-losses-${g.chamber}-qp`" :field="NumberField.LOSS_QP" :value="g.Qp.value" :dq="g.dq.Qp.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qp?.set(v)" @clear="g.Qp?.clear()" /></div>
+            <div class="field-row" v-if="g.Qicl !== null"><UISettlingField class="field" :input-id="`og-losses-${g.chamber}-qicl`" :field="NumberField.LOSS_QICL" :value="g.Qicl.value" :dq="g.dq.Qicl.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qicl?.set(v)" @clear="g.Qicl?.clear()" /></div>
           </template>
           <p class="hint">Qa (stuffing): 100 = none · 20–50 = light · 5–10 = heavy. WinISD defaults: Ql=10, Qa=100, Qp=100, Qicl=100.</p>
         </div>
@@ -830,7 +833,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
     <PRBrowser v-if="prBrowseOpen" :editor="prEditor" @close="prBrowseOpen = false"
       @load="loadPREntry" @load-bundled="loadBundledPassiveRadiatorEntry" @define="defineNewPREntry" />
     <PRInfoDialog v-if="prInfoOpen && prInfo" :info="prInfo" @close="prInfoOpen = false" />
-    <PREditorDialog v-if="!prBrowseOpen && prEditor.cells.value" :editor="prEditor" :cells="prEditor.cells.value" />
+    <PREditorDialog v-if="!prBrowseOpen && prEditor.cells.value" :editor="prEditor" :cells="prEditor.cells.value" :initial-field="presentationState.radiatorProblemField" />
 
     <OptionsModal v-if="optionsOpen" @close="optionsOpen = false" />
 
@@ -862,6 +865,8 @@ provideCellScope({ revision: projectChanged, written: () => {} });
 </template>
 
 <style scoped>
+.project-problems-button { margin-left: auto; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.project-problems-button.has-problems { color: #a83b20; }
 /* Class names, layout and chrome follow WinISD's own window. The WinISD-light palette and
    the --chart-* custom properties keep the shared GraphPanel/canvas rendering light without
    a fork, and the `:deep(input)` rules give the shared NumInput's inner <input> the same

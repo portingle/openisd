@@ -56,7 +56,7 @@ useEscToClose(() => lossesOpen.value !== null, () => { lossesOpen.value = null; 
 
     <section class="mob-csection">
     <PhoneBand :section="PhoneHelp.rearChamber(selectedBox)" />
-    <UIField class="mob-ui-field" :field="NumberField.BOX_VB_L" :label="PhoneLabels.VB" :cell="boxVolumeCell" stepper />
+    <UIField class="mob-ui-field" input-id="mob-box-volume" :field="NumberField.BOX_VB_L" :label="PhoneLabels.VB" :cell="boxVolumeCell" stepper />
     <UIField v-if="selectedBox === 'sealed'" class="mob-ui-field" :field="NumberField.BOX_FSC_HZ" :label="PhoneLabels.FSC" :cell="sealedFscCell" :deviation="WinisdDeviation.CLOSED_BOX_TYPING" stepper />
     <UIFixedField v-else-if="selectedBox === 'box-passive-radiator'" class="mob-ui-field" :title="FH_TARGET_TIP" :field="NumberField.BOX_FH_HZ" :label="PhoneLabels.FH" :value="prNaturalFh" readonly plain />
     <UIFixedField v-else-if="selectedBox === 'bandpass4'" class="mob-ui-field" :field="NumberField.BOX_FSC_HZ" :label="PhoneLabels.FSC" :value="boxResonance" readonly plain />
@@ -64,16 +64,16 @@ useEscToClose(() => lossesOpen.value !== null, () => { lossesOpen.value = null; 
     <div class="mob-clinks">
       <button v-if="selectedBox === 'sealed'" type="button" class="mob-clink" @click="sealedAlignmentEditor.openEditor">{{ PhoneBoxText.CHOOSE_ALIGNMENT_LINK }}</button>
       <button v-else-if="selectedBox === 'vented'" type="button" class="mob-clink" @click="ventedAlignmentEditor.openEditor">{{ PhoneBoxText.CHOOSE_ALIGNMENT_LINK }}</button>
-      <button type="button" class="mob-clink mob-clink-end" @click="lossesOpen = isDual ? 'rear' : 'whole'">{{ PhoneBoxText.BOX_LOSSES_LINK }}</button>
+      <button id="mob-box-losses-rear" type="button" class="mob-clink mob-clink-end" @click="lossesOpen = isDual ? 'rear' : 'whole'">{{ PhoneBoxText.BOX_LOSSES_LINK }}</button>
     </div>
 
     </section>
 
     <section v-if="isDual" class="mob-csection">
       <PhoneBand :section="PhoneHelp.FRONT_CHAMBER" />
-      <UIField v-if="frontVolumeCell" class="mob-ui-field" :field="NumberField.BOX_VF_L" :label="PhoneLabels.VF" :cell="frontVolumeCell" stepper />
+      <UIField v-if="frontVolumeCell" class="mob-ui-field" input-id="mob-front-volume" :field="NumberField.BOX_VF_L" :label="PhoneLabels.VF" :cell="frontVolumeCell" stepper />
       <div class="mob-clinks">
-        <button type="button" class="mob-clink mob-clink-end" @click="lossesOpen = 'front'">{{ PhoneBoxText.BOX_LOSSES_LINK }}</button>
+        <button id="mob-box-losses-front" type="button" class="mob-clink mob-clink-end" @click="lossesOpen = 'front'">{{ PhoneBoxText.BOX_LOSSES_LINK }}</button>
       </div>
     </section>
 
@@ -140,10 +140,10 @@ useEscToClose(() => lossesOpen.value !== null, () => { lossesOpen.value = null; 
       </div>
       <template v-for="g in openLossGroups" :key="g.chamber">
         <div v-if="g.heading !== null" class="mob-panel-head">{{ g.heading }}</div>
-        <UISettlingField class="mob-ui-field" :field="NumberField.LOSS_QL" :value="g.Ql.value" :dq="g.dq.Ql.map(issue => issue.text)" dq-state="E" @update:value="v => g.Ql.set(v)" @clear="g.Ql.clear()" stepper />
-        <UISettlingField class="mob-ui-field" :field="NumberField.LOSS_QA" :value="g.Qa.value" :dq="g.dq.Qa.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qa.set(v)" @clear="g.Qa.clear()" stepper />
-        <UISettlingField v-if="g.Qp !== null" class="mob-ui-field" :field="NumberField.LOSS_QP" :value="g.Qp.value" :dq="g.dq.Qp.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qp?.set(v)" @clear="g.Qp?.clear()" stepper />
-        <UISettlingField v-if="g.Qicl !== null" class="mob-ui-field" :field="NumberField.LOSS_QICL" :value="g.Qicl.value" :dq="g.dq.Qicl.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qicl?.set(v)" @clear="g.Qicl?.clear()" stepper />
+        <UISettlingField class="mob-ui-field" :input-id="`mob-losses-${g.chamber}-ql`" :field="NumberField.LOSS_QL" :value="g.Ql.value" :dq="g.dq.Ql.map(issue => issue.text)" dq-state="E" @update:value="v => g.Ql.set(v)" @clear="g.Ql.clear()" stepper />
+        <UISettlingField class="mob-ui-field" :input-id="`mob-losses-${g.chamber}-qa`" :field="NumberField.LOSS_QA" :value="g.Qa.value" :dq="g.dq.Qa.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qa.set(v)" @clear="g.Qa.clear()" stepper />
+        <UISettlingField v-if="g.Qp !== null" class="mob-ui-field" :input-id="`mob-losses-${g.chamber}-qp`" :field="NumberField.LOSS_QP" :value="g.Qp.value" :dq="g.dq.Qp.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qp?.set(v)" @clear="g.Qp?.clear()" stepper />
+        <UISettlingField v-if="g.Qicl !== null" class="mob-ui-field" :input-id="`mob-losses-${g.chamber}-qicl`" :field="NumberField.LOSS_QICL" :value="g.Qicl.value" :dq="g.dq.Qicl.map(issue => issue.text)" dq-state="E" @update:value="v => g.Qicl?.set(v)" @clear="g.Qicl?.clear()" stepper />
       </template>
       <p class="mob-hint">Qa (stuffing): 100 = none · 20–50 = light · 5–10 = heavy. WinISD defaults: Ql=10, Qa=100, Qp=100, Qicl=100.</p>
       <div class="mob-align-footer">

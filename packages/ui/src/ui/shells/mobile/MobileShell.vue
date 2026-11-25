@@ -5,6 +5,7 @@
 import MobileSaveButton from './MobileSaveButton.vue';
 import MobileTabBar from './MobileTabBar.vue';
 import MobileKeyStrip from './MobileKeyStrip.vue';
+import ProjectProblemsPanel from '../../components/ProjectProblemsPanel.vue';
 import MobileBoxTab from './MobileBoxTab.vue';
 import MobileDriverTab from './MobileDriverTab.vue';
 import MobileSignalTab from './MobileSignalTab.vue';
@@ -39,6 +40,7 @@ const {
   menuOpen, toggleMenu, closeMenu, exportProjectsArchive, openFromDisk, isModified, saveProject, saveAllProjects, anyUnsaved, flashMessage, updateBannerVisible, reloadForUpdate, dismissUpdateBanner, dismissReconnect, revertProject, projectTitle,
   browseDrivers, optionsOpen, openOptions, about, aboutLabel, goToProject, goToAdvanced, pane, closePane, viewportHeightPx, viewportTopPx, sheetTyping, graphSheetOpen, bannersHeld, pinSpacePx, onContentScroll,
   contentEl, canScrollUp, canScrollDown,
+  problemsOpen, projectProblems, goToProjectProblem,
   username, appVersion, projectsPaneOpen, openProjectsPane, closeProjectsPane, projectRows, openProjectRows, selectOpenProject, closeOpenProject, shownProjects, projectsFooter, searchOffered, projectQuery, projectOrder, projectScope, projectOrders, storeLabel, chooseProject,
   setProjectTraceVisible, cycleProjectColour, closeProjectRow, duplicateProjectRow, exportProjectRow, renameProjectRow, resolveProjectRow,
   binRows, binTotal, binOpen, binLabel, moveToBin, restoreFromBin, deleteForever, emptyBin,
@@ -110,9 +112,17 @@ const diagnostics = injectDiagnosticsModal();
       </main>
       <MobilePaneDialog v-if="pane === 'project'" title="Project" @close="closePane">
         <MobileProjectTab />
+        <template #footer>
+          <button type="button" class="mob-pane-problems" :aria-expanded="problemsOpen" @click="problemsOpen = !problemsOpen">{{ projectProblems.length ? '⚠ ' : '' }}{{ projectProblems.length }} {{ projectProblems.length === 1 ? 'problem' : 'problems' }}</button>
+          <button type="button" class="mob-dlg-btn" @click="closePane">Close</button>
+        </template>
       </MobilePaneDialog>
       <MobilePaneDialog v-else-if="pane === 'advanced'" title="Advanced" @close="closePane">
         <MobileAdvancedTab />
+        <template #footer>
+          <button type="button" class="mob-pane-problems" :aria-expanded="problemsOpen" @click="problemsOpen = !problemsOpen">{{ projectProblems.length ? '⚠ ' : '' }}{{ projectProblems.length }} {{ projectProblems.length === 1 ? 'problem' : 'problems' }}</button>
+          <button type="button" class="mob-dlg-btn" @click="closePane">Close</button>
+        </template>
       </MobilePaneDialog>
       <!-- A Graph sheet is open: the banners wait until it closes (QO427). -->
       <template v-if="!bannersHeld">
@@ -139,6 +149,8 @@ const diagnostics = injectDiagnosticsModal();
         <button type="button" class="mob-update-later" :aria-label="cloudSyncDisplay.hint.no" :title="cloudSyncDisplay.hint.no" @click="dismissHint">&#10005;</button>
       </div>
       </template>
+      <button v-show="!sheetTyping && pane === null" type="button" class="mob-problems-button" :class="{ 'has-problems': projectProblems.length > 0 }" :aria-expanded="problemsOpen" @click="problemsOpen = !problemsOpen">{{ projectProblems.length ? '⚠ ' : '' }}{{ projectProblems.length }} {{ projectProblems.length === 1 ? 'problem' : 'problems' }}</button>
+      <ProjectProblemsPanel v-if="problemsOpen" :problems="projectProblems" @close="problemsOpen = false" @go="goToProjectProblem" />
       <MobileTabBar v-show="!sheetTyping" v-model="destination" :shadow-above="canScrollDown" />
 
     </template>
@@ -268,6 +280,9 @@ const diagnostics = injectDiagnosticsModal();
 </template>
 
 <style scoped>
+.mob-pane-problems { border: 0; background: transparent; color: #a83b20; cursor: pointer; margin-right: auto; }
+.mob-problems-button.has-problems { color: #a83b20; }
+.mob-problems-button { flex: none; min-height: 28px; width: 100%; border: 0; border-top: 1px solid #ddd; background: #fff; color: inherit; cursor: pointer; }
 /* Re-declares the shared tokens, exactly as `.original-root` does in style.css, so the two
    skins can diverge later without one silently inheriting the other's values. The provenance
    colours (--good/--acc/--bad/--acc2) stay byte-identical to :root — that's what keeps the

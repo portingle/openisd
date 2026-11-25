@@ -3,7 +3,7 @@ import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
 import {forceMobileSkin} from '../fixtures/mobileSkin.js';
 
 const scenarios = [
-  {name: 'desktop', warning: '#og-pr-excursion-advice', count: '#og-pr-count', async open(page: Page) {
+  {name: 'desktop', async signal(page: Page) { await page.locator('.project-nav li', {hasText: 'Signal'}).click(); }, warning: '#og-pr-excursion-advice', count: '#og-pr-count', async open(page: Page) {
     await page.goto('/');
     await openAProject(page);
     await page.locator('.project-nav li', {hasText: 'Signal'}).click();
@@ -14,7 +14,7 @@ const scenarios = [
     await page.locator('.project-nav li', {hasText: 'Passive Radiator'}).click();
     await page.locator('#og-pr-edit').click();
   }},
-  {name: 'phone', warning: '#mob-pr-excursion-advice', count: '#mob-pr-count', async open(page: Page) {
+  {name: 'phone', async signal(page: Page) { await page.locator('.mob-tab', {hasText: 'Signal'}).click(); }, warning: '#mob-pr-excursion-advice', count: '#mob-pr-count', async open(page: Page) {
     await page.setViewportSize({width: 390, height: 844});
     await forceMobileSkin(page);
     await page.goto('/');
@@ -46,5 +46,12 @@ for (const scenario of scenarios) {
     await expect(countRow.locator('.ui-field-dq-btn')).toBeVisible();
     await warning.scrollIntoViewIfNeeded();
     await testInfo.attach('radiator-warning', {body: await page.screenshot(), contentType: 'image/png'});
+    await scenario.signal(page);
+    await page.getByRole('button', {name: /\d+ problems?/}).click();
+    const list = page.getByRole('dialog', {name: 'Project problems'});
+    const problem = list.locator('li').filter({hasText: 'exceeds Xmax'}).first();
+    await expect(problem).toBeVisible();
+    await problem.getByRole('button', {name: 'Go to'}).click();
+    await expect(count).toBeFocused();
   });
 }

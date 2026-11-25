@@ -29,6 +29,7 @@ import type { FieldPath } from '../schemaRepair.js';
 import { boxParamsIssuesOf, maxCurvesOf, sweepOf, sweepPlanOf, ventAchievedFbOf, ventMaxReachableFbOf } from './projectSweep.js';
 import type { ProjectSweepSource, SweepPlan } from './projectSweep.js';
 import { ProjectContext } from '../driver/driverContext.js';
+import {projectProblemsOf, type ProjectProblem} from './projectProblems.js';
 
 import { withNullEmbeddedDriverId } from './nullDriverId.js';
 import type { ProjectIssues } from './projectIssues.js';
@@ -992,6 +993,11 @@ export class OpenISDProject {
         });
         return assessment === null ? null : {text: this.#engine.pr.excursionAdvice(assessment, power, count),
             warning: assessment.kind === 'exceeded'};
+    }
+
+    /** Input data-quality problems across the active project. */
+    problems(): readonly ProjectProblem[] {
+        return projectProblemsOf(this, this.#engine);
     }
 
     /** The excursion- and power-limited maximum SPL curves. Reports on the same terms as `sweep`,

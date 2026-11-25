@@ -83,6 +83,7 @@ export type { DqReason } from './driver/openISDDriver.js';
 // `projectJson` is NOT exported: it takes and returns package-private record types.
 export { OpenISDProject } from './project/openISDProject.js';
 export type { OpenedProject } from './project/openISDProject.js';
+export type {ProjectProblem, ProjectProblemArea, ProjectProblemDestination} from './project/projectProblems.js';
 export { withoutDerivedMarks } from './derivedMarks.js';
 export { compactedStoredText } from './project/projectSerialization.js';
 export { ProjectBuilder } from './openisdTransforms.js';

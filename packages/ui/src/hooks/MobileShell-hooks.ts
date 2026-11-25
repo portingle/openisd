@@ -4,7 +4,8 @@
  * component (`.claude/rules/ui.md`); every ref/computed/write lives here.
  */
 import {type Ref, computed, nextTick, onMounted, onUnmounted, provide, ref, watch} from 'vue';
-import type {OpenISDProject} from '@openisd/design';
+import type {OpenISDProject, ProjectProblem} from '@openisd/design';
+import {mobileProblemField} from '../logic/problemDestination.js';
 import {cycleTraceColor} from '../logic/presentationState.js';
 import {useApp} from '../logic/app.js';
 import {useFeatureUse, useRecentActions} from './telemetryContext.js';
@@ -58,6 +59,9 @@ const PANE_ACTIONS: Record<MobilePane, ActionName> = {
 };
 
 export interface MobileShellApi {
+  problemsOpen: import('vue').Ref<boolean>;
+  projectProblems: import('vue').ComputedRef<readonly ProjectProblem[]>;
+  goToProjectProblem: (problem: ProjectProblem) => void;
   storeLabel: string;
   projectOpen: import('vue').ComputedRef<boolean>;
   /** The focused project's title for the top bar; '' with no project open. */
@@ -187,7 +191,7 @@ export interface MobileShellApi {
 
 export function useMobileShell(): MobileShellApi {
   const recentActions = useRecentActions();
-  const { appState, presentation: presentationState } = useApp();
+  const { appState, presentation: presentationState, selection } = useApp();
   const { setTraceVisible, focusedProject, focusProject, isModified, openProjects, projectChanged, projectDisplayName, projectHasUnsavedChanges, removeProject, resetProjectToGround } = appState;
   const { setSkinOverride } = presentationState;
   const { designIO, projectRepo, projectBin, appUpdate, appVersion, confirmPort, logging } = useApp();
@@ -197,6 +201,54 @@ export function useMobileShell(): MobileShellApi {
   const projectTitle = computed(() => { void projectChanged.value; return focusedProject()?.title() ?? ''; });
   const destination = ref<MobileDestination>('box');
   const pane = ref<MobilePane | null>(null);
+  const problemsOpen = ref(false);
+  const projectProblems = computed(() => { void projectChanged.value; return focusedProject()?.problems() ?? []; });
+  function goToProjectProblem(problem: ProjectProblem): void {
+    const target = problem.destinations[0];
+    if (!target) return;
+    problemsOpen.value = false;
+    pane.value = null;
+    if (target.area === 'advanced') pane.value = 'advanced';
+    else if (target.area === 'enclosure' || target.area === 'box') destination.value = 'box';
+    else destination.value = target.area;
+    if (target.area === 'driver' && !target.field.startsWith('project.')) {
+      presentationState.driverProblemField = target.field;
+      selection.editProjectDriver();
+      return;
+    }
+    if (target.area === 'enclosure' && target.field.startsWith('radiator.')) {
+      presentationState.radiatorProblemField = target.field.slice('radiator.'.length);
+      void nextTick(() => document.getElementById('mob-pr-edit')?.click());
+      return;
+    }
+    if (target.area === 'filters' && target.field) {
+      void nextTick(() => {
+        const row = Array.from(document.querySelectorAll<HTMLElement>('[data-filter-id]'))
+          .find(element => element.dataset.filterId === target.field);
+        row?.scrollIntoView({block: 'nearest'});
+        row?.querySelector<HTMLElement>('input:not([type=checkbox])')?.focus();
+      });
+      return;
+    }
+    if (target.area === 'box' && target.field.startsWith('losses.')) {
+      const chamber = target.field.split('.')[1];
+      void nextTick(() => {
+        document.getElementById(chamber === 'front' ? 'mob-box-losses-front' : 'mob-box-losses-rear')?.click();
+        const id = mobileProblemField(target);
+        if (id) void nextTick(() => document.getElementById(id)?.focus());
+      });
+      return;
+    }
+    let focus = target;
+    if (target.area === 'enclosure' && target.field.endsWith('.area_m2')) {
+      const project = focusedProject();
+      const port = project?.box.ventPortsOf(project.box.boxType.value).find(item => item.name === target.field.split('.')[0]);
+      if (port) focus = {area: 'enclosure', field: `${port.name}.${port.vent.shape.value === 'slotted' ? 'width_m' : 'diameter_m'}`};
+    }
+    const id = mobileProblemField(focus);
+    if (id) void nextTick(() => document.getElementById(id)?.focus());
+  }
+
   const featureUse = useFeatureUse();
   watch(destination, d => {
     presentationState.mobileDestination = d;
@@ -632,6 +684,7 @@ export function useMobileShell(): MobileShellApi {
   }
 
   return {
+    problemsOpen, projectProblems, goToProjectProblem,
     projectOpen, projectTitle, destination, fileInput, openImportedFile, openNewProject, switchToDesktop, useAutomaticSkin, skinIsAutomatic,
     menuOpen, toggleMenu, closeMenu, exportProjectsArchive: () => designIO.exportProjectsArchive(), openFromDisk, isModified,
     saveProject, saveAllProjects, anyUnsaved, updateBannerVisible, reloadForUpdate, dismissUpdateBanner, revertProject, browseDrivers, optionsOpen, openOptions, about, aboutLabel, goToProject,
