@@ -94,6 +94,13 @@ fi
 SNAP="snap-$STAMP"
 REL="v$STAMP"
 
+# Check the deployment path before changing the release or Latest. A successful lookup does
+# not guarantee a later dispatch, but an unavailable workflow must not cause a partial release.
+if [ "$MODE" != prepare ]; then
+  gh workflow view deploy.yml --ref main > /dev/null 2>&1 \
+    || refuse "production deployment workflow is unavailable; release was not changed"
+fi
+
 dispatch_production_deploy() {
   local release_tag="$1"
   # Pages only permits the main branch in its deployment environment. The caller already has
