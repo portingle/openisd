@@ -3,6 +3,7 @@ import {computed, shallowRef} from 'vue';
 import {NumberField, PHONE_MAX_SIGNIFICANT, type PhoneHelpSection} from '@openisd/design/fields';
 import {useEscToClose} from '../logic/useEscToClose.js';
 import type {OpenISDDriver, OpenISDDriverStandalone, Precise, Readable} from '@openisd/design';
+import type {Air} from '@openisd/design/engine';
 import type {MyDriverRepo} from '@openisd/persistence';
 import type {NumSpecField} from '../logic/appState.js';
 import {formatFieldWithUnit} from './useUnitReadouts.js';
@@ -16,6 +17,19 @@ import {formatFieldWithUnit} from './useUnitReadouts.js';
 
 export function ebpVal(driver: OpenISDDriver): number | null {
   return driver.specs.EBP_hz.value;
+}
+
+/** Show the chart's damping figures when they differ from the editable driver data. */
+export function chartQualityOf(driver: OpenISDDriver, winisdWay: boolean, air?: Air): {qes: string; qts: string} | null {
+  const {BL_Tm, Qes, Qts} = driver.specs;
+  if (!BL_Tm.entered) return null;
+  const figures = driver.chartResonanceFigures(winisdWay, air);
+  if (figures === null) return null;
+  const qes = NumberField.QES.format(figures.Qes);
+  const qts = NumberField.QTS.format(figures.Qts);
+  const statedQes = Qes.value === null ? '' : NumberField.QES.format(Qes.value);
+  const statedQts = Qts.value === null ? '' : NumberField.QTS.format(Qts.value);
+  return qes === statedQes && qts === statedQts ? null : {qes, qts};
 }
 
 /** Save `driver` to My Drivers: over the row `replacesUuid` names, or as a new row when it is

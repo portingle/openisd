@@ -370,7 +370,7 @@ export class PhoneHelp {
     styleLine(WinisdOption.ONE_DRIVER_IMPEDANCE, 'WinISD sizes the sound for drivers in parallel but draws only ONE driver\'s impedance, not the load the amplifier sees (4 × 8 Ω is 2 Ω). OpenISD draws the load for your Driver wiring. Tick for one driver\'s, as WinISD.'),
   ]);
   static readonly ADVANCED_WINISD_BUGS = new PhoneHelpSection('Enable WinISD bugs', 'Mistakes in WinISD\'s maths. OpenISD gets them right. A yellow switch brings WinISD\'s result back. A switch greyed out does nothing for this box.', [
-    bugLine(ToggleField.ADV_WINISDDRIVERMODEL, 'WinISD uses two BLs for one driver, so its charts show a driver that cannot exist. OpenISD uses one. Tick for WinISD\'s.', WinisdDeviation.DRIVER_MODEL),
+    bugLine(ToggleField.ADV_WINISDDRIVERMODEL, 'WinISD splits damping and loudness between two BLs. OpenISD charts both from the typed BL by default and marks a disagreement. Tick for WinISD\'s split.', WinisdDeviation.DRIVER_MODEL),
     bugLine(ToggleField.ADV_WINISDVAMODEL, 'WinISD leaves Rg out of the amplifier load, so the VA chart is low (23 % at Re 3.4 Ω, Rg 1 Ω). OpenISD counts it. Tick for WinISD\'s.', WinisdDeviation.VA_MODEL),
     bugLine(ToggleField.ADV_WINISDPRNPRRESONANCE, 'With 2 or more radiators WinISD takes the box losses at a frequency that is Npr times too low. OpenISD uses the true tuning. Tick for WinISD\'s.', WinisdDeviation.PR_NPR_RESONANCE),
     bugLine(ToggleField.ADV_WINISDBESSELHIGHPASS, 'WinISD\'s Bessel high-pass is not the mirror of its low-pass, so its shape is wrong (up to 6 % at order 4). OpenISD mirrors it. Tick for WinISD\'s.', WinisdFilterDeviation.BESSEL_HIGHPASS),

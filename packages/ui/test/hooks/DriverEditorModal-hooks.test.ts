@@ -1,10 +1,11 @@
 import {describe, expect, it, vi} from 'vitest';
+import {readFileSync} from 'node:fs';
 import {createRenderer, defineComponent, ref} from 'vue';
 import {NumberField, PhoneHelpSection} from '@openisd/design/fields';
 import {MY_DRIVERS_KEY, createMemoryStorage} from '@openisd/persistence';
 import {OpenISDDriver, OpenISDDriverStandalone} from '@openisd/design';
 import {createEngine} from '@openisd/design/engine';
-import {commitMyDriver, ebpVal, useDriverDimensionLabels, useDriverEditorHelp} from '../../src/hooks/DriverEditorModal-hooks.js';
+import {chartQualityOf, commitMyDriver, ebpVal, useDriverDimensionLabels, useDriverEditorHelp} from '../../src/hooks/DriverEditorModal-hooks.js';
 import {recordingTelemetryUi} from '../fixtures/recordingTelemetryUi.js';
 import {myDriverRepoOn} from '../fixtures/repoOn.js';
 
@@ -21,6 +22,18 @@ function completeDriver(): OpenISDDriverStandalone {
 }
 
 describe('DriverEditorModal-hooks', () => {
+  it('shows the W5-1138SMF chart Qes and Qts from its typed BL and retains the BL warning', () => {
+    const text = readFileSync('packages/ui/public/drivers/tang-band/w5-1138smf.json', 'utf8');
+    const driver = OpenISDDriver.fromOwdrText(text, createEngine());
+    if (Array.isArray(driver)) throw new Error(driver.join(', '));
+
+    expect(chartQualityOf(driver, false)).toEqual({qes: '0.5846', qts: '0.5078'});
+    expect(chartQualityOf(driver, true)).toEqual({qes: '0.57', qts: '0.4913'});
+    expect(driver.specs.Qes.value).toBe(0.57);
+    expect(driver.specs.Qts.value).toBe(0.49);
+    expect(driver.issues().some(issue => issue.kind === 'inconsistent-inputs' && issue.fields.includes('BL_Tm'))).toBe(true);
+  });
+
   it('pairs every dimension field name with its figure in the selected unit', () => {
     const driver = completeDriver();
     driver.specs.Basket_m.set(0.101);

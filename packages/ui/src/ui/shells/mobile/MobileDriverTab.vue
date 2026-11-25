@@ -32,7 +32,7 @@ const { project, fullName, driverHelp, keyFigures, consistencyReasons, browseDri
     <PhoneBand :section="PhoneHelp.KEY_FIGURES" />
     <!-- Tapping a key figure opens the driver editor (the mock's Key figures help: "Tap one to edit the driver."). -->
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.DRIVER" @click="editDriver" @keydown.enter="editDriver" :field="NumberField.FS_HZ" label="Fs" :value="keyFigures.Fs" readonly plain />
-    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.DRIVER" @click="editDriver" @keydown.enter="editDriver" :field="NumberField.QTS" label="Qts" :value="keyFigures.Qts" readonly plain />
+    <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.DRIVER" @click="editDriver" @keydown.enter="editDriver" :field="NumberField.QTS" :label="keyFigures.showChartQts ? 'Chart Qts' : 'Qts'" :value="keyFigures.Qts" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.DRIVER" @click="editDriver" @keydown.enter="editDriver" :field="NumberField.VAS_M3" label="Vas" :value="keyFigures.Vas" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.DRIVER" @click="editDriver" @keydown.enter="editDriver" :field="NumberField.RE_OHM" label="Re" :value="keyFigures.Re" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.DRIVER" @click="editDriver" @keydown.enter="editDriver" :field="NumberField.XMAX_M" label="Xmax" :value="keyFigures.Xmax" readonly plain />

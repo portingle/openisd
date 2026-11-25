@@ -5,7 +5,7 @@
  * (`DriverBrowser`, `DriverEditorModal`), reached the same way the desktop shell reaches them.
  */
 import {computed, watch} from 'vue';
-import {PhoneHelp} from '@openisd/design/fields';
+import {NumberField, PhoneHelp} from '@openisd/design/fields';
 import {reportDisagreementsSeen} from '../logic/telemetry/valuesProblem.js';
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
 import {useApp} from '../logic/app.js';
@@ -26,11 +26,17 @@ export function useMobileDriverTab() {
   /** Brand and model on one line, for the name box. */
   const fullName = computed(() => [brand.value, model.value].filter(part => part !== '').join(' '));
 
-  /** The driver's key figures, read off its spec (SI; the field formats them). */
+  /** The driver's key figures, including the Qts of the chart's single-BL circuit when BL is entered. */
   const keyFigures = computed(() => {
     void projectChanged.value;
-    const spec = project.value.driver.specs;
-    return {Fs: spec.Fs_hz.value, Qts: spec.Qts.value, Vas: spec.Vas_m3.value, Re: spec.Re_ohm.value, Xmax: spec.Xmax_m.value};
+    const p = project.value;
+    const driver = p.driver;
+    const spec = driver.specs;
+    const statedQts = spec.Qts.value;
+    const chart = spec.BL_Tm.entered && !p.winisdDriverModel.value
+      ? driver.chartResonanceFigures(p.winisdChartFromFsVasQms.value, p.air) : null;
+    const showChartQts = chart !== null && (statedQts === null || NumberField.QTS.format(chart.Qts) !== NumberField.QTS.format(statedQts));
+    return {Fs: spec.Fs_hz.value, Qts: chart?.Qts ?? statedQts, showChartQts, Vas: spec.Vas_m3.value, Re: spec.Re_ohm.value, Xmax: spec.Xmax_m.value};
   });
   /** The stated values that disagree with each other, as the Driver Editor lists them. */
   const consistencyReasons = computed(() => {

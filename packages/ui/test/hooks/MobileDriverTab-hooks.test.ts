@@ -22,6 +22,25 @@ describe('MobileDriverTab-hooks usage counts', () => {
   });
 });
 
+it('shows the W5-1138SMF chart Qts for the selected single-BL mode', () => {
+  const logic = testAppLogic();
+  const text = readFileSync('packages/ui/public/drivers/tang-band/w5-1138smf.json', 'utf8');
+  const driver = OpenISDDriver.fromOwdrText(text, logic.appState.engine);
+  if (Array.isArray(driver)) throw new Error(driver.join(', '));
+  const project = new ProjectBuilder(driver, logic.appState.engine).sealed().volume_m3(0.00448).build();
+  logic.appState.addProject(project);
+  const {telemetryUi} = recordingTelemetryUi();
+  const tab = runHook(computed(() => project), () => useMobileDriverTab(), logic, telemetryUi);
+
+  expect(tab.keyFigures.value.Qts).toBeCloseTo(0.507766, 6);
+  expect(tab.keyFigures.value.showChartQts).toBe(true);
+  project.winisdChartFromFsVasQms.set(true);
+  expect(tab.keyFigures.value.Qts).toBeCloseTo(0.491332, 6);
+  project.winisdDriverModel.set(true);
+  expect(tab.keyFigures.value.Qts).toBe(driver.specs.Qts.value);
+  expect(tab.keyFigures.value.showChartQts).toBe(false);
+});
+
 describe('MobileDriverTab-hooks Driver help (T882)', () => {
   function tabFor(nDrivers: number) {
     const logic = testAppLogic();

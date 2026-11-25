@@ -1629,8 +1629,8 @@ export class ToggleField extends Field {
   static readonly ADV_WINISDDRIVERMODEL = new ToggleField({
     value: "adv_WinisdDriverModel",
     label: "Two-BL driver",
-    description: "Two-BL driver: WinISD uses two different BL values for one driver. The BL that Re, Fs, Qes and Vas imply sets the damping, and the BL you typed in sets the loudness. But a driver has only one BL, so when the two disagree the loudness and the damping describe different drivers. So with an entered BL that is off, WinISD's charts show a driver that cannot exist (W5-1138SMF, entered BL 7.17, implied 7.384: the SPL chart is 0.26 dB out in the passband and the impedance peak about 1.2 Ω, 8 %, high). OpenISD uses one BL, the implied one, for both; an entered BL that disagrees is marked and changes no chart. Tick this to use both BLs as WinISD does: the entered BL then sets the loudness and, with voice coil inductance on, the inductance roll-off. Nothing changes if the entered BL already agrees.",
-  }, "every chart, only when the entered BL disagrees with the one that Re, Fs, Qes and Vas imply. W5-1138SMF (entered BL 7.17, implied 7.384): the SPL chart differs by 0.26 dB in the passband, the Impedance chart peak is about 1.2 Ω (8 %) high, and the Transfer function magnitude chart differs by 0.51 dB.");
+    description: "The default circuit takes its motor force factor from the BL input. It uses that factor for both cone force and electrical damping. For the Tang Band W5-1138SMF, both calculations use 7.17 Tm. The Fs, Vas and Qms compatibility option reconstructs the circuit and uses 7.384 Tm in this example. The Two-BL option reconstructs the damping factor separately while keeping the entered factor for output and voice coil inductance modelling.",
+  }, "the SPL, Impedance and Transfer function charts when the typed BL differs from the one implied by Re, Fs, Qes and Vas. The Tang Band W5-1138SMF has 7.17 Tm typed and 7.384 Tm implied.");
   static readonly ADV_WINISDVAMODEL = new ToggleField({
     value: "adv_WinisdVaModel",
     label: "Re without Rg",

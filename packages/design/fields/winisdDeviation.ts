@@ -105,9 +105,9 @@ export class WinisdDeviation {
 
   static readonly DRIVER_MODEL = new WinisdDeviation({
     title: 'WinISD mixes two BL values',
-    winisd: 'WinISD uses two different BL values. It drives the cone with the BL you entered, but works out the damping from the BL implied by Fs, Qes and Vas.',
-    openisd: 'OpenISD uses one BL everywhere: the one from the datasheet values you entered.',
-    size: 'W5-1138SMF (entered BL 7.17, implied BL 7.384): the passband SPL differs by 0.26 dB and the impedance peak by about 8 %.',
+    winisd: 'WinISD drives the cone with the typed BL but works out the damping from the BL implied by Re, Fs, Qes and Vas.',
+    openisd: 'The single-motor model takes its force factor from the BL input. The Fs, Vas and Qms compatibility option reconstructs the motor factor from the specified data.',
+    size: 'For the Tang Band W5-1138SMF, the typed BL is 7.17 Tm and the implied BL is 7.384 Tm.',
     fix: {kind: 'errorSwitch', switchField: ToggleField.ADV_WINISDDRIVERMODEL, switchOf: s => s.driverModel},
     charts: [],
   });
