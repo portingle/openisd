@@ -159,6 +159,13 @@ describe('the driver count, series resistance, box tunings, port lengths, losses
     expect(project.nDrivers.value).toBe(0);
     expect(project.Rs_ohm.value).toBe(-2);
     expectCharts(project);
+    const comparison = opened(owprWith('sealed', r => ({...r, signal: {power_W: {state: 'E', value: 10}},
+      driverEmbedding: {...r.driverEmbedding, nDrivers: 1, Rs_ohm: 0}}))).project;
+    const actual = project.sweepPlan(DEFAULT_GRID);
+    const expected = comparison.sweepPlan(DEFAULT_GRID);
+    if (actual.kind !== 'ready' || expected.kind !== 'ready') throw new Error('sweep not ready');
+    expect(expected.job.sweep.eg).not.toBeCloseTo(2.83, 2);
+    expect(actual.job.sweep.eg).toBeCloseTo(expected.job.sweep.eg, 8);
   });
 
   it("a sealed box keeps Ql 0 and Qa -1 and labels the chart calculation with Ql 10 and Qa 100", () => {
