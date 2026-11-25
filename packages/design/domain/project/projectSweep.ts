@@ -462,6 +462,22 @@ function workingLosses(checks: Engine['issues'], sweep: SweepJobParams): readonl
     return issues;
 }
 
+/** Keep invalid saved values in the project, using named working values only for charts. */
+function workingDriverInputs(checks: Engine['issues'], sweep: SweepJobParams): readonly SweepIssue[] {
+    const issues: SweepIssue[] = [];
+    if (sweep.nDrivers !== undefined && !(Number.isFinite(sweep.nDrivers) && sweep.nDrivers >= 1)) {
+        const reason = Number.isFinite(sweep.nDrivers) ? 'must be at least 1' : 'must be finite';
+        sweep.nDrivers = 1;
+        issues.push(checks.approximateCharts('nDrivers', ['nDrivers'], `Num. of drivers ${reason}. Charts are calculated using 1.`));
+    }
+    if (sweep.Rs !== undefined && !(Number.isFinite(sweep.Rs) && sweep.Rs >= 0)) {
+        const reason = Number.isFinite(sweep.Rs) ? 'must not be negative' : 'must be finite';
+        sweep.Rs = 0;
+        issues.push(checks.approximateCharts('Rs', ['Rs'], `Series resistance ${reason}. Charts are calculated using 0 Ω.`));
+    }
+    return issues;
+}
+
 function isSweepLoss(key: string): key is keyof typeof SWEEP_LOSSES {
     return Object.hasOwn(SWEEP_LOSSES, key);
 }
@@ -524,8 +540,9 @@ export function sweepPlanOf(source: ProjectSweepSource, P: FrequencyGrid): Sweep
     const sweep = sweepParamsOf(source, P, source.driveVoltage_V, box, Vb);
     const maxCurves = sweepParamsOf(source, P, 2.83, box, Vb);
     const checks = source.engine.issues;
-    const issues = [...workingLosses(checks, sweep), ...statedTuningIssues(source, box), ...workingBoxInputs(checks, source, box, sweep)];
+    const issues = [...workingLosses(checks, sweep), ...workingDriverInputs(checks, sweep), ...statedTuningIssues(source, box), ...workingBoxInputs(checks, source, box, sweep)];
     workingLosses(checks, maxCurves);
+    workingDriverInputs(checks, maxCurves);
     workingBoxInputs(checks, source, box, maxCurves);
     // The air, counts, series resistance, grid, losses and tunings: the engine's own rules.
     const radiatorWarning = box === 'box-passive-radiator' ? source.box.passiveRadiator.chartMechanics().warning : null;

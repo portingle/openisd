@@ -60,7 +60,7 @@ export type SweepIssue =
 
 /** A stated box loss (leakage, absorption, port or interchamber), port tuning, intra-port length, radiator count or
  *  added mass that no design can use: the sweep ran with a working value for it instead, and `text` says which. */
-export type ApproximateLossIssue = Extract<CalculationIssue<'prMmd_kg' | 'prNum' | 'prMadd' | 'Fb' | 'Ff' | 'Fr' | 'LeffIntra' | 'Ql' | 'Qa' | 'Qp' | 'Qicl' | 'Qlr' | 'Qar' | 'Qpr' | 'Qlf' | 'Qaf' | 'Qpf' | 'Qiclfr'>, {kind: 'approximate-charts'}>;
+export type ApproximateLossIssue = Extract<CalculationIssue<'nDrivers' | 'Rs' | 'prMmd_kg' | 'prNum' | 'prMadd' | 'Fb' | 'Ff' | 'Fr' | 'LeffIntra' | 'Ql' | 'Qa' | 'Qp' | 'Qicl' | 'Qlr' | 'Qar' | 'Qpr' | 'Qlf' | 'Qaf' | 'Qpf' | 'Qiclfr'>, {kind: 'approximate-charts'}>;
 
 /** The unified sweep result: the curves (or null if nothing could be derived), and why. */
 export interface SweepSolveResult {

@@ -3,6 +3,7 @@
  * are drawn from working values with a warning note instead of going blank.
  */
 import {fileURLToPath} from 'node:url';
+import {readFileSync, writeFileSync} from 'node:fs';
 import {expect, openAMobileProject, openAProject, test} from '../fixtures.js';
 import {forceMobileSkin, mobileFieldRow} from '../fixtures/mobileSkin.js';
 import {PIXEL_9} from '../fixtures/phoneSizes.js';
@@ -26,6 +27,23 @@ test.describe('loaded values no design can use', () => {
     await openAProject(page, fixture('p1_sealed_Ql0.wpr'));
     await expectChartDrawn(page, /Leakage Ql must be greater than zero\. Charts are calculated using 10\./);
     await expect(chartBlocked(page)).toHaveCount(0);
+  });
+
+  test('saved invalid driver count and series resistance keep a chart with named working values', async ({page}, testInfo) => {
+    const source = readFileSync(fixture('p1_sealed_Ql0.wpr'), 'utf8')
+      .replace('Qlr=0', 'Qlr=10')
+      .replace('Nd=1', 'Nd=0')
+      .replace('Rg=0.1', 'Rg=-2');
+    const path = testInfo.outputPath('invalid-driver-inputs.wpr');
+    writeFileSync(path, source);
+    await openAProject(page, path);
+    await expectChartDrawn(page, /Num\. of drivers must be at least 1\. Charts are calculated using 1\./);
+    await expect(page.locator('.gwarn').first()).toHaveAttribute('title', /Series resistance must not be negative\. Charts are calculated using 0 Ω\./);
+    await expect(chartBlocked(page)).toHaveCount(0);
+    await page.locator('.project-nav li', {hasText: 'Driver'}).click();
+    await expect(page.locator('#og-ndrivers')).toHaveValue('0');
+    await page.locator('.project-nav li', {hasText: 'Signal'}).click();
+    await expect(page.locator('.ui-field', {hasText: 'Series resistance'}).locator('input')).toHaveValue(/^-2(\.0+)?$/);
   });
 
   test('passive-radiator count 0 draws the chart with a note', async ({page}) => {
