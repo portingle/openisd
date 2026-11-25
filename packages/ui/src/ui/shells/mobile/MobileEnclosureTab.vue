@@ -18,7 +18,7 @@ const {
   project, selectedBox,
   ventSections, tuningNoteShown,
   prResonanceMassDq, prFsMass_hz,
-  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule,
+  prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule, prExcursion, prCountDq,
   VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
   FB_TARGET_TIP, VENT_GEOMETRY_TIP,
 } = useMobileEnclosureTab();
@@ -82,11 +82,12 @@ const {
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-xmax" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.PR_XMAX_MM" :value="prKeyFigures.Xmax_m" readonly plain />
     <UIFixedField class="mob-ui-field mob-ui-field-tap" :chart-inputs="ChartInputs.RADIATOR" input-id="mob-pr-key-vd" @click="startEditPR" @keydown.enter="startEditPR" :field="NumberField.VD_M3" :value="prKeyFigures.Vd_m3" readonly plain />
     <p v-if="prTwoTimesRule" id="mob-pr-two-times" class="mob-cnote">{{ prTwoTimesRule }}</p>
+    <p v-if="prExcursion" id="mob-pr-excursion-advice" class="mob-cnote">{{ prExcursion.text }}</p>
     </section>
 
     <section class="mob-csection">
     <PhoneBand :section="PhoneHelp.USER_OPTIONS" />
-    <UIFixedField class="mob-ui-field" input-id="mob-pr-count" :field="NumberField.PR_NUM" :dq="project.box.passiveRadiator.countDq" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" />
+    <UIFixedField class="mob-ui-field" input-id="mob-pr-count" :field="NumberField.PR_NUM" :dq="prCountDq" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" />
     <UIField class="mob-ui-field" :field="NumberField.PR_MADD_G" :label="PhoneLabels.PR_ADDED_MASS" :cell="project.box.passiveRadiator.addedMass_kg" stepper />
     <UIFixedField class="mob-ui-field" :field="NumberField.PR_FSMASS_HZ" :label="PhoneLabels.PR_FPR_MASS" :value="prFsMass_hz" :dq="prResonanceMassDq.dq" readonly plain />
     </section>

@@ -5,6 +5,7 @@
  * Enclosure tab do", asked by both shells.
  */
 import {useFocusedProject} from '../logic/focusedProjectContext.js';
+import {createPrExcursionAdvice} from './prExcursionAdvice.js';
 import {useFeatureUse} from './telemetryContext.js';
 import {useApp} from '../logic/app.js';
 import {appPassiveRadiatorFiles} from './passiveRadiatorEditor.js';
@@ -31,6 +32,7 @@ export function useMobileEnclosureTab() {
   const {boxTypeIsSimulatable, focusedProject, projectChanged} = useApp().appState;
   const project = useFocusedProject();
   const { engine, myPassiveRadiators, bundledPassiveRadiators } = useApp();
+  const {prExcursion, prCountDq} = createPrExcursionAdvice(project, projectChanged);
 
   const { selectedBox } = createSelectedBox({ focusedProject, projectChanged, isSimulatable: boxTypeIsSimulatable, featureUse: useFeatureUse() });
   const {
@@ -82,7 +84,7 @@ export function useMobileEnclosureTab() {
     project, selectedBox,
     activeVent, activeTuning, ventPorts, portPipeResonance_hz, fbUnreachable, fbUnreachableMsg, tuningField,
     prResonanceMassDq, prFsMass_hz, prNaturalFh,
-    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule,
+    prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo, prKeyFigures, prKeyFigureMarks, prTwoTimesRule, prExcursion, prCountDq,
     VENT_SHAPE_OPTIONS, END_CORRECTION_OPTIONS,
     FB_TARGET_TIP, VENT_GEOMETRY_TIP,
   };

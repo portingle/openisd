@@ -10,7 +10,8 @@ import {PHONE_SIZES} from '../fixtures/phoneSizes.js';
 import type {Page} from '@playwright/test';
 
 /** The sample project's 2× rule line: its driver's Vd is 86.95 cm³, so radiators need 2 × 86.95 = 173.9 cm³; its radiator gives that alone. */
-const TWO_TIMES_RULE = "2× rule: radiators need ≥ 174 cm³ — 1 of these is enough";
+const TWO_TIMES_RULE = "2× guideline at driver Xmax: radiators need ≥ 174 cm³ — 1 radiator";
+const PR_WITHIN_LIMIT = "With your 1 W signal and current filters, 1 radiator stays within Xmax in the 10–20,000 Hz simulation.";
 type BoxOption = 'sealed' | 'vented' | 'box-passive-radiator' | 'bandpass4' | 'bandpass6' | 'abc';
 
 const LOSSES = 'Box losses (Qa, Ql, Qp)…';
@@ -23,7 +24,7 @@ const EXPECTED: readonly {readonly option: BoxOption; readonly sections: readonl
   {option: 'box-passive-radiator', sections: [['Box', 'Box type'], ['Rear chamber', 'Vb', 'Fh', LOSSES],
     // QO946.c115, c117, 12:57-13:01: the radiator by name (its figures in the editor), Key figures and the 2× rule line.
     ['Passive radiator', 'Fp'],
-    ['Key figures', 'Fpr', 'Mms', 'Sd', 'Xmax', 'Vd', TWO_TIMES_RULE],
+    ['Key figures', 'Fpr', 'Mms', 'Sd', 'Xmax', 'Vd', TWO_TIMES_RULE, PR_WITHIN_LIMIT],
     ['User options', 'Num. of PRs', 'Added mass', 'Fpr with mass']]},
   {option: 'bandpass4', sections: [['Box', 'Box type'], ['Rear chamber', 'Vb', 'Fsc', LOSSES], ['Front chamber', 'Vf', LOSSES],
     ['Front vent', 'Ffc', ...VENT_ROWS], ['Chart', 'Velocity limit']]},

@@ -78,7 +78,7 @@ const {
   model, startEdit, showDriverDisagreements, showDriverInfo, startWhatIf, driverConsistencyReasons,
   ventPorts, END_CORRECTION_OPTIONS, VENT_COUNT_OPTIONS,
   prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo,
-  prResonanceMassDq, prFsMass_hz,
+  prResonanceMassDq, prFsMass_hz, prExcursion, prCountDq,
   advTemp, advHumidity, advPressure, advSoundVelocity, advAirDensity,
   envTempStored, envHumidityStored, envPressureStored, envTempDq, envHumidityDq, envPressureDq,
   envSoundVelocityStored, envAirDensityStored, envSoundVelocityDq, envAirDensityDq,
@@ -517,7 +517,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
               <div>
                 <DesktopBand :section="userOptionsHelp" @help="openSectionHelp" />
                 <div class="field-row" style="margin-bottom:3px;">
-                  <UIFixedField class="field" input-id="og-pr-count" :field="NumberField.PR_NUM" :dq="project.box.passiveRadiator.countDq" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" :deviation="prNprDeviationShown ? WinisdDeviation.PR_NPR_RESONANCE : undefined" />
+                  <UIFixedField class="field" input-id="og-pr-count" :field="NumberField.PR_NUM" :dq="prCountDq" :value="project.box.passiveRadiator.count.value" @update:value="n => project.box.passiveRadiator.count.set(n)" :deviation="prNprDeviationShown ? WinisdDeviation.PR_NPR_RESONANCE : undefined" />
                 </div>
                 <div class="field-row" style="margin-bottom:3px;">
                   <UIField class="field" input-id="og-pr-fp" :field="NumberField.PR_FP_HZ" :cell="project.box.passiveRadiator.tuning_goal_hz" />
@@ -530,6 +530,7 @@ provideCellScope({ revision: projectChanged, written: () => {} });
                 </div>
               </div>
             </div>
+            <p v-if="prExcursion" id="og-pr-excursion-advice" style="margin: 2px 0; font-size: 0.9em; white-space: normal;">{{ prExcursion.text }}</p>
           </div>
 
 

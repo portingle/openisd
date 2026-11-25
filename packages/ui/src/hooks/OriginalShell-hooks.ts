@@ -15,6 +15,7 @@
  * `selectedBox` / `projectChanged`.
  */
 import { useDismissOnOutside } from './dismissOnOutside.js';
+import {createPrExcursionAdvice} from './prExcursionAdvice.js';
 import {compatSwitchSetter} from './compatSwitch.js';
 import type {ComputedRef, Ref} from 'vue';
 import {reportDisagreementsSeen} from '../logic/telemetry/valuesProblem.js';
@@ -161,6 +162,7 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
   // mutation (ledger QO54). `project` also re-derives on every focus change (switching tabs),
   // sourced from `appState.ts`'s own focus-aware `live` bridge.
   const project = useFocusedProject();
+  const {prExcursion, prCountDq} = createPrExcursionAdvice(project, projectChanged);
 
   const { engine, designIO, selection, driverBrowsing, myPassiveRadiators, bundledPassiveRadiators, confirmPort, appUpdate } = useApp();
   const { saveProject, saveProjectRecord, saveAllProjects, saveProjectAs, importFile } = designIO;
@@ -832,7 +834,7 @@ export function useOriginalShell(options?: { sealedReadouts?: typeof createSeale
     model, startEdit, showDriverDisagreements, showDriverInfo: driverBrowsing.showProjectDriverInfo, startWhatIf, driverConsistencyReasons,
     activeVent, activeTuning, ventPorts, END_CORRECTION_OPTIONS, VENT_COUNT_OPTIONS, portPipeResonance_hz,
     prBrowseOpen, loadPREntry, loadBundledPassiveRadiatorEntry, prEditor, startEditPR, defineNewPREntry, prInfoOpen, prInfo, openPRInfo,
-    prAddedMassDq, prTuningDq, prResonanceMassDq, prFsMass_hz, prNaturalFh,
+    prAddedMassDq, prTuningDq, prResonanceMassDq, prFsMass_hz, prNaturalFh, prExcursion, prCountDq,
     fmt,
     advTemp, advHumidity, advPressure, advAir, advSoundVelocity, advAirDensity,
     envTempDq, envHumidityDq, envPressureDq, resetAirToAppDefaults,
